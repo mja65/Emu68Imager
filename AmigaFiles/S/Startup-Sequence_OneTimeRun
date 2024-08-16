@@ -1,0 +1,49 @@
+failat 21 
+Version exec.library version 47 >NIL:
+If Not Warn
+	Setenv KickstartVersion 3.2
+	Else
+	Version exec.library version 40 >NIL:
+	if not warn
+		Setenv KickstartVersion 3.1
+	endif
+endif
+
+version >NIL: uaehf.device 1 
+IF NOT FAIL
+   setenv System "WinUAE" 
+   echo "Setting environment as WinUAE" 
+   ELSE 
+   version brcm-emmc.device >nil: 
+      If NOT FAIL 
+         echo "Setting environment as Raspberry Pi 4 (or CM4)" 
+         setenv System "PistormRaspi4" 
+         ELSE 
+         version brcm-sdhc.device 
+          If NOT fail 
+            echo "Setting environment as Raspberry Pi 3 (or Zero2)" 
+            setenv System "PistormRaspi3" 
+          ELSE 
+            echo "Setting environment as Amiga" 
+            setenv System "RealAmiga" 
+          ENDIF 
+      EndIf 
+EndIf 
+IF NOT ${System} EQ "WinUAE" 
+    IF NOT ${System} EQ "RealAmiga" 
+        Dir S:OneTimeRun/#? >NIL: 
+        IF NOT FAIL 
+            ASK "Running One Time Scripts. Press Enter to Continue" 
+            Echo >T:RunTimeScript "Failat 21" 
+            List >>T:RunTimeScript S:OneTimeRun PAT=~(#?.info) LFORMAT="Echo *"Running Script: %n*"*nEcho *"*"*nExecute *"%p%n*"*nDelete *"%p%n*"*n" ALL FILES
+            Execute T:RunTimeScript 
+            Delete >NIL: T:RunTimeScript 
+       ENDIF 
+   ENDIF 
+ENDIF 
+IF ${Reboot} EQ 1 
+      Ask "Press Enter and the Amiga will Reboot" 
+      Diskchange SDH0:
+      reboot 
+ENDIF 
+failat 10

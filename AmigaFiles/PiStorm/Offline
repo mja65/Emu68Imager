@@ -1,0 +1,5 @@
+screentext "STOPING ROADSHOW..." FONT Topaz/11 T CC0000 F FFFF0 SS 0
+
+failat 200
+netshutdown >nil:
+

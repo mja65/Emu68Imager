@@ -1,0 +1,20 @@
+#-Pistorm detection-#
+gpio=0-27=ip
+gpio=0-27=pu
+
+##If GPIO 24 is low (PS32-lite, Pulldown on PCB)
+[gpio24=0]
+##If keyboard reset is kept hold, then put pistorm32 into stealth mode, boots stock A1200
+[gpio4=0]
+kernel=Emu68-pistorm32lite
+initramfs ps32lite-stealth-firmware.gz
+##Normal Boot
+[gpio4=1]
+bootcode_delay=1
+kernel=Emu68-pistorm32lite
+initramfs kick.rom
+
+##If GPIO 24 is high (Pistorm, Pullup on PCB)
+[gpio24=1]
+kernel=Emu68-pistorm
+initramfs kick.rom

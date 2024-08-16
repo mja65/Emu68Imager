@@ -1,0 +1,3 @@
+makedir SYS:STORAGE/DataTypes >NiL:
+delete SYS:Fonts/Disk.info >Nil: 
+delete SYS:Locale/Disk.info >Nil:

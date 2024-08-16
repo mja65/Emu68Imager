@@ -1,0 +1,6 @@
+Version exec.library version 47 >NIL:
+If Warn
+	c:ed sys:prefs/env-archive/Sys/wireless.prefs
+else
+	sys:tools/TextEdit sys:prefs/env-archive/Sys/wireless.prefs
+endif

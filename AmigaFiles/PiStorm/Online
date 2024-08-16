@@ -1,0 +1,19 @@
+screentext "STARTING WIFI..." FONT Topaz/11 T CC0000 F FFFF00 SS 0
+
+;assign libs: libs:Roadshow ADD
+
+run >nil: wirelessmanager wifipi.device >nil:
+wait 1
+WaitUntilConnected device=wifipi.device
+
+screentext "STARTING ROADSHOW..." FONT Topaz/11 T CC0000 F FFFF00 SS 0
+
+;roadshowcontrol tcp.recvspace = 150000 >NIL:
+;roadshowcontrol tcp.sendspace = 150000 >NIL:
+roadshowcontrol tcp.recvspace = 16384 >nil:
+roadshowcontrol tcp.sendspace = 16384 >nil:
+
+addnetinterface wifipi >NIL:
+
+screentext "ROADSHOW ONLINE!" FONT Topaz/11 T CC0000 F FFFF00 SS 0
+
