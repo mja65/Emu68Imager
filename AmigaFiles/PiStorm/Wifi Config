@@ -1,5 +1,4 @@
-Version exec.library version 47 >NIL:
-If Warn
+If ${KickstartVersion} EQ "3.1"
 	c:ed sys:prefs/env-archive/Sys/wireless.prefs
 else
 	sys:tools/TextEdit sys:prefs/env-archive/Sys/wireless.prefs

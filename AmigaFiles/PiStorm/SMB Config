@@ -1,6 +1,5 @@
-Version exec.library version 47 >NIL:
-If Warn
+If ${KickstartVersion} EQ "3.1"
 	c:ed sys:storage/DosDrivers/SMB0
 else
 	sys:tools/TextEdit sys:storage/DosDrivers/SMB0
-endif
+endif	

@@ -113,6 +113,22 @@ $TransferLocation= Read-Host "Please enter location of files to transfer"
 $SSID = Read-Host "Please enter your Wireless SSID"
 $WifiPassword= Read-Host "Please enter your wifi password" -MaskInput
 
+$ROMPath = Read-Host "Please enter the folder location of the Amiga Kickstart Rom"
+if (!$ROMPath) {
+        Write-host "No input. Using D:\Emulators\Amiga Files\Shared\rom\"
+    $ROMPath='D:\Emulators\Amiga Files\Shared\rom\'
+}
+
+$ADFPath = Read-Host "Please enter the folder location of the Amiga Workbench ADF files"
+if (!$ADFPath) {
+    Write-host "No input. Using D:\Emulators\Amiga Files\Shared\adf\"
+    $ADFPath='D:\Emulators\Amiga Files\Shared\adf\'
+}
+
+$StartDateandTime = (Get-Date -Format HH:mm:ss)
+
+Write-Host "Starting execution at $StartDateandTime"
+
 ### Clean up
 
 $NewFolders =("Temp","OutputImage","AmigaImageFiles\System","AmigaImageFiles\Work","FAT32Partition")
@@ -136,23 +152,10 @@ if (-not(Test-Path ($WorkingFolder+'Programs'))){
 
 ### Determine Kickstart Rom Path
 
-$ROMPath = Read-Host "Please enter the folder location of the Amiga Kickstart Rom"
-if (!$ROMPath) {
-        Write-host "No input. Using D:\Emulators\Amiga Files\Shared\rom\"
-    $ROMPath='D:\Emulators\Amiga Files\Shared\rom\'
-}
-
-
 $FoundKickstarttoUse = Compare-KickstartHashes -PathtoKickstartHashes ($InputFolder+'RomHashes.csv') -PathtoKickstartFiles $ROMPath -KickstartVersion $KickstartVersiontoUse
 $KickstartPath = $FoundKickstarttoUse.KickstartPath
 
 Write-Host ('Kickstart to be used is: '+$KickstartPath)
-
-$ADFPath = Read-Host "Please enter the folder location of the Amiga Workbench ADF files"
-if (!$ADFPath) {
-    Write-host "No input. Using D:\Emulators\Amiga Files\Shared\adf\"
-    $ADFPath='D:\Emulators\Amiga Files\Shared\adf\'
-}
 
 $AvailableADFs = Compare-ADFHashes -PathtoADFFiles $ADFPath -PathtoADFHashes ($InputFolder+'ADFHashes.csv') -KickstartVersion $KickstartVersiontoUse -PathtoListofInstallFiles ($InputFolder+'ListofInstallFiles.csv') 
 
@@ -179,9 +182,6 @@ Write-Host 'ADF install images to be used are:'
 $ListofInstallFiles |  Select-Object Path,FriendlyName -Unique | ForEach-Object {
     Write-host ($_.FriendlyName+' ('+$_.Path+')')
 } 
-
-
-
 
 ### Download HST-Imager and HST-Amiga
 
@@ -268,9 +268,6 @@ elseif ($KickstartVersiontoUse -eq 3.2){
     Start-HSTImager -Command 'fs extract' -ADFName $GlowIconsADF -ADFInputFiles 'Prefs\Env-Archive\Sys\def_harddisk.info' -DrivetoWrite 'Work' -Extract_Flag 'AmigaDrive'
     Rename-Item ($AmigaDrivetoCopy+"Work\def_harddisk.info") ($AmigaDrivetoCopy+"Work\disk.info") 
 }
-
-
-
 
 ### End Basic Drive Setup
 
@@ -623,3 +620,8 @@ Set-Location $LocationofImage
 & $HDF2emu68Path $LocationofImage$NameofImage $SizeofFAT32 ($FAT32Partition)
 $null= Rename-Item ($LocationofImager+'emu68_converted.img') -NewName ('Emu68Kickstart'+$KickstartVersiontoUse+'.img')
 Set-location $WorkingFolder
+
+$EndDateandTime = (Get-Date -Format HH:mm:ss)
+$ElapsedTime = (New-TimeSpan -Start $StartDateandTime -End $EndDateandTime).TotalSeconds
+
+Write-Host "Started at: $StartDateandTime Finished at: $EndDateandTime. Total time to run (in seconds) was: $ElapsedTime" 
