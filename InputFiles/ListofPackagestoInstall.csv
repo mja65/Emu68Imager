@@ -140,8 +140,8 @@ TRUE;3.1|3.2;SD0 Device;FALSE;;;;Local;CopyOnly;Devs\DosDrivers\SD0pi4;;FALSE;;;
 TRUE;3.1|3.2;SD0 Device - info file;FALSE;;;;ADF;Extract;StorageADF;DosDrivers\;FALSE;;DosDrivers\PC0.info;System;Devs\DosDrivers\;FALSE;SD0.info;FALSE;FALSE;;;Replace;FALSE
 TRUE;3.1|3.2;SearchReplace;FALSE;;;;Web;Full;http://aminet.net/text/misc/SearchReplace.lha;SearchReplace.Lha;TRUE;0FD5B8E936921E2745F0473211D37A36;SearchReplace/SearchReplace;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;SetDST;FALSE;;;;Web;Full;https://aminet.net/util/time/SetDST.lha;SetDST.lha;TRUE;EF32E16790F81AAF5AB8DDC1A60E372B;SetDST-*\C\*;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
-TRUE;3.1|3.2;SetDST;FALSE;;;;Web;Full;https://aminet.net/util/time/SetDST.lha;SetDST.lha;TRUE;EF32E16790F81AAF5AB8DDC1A60E372B;SetDST-*\SetDST;System;WBStartup\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
-TRUE;3.1|3.2;SetDST;FALSE;;;;Web;Full;https://aminet.net/util/time/SetDST.lha;SetDST.lha;TRUE;EF32E16790F81AAF5AB8DDC1A60E372B;SetDST-*\SetDST.info;System;WBStartup\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
+TRUE;3.1|3.2;SetDST;FALSE;;;;Web;Full;https://aminet.net/util/time/SetDST.lha;SetDST.lha;TRUE;EF32E16790F81AAF5AB8DDC1A60E372B;SetDST-*\SetDST;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
+FALSE;3.1|3.2;SetDST;FALSE;;;;Web;Full;https://aminet.net/util/time/SetDST.lha;SetDST.lha;TRUE;EF32E16790F81AAF5AB8DDC1A60E372B;SetDST-*\SetDST.info;System;WBStartup\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;SetDST - Dat File;FALSE;;;;Local;CopyOnly;S\DST.Dat;;FALSE;;;System;S\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1;Setpatch44.38;FALSE;;;;Web;Full;https://cdn.cloanto.com/pub/amiga/SetPatch-44-38.lha;SetPatch.lha;TRUE;B3FCB573BF33987C33E4C9415E3ED0BB;SetPatch;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;RTB Files - SKick;FALSE;;;;Web;Full;http://aminet.net/util/boot/skick346.lha;skick346.lha;TRUE;745EBF5A39D42E1B352A1FB914CFAB7A;Kickstarts\*;System;Devs\Kickstarts\;FALSE;;FALSE;FALSE;;;FALSE;FALSE

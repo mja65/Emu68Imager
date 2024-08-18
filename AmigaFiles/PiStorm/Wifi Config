@@ -1,7 +1,7 @@
 If ${KickstartVersion} EQ 3.1
-	c:ed sys:prefs/env-archive/Sys/wireless.prefs
+	sys:programs/JanoEditor/JanoEditor ENVARC:Sys/wireless.prefs
 else
 	if ${KickstartVersion} EQ 3.2
-	sys:tools/TextEdit sys:prefs/env-archive/Sys/wireless.prefs
+	sys:tools/TextEdit ENVARC:Sys/wireless.prefs
 	endif
 endif

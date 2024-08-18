@@ -1,20 +1,21 @@
 screentext "STARTING WIFI..." FONT Topaz/11 T CC0000 F FFFF00 SS 0
-
+failat 21
 ;assign libs: libs:Roadshow ADD
 
-run >nil: wirelessmanager wifipi.device >nil:
+run <>nil: wirelessmanager Device=wifipi.device UNIT=0 CONFIG="ENVARC:Sys/Wireless.prefs"
 wait 1
-WaitUntilConnected device=wifipi.device
+WaitUntilConnected device=wifipi.device UNIT=0 DELAY=100
 
-screentext "STARTING ROADSHOW..." FONT Topaz/11 T CC0000 F FFFF00 SS 0
-
-;roadshowcontrol tcp.recvspace = 150000 >NIL:
-;roadshowcontrol tcp.sendspace = 150000 >NIL:
-roadshowcontrol tcp.recvspace = 16384 >nil:
-roadshowcontrol tcp.sendspace = 16384 >nil:
-
-addnetinterface wifipi >NIL:
-sntp pool.ntp.org >NIL:
-
-screentext "ROADSHOW ONLINE!" FONT Topaz/11 T CC0000 F FFFF00 SS 0
-
+if NOT Warn
+	screentext "STARTING ROADSHOW..." FONT Topaz/11 T CC0000 F FFFF00 SS 0
+	
+	;roadshowcontrol tcp.recvspace = 150000 >NIL:
+	;roadshowcontrol tcp.sendspace = 150000 >NIL:
+	roadshowcontrol tcp.recvspace = 16384 >nil:
+	roadshowcontrol tcp.sendspace = 16384 >nil:
+	addnetinterface wifipi >NIL:
+	sntp pool.ntp.org >NIL:
+	c:SetDST NOASK NOREQ QUIET >NIL:
+	screentext "ROADSHOW ONLINE!" FONT Topaz/11 T CC0000 F FFFF00 SS 0
+endif
+failat 10

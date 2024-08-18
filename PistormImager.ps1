@@ -453,20 +453,7 @@ foreach($PackagetoFind in $ListofPackagestoInstall) {
            else{
                Write-host ('Copying files to drive. Source path is: '+$SourcePathtoUse+' Destination path is: '+$DestinationPathtoUse)        
            }
-           Copy-Item -Path $SourcePathtoUse  -Destination $DestinationPathtoUse -Recurse -force
-          <# if ($PackagetoFind.NewFileName.Length -ne 0){
-               if ($PackagetoFind.InstallType -eq 'CopyOnly'){
-                   $filename=Split-Path $PackagetoFind.SourceLocation -Leaf
-               }
-               else{
-                   $filename=(Split-Path ($PackagetoFind.FilestoInstall) -leaf)
-               }
-               
-               if ($filename -match '[*]'){
-                   $filename=(Get-ChildItem $DestinationPathtoUse | Where-Object {$_.name -like $filename}).Name
-               }     
-               $null = Rename-Item (($AmigaDrivetoCopy+$PackagetoFind.DrivetoInstall+'\'+$PackagetoFind.LocationtoInstall)+$filename) -NewName $PackagetoFind.NewFileName
-           }#>     
+           Copy-Item -Path $SourcePathtoUse  -Destination $DestinationPathtoUse -Recurse -force  
            #### End Copy Files
            if (($PackagetoFind.ModifyInfoFileTooltype -eq 'Replace') -or ($PackagetoFind.ModifyInfoFileTooltype -eq 'Modify')) {
                Write-Host 'Tooltypes for relevant .info files for:'$PackagetoFind.PackageName
@@ -493,7 +480,6 @@ foreach($PackagetoFind in $ListofPackagestoInstall) {
     $PackageCheck=$PackagetoFind.PackageName  
 }
 
-
 ### Modify Startup-Sequence and User-Startup
 
 ### Begin Remove CPU check section from Startup-Sequence
@@ -512,14 +498,6 @@ if (Test-Path ($AmigaDrivetoCopy+'System\S\User-Startup')){
 
 Export-TextFileforAmiga -ExportFile ($AmigaDrivetoCopy+'System\S\Startup-Sequence') -DatatoExport $StartupSequence -AddLineFeeds 'TRUE'
 Export-TextFileforAmiga -ExportFile ($AmigaDrivetoCopy+'System\S\User-Startup') -DatatoExport $UserStartup -AddLineFeeds 'TRUE'
-
-### Begin WHDLoad Wrapper
-
-#$null = Rename-Item ($AmigaDrivetoCopy+"System\C\WhdLoad") ($AmigaDrivetoCopy+"System\C\WhdLoad.ori") 
-#$null = copy-Item ($AmigaDrivetoCopy+"System\C\WhdLoadWrapper") ($AmigaDrivetoCopy+"System\C\WhdLoad") 
-#copy-Item ($AmigaDrivetoCopy+"System\S\WhdLoad-Wrapper\StartupScript_NoScreenText") ($AmigaDrivetoCopy+"System\S\WhdLoad-Wrapper\StartupScript") 
-
-### End WHDLoad Wrapper
 
 ### Wireless Prefs
 
@@ -597,9 +575,6 @@ if (-not (Test-Path ($FAT32Partition+'Install\'))){
 #$null = copy-item 'D:\Emulators\Amiga Files\Shared\rom\amiga-os-130.rom' ($FAT32Partition+'Kickstarts\') -Force
 
 Copy-Item ($LocationofAmigaFiles+'FAT32\cmdline.txt') -Destination ($FAT32Partition)
-
-#$Cmdline="sd.low_speed emmc.low_speed sd.unit0=rw emmc.unit0=rw`n"
-#[System.IO.File]::WriteAllText(($FAT32Partition+"cmdline.txt"),$Cmdline,[System.Text.Encoding]::UTF8)
 
 $ConfigTxt = Get-Content -Path ($LocationofAmigaFiles+'FAT32\config.txt')
 
