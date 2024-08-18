@@ -597,6 +597,7 @@ function Find-WHDLoadWrapperURL{
                     Kickstart_Version = $KickstartRomandHash.Kickstart_Version
                     FriendlyName= $KickstartRomandHash.FriendlyName
                     Sequence = $KickstartRomandHash.Sequence 
+                    Fat32Name = $KickstartRomandHash.Fat32Name
                     KickstartPath = ($HashTableforKickstartFilestoCheck[$KickstartRomandHash.Hash])
                 }        
             }
@@ -605,6 +606,7 @@ function Find-WHDLoadWrapperURL{
                     Kickstart_Version = $KickstartRomandHash.Kickstart_Version
                     FriendlyName= $KickstartRomandHash.FriendlyName
                     Sequence = $KickstartRomandHash.Sequence 
+                    Fat32Name = $KickstartRomandHash.Fat32Name
                     KickstartPath = ""
                 }        
             }

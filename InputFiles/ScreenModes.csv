@@ -1,0 +1,3 @@
+Name;FriendlyName;hdmi_group;hdmi_mode;hdmi_cvtmax_framebuffer_width;max_framebuffer_height;hdmi_pixel_freq_limit
+2560*1440-50;Experimental 2560x1440 50Hz mode ;2;87;2560 1440 50 3 0 0 12560;1440;400000000
+1920*1080-60;1080p 60hz;2;82;;;

@@ -14,6 +14,7 @@ roadshowcontrol tcp.recvspace = 16384 >nil:
 roadshowcontrol tcp.sendspace = 16384 >nil:
 
 addnetinterface wifipi >NIL:
+sntp pool.ntp.org >NIL:
 
 screentext "ROADSHOW ONLINE!" FONT Topaz/11 T CC0000 F FFFF00 SS 0
 

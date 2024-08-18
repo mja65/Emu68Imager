@@ -1,5 +1,7 @@
-If ${KickstartVersion} EQ "3.1"
+If ${KickstartVersion} EQ 3.1
 	c:ed sys:storage/DosDrivers/SMB0
 else
+	if ${KickstartVersion} EQ 3.2
 	sys:tools/TextEdit sys:storage/DosDrivers/SMB0
+	endif
 endif	

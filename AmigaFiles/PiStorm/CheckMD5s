@@ -1,0 +1,2 @@
+List >>T:CheckMd5s.txt Sys: PAT=~(#?.info) LFORMAT="c:md5sum  *"%p%n*" >>EMU68BOOT:MD5sofSystem.txt" ALL FILES
+execute T:CheckMd5s.txt
