@@ -8,6 +8,8 @@ $Emu68releases= 'https://api.github.com/repos/michalsc/Emu68/releases'
 $Emu68Toolsreleases= 'https://api.github.com/repos/michalsc/Emu68-tools/releases'
 
 $Scriptpath='C:\Users\Matt\OneDrive\Documents\Emu68Imager'
+$SourceProgramPath='C:\Users\Matt\OneDrive\Documents\Emu68Imager\Programs\'
+$InputFolder='C:\Users\Matt\OneDrive\Documents\Emu68Imager\InputFiles\'
 
 Write-host 'Pistorm Imager'
 
@@ -33,6 +35,15 @@ $HDF2emu68Path=$WorkingFolder+'Programs\hdf2emu68.exe'
 $7zipPath=$WorkingFolder+'Programs\7z.exe'
 
 if (-not (Test-Path $HDF2emu68Path)){
+    $null = Copy-Item ($SourceProgramPath+'hdf2emu68.exe') $HDF2emu68Path
+}
+
+if (-not (Test-Path $7zipPath)){
+    $null = Copy-Item ($SourceProgramPath+'7z.exe') $7zipPath -Force
+    $null = Copy-Item ($SourceProgramPath+'7z.dll') ($ProgramsFolder+'7z.dll') -Force
+}
+
+if (-not (Test-Path $HDF2emu68Path)){
     Write-Host 'HDF2emu68.exe not found! Error in installation!'
     exit
 }
@@ -55,7 +66,7 @@ $LZXPath=$ProgramsFolder+'unlzx.exe'
 #$LocationofAmigaFiles=$WorkingFolder+'AmigaFiles\'
 $LocationofAmigaFiles='C:\Users\Matt\OneDrive\Documents\Emu68Imager\AmigaFiles\'
 #$InputFolder=$WorkingFolder+'InputFiles\'
-$InputFolder='C:\Users\Matt\OneDrive\Documents\Emu68Imager\InputFiles\'
+
 
 $LocationofImage=$WorkingFolder+'OutputImage\'
 $AmigaDrivetoCopy=$WorkingFolder+'AmigaImageFiles\'
