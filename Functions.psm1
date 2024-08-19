@@ -1,6 +1,5 @@
 ### Functions
 
-
 function Compare-FileHash {
     param (
         $FiletoCheck,
@@ -29,6 +28,13 @@ function Expand-Zipfiles {
     )
     Write-Host "Extracting from"$InputFile
     & $7zipPath x ('-o'+$OutputDirectory) $InputFile $FiletoExtract -y >($TempFolder+'Test.txt')
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host ("Error extracting "+$InputFile+"! Cannot continue!")
+        return $false    
+    }
+    else {
+        return $true
+    }
 }
 
 function Expand-LZXArchive {
@@ -85,107 +91,95 @@ function Get-AmigaFileWeb {
     }
 }
 
-    function Start-HSTImager {
-        param (
-            $Command,
-            $CommandString,
-            $SourcePath,
-            $DestinationPath,
-            $FileSystem,
-            $ImageSize,
-            $DeviceName,
-            $SizeofPartition,
-            $BootableFlag,
-            $MaxTransfer,
-            $Mask,
-            $Buffers,
-            $PartitionNumber,
-            $VolumeName,
-            $ADFName,
-            $ADFInputFiles,
-            $DrivetoWrite,
-            $ADFLocationtoInstall,
-            $Extract_Flag,
-            $HDFFullPath 
+function Start-HSTImager {
+    param (
+        $Command,
+        $CommandString,
+        $SourcePath,
+        $DestinationPath,
+        $FileSystem,
+        $ImageSize,
+        $DeviceName,
+        $SizeofPartition,
+        $BootableFlag,
+        $MaxTransfer,
+        $Mask,
+        $Buffers,
+        $PartitionNumber,
+        $VolumeName,
+        $ADFName,
+        $ADFInputFiles,
+        $DrivetoWrite,
+        $ADFLocationtoInstall,
+        $Extract_Flag,
+        $HDFFullPath 
     
-        )
-        $Logoutput=($TempFolder+'Test.txt')
-        if ($Command -eq 'rdb init'){
-            #& "$HSTImagePath" rdb init "$DestinationPath" >"$Logoutput"
-            & $HSTImagePath rdb init $DestinationPath >$Logoutput            
-        }
-        if ($Command -eq 'rdb filesystem add'){
-           # & "$HSTImagePath" rdb filesystem add "$SourcePath" "$DestinationPath" "$FileSystem" >"$Logoutput"
-            & $HSTImagePath rdb filesystem add $SourcePath $DestinationPath $FileSystem >$Logoutput            
-        }
-        if ($Command -eq 'rdb part add'){
-            if ($BootableFlag -eq '-b'){
-              #  & "$HSTImagePath" rdb part add "$SourcePath" "$DeviceName" "$FileSystem" "$SizeofPartition" "$BootableFlag" >"$Logoutput"
-                & $HSTImagePath rdb part add $SourcePath $DeviceName $FileSystem $SizeofPartition $BootableFlag -ma $Mask -bu $Buffers -mt $MaxTransfer >$Logoutput                
-            }
-            else{
-              #  & "$HSTImagePath" rdb part add "$SourcePath" "$DeviceName" "$FileSystem" "$SizeofPartition" >"$Logoutput"
-                & $HSTImagePath rdb part add $SourcePath $DeviceName $FileSystem $SizeofPartition >$Logoutput                
-            }
-        }
-        if ($Command -eq 'rdb part format'){
-          #  & "$HSTImagePath" rdb part format "$SourcePath" "$PartitionNumber" "$VolumeName" >"$Logoutput"
-            & $HSTImagePath rdb part format $SourcePath $PartitionNumber $VolumeName >$Logoutput            
-        }   
-        elseif ($Command -eq 'Blank'){
-           # & "$HSTImagePath" blank "$DestinationPath" "$ImageSize" >"$Logoutput"
-            & $HSTImagePath blank $DestinationPath $ImageSize >$Logoutput            
-        }
-        elseif ($Command -eq 'fs extract') {
-            ## Added for Powershell 5 compatibility - begin
-            if ($ADFInputFiles -eq ""){
-                $SourcePath=$ADFName
-            }
-            else{
-                $SourcePath=($ADFName+'\'+$ADFInputFiles)
-            }
-            if ($ADFLocationtoInstall -eq ""){
-                $DestinationPath=$DrivetoWrite
-            }
-            else{
-                $DestinationPath=($DrivetoWrite+'\'+$ADFLocationtoInstall)
-            }
-            Write-Host "Source path is: $SourcePath Destination path is: $DestinationPath"
-            ## Added for Powershell 5 compatibility - end
-            if ($Extract_Flag -eq 'rdb'){
-                #& "$HSTImagePath" fs extract "$ADFName\$ADFInputFiles" "$HDFFullPath\rdb\$DrivetoWrite\$ADFLocationtoInstall" >"$Logoutput"                           
-                & $HSTImagePath fs extract $SourcePath $HDFFullPath\rdb\$DestinationPath >$Logoutput                                
-            }
-            elseif ($Extract_Flag -eq 'AmigaDrive'){
-                if (-not (Test-Path ($AmigaDrivetoCopy+$DrivetoWrite+'\'+$ADFLocationtoInstall))){
-                    $null = New-Item ($AmigaDrivetoCopy+$DrivetoWrite+'\'+$ADFLocationtoInstall) -ItemType Directory
-                }
-                #& "$HSTImagePath" fs extract "$ADFName\$ADFInputFiles" "$AmigaDrivetoCopy$DrivetoWrite\$ADFLocationtoInstall" >"$Logoutput"
-                & $HSTImagePath fs extract $SourcePath $AmigaDrivetoCopy$DestinationPath >$Logoutput      
-            }
-            else{
-                if (-not (Test-Path ($ADFLocationtoInstall))){
-                    $null = New-Item ($ADFLocationtoInstall) -ItemType Directory
-                }                
-                #& "$HSTImagePath" fs extract "$ADFName\$ADFInputFiles" "$ADFLocationtoInstall" >"$Logoutput"
-                & $HSTImagePath fs extract $SourcePath $ADFLocationtoInstall >$Logoutput      
-            }           
-        }
-        $CheckforError = Get-Content ($Logoutput)
-        $ErrorCount=0
-        foreach ($ErrorLine in $CheckforError){
-            if ($ErrorLine -match " ERR]"){
-                $ErrorCount += 1
-                Write-Host "Error in HST-Imager:"$ErrorLine            
-            }
-        }
-        if ($ErrorCount -ge 1){
-            $null=Remove-Item ($Logoutput) -Force
-            exit    
-        }    
+    )
+    $Logoutput=($TempFolder+'Test.txt')
+    if ($Command -eq 'rdb init'){
+        & $HSTImagePath rdb init $DestinationPath >$Logoutput            
     }
-    
-
+    if ($Command -eq 'rdb filesystem add'){
+        & $HSTImagePath rdb filesystem add $SourcePath $DestinationPath $FileSystem >$Logoutput            
+    }
+    if ($Command -eq 'rdb part add'){
+        if ($BootableFlag -eq '-b'){
+            & $HSTImagePath rdb part add $SourcePath $DeviceName $FileSystem $SizeofPartition $BootableFlag -ma $Mask -bu $Buffers -mt $MaxTransfer >$Logoutput                
+        }
+        else{
+            & $HSTImagePath rdb part add $SourcePath $DeviceName $FileSystem $SizeofPartition >$Logoutput                
+        }
+    }
+    if ($Command -eq 'rdb part format'){
+        & $HSTImagePath rdb part format $SourcePath $PartitionNumber $VolumeName >$Logoutput            
+    }   
+    elseif ($Command -eq 'Blank'){
+        & $HSTImagePath blank $DestinationPath $ImageSize >$Logoutput            
+    }
+    elseif ($Command -eq 'fs extract') {
+        if ($ADFInputFiles -eq ""){
+            $SourcePath=$ADFName
+        }
+        else{
+            $SourcePath=($ADFName+'\'+$ADFInputFiles)
+        }
+        if ($ADFLocationtoInstall -eq ""){
+            $DestinationPath=$DrivetoWrite
+        }
+        else{
+            $DestinationPath=($DrivetoWrite+'\'+$ADFLocationtoInstall)
+        }
+        Write-Host "Source path is: $SourcePath Destination path is: $DestinationPath"
+        if ($Extract_Flag -eq 'rdb'){               
+            & $HSTImagePath fs extract $SourcePath $HDFFullPath\rdb\$DestinationPath >$Logoutput                                
+        }
+        elseif ($Extract_Flag -eq 'AmigaDrive'){
+            if (-not (Test-Path ($AmigaDrivetoCopy+$DrivetoWrite+'\'+$ADFLocationtoInstall))){
+                $null = New-Item ($AmigaDrivetoCopy+$DrivetoWrite+'\'+$ADFLocationtoInstall) -ItemType Directory
+            }
+            & $HSTImagePath fs extract $SourcePath $AmigaDrivetoCopy$DestinationPath >$Logoutput      
+        }
+        else{
+            if (-not (Test-Path ($ADFLocationtoInstall))){
+                $null = New-Item ($ADFLocationtoInstall) -ItemType Directory
+            }                
+            & $HSTImagePath fs extract $SourcePath $ADFLocationtoInstall >$Logoutput      
+        }           
+    }
+    $CheckforError = Get-Content ($Logoutput)
+    $ErrorCount=0
+    foreach ($ErrorLine in $CheckforError){
+        if ($ErrorLine -match " ERR]"){
+            $ErrorCount += 1
+            Write-Host "Error in HST-Imager:"$ErrorLine            
+        }
+    }
+    if ($ErrorCount -ge 1){
+        $null=Remove-Item ($Logoutput) -Force
+        exit    
+    }    
+}
+  
 function Find-LatestAminetPackage {
     param (
         $PackagetoFind,
@@ -196,7 +190,7 @@ function Find-LatestAminetPackage {
     $AminetURL='http://aminet.net'
     $URL=('https://aminet.net/search?name='+$PackagetoFind+'&o_date=newer&date='+$DateNewerthan+'&arch[]='+$Architecture)
     Write-Host ('Searching for: '+$PackagetoFind)
-    $ListofAminetFiles=Invoke-WebRequest $URL -UseBasicParsing ## -AllowInsecureRedirect Powershell 5 compatibility
+    $ListofAminetFiles=Invoke-WebRequest $URL -UseBasicParsing # -AllowInsecureRedirect Powershell 5 compatibility
     foreach ($Line in $ListofAminetFiles.Links) {      
     if (!$Exclusion) {
         if (($line -match ('.lha'))){
@@ -209,10 +203,11 @@ function Find-LatestAminetPackage {
         if (($line -match ('.lha')) -and (-not ($line -match $Exclusion))){
             Write-Host ('Found '+$line.href)
             return ($AminetURL+$line.href)
-       }     
-   }
+       }       
+    }
+    Write-Host 'Could not find package! Unrrecoverable error!'
+    return                 
 }
-
 
 function Write-AmigaFilestoFS {
     param (
@@ -225,12 +220,9 @@ function Write-AmigaFilestoFS {
     $Logoutput= ($TempFolder+'Test.txt')
     Write-Host ("Writing file(s) to HDF image for: "+$DrivetoRead+":"+$FilestoCopy+" to drive "+$DrivetoWrite+":") 
     if($TransferFlag -eq 'Transfer'){
- #       & ($HSTImagePath) fs copy ($FilestoCopy) ($HDFFullPath+'\rdb\'+$DrivetoWrite+'\My Files\') $Logoutput
         & "$HSTImagePath" fs copy "$FilestoCopy" "$HDFFullPath\rdb\$DrivetoWrite\My Files\" >"$Logoutput"
     }
     else {
-#        & ($HSTImagePath) fs copy ($AmigaDrivetoCopy+$DrivetoRead+'\'+$FilestoCopy) ($HDFFullPath+'\rdb\'+$DrivetoWrite+'\') $Logoutput
-#        & "$HSTImagePath" fs copy "$AmigaDrivetoCopy$DrivetoRead\$FilestoCopy" "$HDFFullPath\rdb\$DrivetoWrite\" >"$Logoutput"
         & $HSTImagePath fs copy $AmigaDrivetoCopy$DrivetoRead\$FilestoCopy $HDFFullPath\rdb\$DrivetoWrite\ >$Logoutput
     }
     $CheckforError = Get-Content ($Logoutput)
@@ -255,9 +247,7 @@ function Write-AmigaTooltypes {
     )
     $Logoutput=($TempFolder+'Test.txt')
     Write-Host ("Importing Tooltypes for info file(s): "+$DrivetoWrite +":"+$InfoFiletoWritePath+" from "+$DrivetoRead+":"+$InfoTextFiletoReadPath) 
- #   & ($HSTAmigaPath) icon tooltypes import ($AmigaDrivetoCopy+$DrivetoWrite+'\'+$InfoFiletoWritePath) $InfoTextFiletoReadPath $Logoutput
-#    & "$HSTAmigaPath" icon tooltypes import "$AmigaDrivetoCopy$DrivetoWrite\$InfoFiletoWritePath" "$InfoTextFiletoReadPath" >"$Logoutput"
-     & $HSTAmigaPath icon tooltypes import $AmigaDrivetoCopy$DrivetoWrite\$InfoFiletoWritePath $InfoTextFiletoReadPath >$Logoutput
+    & $HSTAmigaPath icon tooltypes import $AmigaDrivetoCopy$DrivetoWrite\$InfoFiletoWritePath $InfoTextFiletoReadPath >$Logoutput
     $CheckforError = Get-Content ($Logoutput)
     $ErrorCount=0
     foreach ($ErrorLine in $CheckforError){
@@ -281,8 +271,6 @@ function Read-AmigaTooltypes {
     )
     $Logoutput=($TempFolder+'Test.txt')
     Write-Host ("Extracting Tooltypes for info file(s): "+$DrivetoRead +":"+$InfoFiletoReadPath+" to "+$InfoTextFiletoWritePath) 
-#    & "$HSTAmigaPath" "icon tooltypes export" "($AmigaDrivetoCopy+$DrivetoRead+'\'+$InfoFiletoReadPath)" "$InfoTextFiletoWritePath" "$Logoutput"
-#    & "$HSTAmigaPath" icon tooltypes export "$AmigaDrivetoCopy$DrivetoRead\$InfoFiletoReadPath" "$InfoTextFiletoWritePath" >"$Logoutput"
     & $HSTAmigaPath icon tooltypes export $AmigaDrivetoCopy$DrivetoRead\$InfoFiletoReadPath $InfoTextFiletoWritePath >$Logoutput
     $CheckforError = Get-Content ($Logoutput)
     $ErrorCount=0
@@ -322,9 +310,7 @@ function Add-AmigaFolder {
     $Startpoint=(Split-Path -Path ($AmigaDrivetoCopy+$AmigaFolderPath)).length+1
     $Endpoint=($AmigaDrivetoCopy+$AmigaFolderPath).length-1
     $Length=$Endpoint-$Startpoint
-    $FileName=($AmigaDrivetoCopy+$AmigaFolderPath).Substring($Startpoint,$Length)
-    #        $FileName=Split-Path ($AmigaDrivetoCopy+$AmigaFolderPath) -LeafBase Powershell 5 compatibility
-   
+    $FileName=($AmigaDrivetoCopy+$AmigaFolderPath).Substring($Startpoint,$Length) 
     if (-not (Test-Path ($AmigaDrivetoCopy+$AmigaFolderPath))){
         Write-Host ('Creating Folder "'+$AmigaFolderPath+'"')
         $null = New-Item -path ($AmigaDrivetoCopy+$AmigaFolderPath) -ItemType Directory -Force 
@@ -369,11 +355,22 @@ function Get-GithubRelease {
         }
         $GithubDownloadURL =$GithubDetails_2[0].browser_download_url 
         Write-Host "Downloading Files"
-        Invoke-WebRequest $GithubDownloadURL -OutFile $LocationforDownload
+        try {
+            Invoke-WebRequest $GithubDownloadURL -OutFile $LocationforDownload # Powershell 5 compatibility -AllowInsecureRedirect
+            Write-Host "Download completed"            
+        }
+        catch {
+            Write-Host "Error downloading $NameofDL!"
+            return $false
+        }
         Write-Host "Extracting Files"
         $null = Expand-Archive -LiteralPath $LocationforDownload -DestinationPath $LocationforProgram -force
+        return $true   
     }
 }
+
+
+
 
 function Edit-AmigaScripts {
     param (
@@ -510,7 +507,6 @@ function Import-TextFileforAmiga {
     )
     $DataRevised = New-Object System.Collections.Generic.List[System.Object]
     if ($SystemType -eq 'PC'){
-#        $Data=Get-Content -path $ImportFile -Encoding iso-8859-1 ## Powershell 5 compatibility
         $Data=Get-Content -path $ImportFile -Encoding ascii ## Powershell 5 compatibility
         $Data = $Data -split "`n"
     }
@@ -544,219 +540,209 @@ function Find-WHDLoadWrapperURL{
         $DownloadLink = $SiteLink+($ListofURLs | Sort-Object -Descending | Select-Object -First 1)
         return $DownloadLink
     }
-
-    function Get-ModifiedToolTypes {
-        param (
-            $OriginalToolTypes,
-            $ModifiedToolTypes
-        )
-        $Tooltypes_Revised = New-Object System.Collections.Generic.List[System.Object]
-        $HashTableforOldandNewToolTypes = @{} # Clear Hash
-        foreach ($ModifiedToolType in $ModifiedTooltypes){
-            if ($ModifiedToolType.OldValue -ne ""){
-                $HashTableforOldandNewToolTypes.Add($ModifiedToolType.OldValue,$ModifiedToolType.NewValue) 
-            }
-            else{
-                $Tooltypes_Revised.Add($ModifiedTooltype.NewValue)            
-                #echo $ModifiedTooltype.NewValue
+    
+function Get-ModifiedToolTypes {
+    param (
+        $OriginalToolTypes,
+        $ModifiedToolTypes
+    )
+    $Tooltypes_Revised = New-Object System.Collections.Generic.List[System.Object]
+    $HashTableforOldandNewToolTypes = @{} # Clear Hash
+    foreach ($ModifiedToolType in $ModifiedTooltypes){
+        if ($ModifiedToolType.OldValue -ne ""){
+            $HashTableforOldandNewToolTypes.Add($ModifiedToolType.OldValue,$ModifiedToolType.NewValue) 
+        }
+        else{
+            $Tooltypes_Revised.Add($ModifiedTooltype.NewValue)            
+            #echo $ModifiedTooltype.NewValue
+        }        
+    }
+    foreach ($OriginalToolType in $OriginalToolTypes){
+        if ($HashTableforOldandNewToolTypes[$OriginalToolType]){
+            $Tooltypes_Revised.Add($HashTableforOldandNewToolTypes[$OriginalToolType])
+        }
+        else{
+            $Tooltypes_Revised.Add($OriginalToolType)
+        }
+    }
+    return $Tooltypes_Revised    
+}    
+    
+function Compare-KickstartHashes {
+    param (
+        $PathtoKickstartHashes,
+        $PathtoKickstartFiles,
+        $KickstartVersion
+    )
+    $KickstartHashestoFind =Import-Csv $PathtoKickstartHashes -Delimiter ';' |  Where-Object {$_.Kickstart_Version -eq $KickstartVersion} | Sort-Object -Property 'Sequence'   
+    $ListofKickstartFilestoCheck = Get-ChildItem $PathtoKickstartFiles -Recurse | Where-Object { $_.PSIsContainer -eq $false } 
+    
+    $FoundKickstarts = [System.Collections.Generic.List[PSCustomObject]]::New()
+    $HashTableforKickstartFilestoCheck = @{} # Clear Hash
+    
+    foreach ($KickstartDetailLine in $ListofKickstartFilestoCheck){
+        $KickstartHash=Get-FileHash $KickstartDetailLine.FullName -Algorithm MD5
+        $HashTableforKickstartFilestoCheck.Add(($KickstartHash.Hash),$KickstartDetailLine.FullName)
+    }
+    
+    foreach ($KickstartRomandHash in $KickstartHashestoFind){
+        if ($HashTableforKickstartFilestoCheck[$KickstartRomandHash.Hash]){
+            $FoundKickstarts += [PSCustomObject]@{
+                Kickstart_Version = $KickstartRomandHash.Kickstart_Version
+                FriendlyName= $KickstartRomandHash.FriendlyName
+                Sequence = $KickstartRomandHash.Sequence 
+                Fat32Name = $KickstartRomandHash.Fat32Name
+                KickstartPath = ($HashTableforKickstartFilestoCheck[$KickstartRomandHash.Hash])
             }        
         }
-        foreach ($OriginalToolType in $OriginalToolTypes){
-            if ($HashTableforOldandNewToolTypes[$OriginalToolType]){
-                $Tooltypes_Revised.Add($HashTableforOldandNewToolTypes[$OriginalToolType])
-                #echo $HashTableforOldandNewToolTypes[$OriginalToolType]     
+        else{
+            $FoundKickstarts += [PSCustomObject]@{
+                Kickstart_Version = $KickstartRomandHash.Kickstart_Version
+                FriendlyName= $KickstartRomandHash.FriendlyName
+                Sequence = $KickstartRomandHash.Sequence 
+                Fat32Name = $KickstartRomandHash.Fat32Name
+                KickstartPath = ""
+            }        
+        }
+    }
+    
+    if ($FoundKickstarts){
+        $KickstarttoUse = $FoundKickstarts | Sort-Object -Property 'Sequence' | Select-Object -first 1
+        return $KickstarttoUse 
+    }
+    else{
+        Write-host "No valid Kickstart file found!"
+        return
+    }
+}
+    
+function Compare-ADFHashes {
+    param (
+        $PathtoADFFiles,
+        $PathtoADFHashes,
+        $KickstartVersion,
+        $PathtoListofInstallFiles
+    
+    )
+    
+    Write-Host "Calculating hashes of ADFs in location $PathtoADFFiles"
+    $ListofADFFilestoCheck = Get-ChildItem $PathtoADFFiles -Recurse | Where-Object { $_.PSIsContainer -eq $false } | Get-FileHash  -Algorithm MD5
+    Write-Host "Hashes calculated!"
+    $ADFHashestoFind = Import-Csv $PathtoADFHashes -Delimiter ';' |  Where-Object {$_.Kickstart_Version -eq $KickstartVersion} | Sort-Object -Property 'Sequence'
+    $RequiredADFs = Import-Csv $PathtoListofInstallFiles -Delimiter ';' |  Where-Object {$_.Kickstart_Version -eq $KickstartVersion} | Sort-Object -Property 'Sequence'
+    $UniqueRequiredADFs = $RequiredADFs | Select-Object FriendlyName -Unique
+    
+    $HashTableforADFFilestoCheck = @{} # Clear Hash
+    
+    $MatchedADFs = [System.Collections.Generic.List[PSCustomObject]]::New()
+    
+    foreach ($ADFDetailLine in $ADFHashestoFind){
+        $HashTableforADFFilestoCheck += @{
+            $ADFDetailLine.Hash=$ADFDetailLine.ADF_Name,$ADFDetailLine.FriendlyName    
+        }
+    }
+    
+    foreach ($ADFLine in $ListofADFFilestoCheck){
+        if ($HashTableforADFFilestoCheck[$ADFLine.Hash]){
+            $MatchedADFs += [PSCustomObject]@{
+                PathtoADF= $ADFLine.Path
+                Hash = $ADFLine.Hash
+                ADF_Name = $HashTableforADFFilestoCheck[$ADFLine.Hash][0]
+                FriendlyName = $HashTableforADFFilestoCheck[$ADFLine.Hash][1]
+            }
+        }
+    }
+    
+    $UniqueAvailableADFs = $MatchedADFs.FriendlyName | Get-Unique 
+    
+    $ErrorCount=0
+          
+    foreach ($RequiredADF in $UniqueRequiredADFs){
+        $ADFFound=$false
+        foreach ($AvailableADF in $UniqueAvailableADFs){
+            if ($RequiredADF.FriendlyName -eq $AvailableADF){
+                $ADFFound=$true
+            }
+        }
+        if ($ADFFound -eq  $true){
+            Write-Host ('Found ADF file: '+$RequiredADF.FriendlyName)
+        }
+        if ($ADFFound -eq  $false){
+            write-host ('ADF file: '+$RequiredADF+' is missing from directory and/or hash is invalid Please check file!')
+            $ErrorCount +=1
+        }
+    } 
+    
+    if ($ErrorCount -gt 0){
+        exit
+    }
+    else{
+        return $MatchedADFs 
+    }
+}    
+
+function Get-StartupSequenceVersion {
+    param (
+        $StartupSequencetoCheck
+    )
+    $StartupSequence_FirstLine = $StartupSequencetoCheck | Select-Object -First 1
+    
+    $String_Start='; $VER: Startup-Sequence_HardDrive '    
+    $String_End=' ('
+    
+    $Startpoint = $StartupSequence_FirstLine.IndexOf($String_Start)+$String_Start.Length
+    if ($Startpoint -lt 0){
+        Write-host "Error! No version found!"
+        return
+    }
+    else{
+        $Endpoint = $StartupSequence_FirstLine.IndexOf($String_End)
+        $Version=$StartupSequence_FirstLine.Substring($Startpoint,($Endpoint-$Startpoint))
+        Write-Host "Version of Startup-Sequence is $Version"
+        return $Version
+    }
+}
+    
+function Get-StartupSequenceInjectionPointfromVersion {
+    param (
+        $SSversion,
+        $InjectionPointtoParse
+        )
+        $InjectionPointTable = [System.Collections.Generic.List[PSCustomObject]]::New()
+        
+        if ($InjectionPointtoParse -match "¬"){
+            $InjectionPointSplit=$InjectionPointtoParse -split "¬"
+        
+        }
+        else {
+            Write-host "Injection point identified (not version specific) is: $InjectionPointtoParse"
+            return $InjectionPointtoParse
+        }    
+        foreach ($Row in $InjectionPointSplit) {
+            if ($Row.Substring(0,8) -eq 'VERSION-'){
+                $Startpoint='VERSION-'.Length
+                $length=($row.Length)-$Startpoint       
+                $VersiontoPopulate=$row.substring($Startpoint,$length)
             }
             else{
-                $Tooltypes_Revised.Add($OriginalToolType)
-                 #echo $OriginalToolType
+                $StringtoPopulate=$Row
             }
-        }
-        return $Tooltypes_Revised    
-    }
-
-    function Compare-KickstartHashes {
-        param (
-            $PathtoKickstartHashes,
-            $PathtoKickstartFiles,
-            $KickstartVersion
-        )
-        $KickstartHashestoFind =Import-Csv $PathtoKickstartHashes -Delimiter ';' |  Where-Object {$_.Kickstart_Version -eq $KickstartVersion} | Sort-Object -Property 'Sequence'   
-        $ListofKickstartFilestoCheck = Get-ChildItem $PathtoKickstartFiles -Recurse | Where-Object { $_.PSIsContainer -eq $false } 
-    
-        $FoundKickstarts = [System.Collections.Generic.List[PSCustomObject]]::New()
-        $HashTableforKickstartFilestoCheck = @{} # Clear Hash
-    
-        foreach ($KickstartDetailLine in $ListofKickstartFilestoCheck){
-            $KickstartHash=Get-FileHash $KickstartDetailLine.FullName -Algorithm MD5
-            $HashTableforKickstartFilestoCheck.Add(($KickstartHash.Hash),$KickstartDetailLine.FullName)
-        }
-    
-        foreach ($KickstartRomandHash in $KickstartHashestoFind){
-            if ($HashTableforKickstartFilestoCheck[$KickstartRomandHash.Hash]){
-                $FoundKickstarts += [PSCustomObject]@{
-                    Kickstart_Version = $KickstartRomandHash.Kickstart_Version
-                    FriendlyName= $KickstartRomandHash.FriendlyName
-                    Sequence = $KickstartRomandHash.Sequence 
-                    Fat32Name = $KickstartRomandHash.Fat32Name
-                    KickstartPath = ($HashTableforKickstartFilestoCheck[$KickstartRomandHash.Hash])
-                }        
-            }
-            else{
-                $FoundKickstarts += [PSCustomObject]@{
-                    Kickstart_Version = $KickstartRomandHash.Kickstart_Version
-                    FriendlyName= $KickstartRomandHash.FriendlyName
-                    Sequence = $KickstartRomandHash.Sequence 
-                    Fat32Name = $KickstartRomandHash.Fat32Name
-                    KickstartPath = ""
-                }        
-            }
-        }
-        
-        if ($FoundKickstarts){
-            $KickstarttoUse = $FoundKickstarts | Sort-Object -Property 'Sequence' | Select-Object -first 1
-            return $KickstarttoUse 
-        }
-        else{
-            Write-host "No valid Kickstart file found!"
-            return
-        }
-    
-    }
-
-    function Compare-ADFHashes {
-        param (
-            $PathtoADFFiles,
-            $PathtoADFHashes,
-            $KickstartVersion,
-            $PathtoListofInstallFiles
-    
-        )
-        
-        <#
-        $PathtoADFFiles='D:\Emulators\Amiga Files\Shared\adf'
-        $KickstartVersion=3.1
-        $PathtoADFHashes='c:\Users\Matt\Downloads\Emu68Imager\InputFiles\ADFHashes.csv'
-        $PathtoListofInstallFiles='c:\Users\Matt\Downloads\Emu68Imager\InputFiles\ListofInstallFiles.csv'
-        #>
-        Write-Host "Calculating hashes of ADFs in location $PathtoADFFiles"
-        $ListofADFFilestoCheck = Get-ChildItem $PathtoADFFiles -Recurse | Where-Object { $_.PSIsContainer -eq $false } | Get-FileHash  -Algorithm MD5
-        Write-Host "Hashes calculated!"
-        $ADFHashestoFind = Import-Csv $PathtoADFHashes -Delimiter ';' |  Where-Object {$_.Kickstart_Version -eq $KickstartVersion} | Sort-Object -Property 'Sequence'
-        $RequiredADFs = Import-Csv $PathtoListofInstallFiles -Delimiter ';' |  Where-Object {$_.Kickstart_Version -eq $KickstartVersion} | Sort-Object -Property 'Sequence'
-        #$UniqueRequiredADFs = ($RequiredADFs.FriendlyName) | Get-Unique
-        $UniqueRequiredADFs = $RequiredADFs | Select-Object FriendlyName -Unique
-        
-        $HashTableforADFFilestoCheck = @{} # Clear Hash
-        
-        $MatchedADFs = [System.Collections.Generic.List[PSCustomObject]]::New()
-        
-        foreach ($ADFDetailLine in $ADFHashestoFind){
-            $HashTableforADFFilestoCheck += @{
-                $ADFDetailLine.Hash=$ADFDetailLine.ADF_Name,$ADFDetailLine.FriendlyName    
-            }
-        }
-        
-        foreach ($ADFLine in $ListofADFFilestoCheck){
-            if ($HashTableforADFFilestoCheck[$ADFLine.Hash]){
-                $MatchedADFs += [PSCustomObject]@{
-                    PathtoADF= $ADFLine.Path
-                    Hash = $ADFLine.Hash
-                    ADF_Name = $HashTableforADFFilestoCheck[$ADFLine.Hash][0]
-                    FriendlyName = $HashTableforADFFilestoCheck[$ADFLine.Hash][1]
+            if ($null -ne $StringtoPopulate){
+                $InjectionPointTable += [PSCustomObject]@{
+                    Version = $VersiontoPopulate
+                    Text= $StringtoPopulate
                 }
-            }
+                $StringtoPopulate=$null
+            } 
+        
         }
-        
-        $UniqueAvailableADFs = $MatchedADFs.FriendlyName | Get-Unique 
-        
-        $ErrorCount=0
-              
-        foreach ($RequiredADF in $UniqueRequiredADFs){
-            $ADFFound=$false
-            foreach ($AvailableADF in $UniqueAvailableADFs){
-                if ($RequiredADF.FriendlyName -eq $AvailableADF){
-                    $ADFFound=$true
-                }
+        foreach ($line in $InjectionPointTable){
+            if ($line.Version -eq $SSversion){
+                Write-host ('Injection point identified for version '+$SSversion+' is: '+$line.Text)
+                return $line.Text
             }
-            if ($ADFFound -eq  $true){
-                Write-Host ('Found ADF file: '+$RequiredADF.FriendlyName)
-            }
-            if ($ADFFound -eq  $false){
-                write-host ('ADF file: '+$RequiredADF+' is missing from directory and/or hash is invalid Please check file!')
-                $ErrorCount +=1
-            }
-        } 
+        }    
+        return           
+}
     
-        if ($ErrorCount -gt 0){
-            exit
-        }
-        else{
-            return $MatchedADFs 
-        }
-    }
-
-    function Get-StartupSequenceVersion {
-        param (
-            $StartupSequencetoCheck
-        )
-        $StartupSequence_FirstLine = $StartupSequencetoCheck | Select-Object -First 1
-        
-        $String_Start='; $VER: Startup-Sequence_HardDrive '    
-        $String_End=' ('
-        
-        $Startpoint = $StartupSequence_FirstLine.IndexOf($String_Start)+$String_Start.Length
-        if ($Startpoint -lt 0){
-            Write-host "Error! No version found!"
-            return
-        }
-        else{
-            $Endpoint = $StartupSequence_FirstLine.IndexOf($String_End)
-            $Version=$StartupSequence_FirstLine.Substring($Startpoint,($Endpoint-$Startpoint))
-            Write-Host "Version of Startup-Sequence is $Version"
-            return $Version
-        }
-    }
-
-    function Get-StartupSequenceInjectionPointfromVersion {
-        param (
-            $SSversion,
-            $InjectionPointtoParse
-            )
-            $InjectionPointTable = [System.Collections.Generic.List[PSCustomObject]]::New()
-            
-            if ($InjectionPointtoParse -match "¬"){
-                $InjectionPointSplit=$InjectionPointtoParse -split "¬"
-            
-            }
-            else {
-                Write-host "Injection point identified (not version specific) is: $InjectionPointtoParse"
-                return $InjectionPointtoParse
-            }    
-            foreach ($Row in $InjectionPointSplit) {
-                if ($Row.Substring(0,8) -eq 'VERSION-'){
-                    $Startpoint='VERSION-'.Length
-                    $length=($row.Length)-$Startpoint       
-                    $VersiontoPopulate=$row.substring($Startpoint,$length)
-                }
-                else{
-                    $StringtoPopulate=$Row
-                }
-                if ($null -ne $StringtoPopulate){
-                    $InjectionPointTable += [PSCustomObject]@{
-                        Version = $VersiontoPopulate
-                        Text= $StringtoPopulate
-                    }
-                    $StringtoPopulate=$null
-                } 
-            
-            }
-            foreach ($line in $InjectionPointTable){
-                if ($line.Version -eq $SSversion){
-                    Write-host ('Injection point identified for version '+$SSversion+' is: '+$line.Text)
-                    return $line.Text
-                }
-            }    
-            return           
-        }  
-
 ### End Functions

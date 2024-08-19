@@ -15,9 +15,19 @@ address command vCmd
 vCmd='delete T:RunHashes QUIET >NIL:'
 address command vCmd
 
+fENVKickstart='ENV:KickstartVersion'
+
+open(vKickstartLine,fENVKickstart,'read')
+vKickstartFound=readln(vKickstartLine)
+close(vKickstartLine)
+
+vKickstartVersion=vKickstartFound
+
+/*
 address command 'rx "push `getenv KickstartVersion`"'
 pull rxvar
 vKickstartVersion=rxvar
+*/
 
 Say "Checking Kickstarts on FAT32 Kickstarts Folder to Transfer to WHDLoad"
 Say ""

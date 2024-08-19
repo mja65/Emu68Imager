@@ -1,6 +1,6 @@
 InstallFlag;KickstartVersion;PackageName;SearchforUpdatedPackage;UpdatePackageSearchTerm;UpdatePackageSearchExclusionTerm;UpdatePackageSearchMinimumDate;Source;InstallType;SourceLocation;FileDownloadName;PerformHashCheck;Hash;FilestoInstall;DrivetoInstall;LocationtoInstall;CreateFolderInfoFile;NewFileName;ModifyUserStartup;ModifyStartupSequence;StartupSequenceInjectionStartPoint;StartupSequenceInjectionEndPoint;ModifyInfoFileTooltype;PiSpecificStorageDriver
-FALSE;3.1|3.2;#IconLib;TRUE;IconLib;;20231231;Web;Full;;Iconlib.lha;FALSE;10156C1508013D774874135DB9C4E4D3;IconLib_*\ThirdParty\RemLib\RemLib;System;C\;FALSE;;FALSE;TRUE;VERSION-40.5¬C:Version >NIL: exec.library 45 20¬VERSION-40.2¬C:SetPatch QUIET;;FALSE;FALSE
-FALSE;3.1|3.2;#IconLib;TRUE;IconLib;;20231231;Web;Full;;Iconlib.lha;FALSE;10156C1508013D774874135DB9C4E4D3;IconLib_*\Libs\icon.library;System;Libs\;FALSE;;FALSE;TRUE;VERSION-40.5¬C:Version >NIL: exec.library 45 20¬VERSION-40.2¬C:SetPatch QUIET;;FALSE;FALSE
+FALSE;3.1|3.2;#IconLib;TRUE;IconLib;;20231231;Web;Full;;Iconlib.lha;FALSE;10156C1508013D774874135DB9C4E4D3;IconLib_*\ThirdParty\RemLib\RemLib;System;C\;FALSE;;FALSE;Add;VERSION-40.5¬C:Version >NIL: exec.library 45 20¬VERSION-40.2¬C:SetPatch QUIET;;FALSE;FALSE
+FALSE;3.1|3.2;#IconLib;TRUE;IconLib;;20231231;Web;Full;;Iconlib.lha;FALSE;10156C1508013D774874135DB9C4E4D3;IconLib_*\Libs\icon.library;System;Libs\;FALSE;;FALSE;Add;VERSION-40.5¬C:Version >NIL: exec.library 45 20¬VERSION-40.2¬C:SetPatch QUIET;;FALSE;FALSE
 TRUE;3.1|3.2;AmiSpeedTest;FALSE;;;;Web;Full;https://aminet.net/comm/net/AmiSpeedTest.lha;AmiSpeedTest.lha;TRUE;f092dfa356e689faece7efe0b40879da;AmiSpeedTest\*;System;Programs\AmiSpeedTest\;TRUE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;AMISSL;TRUE;AMISSL;-SDK;20231231;Web;Full;;AmiSSL.lha;FALSE;AFE0CF0B8A6369828604122DB707EEEE;AmiSSL\Libs\AmigaOS3\amisslmaster.library;System;Programs\AMISSL\Libs\;FALSE;;TRUE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;AMISSL;TRUE;AMISSL;-SDK;20231231;Web;Full;;AmiSSL.lha;FALSE;AFE0CF0B8A6369828604122DB707EEEE;AmiSSL\Libs\AmigaOS3\AmiSSL\68020-40\amissl_v331.library;System;Programs\AMISSL\Libs\AmiSSL\;FALSE;;TRUE;FALSE;;;FALSE;FALSE
@@ -32,7 +32,7 @@ TRUE;3.1|3.2;DOpus417;FALSE;;;;Web;Full;http://dopus.free.fr/betas/DOpus417pre21
 TRUE;3.1|3.2;DOpus417;FALSE;;;;Web;Full;http://dopus.free.fr/betas/DOpus417pre21.lzx;DOpus417pre21.lzx;TRUE;8B880EDD51404C7EFBE54245713CF578;DOpus_Icon;System;Programs\DOpus\modules\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;DOpus417;FALSE;;;;Web;Full;http://dopus.free.fr/betas/DOpus417pre21.lzx;DOpus417pre21.lzx;TRUE;8B880EDD51404C7EFBE54245713CF578;DOpus_Print;System;Programs\DOpus\modules\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;DOpus417;FALSE;;;;Web;Full;http://dopus.free.fr/betas/DOpus417pre21.lzx;DOpus417pre21.lzx;TRUE;8B880EDD51404C7EFBE54245713CF578;History\*;System;Programs\DOpus\History\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
-TRUE;3.1|3.2;DopusEdit;FALSE;;;;Local;CopyOnly;Programs\Dopus\C\DopusEdit;;FALSE;;;System;Programs\DOpus\c\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
+FALSE;3.1|3.2;DopusEdit;FALSE;;;;Local;CopyOnly;Programs\Dopus\C\DopusEdit;;FALSE;;;System;Programs\DOpus\c\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;Emu68Info;FALSE;;;;Local;CopyOnly;C\Emu68Info;;FALSE;;;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;EmuContol - C Folder;FALSE;;;;Emu68;CopyOnly;Emu68Tools\EmuControl\Emucontrol;;FALSE;;;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;Emucontrol - Pistorm Folder;FALSE;;;;Emu68;CopyOnly;Emu68Tools\EmuControl\Emucontrol;;FALSE;;;System;PiStorm\;TRUE;;FALSE;FALSE;;;FALSE;FALSE
@@ -41,6 +41,14 @@ TRUE;3.1|3.2;EMUControl - VC4Tweak;FALSE;;;;Emu68;CopyOnly;Emu68Tools\EmuControl
 TRUE;3.1|3.2;EMUControl - VC4Tweak;FALSE;;;;Emu68;CopyOnly;Emu68Tools\VC4Tweak\VC4Tweak;;FALSE;;;System;PiStorm\;TRUE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;FAT95;FALSE;;;;Web;Full;https://aminet.net/disk/misc/fat95.lha;Fat95.lha;TRUE;B9BBC735FC367F830250D26FAA879B39;fat95\l\fat95;System;L\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;FileSysbox;FALSE;;;;Web;Full;http://aminet.net/util/libs/filesysbox.m68k-amigaos.lha;filesysbox.m68k-amigaos.lha;TRUE;C8AEB8CEFE87B98499963FE5330E2CA6;filesysbox\Libs\filesysbox.library.020;System;Libs\;FALSE;filesysbox.library;FALSE;FALSE;;;FALSE;FALSE
+TRUE;3.1|3.2;HippoPlayer;FALSE;;;;Web;Full;https://aminet.net/mus/play/hippoplayer.lha;hippoplayer.lha;TRUE;aa28f29175d968c4f4ccfd5a6c4f7ce4;HippoPlayer\HiP.*;System;Programs\HippoPlayer\;TRUE;;FALSE;FALSE;;;FALSE;FALSE
+TRUE;3.1|3.2;HippoPlayer;FALSE;;;;Web;Full;https://aminet.net/mus/play/hippoplayer.lha;hippoplayer.lha;TRUE;aa28f29175d968c4f4ccfd5a6c4f7ce4;HippoPlayer\HippoPlayer.PS3M;System;S\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
+TRUE;3.1|3.2;HippoPlayer;FALSE;;;;Web;Full;https://aminet.net/mus/play/hippoplayer.lha;hippoplayer.lha;TRUE;aa28f29175d968c4f4ccfd5a6c4f7ce4;HippoSupport\*;System;Programs\HippoPlayer\;TRUE;;FALSE;FALSE;;;FALSE;FALSE
+TRUE;3.1|3.2;HippoPlayer;FALSE;;;;Web;Full;https://aminet.net/mus/play/hippoplayer.lha;hippoplayer.lha;TRUE;aa28f29175d968c4f4ccfd5a6c4f7ce4;HippoSupport\Libs\octa*;System;Libs\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
+TRUE;3.1|3.2;HippoPlayer;FALSE;;;;Web;Full;https://aminet.net/mus/play/hippoplayer.lha;hippoplayer.lha;TRUE;aa28f29175d968c4f4ccfd5a6c4f7ce4;HippoSupport\Libs\m*;System;Libs\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
+TRUE;3.1|3.2;HippoPlayerUpdate;FALSE;;;;Web;Full;https://aminet.net/package/mus/play/hippoplayerupdate.lha;hippoplayerupdate.lha;FALSE;2a024bf40065e91edd0f8d876d5268ed;HiP;System;Programs\HippoPlayer\;TRUE;;FALSE;FALSE;;;FALSE;FALSE
+TRUE;3.1|3.2;HippoPlayerUpdate;FALSE;;;;Web;Full;https://aminet.net/package/mus/play/hippoplayerupdate.lha;hippoplayerupdate.lha;FALSE;2a024bf40065e91edd0f8d876d5268ed;HippoPlayer.group;System;S\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
+TRUE;3.1|3.2;HippoPlayerUpdate;FALSE;;;;Web;Full;https://aminet.net/package/mus/play/hippoplayerupdate.lha;hippoplayerupdate.lha;FALSE;2a024bf40065e91edd0f8d876d5268ed;playsid.library;System;Libs\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;Ibrowse;FALSE;;;;Web;Full;https://www.ibrowse-dev.net/resources/IBrowse3.0a-OS3.lha;IBrowse-OS3.lha;TRUE;E448F1B7E46034A5D2DBCB464C9A7268;Ibrowse*.info;System;Programs\;FALSE;Ibrowse.info;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;Ibrowse;FALSE;;;;Web;Full;https://www.ibrowse-dev.net/resources/IBrowse3.0a-OS3.lha;IBrowse-OS3.lha;TRUE;E448F1B7E46034A5D2DBCB464C9A7268;IBrowse*-OS3\Catalogs\*;System;Programs\Ibrowse\Catalogs\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;Ibrowse;FALSE;;;;Web;Full;https://www.ibrowse-dev.net/resources/IBrowse3.0a-OS3.lha;IBrowse-OS3.lha;TRUE;E448F1B7E46034A5D2DBCB464C9A7268;Ibrowse*-OS3\Codecs\*;System;Programs\Ibrowse\Codecs\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
@@ -100,7 +108,7 @@ TRUE;3.1|3.2;MUI38;FALSE;;;;Web;Full;http://aminet.net/util/libs/mui38usr.lha;mu
 TRUE;3.1|3.2;MUI38;FALSE;;;;Web;Full;http://aminet.net/util/libs/mui38usr.lha;mui38usr.lha;TRUE;04DF2D2C444A112C66D1B2CA593CB71A;MUI\ReadMe.info;System;Programs\MUI\;FALSE;;TRUE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;MUI38;FALSE;;;;Web;Full;http://aminet.net/util/libs/mui38usr.lha;mui38usr.lha;TRUE;04DF2D2C444A112C66D1B2CA593CB71A;MUI\Rexx.info;System;Programs\MUI\;FALSE;;TRUE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;oc666.library;FALSE;;;;Local;CopyOnly;Libs\oc666.library;;FALSE;;;System;Libs\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
-TRUE;3.1|3.2;OneTimeRun;FALSE;;;;Local;CopyOnly;OneTimeRun\*;;FALSE;;;System;S\OneTimeRun\;FALSE;;FALSE;TRUE;Binddrivers;;FALSE;FALSE
+TRUE;3.1|3.2;OneTimeRun;FALSE;;;;Local;CopyOnly;OneTimeRun\*;;FALSE;;;System;S\OneTimeRun\;FALSE;;FALSE;Add;Binddrivers;;FALSE;FALSE
 TRUE;3.1|3.2;PFS - setfnsize;FALSE;;;;Web;Full;http://aminet.net/disk/misc/PFS3_53.lha;PFS3_53.lha;TRUE;FEDAA397BDD9C593EF1EA7C2E86BFB33;PFS3\tools\setfnsize;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;Picasso96;FALSE;;;;Web;Full;http://aminet.net/driver/video/Picasso96.lha;Picasso96.lha;TRUE;16287F92CE6DDEA23F5456CEB4525189;Picasso96Install\Classes\DataTypes\picture.datatype;System;Classes\DataTypes;FALSE;;TRUE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;Picasso96;FALSE;;;;Web;Full;http://aminet.net/driver/video/Picasso96.lha;Picasso96.lha;TRUE;16287F92CE6DDEA23F5456CEB4525189;Picasso96Install\Devs\Monitors\Picasso96.info;System;Devs\Monitors\;FALSE;Videocore.info;TRUE;FALSE;;;Replace;FALSE
@@ -130,8 +138,9 @@ TRUE;3.1|3.2;Pistorm Folder -TransferKick;FALSE;;;;Local;CopyOnly;Pistorm\Transf
 TRUE;3.1|3.2;Pistorm Folder -Wifi Config;FALSE;;;;Local;CopyOnly;Pistorm\Wifi Config;;FALSE;;;System;PiStorm\;TRUE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;Pistorm Folder -Wifi Config;FALSE;;;;Local;CopyOnly;Pistorm\Wifi Config.info;;FALSE;;;System;PiStorm\;TRUE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;Prism2;FALSE;;;;Web;Full;http://aminet.net/driver/net/prism2v2.lha;Prism2v2.lha;TRUE;C2C6060C016DC4F22902C8809477985A;Prism2v2\C\*;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
-TRUE;3.1;REXXMast;FALSE;;;;Local;StartupSequenceOnly;;;FALSE;;;;;;;;TRUE;IF EXISTS S:User-Startup;;;
+TRUE;3.1;REXXMast;FALSE;;;;Local;StartupSequenceOnly;;;FALSE;;;;;;;;Add;IF EXISTS S:User-Startup;;;
 TRUE;3.1|3.2;Reboot;FALSE;;;;Web;Full;http://aminet.net/util/boot/reboot.lha;reboot.lha;TRUE;95355F5C845088151874633164A95693;Reboot\Reboot;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
+TRUE;3.1|3.2;ReqTools;FALSE;;;;Web;Full;http://aminet.net/util/libs/Reqtools-Wide.lha;ReqtoolsWide.lha;TRUE;7b146009ce6b99623d73a244a89b8c2a;reqtools.library;System;Libs\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;Roadshow;FALSE;;;;Local;Full;Roadshow-Demo-1.15.lha;Roadshow.lha;FALSE;25471647C76D8EAB98F78D24945B3FC6;Roadshow-Demo-*\Workbench\*;System;;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;Roadshow;FALSE;;;;Local;Full;Roadshow-Demo-1.15.lha;Roadshow.lha;FALSE;25471647C76D8EAB98F78D24945B3FC6;Roadshow-Demo-*\Workbench\Storage\NetInterfaces\CNet16.info;System;Devs\NetInterfaces\;FALSE;wifipi.info;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;Screentext;FALSE;;;;Web;Full;https://thomas-rapp.hier-im-netz.de/downloads/ScreenText.lha;ScreenText.lha;TRUE;D500457A41A18D73C01DD6B27DCE5A41;Screentext;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
@@ -168,15 +177,15 @@ TRUE;3.1|3.2;WHDLoad;FALSE;;;;Web;Full;https://whdload.de/whdload/WHDLoad_usr.lh
 TRUE;3.1|3.2;WHDLoad;FALSE;;;;Web;Full;https://whdload.de/whdload/WHDLoad_usr.lha;Whdload_usr.lha;FALSE;3E4A8FBEA4BB2C85B3FCC29B013E77E9;WHDLoad\C\Patcher;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;WHDLoad;FALSE;;;;Web;Full;https://whdload.de/whdload/WHDLoad_usr.lha;Whdload_usr.lha;FALSE;3E4A8FBEA4BB2C85B3FCC29B013E77E9;WHDLoad\S\*;System;S\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;WHDLoadWrapper;TRUE;;;;Web;Full;;WHDLoadWrapper.lha;FALSE;9482600EDA83D5E5046F66C3574D3FBF;WHDLoadWrapper\C\Bplcon3Hack;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
-TRUE;3.1|3.3;WHDLoadWrapper;TRUE;;;;Web;Full;;WHDLoadWrapper.lha;FALSE;9482600EDA83D5E5046F66C3574D3FBF;WHDLoadWrapper\C\checkagatest;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
-TRUE;3.1|3.4;WHDLoadWrapper;TRUE;;;;Web;Full;;WHDLoadWrapper.lha;FALSE;9482600EDA83D5E5046F66C3574D3FBF;WHDLoadWrapper\C\Emu68Downclocker;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
-TRUE;3.1|3.5;WHDLoadWrapper;TRUE;;;;Web;Full;;WHDLoadWrapper.lha;FALSE;9482600EDA83D5E5046F66C3574D3FBF;WHDLoadWrapper\C\RemakeDisplay;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
-TRUE;3.1|3.6;WHDLoadWrapper;TRUE;;;;Web;Full;;WHDLoadWrapper.lha;FALSE;9482600EDA83D5E5046F66C3574D3FBF;WHDLoadWrapper\C\ScreenText;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
-TRUE;3.1|3.7;WHDLoadWrapper;TRUE;;;;Web;Full;;WHDLoadWrapper.lha;FALSE;9482600EDA83D5E5046F66C3574D3FBF;WHDLoadWrapper\C\tude;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
-TRUE;3.1|3.8;WHDLoadWrapper;TRUE;;;;Web;Full;;WHDLoadWrapper.lha;FALSE;9482600EDA83D5E5046F66C3574D3FBF;WHDLoadWrapper\C\uae-configuration;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
-TRUE;3.1|3.9;WHDLoadWrapper;TRUE;;;;Web;Full;;WHDLoadWrapper.lha;FALSE;9482600EDA83D5E5046F66C3574D3FBF;WHDLoadWrapper\C\WHDLoadWrapper;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
-TRUE;3.1|3.10;WHDLoadWrapper;TRUE;;;;Web;Full;;WHDLoadWrapper.lha;FALSE;9482600EDA83D5E5046F66C3574D3FBF;WHDLoadWrapper\C\WHDMassUpdate;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
-TRUE;3.1|3.11;WHDLoadWrapper;TRUE;;;;Web;Full;;WHDLoadWrapper.lha;FALSE;9482600EDA83D5E5046F66C3574D3FBF;WHDLoadWrapper\C\WHDLoadWrapper;System;C\;FALSE;WHDLoad;FALSE;FALSE;;;FALSE;FALSE
+TRUE;3.1|3.2;WHDLoadWrapper;TRUE;;;;Web;Full;;WHDLoadWrapper.lha;FALSE;9482600EDA83D5E5046F66C3574D3FBF;WHDLoadWrapper\C\checkagatest;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
+TRUE;3.1|3.2;WHDLoadWrapper;TRUE;;;;Web;Full;;WHDLoadWrapper.lha;FALSE;9482600EDA83D5E5046F66C3574D3FBF;WHDLoadWrapper\C\Emu68Downclocker;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
+TRUE;3.1|3.2;WHDLoadWrapper;TRUE;;;;Web;Full;;WHDLoadWrapper.lha;FALSE;9482600EDA83D5E5046F66C3574D3FBF;WHDLoadWrapper\C\RemakeDisplay;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
+TRUE;3.1|3.2;WHDLoadWrapper;TRUE;;;;Web;Full;;WHDLoadWrapper.lha;FALSE;9482600EDA83D5E5046F66C3574D3FBF;WHDLoadWrapper\C\ScreenText;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
+TRUE;3.1|3.2;WHDLoadWrapper;TRUE;;;;Web;Full;;WHDLoadWrapper.lha;FALSE;9482600EDA83D5E5046F66C3574D3FBF;WHDLoadWrapper\C\tude;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
+TRUE;3.1|3.2;WHDLoadWrapper;TRUE;;;;Web;Full;;WHDLoadWrapper.lha;FALSE;9482600EDA83D5E5046F66C3574D3FBF;WHDLoadWrapper\C\uae-configuration;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
+TRUE;3.1|3.2;WHDLoadWrapper;TRUE;;;;Web;Full;;WHDLoadWrapper.lha;FALSE;9482600EDA83D5E5046F66C3574D3FBF;WHDLoadWrapper\C\WHDLoadWrapper;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
+TRUE;3.1|3.2;WHDLoadWrapper;TRUE;;;;Web;Full;;WHDLoadWrapper.lha;FALSE;9482600EDA83D5E5046F66C3574D3FBF;WHDLoadWrapper\C\WHDMassUpdate;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
+TRUE;3.1|3.2;WHDLoadWrapper;TRUE;;;;Web;Full;;WHDLoadWrapper.lha;FALSE;9482600EDA83D5E5046F66C3574D3FBF;WHDLoadWrapper\C\WHDLoadWrapper;System;C\;FALSE;WHDLoad;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;WHDLoadWrapper;TRUE;;;;Web;Full;;WHDLoadWrapper.lha;FALSE;9482600EDA83D5E5046F66C3574D3FBF;WHDLoadWrapper\S\WHDLoad-Wrapper\Updater\*;System;S\WHDLoad-Wrapper\Updater\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;WHDLoadWrapper;TRUE;;;;Web;Full;;WHDLoadWrapper.lha;FALSE;9482600EDA83D5E5046F66C3574D3FBF;WHDLoadWrapper\S\WHDLoad-Wrapper\Execute31;System;S\WHDLoad-Wrapper\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;WHDLoadWrapper;TRUE;;;;Web;Full;;WHDLoadWrapper.lha;FALSE;9482600EDA83D5E5046F66C3574D3FBF;WHDLoadWrapper\S\WHDLoad-Wrapper\StartupScript_Caffeine;System;S\WHDLoad-Wrapper\;FALSE;;FALSE;FALSE;;;FALSE;FALSE

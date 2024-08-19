@@ -308,20 +308,52 @@ Foreach($InstallFileLine in $ListofInstallFiles){
         Start-HSTImager -Command 'fs extract' -ADFName $InstallFileLine.Path -ADFInputFiles ($InstallFileLine.AmigaFiletoInstall -replace '/','\') -Extract_Flag 'AmigaDrive' -DrivetoWrite 'System' -ADFLocationtoInstall $InstallFileLine.LocationtoInstall
         Expand-AmigaZFiles -LocationofZFiles ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall+'\'+$InstallFileLine.LocationtoInstall)
     }
-    elseif($InstallFileLine.NewFileName -ne ""){
-       Write-host 'Extracting files'
-       $NameofFiletoChange=$InstallFileLine.AmigaFiletoInstall.split("/")[-1]  
-       Start-HSTImager -Command 'fs extract' -ADFName $InstallFileLine.Path -ADFInputFiles $InstallFileLine.AmigaFiletoInstall -Extract_Flag 'AmigaDrive' -DrivetoWrite 'System' -ADFLocationtoInstall $InstallFileLine.LocationtoInstall
-       $null = rename-Item -Path ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall+'\'+$InstallFileLine.LocationtoInstall+'\'+$NameofFiletoChange) -NewName $InstallFileLine.NewFileName            
-    }
+    elseif (($InstallFileLine.NewFileName -ne "")  -or
+            ($InstallFileLine.ModifyScript -ne 'FALSE') -or
+            ($InstallFileLine.ModifyInfoFileTooltype -ne 'FALSE')){
+                if ($InstallFileLine.LocationtoInstall -ne ""){
+                    $LocationtoInstall=($InstallFileLine.LocationtoInstall+'\')
+                }
+                else{
+                    $LocationtoInstall=$null
+                }
+                if ($InstallFileLine.NewFileName -ne ""){
+                    $FullPath = $AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall+'\'+$LocationtoInstall+$InstallFileLine.NewFileName
+                }
+                else{
+                    $FullPath = $AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall+'\'+$LocationtoInstall+(Split-Path $InstallFileLine.AmigaFiletoInstall -Leaf) 
+                }
+                $filename = Split-Path $FullPath -leaf
+                Write-host 'Extracting files'
+                Start-HSTImager -Command 'fs extract' -ADFName $InstallFileLine.Path -ADFInputFiles $InstallFileLine.AmigaFiletoInstall -Extract_Flag 'AmigaDrive' -DrivetoWrite 'System' -ADFLocationtoInstall $LocationtoInstall
+                if ($InstallFileLine.NewFileName -ne ""){
+                    $NameofFiletoChange=$InstallFileLine.AmigaFiletoInstall.split("/")[-1]  
+                    if (Test-Path ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall+'\'+$LocationtoInstall+$InstallFileLine.NewFileName)){
+                        Remove-Item ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall+'\'+$LocationtoInstall+$InstallFileLine.NewFileName)
+                    }
+                    $null = rename-Item -Path ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall+'\'+$LocationtoInstall+$NameofFiletoChange) -NewName $InstallFileLine.NewFileName            
+                }
+                if ($InstallFileLine.ModifyInfoFileTooltype -eq 'Modify'){
+                    Read-AmigaTooltypes -DrivetoRead $InstallFileLine.DrivetoInstall -InfoFiletoReadPath ($LocationtoInstall+$filename) -InfoTextFiletoWritePath ($TempFolder+$filename+'.txt')                   
+                    $OldToolTypes = Get-Content($TempFolder+$filename+'.txt')
+                    $TooltypestoModify = Import-Csv ($LocationofAmigaFiles+$LocationtoInstall+'\'+$filename+'.txt') -Delimiter ';'
+                    Get-ModifiedToolTypes -OriginalToolTypes $OldToolTypes -ModifiedToolTypes $TooltypestoModify | Out-File ($TempFolder+$filename+'amendedtoimport.txt')
+                    Write-AmigaTooltypes -DrivetoWrite $InstallFileLine.DrivetoInstall -InfoFiletoWritePath ($LocationtoInstall+$filename) -InfoTextFiletoReadPath ($TempFolder+$fileName+'amendedtoimport.txt') 
+                }        
+                if ($InstallFileLine.ModifyScript -eq'Remove'){
+                    Write-Host ('Modifying '+$FileName+' for: '+$InstallFileLine.ScriptNameofChange)
+                    $ScripttoEdit = Import-TextFileforAmiga -SystemType 'Amiga' -ImportFile ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall+'\'+$LocationtoInstall+$FileName)
+                    $ScripttoEdit = Edit-AmigaScripts -ScripttoEdit $ScripttoEdit -Action 'remove' -name $InstallFileLine.ScriptNameofChange -Startpoint $InstallFileLine.ScriptInjectionStartPoint -Endpoint $InstallFileLine.ScriptInjectionEndPoint                    
+                    Export-TextFileforAmiga -ExportFile ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall+'\'+$LocationtoInstall+$FileName) -DatatoExport $ScripttoEdit -AddLineFeeds 'TRUE'
+                }
+            }    
     else {
-        Write-host 'Extracting files'
-        Start-HSTImager -Command 'fs extract' -ADFName $InstallFileLine.Path -ADFInputFiles $InstallFileLine.AmigaFiletoInstall -DrivetoWrite $DeviceName_System -ADFLocationtoInstall $InstallFileLine.LocationtoInstall -Extract_Flag 'rdb' -HDFFullPath ($LocationofImage+$NameofImage) 
+         Write-host 'Extracting files'
+         Start-HSTImager -Command 'fs extract' -ADFName $InstallFileLine.Path -ADFInputFiles $InstallFileLine.AmigaFiletoInstall -DrivetoWrite $DeviceName_System -ADFLocationtoInstall $InstallFileLine.LocationtoInstall -Extract_Flag 'rdb' -HDFFullPath ($LocationofImage+$NameofImage) 
     }
     $ItemCounter+=1    
 }
 ### End Copy Install files from ADF
-
 
 #######################################################################################################################################################################################################################################
 
@@ -352,7 +384,8 @@ foreach($PackagetoFind in $ListofPackagestoInstall) {
             }
             Elseif ($PackagetoFind.Source -eq "Web"){
                 if(($PackagetoFind.SearchforUpdatedPackage -eq 'TRUE') -and ($PackagetoFind.PackageName -ne 'WHDLoadWrapper')){
-                    $PackagetoFind.SourceLocation=Find-LatestAminetPackage -PackagetoFind $PackagetoFind.PackageName -Exclusion $PackagetoFind.UpdatePackageSearchExclusionTerm -DateNewerthan $PackagetoFind.UpdatePackageSearchMinimumDate -Architecture 'm68k-amigaos'           
+                    $PackagetoFind.SourceLocation=Find-LatestAminetPackage -PackagetoFind $PackagetoFind.PackageName -Exclusion $PackagetoFind.UpdatePackageSearchExclusionTerm -DateNewerthan $PackagetoFind.UpdatePackageSearchMinimumDate -Architecture 'm68k-amigaos'
+                   # Write-Host $PackagetoFind.SourceLocation           
                 }
                 if(($PackagetoFind.SearchforUpdatedPackage -eq 'TRUE') -and ($PackagetoFind.PackageName -eq 'WHDLoadWrapper')){
                     $PackagetoFind.SourceLocation=(Find-WHDLoadWrapperURL -SearchCriteria 'WHDLoadWrapper' -ResultLimit '10') 
@@ -363,12 +396,14 @@ foreach($PackagetoFind in $ListofPackagestoInstall) {
                 else{
                     if (-not (Get-AmigaFileWeb -URL $PackagetoFind.SourceLocation -NameofDL $PackagetoFind.FileDownloadName -LocationforDL $AmigaDownloads)){
                         Write-host "Unrecoverable error with download(s)!"
-                        break
+                        exit
                     }                    
                 }
                 if ($PackagetoFind.PerformHashCheck -eq 'TRUE'){
                     if (-not (Compare-FileHash -FiletoCheck ($AmigaDownloads+$PackagetoFind.FileDownloadName) -HashtoCheck $PackagetoFind.Hash)){
-                        Write-Host "Error in downloaded packages! Unable to continue!" 
+                        Write-Host "Error in downloaded packages! Unable to continue!"
+                        Write-Host ('Deleting package '+($AmigaDownloads+$PackagetoFind.FileDownloadName))
+                        $null=Remove-Item -Path ($AmigaDownloads+$PackagetoFind.FileDownloadName) -Force 
                         exit
                     }
                 }
@@ -383,12 +418,17 @@ foreach($PackagetoFind in $ListofPackagestoInstall) {
                 }
             }
             if ($PackagetoFind.InstallType -eq "Full"){
-                Write-Host 'Exapanding archive file for package'$PackagetoFind.PackageName
+                Write-Host 'Expanding archive file for package'$PackagetoFind.PackageName
                 if ([System.IO.Path]::GetExtension($PackagetoFind.FileDownloadName) -eq '.lzx'){
                     Expand-LZXArchive -LZXFile ($AmigaDownloads+$PackagetoFind.FileDownloadName) -DestinationPath ($TempFolder+$PackagetoFind.FileDownloadName) 
                 } 
                 if ([System.IO.Path]::GetExtension($PackagetoFind.FileDownloadName) -eq '.lha'){
-                    Expand-Zipfiles -InputFile ($AmigaDownloads+$PackagetoFind.FileDownloadName) -OutputDirectory ($TempFolder+$PackagetoFind.FileDownloadName)            
+                    if (-not(Expand-Zipfiles -InputFile ($AmigaDownloads+$PackagetoFind.FileDownloadName) -OutputDirectory ($TempFolder+$PackagetoFind.FileDownloadName))){
+                        Write-Host ('Deleting package '+($AmigaDownloads+$PackagetoFind.FileDownloadName))
+                        $null=Remove-Item -Path ($AmigaDownloads+$PackagetoFind.FileDownloadName) -Force
+                        exit # Error in extracting
+                    }
+                               
                 } 
             }
 
@@ -419,7 +459,7 @@ foreach($PackagetoFind in $ListofPackagestoInstall) {
             $UserStartup += Edit-AmigaScripts -name $PackagetoFind.PackageName -Action 'Append' -LinestoAdd (Import-TextFileforAmiga -SystemType 'PC' -ImportFile ($LocationofAmigaFiles+'S\User-Startup_'+$PackagetoFind.PackageName))
             
         }
-        if ($PackagetoFind.ModifyStartupSequence -eq'TRUE'){
+        if ($PackagetoFind.ModifyStartupSequence -eq'Add'){
             Write-Host 'Modifying S/Startup-Sequence file for:'$PackagetoFind.PackageName 
             $InjectionPoint=Get-StartupSequenceInjectionPointfromVersion -SSversion $StartupSequenceversion -InjectionPointtoParse $PackagetoFind.StartupSequenceInjectionStartPoint
             $StartupSequence = Edit-AmigaScripts -ScripttoEdit $StartupSequence -Action 'inject' -injectionpoint 'before' -name $PackagetoFind.PackageName -Startpoint $InjectionPoint -LinestoAdd (Import-TextFileforAmiga -SystemType 'PC' -ImportFile ($LocationofAmigaFiles+'S\Startup-Sequence_'+$PackagetoFind.PackageName))            
@@ -431,7 +471,6 @@ foreach($PackagetoFind in $ListofPackagestoInstall) {
        ($PackagetoFind.InstallType -eq 'Extract')){
            ### Determining Source Paths
            $DestinationPathtoUse =($AmigaDrivetoCopy+$PackagetoFind.DrivetoInstall+'\'+$PackagetoFind.LocationtoInstall) 
-           #$DestinationFileName = (Split-Path $PackagetoFind.LocationtoInstall -Leaf)
            if ($PackagetoFind.Source -eq 'Web'){
                $SourcePathtoUse=($TempFolder+$PackagetoFind.FileDownloadName+'\'+$PackagetoFind.FilestoInstall)  
            }
@@ -447,7 +486,6 @@ foreach($PackagetoFind in $ListofPackagestoInstall) {
            elseif (($PackagetoFind.Source -eq 'Local') -and ($PackagetoFind.InstallType -eq 'Full')){
                $SourcePathtoUse=($TempFolder+$PackagetoFind.FileDownloadName+'\'+$PackagetoFind.FilestoInstall)     
            }
-          #echo ($PackagetoFind.PackageName+' '+$SourcePathtoUse+' '+$DestinationPathtoUse)
            #### End Determining SourcePaths
            Write-Host "Creating directories where required - Folder"$PackagetoFind.LocationtoInstall
            if (-not (Test-Path ($AmigaDrivetoCopy+$PackagetoFind.DrivetoInstall+'\'+$PackagetoFind.LocationtoInstall))){
@@ -481,7 +519,7 @@ foreach($PackagetoFind in $ListofPackagestoInstall) {
                if ($PackagetoFind.ModifyInfoFileTooltype -eq 'Modify'){
                    Read-AmigaTooltypes -DrivetoRead $PackagetoFind.DrivetoInstall -InfoFiletoReadPath ($PackagetoFind.LocationtoInstall+$filename) -InfoTextFiletoWritePath ($TempFolder+$filename+'.txt')
                    $OldToolTypes= Get-Content($TempFolder+$filename+'.txt')
-                      Get-ModifiedToolTypes -OriginalToolTypes $OldToolTypes -ModifiedToolTypes $Tooltypes  | Out-File ($TempFolder+$filename+'amendedtoimport.txt')
+                   Get-ModifiedToolTypes -OriginalToolTypes $OldToolTypes -ModifiedToolTypes $Tooltypes  | Out-File ($TempFolder+$filename+'amendedtoimport.txt')
                }
                Write-AmigaTooltypes -DrivetoWrite $PackagetoFind.DrivetoInstall -InfoFiletoWritePath ($PackagetoFind.LocationtoInstall+$filename) -InfoTextFiletoReadPath ($TempFolder+$filename+'amendedtoimport.txt') 
            }
@@ -489,22 +527,6 @@ foreach($PackagetoFind in $ListofPackagestoInstall) {
            }    
        }
     $PackageCheck=$PackagetoFind.PackageName  
-}
-
-### Modify Startup-Sequence and User-Startup
-
-### Begin Remove CPU check section from Startup-Sequence
-
-if ($KickstartVersiontoUse -eq 3.2) {
-    $StartupSequence = Edit-AmigaScripts -ScripttoEdit $StartupSequence -Action 'remove' -name 'CPU Section' -Startpoint '- CPU CheckInstall Section -' -Endpoint '- End of CPU CheckInstall Section -'
-}
-
-if (Test-Path ($AmigaDrivetoCopy+'System\S\Startup-Sequence')){
-    Remove-Item  ($AmigaDrivetoCopy+'System\S\Startup-Sequence') -Force
-}
-
-if (Test-Path ($AmigaDrivetoCopy+'System\S\User-Startup')){
-    Remove-Item  ($AmigaDrivetoCopy+'System\S\User-Startup') -Force
 }
 
 Export-TextFileforAmiga -ExportFile ($AmigaDrivetoCopy+'System\S\Startup-Sequence') -DatatoExport $StartupSequence -AddLineFeeds 'TRUE'
@@ -526,28 +548,7 @@ Export-TextFileforAmiga -ExportFile ($AmigaDrivetoCopy+'System\Prefs\Env-Archive
 
 ### End Wireless Prefs
 
-#### Begin Fix HDToolBox ToolType
-
-Read-AmigaTooltypes -DrivetoRead 'System' -InfoFiletoReadPath 'Tools\HDToolBoxPi3.info' -InfoTextFiletoWritePath ($AmigaDrivetoCopy+'System\Tools\HDToolBoxPi3.info.txt')
-$OldToolTypes = Get-Content($AmigaDrivetoCopy+'System\Tools\HDToolBoxPi3.info.txt')
-$TooltypestoModify =Import-Csv ($LocationofAmigaFiles+'\Tools\HDToolBoxPi3.info.txt') -Delimiter ';'
-
-Get-ModifiedToolTypes -OriginalToolTypes $OldToolTypes -ModifiedToolTypes $TooltypestoModify | Out-File ($AmigaDrivetoCopy+'System\Tools\HDToolBoxPi3.infoamendedtoimport.txt')
-Write-AmigaTooltypes -DrivetoWrite 'System' -InfoFiletoWritePath 'Tools\HDToolboxPi3.info' -InfoTextFiletoReadPath ($AmigaDrivetoCopy+'System\Tools\HDToolBoxPi3.infoamendedtoimport.txt')
-
-Read-AmigaTooltypes -DrivetoRead 'System' -InfoFiletoReadPath 'Tools\HDToolBoxPi4.info' -InfoTextFiletoWritePath ($AmigaDrivetoCopy+'System\Tools\HDToolBoxPi4.info.txt')
-$OldToolTypes = Get-Content($AmigaDrivetoCopy+'System\Tools\HDToolBoxPi4.info.txt')
-$TooltypestoModify =Import-Csv ($LocationofAmigaFiles+'\Tools\HDToolBoxPi4.info.txt') -Delimiter ';'
-
-Get-ModifiedToolTypes -OriginalToolTypes $OldToolTypes -ModifiedToolTypes $TooltypestoModify | Out-File ($AmigaDrivetoCopy+'System\Tools\HDToolBoxPi4.infoamendedtoimport.txt')
-Write-AmigaTooltypes -DrivetoWrite 'System' -InfoFiletoWritePath 'Tools\HDToolboxPi4.info' -InfoTextFiletoReadPath ($AmigaDrivetoCopy+'System\Tools\HDToolBoxPi4.infoamendedtoimport.txt')
-
-$null = remove-Item ($AmigaDrivetoCopy+'System\Tools\HDToolBoxPi3.info.txt')
-$null = remove-Item ($AmigaDrivetoCopy+'System\Tools\HDToolBoxPi4.info.txt')
-$null = remove-Item ($AmigaDrivetoCopy+'System\Tools\HDToolBoxPi3.infoamendedtoimport.txt')
-$null = remove-Item ($AmigaDrivetoCopy+'System\Tools\HDToolBoxPi4.infoamendedtoimport.txt')
-
-#### End Fix HDToolBox ToolType
+# #### End Fix HDToolBox ToolType
 
 ### Fix WBStartup
 
@@ -592,7 +593,7 @@ $ConfigTxt = Get-Content -Path ($LocationofAmigaFiles+'FAT32\config.txt')
 $AvailableScreenModes = Import-Csv ($InputFolder+'ScreenModes.CSV') -Delimiter (';')
 foreach ($AvailableScreenMode in $AvailableScreenModes){
     if ($AvailableScreenMode.Name -eq $ScreenMode){
-        $ScreenModetoSet = $AvailableScreenMode
+        $AvailableScreenMode.Selected = $true
     }
 }
 
@@ -600,33 +601,67 @@ foreach ($Line in $ConfigTxt) {
     if ($line -eq '[ROMPATH]'){
         $RevisedConfigTxt+=('initramfs '+$KickstartNameFAT32)+"`n"
     }
-    if ($line -eq '[VIDEOMODES]'){
-        if (-not ($ScreenModetoSet.hdmi_group.Length -eq 0)){
-            $RevisedConfigTxt+=('hdmi_group='+$ScreenModetoSet.hdmi_group)+"`n"
-        }
-        if (-not ($ScreenModetoSet.hdmi_mode.Length -eq 0)){
-            $RevisedConfigTxt+=('hdmi_mode='+$ScreenModetoSet.hdmi_mode)+"`n"
-        }
-        if (-not ($ScreenModetoSet.hdmi_cvt.length -eq 0)){
-            $RevisedConfigTxt+=('hdmi_cvt='+$ScreenModetoSet.hdmi_cvt)+"`n"
-        }
-        if (-not ($ScreenModetoSet.max_framebuffer_width.length -eq 0)){
-            $RevisedConfigTxt+=('max_framebuffer_width='+$ScreenModetoSet.max_framebuffer_width)+"`n"
-        }
-        if (-not ($ScreenModetoSet.max_framebuffer_height.length -eq 0)){
-            $RevisedConfigTxt+=('max_framebuffer_height='+$ScreenModetoSet.max_framebuffer_height)+"`n"
-        }
-        if (-not ($ScreenModetoSet.hdmi_pixel_freq_limit.length -eq 0)){
-            $RevisedConfigTxt+=('hdmi_pixel_freq_limit='+$ScreenModetoSet.hdmi_pixel_freq_limit)+"`n"
-        }
-        if (-not ($ScreenModetoSet.disable_overscan -eq 0)){
-            $RevisedConfigTxt+=('disable_overscan='+$ScreenModetoSet.disable_overscan)+"`n"
+    elseif ($line -eq '[VIDEOMODES]'){
+        $RevisedConfigTxt+="# The following defines the screenmode for your monitor. If you wish to select a different screenmode `n"
+        $RevisedConfigTxt+="# you can comment out your existing mode and remove the comment marks from the new one.`n"
+        foreach ($AvailableScreenMode in ($AvailableScreenModes | Sort-Object -Property 'Selected' -Descending)){
+            if ($AvailableScreenMode.Selected -eq $true){
+                $RevisedConfigTxt+="`n"
+                $RevisedConfigTxt+=('# ScreenMode: (Currently Selected)'+$AvailableScreenMode.FriendlyName)+"`n"
+                if (-not ($AvailableScreenMode.hdmi_group.Length -eq 0)){
+                    $RevisedConfigTxt+=('hdmi_group='+$AvailableScreenMode.hdmi_group)+"`n"
+                }
+                if (-not ($AvailableScreenMode.hdmi_mode.Length -eq 0)){
+                    $RevisedConfigTxt+=('hdmi_mode='+$AvailableScreenMode.hdmi_mode)+"`n"
+                }
+                if (-not ($AvailableScreenMode.hdmi_cvt.length -eq 0)){
+                    $RevisedConfigTxt+=('hdmi_cvt='+$AvailableScreenMode.hdmi_cvt)+"`n"
+                }
+                if (-not ($AvailableScreenMode.max_framebuffer_width.length -eq 0)){
+                    $RevisedConfigTxt+=('max_framebuffer_width='+$AvailableScreenMode.max_framebuffer_width)+"`n"
+                }
+                if (-not ($AvailableScreenMode.max_framebuffer_height.length -eq 0)){
+                    $RevisedConfigTxt+=('max_framebuffer_height='+$AvailableScreenMode.max_framebuffer_height)+"`n"
+                }
+                if (-not ($AvailableScreenMode.hdmi_pixel_freq_limit.length -eq 0)){
+                    $RevisedConfigTxt+=('hdmi_pixel_freq_limit='+$AvailableScreenMode.hdmi_pixel_freq_limit)+"`n"
+                }
+                if (-not ($AvailableScreenMode.disable_overscan.length -eq 0)){
+                    $RevisedConfigTxt+=('disable_overscan='+$AvailableScreenMode.disable_overscan)+"`n"
+                }
+            }
+            else{
+                $RevisedConfigTxt+="`n"
+                $RevisedConfigTxt+=('# ScreenMode: '+$AvailableScreenMode.FriendlyName)+"`n"
+                if (-not ($AvailableScreenMode.hdmi_group.Length -eq 0)){
+                    $RevisedConfigTxt+=('# hdmi_group='+$AvailableScreenMode.hdmi_group)+"`n"
+                }
+                if (-not ($AvailableScreenMode.hdmi_mode.Length -eq 0)){
+                    $RevisedConfigTxt+=('# hdmi_mode='+$AvailableScreenMode.hdmi_mode)+"`n"
+                }
+                if (-not ($AvailableScreenMode.hdmi_cvt.length -eq 0)){
+                    $RevisedConfigTxt+=('# hdmi_cvt='+$AvailableScreenMode.hdmi_cvt)+"`n"
+                }
+                if (-not ($AvailableScreenMode.max_framebuffer_width.length -eq 0)){
+                    $RevisedConfigTxt+=('# max_framebuffer_width='+$AvailableScreenMode.max_framebuffer_width)+"`n"
+                }
+                if (-not ($AvailableScreenMode.max_framebuffer_height.length -eq 0)){
+                    $RevisedConfigTxt+=('# max_framebuffer_height='+$AvailableScreenMode.max_framebuffer_height)+"`n"
+                }
+                if (-not ($AvailableScreenMode.hdmi_pixel_freq_limit.length -eq 0)){
+                    $RevisedConfigTxt+=('# hdmi_pixel_freq_limit='+$AvailableScreenMode.hdmi_pixel_freq_limit)+"`n"
+                }
+                if (-not ($AvailableScreenMode.disable_overscan.length -eq 0)){
+                    $RevisedConfigTxt+=('# disable_overscan='+$AvailableScreenMode.disable_overscan)+"`n"
+                }            
+            }            
         }
     }
     else{
         $RevisedConfigTxt += ($Line+"`n")
     }    
-}    
+}
+
 
 Export-TextFileforAmiga -DatatoExport $RevisedConfigTxt -ExportFile ($FAT32Partition+'config.txt') -AddLineFeeds 'TRUE' 
 
