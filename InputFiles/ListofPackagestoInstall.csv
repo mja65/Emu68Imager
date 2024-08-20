@@ -46,9 +46,9 @@ TRUE;3.1|3.2;HippoPlayer;FALSE;;;;Web;Full;https://aminet.net/mus/play/hippoplay
 TRUE;3.1|3.2;HippoPlayer;FALSE;;;;Web;Full;https://aminet.net/mus/play/hippoplayer.lha;hippoplayer.lha;TRUE;aa28f29175d968c4f4ccfd5a6c4f7ce4;HippoSupport\*;System;Programs\HippoPlayer\;TRUE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;HippoPlayer;FALSE;;;;Web;Full;https://aminet.net/mus/play/hippoplayer.lha;hippoplayer.lha;TRUE;aa28f29175d968c4f4ccfd5a6c4f7ce4;HippoSupport\Libs\octa*;System;Libs\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;HippoPlayer;FALSE;;;;Web;Full;https://aminet.net/mus/play/hippoplayer.lha;hippoplayer.lha;TRUE;aa28f29175d968c4f4ccfd5a6c4f7ce4;HippoSupport\Libs\m*;System;Libs\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
-TRUE;3.1|3.2;HippoPlayerUpdate;FALSE;;;;Web;Full;https://aminet.net/package/mus/play/hippoplayerupdate.lha;hippoplayerupdate.lha;FALSE;2a024bf40065e91edd0f8d876d5268ed;HiP;System;Programs\HippoPlayer\;TRUE;;FALSE;FALSE;;;FALSE;FALSE
-TRUE;3.1|3.2;HippoPlayerUpdate;FALSE;;;;Web;Full;https://aminet.net/package/mus/play/hippoplayerupdate.lha;hippoplayerupdate.lha;FALSE;2a024bf40065e91edd0f8d876d5268ed;HippoPlayer.group;System;S\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
-TRUE;3.1|3.2;HippoPlayerUpdate;FALSE;;;;Web;Full;https://aminet.net/package/mus/play/hippoplayerupdate.lha;hippoplayerupdate.lha;FALSE;2a024bf40065e91edd0f8d876d5268ed;playsid.library;System;Libs\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
+TRUE;3.1|3.2;HippoPlayerUpdate;FALSE;;;;Web;Full;https://aminet.net/mus/play/hippoplayerupdate.lha;hippoplayerupdate.lha;FALSE;2a024bf40065e91edd0f8d876d5268ed;HiP;System;Programs\HippoPlayer\;TRUE;;FALSE;FALSE;;;FALSE;FALSE
+TRUE;3.1|3.2;HippoPlayerUpdate;FALSE;;;;Web;Full;https://aminet.net/mus/play/hippoplayerupdate.lha;hippoplayerupdate.lha;FALSE;2a024bf40065e91edd0f8d876d5268ed;HippoPlayer.group;System;S\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
+TRUE;3.1|3.2;HippoPlayerUpdate;FALSE;;;;Web;Full;https://aminet.net/mus/play/hippoplayerupdate.lha;hippoplayerupdate.lha;FALSE;2a024bf40065e91edd0f8d876d5268ed;playsid.library;System;Libs\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;Ibrowse;FALSE;;;;Web;Full;https://www.ibrowse-dev.net/resources/IBrowse3.0a-OS3.lha;IBrowse-OS3.lha;TRUE;E448F1B7E46034A5D2DBCB464C9A7268;Ibrowse*.info;System;Programs\;FALSE;Ibrowse.info;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;Ibrowse;FALSE;;;;Web;Full;https://www.ibrowse-dev.net/resources/IBrowse3.0a-OS3.lha;IBrowse-OS3.lha;TRUE;E448F1B7E46034A5D2DBCB464C9A7268;IBrowse*-OS3\Catalogs\*;System;Programs\Ibrowse\Catalogs\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;Ibrowse;FALSE;;;;Web;Full;https://www.ibrowse-dev.net/resources/IBrowse3.0a-OS3.lha;IBrowse-OS3.lha;TRUE;E448F1B7E46034A5D2DBCB464C9A7268;Ibrowse*-OS3\Codecs\*;System;Programs\Ibrowse\Codecs\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
@@ -141,6 +141,7 @@ TRUE;3.1|3.2;Prism2;FALSE;;;;Web;Full;http://aminet.net/driver/net/prism2v2.lha;
 TRUE;3.1;REXXMast;FALSE;;;;Local;StartupSequenceOnly;;;FALSE;;;;;;;;Add;IF EXISTS S:User-Startup;;;
 TRUE;3.1|3.2;Reboot;FALSE;;;;Web;Full;http://aminet.net/util/boot/reboot.lha;reboot.lha;TRUE;95355F5C845088151874633164A95693;Reboot\Reboot;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;ReqTools;FALSE;;;;Web;Full;http://aminet.net/util/libs/Reqtools-Wide.lha;ReqtoolsWide.lha;TRUE;7b146009ce6b99623d73a244a89b8c2a;reqtools.library;System;Libs\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
+TRUE;3.1|3.2;ReqTools Prefs ;FALSE;;;;Local;CopyOnly;Prefs\Env-Archive\ReqTools.prefs;;FALSE;;;System;Prefs\Env-Archive\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;Roadshow;FALSE;;;;Local;Full;Roadshow-Demo-1.15.lha;Roadshow.lha;FALSE;25471647C76D8EAB98F78D24945B3FC6;Roadshow-Demo-*\Workbench\*;System;;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;Roadshow;FALSE;;;;Local;Full;Roadshow-Demo-1.15.lha;Roadshow.lha;FALSE;25471647C76D8EAB98F78D24945B3FC6;Roadshow-Demo-*\Workbench\Storage\NetInterfaces\CNet16.info;System;Devs\NetInterfaces\;FALSE;wifipi.info;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;Screentext;FALSE;;;;Web;Full;https://thomas-rapp.hier-im-netz.de/downloads/ScreenText.lha;ScreenText.lha;TRUE;D500457A41A18D73C01DD6B27DCE5A41;Screentext;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
@@ -170,6 +171,7 @@ TRUE;3.1|3.2;Videocore;FALSE;;;;Emu68;CopyOnly;Emu68Tools\VideoCore\Videocore.ca
 TRUE;3.1|3.2;Vinced;FALSE;;;;Web;Full;http://aminet.net/util/shell/ViNCEd.lha;Vinced.lha;TRUE;642380B7AE0859DC227BFF2BCC5FA6A0;ViNCEd\Extras\Fonts\topaz6.font;System;Fonts\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;Vinced;FALSE;;;;Web;Full;http://aminet.net/util/shell/ViNCEd.lha;Vinced.lha;TRUE;642380B7AE0859DC227BFF2BCC5FA6A0;ViNCEd\Extras\Fonts\topaz6\8e;System;Fonts\topaz6\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;WaitUntilConnected;FALSE;;;;Local;CopyOnly;C\WaitUntilConnected;;FALSE;;;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
+TRUE;3.1|3.2;WaitforTask;FALSE;;;;Local;CopyOnly;C\WaitforTask;;FALSE;;;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;WHDLoad;FALSE;;;;Web;Full;https://whdload.de/whdload/WHDLoad_usr.lha;Whdload_usr.lha;FALSE;3E4A8FBEA4BB2C85B3FCC29B013E77E9;WHDLoad\C\WHDLoad;System;C\;FALSE;WHDLoad.ori;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;WHDLoad;FALSE;;;;Web;Full;https://whdload.de/whdload/WHDLoad_usr.lha;Whdload_usr.lha;FALSE;3E4A8FBEA4BB2C85B3FCC29B013E77E9;WHDLoad\C\WHDLoadCD32;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;WHDLoad;FALSE;;;;Web;Full;https://whdload.de/whdload/WHDLoad_usr.lha;Whdload_usr.lha;FALSE;3E4A8FBEA4BB2C85B3FCC29B013E77E9;WHDLoad\C\RawDIC;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
@@ -180,7 +182,7 @@ TRUE;3.1|3.2;WHDLoadWrapper;TRUE;;;;Web;Full;;WHDLoadWrapper.lha;FALSE;9482600ED
 TRUE;3.1|3.2;WHDLoadWrapper;TRUE;;;;Web;Full;;WHDLoadWrapper.lha;FALSE;9482600EDA83D5E5046F66C3574D3FBF;WHDLoadWrapper\C\checkagatest;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;WHDLoadWrapper;TRUE;;;;Web;Full;;WHDLoadWrapper.lha;FALSE;9482600EDA83D5E5046F66C3574D3FBF;WHDLoadWrapper\C\Emu68Downclocker;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;WHDLoadWrapper;TRUE;;;;Web;Full;;WHDLoadWrapper.lha;FALSE;9482600EDA83D5E5046F66C3574D3FBF;WHDLoadWrapper\C\RemakeDisplay;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
-TRUE;3.1|3.2;WHDLoadWrapper;TRUE;;;;Web;Full;;WHDLoadWrapper.lha;FALSE;9482600EDA83D5E5046F66C3574D3FBF;WHDLoadWrapper\C\ScreenText;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
+FALSE;3.1|3.2;WHDLoadWrapper;TRUE;;;;Web;Full;;WHDLoadWrapper.lha;FALSE;9482600EDA83D5E5046F66C3574D3FBF;WHDLoadWrapper\C\ScreenText;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;WHDLoadWrapper;TRUE;;;;Web;Full;;WHDLoadWrapper.lha;FALSE;9482600EDA83D5E5046F66C3574D3FBF;WHDLoadWrapper\C\tude;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;WHDLoadWrapper;TRUE;;;;Web;Full;;WHDLoadWrapper.lha;FALSE;9482600EDA83D5E5046F66C3574D3FBF;WHDLoadWrapper\C\uae-configuration;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;WHDLoadWrapper;TRUE;;;;Web;Full;;WHDLoadWrapper.lha;FALSE;9482600EDA83D5E5046F66C3574D3FBF;WHDLoadWrapper\C\WHDLoadWrapper;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
@@ -197,6 +199,7 @@ TRUE;3.1|3.2;WHDLoadWrapper;TRUE;;;;Web;Full;;WHDLoadWrapper.lha;FALSE;9482600ED
 TRUE;3.1|3.2;WifiPi Config;FALSE;;;;Local;CopyOnly;Devs\NetInterfaces\wifipi;;FALSE;;;System;Devs\NetInterfaces\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;WifiPi.device;FALSE;;;;Emu68;CopyOnly;Emu68Tools\Emu68-Wifi\Devs\*;;FALSE;;;System;Devs\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1;Workbench.library;FALSE;;;;Web;Full;https://cdn.cloanto.com/pub/amiga/Workbench-Library-40-5.lha;WorkbenchLibrary.lha;TRUE;401059CD24DFD9C196BDDA7F2293276C;Workbench.library;System;Libs\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
+TRUE;3.2;Workbench Prefs ;FALSE;;;;Local;CopyOnly;Prefs\Env-Archive\Sys\Workbench.prefs;;FALSE;;;System;Prefs\Env-Archive\Sys\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;XADMaster;FALSE;;;;Web;Full;https://aminet.net/util/arc/xadmaster020.lha;xadmaster020.lha;TRUE;38C003269BECBF309108BF1C86E0C688;xad\c\*;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;XADMaster;FALSE;;;;Web;Full;https://aminet.net/util/arc/xadmaster020.lha;xadmaster020.lha;TRUE;38C003269BECBF309108BF1C86E0C688;xad\libs\xad\*;System;Libs\xad\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;XADMaster;FALSE;;;;Web;Full;https://aminet.net/util/arc/xadmaster020.lha;xadmaster020.lha;TRUE;38C003269BECBF309108BF1C86E0C688;xad\libs\xadmast*;System;Libs\;FALSE;;FALSE;FALSE;;;FALSE;FALSE

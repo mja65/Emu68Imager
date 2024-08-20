@@ -18,3 +18,8 @@ else
 		Delete Sys:Tools/HDToolboxPi4.info QUIET
 	endif  
 endif
+Mount SD0: >NIL:
+echo "sd.low_speed emmc.low_speed sd.unit0=rw emmc.unit0=rw" >EMU68BOOT:cmdline.txt
+Assign SD0: DISMOUNT >NIL:
+Assign EMU68BOOT: DISMOUNT >NIL:
+

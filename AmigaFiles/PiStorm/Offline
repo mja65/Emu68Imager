@@ -1,5 +1,7 @@
-screentext "STOPPING ROADSHOW..." FONT Topaz/11 T CC0000 F FFFF0 SS 0
+run >NIL: screentext "STOPPING ROADSHOW..." D 1000 FONT Topaz/11 T CC0000 F FFFF00 SS 0
 
 failat 200
 netshutdown >nil:
 
+break name screentext
+screentext "ROADSHOW STOPPED!" FONT Topaz/11 T CC0000 F FFFF00 SS 0

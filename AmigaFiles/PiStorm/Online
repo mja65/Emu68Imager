@@ -1,4 +1,4 @@
-screentext "STARTING WIFI..." FONT Topaz/11 T CC0000 F FFFF00 SS 0
+run >NIL: screentext "STARTING WIFI..." FONT Topaz/11 T CC0000 F FFFF00 SS 0 D 1000
 failat 21
 ;assign libs: libs:Roadshow ADD
 
@@ -7,15 +7,20 @@ wait 1
 WaitUntilConnected device=wifipi.device UNIT=0 DELAY=100
 
 if NOT Warn
-	screentext "STARTING ROADSHOW..." FONT Topaz/11 T CC0000 F FFFF00 SS 0
+        break name screentext
+	run >NIL: screentext "STARTING ROADSHOW..." FONT Topaz/11 T CC0000 F FFFF00 SS 0 D 1000
 	
 	;roadshowcontrol tcp.recvspace = 150000 >NIL:
 	;roadshowcontrol tcp.sendspace = 150000 >NIL:
 	roadshowcontrol tcp.recvspace = 16384 >nil:
 	roadshowcontrol tcp.sendspace = 16384 >nil:
 	addnetinterface wifipi >NIL:
+	
 	sntp pool.ntp.org >NIL:
-	c:SetDST NOASK NOREQ QUIET >NIL:
+        waitfortask sntp
+        c:SetDST NOASK NOREQ QUIET >NIL:
+
+        break name screentext
 	screentext "ROADSHOW ONLINE!" FONT Topaz/11 T CC0000 F FFFF00 SS 0
 endif
 failat 10

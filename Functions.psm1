@@ -24,10 +24,12 @@ function Expand-Zipfiles {
     param (
         $InputFile,
         $OutputDirectory,
-        $FiletoExtract
+        $FiletoExtract,
+        $7zipPathtouse,
+        $TempFoldertouse
     )
     Write-Host "Extracting from"$InputFile
-    & $7zipPath x ('-o'+$OutputDirectory) $InputFile $FiletoExtract -y >($TempFolder+'Test.txt')
+    & $7zipPathtouse x ('-o'+$OutputDirectory) $InputFile $FiletoExtract -y >($TempFoldertouse+'Test.txt')
     if ($LASTEXITCODE -ne 0) {
         Write-Host ("Error extracting "+$InputFile+"! Cannot continue!")
         return $false    
@@ -40,15 +42,18 @@ function Expand-Zipfiles {
 function Expand-LZXArchive {
     param (
         $LZXFile,
-        $DestinationPath
+        $DestinationPath,
+        $TempFoldertouse,
+        $WorkingFoldertouse,
+        $LZXPathtouse
     )
     Write-host 'Extracting file'$LZXFile
     if (-not(Test-Path $DestinationPath)){
        $null= New-Item $DestinationPath -ItemType Directory
     }
     Set-Location $DestinationPath
-    & $LZXPath $LZXFile >($TempFolder+'Test.txt')
-    Set-Location $WorkingFolder
+    & $LZXPathtouse $LZXFile >($TempFoldertouse+'Test.txt')
+    Set-Location $WorkingFoldertouse
 }
 
 function Get-AmigaFileWeb {
@@ -93,6 +98,9 @@ function Get-AmigaFileWeb {
 
 function Start-HSTImager {
     param (
+        $HSTImagePathtouse,
+        $TempFoldertouse,
+        $AmigaDrivetoCopytouse,
         $Command,
         $CommandString,
         $SourcePath,
@@ -115,26 +123,26 @@ function Start-HSTImager {
         $HDFFullPath 
     
     )
-    $Logoutput=($TempFolder+'Test.txt')
+    $Logoutput=($TempFoldertouse+'Test.txt')
     if ($Command -eq 'rdb init'){
-        & $HSTImagePath rdb init $DestinationPath >$Logoutput            
+        & $HSTImagePathtouse rdb init $DestinationPath >$Logoutput            
     }
     if ($Command -eq 'rdb filesystem add'){
-        & $HSTImagePath rdb filesystem add $SourcePath $DestinationPath $FileSystem >$Logoutput            
+        & $HSTImagePathtouse rdb filesystem add $SourcePath $DestinationPath $FileSystem >$Logoutput            
     }
     if ($Command -eq 'rdb part add'){
         if ($BootableFlag -eq '-b'){
-            & $HSTImagePath rdb part add $SourcePath $DeviceName $FileSystem $SizeofPartition $BootableFlag -ma $Mask -bu $Buffers -mt $MaxTransfer >$Logoutput                
+            & $HSTImagePathtouse rdb part add $SourcePath $DeviceName $FileSystem $SizeofPartition $BootableFlag -ma $Mask -bu $Buffers -mt $MaxTransfer >$Logoutput                
         }
         else{
-            & $HSTImagePath rdb part add $SourcePath $DeviceName $FileSystem $SizeofPartition >$Logoutput                
+            & $HSTImagePathtouse rdb part add $SourcePath $DeviceName $FileSystem $SizeofPartition >$Logoutput                
         }
     }
     if ($Command -eq 'rdb part format'){
-        & $HSTImagePath rdb part format $SourcePath $PartitionNumber $VolumeName >$Logoutput            
+        & $HSTImagePathtouse rdb part format $SourcePath $PartitionNumber $VolumeName >$Logoutput            
     }   
     elseif ($Command -eq 'Blank'){
-        & $HSTImagePath blank $DestinationPath $ImageSize >$Logoutput            
+        & $HSTImagePathtouse blank $DestinationPath $ImageSize >$Logoutput            
     }
     elseif ($Command -eq 'fs extract') {
         if ($ADFInputFiles -eq ""){
@@ -151,19 +159,19 @@ function Start-HSTImager {
         }
         Write-Host "Source path is: $SourcePath Destination path is: $DestinationPath"
         if ($Extract_Flag -eq 'rdb'){               
-            & $HSTImagePath fs extract $SourcePath $HDFFullPath\rdb\$DestinationPath >$Logoutput                                
+            & $HSTImagePathtouse fs extract $SourcePath $HDFFullPath\rdb\$DestinationPath >$Logoutput                                
         }
         elseif ($Extract_Flag -eq 'AmigaDrive'){
-            if (-not (Test-Path ($AmigaDrivetoCopy+$DrivetoWrite+'\'+$ADFLocationtoInstall))){
-                $null = New-Item ($AmigaDrivetoCopy+$DrivetoWrite+'\'+$ADFLocationtoInstall) -ItemType Directory
+            if (-not (Test-Path ($AmigaDrivetoCopytouse+$DrivetoWrite+'\'+$ADFLocationtoInstall))){
+                $null = New-Item ($AmigaDrivetoCopytouse+$DrivetoWrite+'\'+$ADFLocationtoInstall) -ItemType Directory
             }
-            & $HSTImagePath fs extract $SourcePath $AmigaDrivetoCopy$DestinationPath >$Logoutput      
+            & $HSTImagePathtouse fs extract $SourcePath $AmigaDrivetoCopytouse$DestinationPath >$Logoutput      
         }
         else{
             if (-not (Test-Path ($ADFLocationtoInstall))){
                 $null = New-Item ($ADFLocationtoInstall) -ItemType Directory
             }                
-            & $HSTImagePath fs extract $SourcePath $ADFLocationtoInstall >$Logoutput      
+            & $HSTImagePathtouse fs extract $SourcePath $ADFLocationtoInstall >$Logoutput      
         }           
     }
     $CheckforError = Get-Content ($Logoutput)
@@ -180,50 +188,24 @@ function Start-HSTImager {
     }    
 }
   
-function Find-LatestAminetPackage {
-    param (
-        $PackagetoFind,
-        $Exclusion,
-        $DateNewerthan,
-        $Architecture
-    )
-    $AminetURL='http://aminet.net'
-    $URL=('https://aminet.net/search?name='+$PackagetoFind+'&o_date=newer&date='+$DateNewerthan+'&arch[]='+$Architecture)
-    Write-Host ('Searching for: '+$PackagetoFind)
-    $ListofAminetFiles=Invoke-WebRequest $URL -UseBasicParsing # -AllowInsecureRedirect Powershell 5 compatibility
-    foreach ($Line in $ListofAminetFiles.Links) {      
-    if (!$Exclusion) {
-        if (($line -match ('.lha'))){
-            Write-Host ('Found '+$line.href)
-            return ($AminetURL+$line.href)
-       }     
-    }
-    else {
-    }
-        if (($line -match ('.lha')) -and (-not ($line -match $Exclusion))){
-            Write-Host ('Found '+$line.href)
-            return ($AminetURL+$line.href)
-       }       
-    }
-    Write-Host 'Could not find package! Unrrecoverable error!'
-    return                 
-}
-
 function Write-AmigaFilestoFS {
     param (
+        $HSTImagePathtouse,
         $DrivetoRead,
         $FilestoCopy,
         $DrivetoWrite,
         $HDFFullPath,
-        $TransferFlag
+        $TransferFlag,
+        $TempFoldertouse,
+        $AmigaDrivetoCopytouse
     )        
-    $Logoutput= ($TempFolder+'Test.txt')
+    $Logoutput= ($TempFoldertouse+'Test.txt')
     Write-Host ("Writing file(s) to HDF image for: "+$DrivetoRead+":"+$FilestoCopy+" to drive "+$DrivetoWrite+":") 
     if($TransferFlag -eq 'Transfer'){
-        & "$HSTImagePath" fs copy "$FilestoCopy" "$HDFFullPath\rdb\$DrivetoWrite\My Files\" >"$Logoutput"
+        & $HSTImagePathtouse fs copy $FilestoCopy $HDFFullPath\rdb\$DrivetoWrite\My Files\ >$Logoutput
     }
     else {
-        & $HSTImagePath fs copy $AmigaDrivetoCopy$DrivetoRead\$FilestoCopy $HDFFullPath\rdb\$DrivetoWrite\ >$Logoutput
+        & $HSTImagePathtouse fs copy $AmigaDrivetoCopytouse$DrivetoRead\$FilestoCopy $HDFFullPath\rdb\$DrivetoWrite\ >$Logoutput
     }
     $CheckforError = Get-Content ($Logoutput)
     $ErrorCount=0
@@ -240,14 +222,17 @@ function Write-AmigaFilestoFS {
 }
 function Write-AmigaTooltypes {
     param (
+        $HSTAmigaPathtouse,
         $DrivetoWrite,
         $InfoFiletoWritePath,
-        $InfoTextFiletoReadPath
+        $InfoTextFiletoReadPath,
+        $TempFoldertouse,
+        $AmigaDrivetoCopytouse
 
     )
-    $Logoutput=($TempFolder+'Test.txt')
+    $Logoutput=($TempFoldertouse+'Test.txt')
     Write-Host ("Importing Tooltypes for info file(s): "+$DrivetoWrite +":"+$InfoFiletoWritePath+" from "+$DrivetoRead+":"+$InfoTextFiletoReadPath) 
-    & $HSTAmigaPath icon tooltypes import $AmigaDrivetoCopy$DrivetoWrite\$InfoFiletoWritePath $InfoTextFiletoReadPath >$Logoutput
+    & $HSTAmigaPathtouse icon tooltypes import $AmigaDrivetoCopytouse$DrivetoWrite\$InfoFiletoWritePath $InfoTextFiletoReadPath >$Logoutput
     $CheckforError = Get-Content ($Logoutput)
     $ErrorCount=0
     foreach ($ErrorLine in $CheckforError){
@@ -264,14 +249,17 @@ function Write-AmigaTooltypes {
 
 function Read-AmigaTooltypes {
     param (
+        $HSTAmigaPathtouse,    
         $DrivetoRead,
         $InfoFiletoReadPath,
-        $InfoTextFiletoWritePath
+        $InfoTextFiletoWritePath,
+        $TempFoldertouse,
+        $AmigaDrivetoCopytouse
 
     )
-    $Logoutput=($TempFolder+'Test.txt')
+    $Logoutput=($TempFoldertouse+'Test.txt')
     Write-Host ("Extracting Tooltypes for info file(s): "+$DrivetoRead +":"+$InfoFiletoReadPath+" to "+$InfoTextFiletoWritePath) 
-    & $HSTAmigaPath icon tooltypes export $AmigaDrivetoCopy$DrivetoRead\$InfoFiletoReadPath $InfoTextFiletoWritePath >$Logoutput
+    & $HSTAmigaPathtouse icon tooltypes export $AmigaDrivetoCopytouse$DrivetoRead\$InfoFiletoReadPath $InfoTextFiletoWritePath >$Logoutput
     $CheckforError = Get-Content ($Logoutput)
     $ErrorCount=0
     foreach ($ErrorLine in $CheckforError){
@@ -288,32 +276,36 @@ function Read-AmigaTooltypes {
 
 function Expand-AmigaZFiles {
     param (
-        $LocationofZFiles
+        $LocationofZFiles,
+        $7zipPathtouse,
+        $WorkingFoldertouse
     )
     $ListofFilestoDecompress=Get-ChildItem -Path $LocationofZFiles -Recurse -Filter '*.Z'
     Write-Host ("Decompressing .Z files in location: "+$LocationofZFiles)
     foreach ($FiletoDecompress in $ListofFilestoDecompress){
         $InputFile=$FiletoDecompress.FullName
         set-location $FiletoDecompress.DirectoryName
-        & $7zipPath e $InputFile -bso0 -bsp0 -y
+        & $7zipPathtouse e $InputFile -bso0 -bsp0 -y
     }      
-    Set-Location $WorkingFolder
+    Set-Location $WorkingFoldertouse
     Write-Host ("Deleting .Z files in location: "+$LocationofZFiles)
     Get-ChildItem -Path $LocationofZFiles -Recurse -Filter '*.Z' | remove-Item -Recurse -Force
 }
 
 function Add-AmigaFolder {
     param (
-        $AmigaFolderPath
+        $AmigaFolderPath,
+        $TempFoldertouse,
+        $AmigaDrivetoCopytouse
     )
-    $ParentFolder=(Split-Path ($AmigaDrivetoCopy+$AmigaFolderPath) -Parent)+'\'
-    $Startpoint=(Split-Path -Path ($AmigaDrivetoCopy+$AmigaFolderPath)).length+1
-    $Endpoint=($AmigaDrivetoCopy+$AmigaFolderPath).length-1
+    $ParentFolder=(Split-Path ($AmigaDrivetoCopytouse+$AmigaFolderPath) -Parent)+'\'
+    $Startpoint=(Split-Path -Path ($AmigaDrivetoCopytouse+$AmigaFolderPath)).length+1
+    $Endpoint=($AmigaDrivetoCopytouse+$AmigaFolderPath).length-1
     $Length=$Endpoint-$Startpoint
-    $FileName=($AmigaDrivetoCopy+$AmigaFolderPath).Substring($Startpoint,$Length) 
-    if (-not (Test-Path ($AmigaDrivetoCopy+$AmigaFolderPath))){
+    $FileName=($AmigaDrivetoCopytouse+$AmigaFolderPath).Substring($Startpoint,$Length) 
+    if (-not (Test-Path ($AmigaDrivetoCopytouse+$AmigaFolderPath))){
         Write-Host ('Creating Folder "'+$AmigaFolderPath+'"')
-        $null = New-Item -path ($AmigaDrivetoCopy+$AmigaFolderPath) -ItemType Directory -Force 
+        $null = New-Item -path ($AmigaDrivetoCopytouse+$AmigaFolderPath) -ItemType Directory -Force 
     }
     else{
         Write-Host ('Folder "'+$AmigaFolderPath+'" already exists')
@@ -321,14 +313,12 @@ function Add-AmigaFolder {
     }
     if (-not(Test-Path ($ParentFolder+$FileName+'.info'))){
         write-host ('Creating .info file '+$FileName+'.info')
-        Copy-Item ($TempFolder+'NewFolder.info') $ParentFolder
+        Copy-Item ($TempFoldertouse+'NewFolder.info') $ParentFolder
         Rename-Item ($ParentFolder+'NewFolder.info') ($ParentFolder+$FileName+'.info')
     }
     else {
         write-host ($FileName+'.info already exists')
     }
-
-
 }
 
 function Get-GithubRelease {
@@ -342,7 +332,7 @@ function Get-GithubRelease {
     )
     if(Test-Path $LocationforProgram){
         Write-Host "File already exists!"
-        return    
+        return $true   
     }
     else{
         Write-Host "Retrieving Github information"
@@ -368,9 +358,6 @@ function Get-GithubRelease {
         return $true   
     }
 }
-
-
-
 
 function Edit-AmigaScripts {
     param (
@@ -520,6 +507,35 @@ function Import-TextFileforAmiga {
     return $DataRevised
 }
 
+function Find-LatestAminetPackage {
+    param (
+        $PackagetoFind,
+        $Exclusion,
+        $DateNewerthan,
+        $Architecture
+    )
+    $AminetURL='http://aminet.net'
+    $URL=('https://aminet.net/search?name='+$PackagetoFind+'&o_date=newer&date='+$DateNewerthan+'&arch[]='+$Architecture)
+    Write-Host ('Searching for: '+$PackagetoFind)
+    $ListofAminetFiles=Invoke-WebRequest $URL -UseBasicParsing # -AllowInsecureRedirect Powershell 5 compatibility
+    foreach ($Line in $ListofAminetFiles.Links) {      
+    if (!$Exclusion) {
+        if (($line -match ('.lha'))){
+            Write-Host ('Found '+$line.href)
+            return ($AminetURL+$line.href)
+       }     
+    }
+    else {
+    }
+        if (($line -match ('.lha')) -and (-not ($line -match $Exclusion))){
+            Write-Host ('Found '+$line.href)
+            return ($AminetURL+$line.href)
+       }       
+    }
+    Write-Host 'Could not find package! Unrrecoverable error!'
+    return                 
+}
+
 function Find-WHDLoadWrapperURL{
     param (
         $SearchCriteria,
@@ -538,7 +554,12 @@ function Find-WHDLoadWrapperURL{
             }
         }
         $DownloadLink = $SiteLink+($ListofURLs | Sort-Object -Descending | Select-Object -First 1)
-        return $DownloadLink
+        if ($DownloadLink){
+            return $DownloadLink
+        }
+        else {
+            return
+        }
     }
     
 function Get-ModifiedToolTypes {
