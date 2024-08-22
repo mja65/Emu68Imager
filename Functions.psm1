@@ -25,13 +25,13 @@ function Expand-Zipfiles {
         $InputFile,
         $OutputDirectory,
         $FiletoExtract,
-        $7zipPathtouse,
+        $SevenzipPathtouse,
         $TempFoldertouse
     )
     Write-Host "Extracting from"$InputFile
-    & $7zipPathtouse x ('-o'+$OutputDirectory) $InputFile $FiletoExtract -y >($TempFoldertouse+'Test.txt')
+    & $SevenzipPathtouse x ('-o'+$OutputDirectory) $InputFile $FiletoExtract -y >($TempFoldertouse+'LogOutputTemp.txt')
     if ($LASTEXITCODE -ne 0) {
-        Write-Host ("Error extracting "+$InputFile+"! Cannot continue!")
+        Write-Host ("Error extracting "+$InputFile+"! Cannot continue!") -ForegroundColor Red
         return $false    
     }
     else {
@@ -52,7 +52,7 @@ function Expand-LZXArchive {
        $null= New-Item $DestinationPath -ItemType Directory
     }
     Set-Location $DestinationPath
-    & $LZXPathtouse $LZXFile >($TempFoldertouse+'Test.txt')
+    & $LZXPathtouse $LZXFile >($TempFoldertouse+'LogOutputTemp.txt')
     Set-Location $WorkingFoldertouse
 }
 
@@ -80,7 +80,7 @@ function Get-AmigaFileWeb {
                 Write-Host ("Error downloading "+$NameofDL+"! Trying different server")
             }
         }
-        Write-Host "All servers attempted. Download failed"
+        Write-Host "All servers attempted. Download failed" -ForegroundColor Red
         return $false    
     }
     else{
@@ -90,7 +90,7 @@ function Get-AmigaFileWeb {
             return $true       
         }
         catch {
-            Write-Host ("Error downloading "+$NameofDL+"!")
+            Write-Host ("Error downloading "+$NameofDL+"!") -ForegroundColor Red
             return $false
         }        
     }
@@ -123,7 +123,7 @@ function Start-HSTImager {
         $HDFFullPath 
     
     )
-    $Logoutput=($TempFoldertouse+'Test.txt')
+    $Logoutput=($TempFoldertouse+'LogOutputTemp.txt')
     if ($Command -eq 'rdb init'){
         & $HSTImagePathtouse rdb init $DestinationPath >$Logoutput            
     }
@@ -199,7 +199,7 @@ function Write-AmigaFilestoFS {
         $TempFoldertouse,
         $AmigaDrivetoCopytouse
     )        
-    $Logoutput= ($TempFoldertouse+'Test.txt')
+    $Logoutput= ($TempFoldertouse+'LogOutputTemp.txt')
     Write-Host ("Writing file(s) to HDF image for: "+$DrivetoRead+":"+$FilestoCopy+" to drive "+$DrivetoWrite+":") 
     if($TransferFlag -eq 'Transfer'){
         & $HSTImagePathtouse fs copy $FilestoCopy $HDFFullPath\rdb\$DrivetoWrite\My Files\ >$Logoutput
@@ -212,7 +212,7 @@ function Write-AmigaFilestoFS {
     foreach ($ErrorLine in $CheckforError){
         if ($ErrorLine -match " ERR]"){
             $ErrorCount += 1
-            Write-Host "Error in HST-Imager:"$ErrorLine            
+            Write-Host "Error in HST-Imager:"$ErrorLine -ForegroundColor Red           
         }
     }
     if ($ErrorCount -ge 1){
@@ -230,7 +230,7 @@ function Write-AmigaTooltypes {
         $AmigaDrivetoCopytouse
 
     )
-    $Logoutput=($TempFoldertouse+'Test.txt')
+    $Logoutput=($TempFoldertouse+'LogOutputTemp.txt')
     Write-Host ("Importing Tooltypes for info file(s): "+$DrivetoWrite +":"+$InfoFiletoWritePath+" from "+$DrivetoRead+":"+$InfoTextFiletoReadPath) 
     & $HSTAmigaPathtouse icon tooltypes import $AmigaDrivetoCopytouse$DrivetoWrite\$InfoFiletoWritePath $InfoTextFiletoReadPath >$Logoutput
     $CheckforError = Get-Content ($Logoutput)
@@ -238,7 +238,7 @@ function Write-AmigaTooltypes {
     foreach ($ErrorLine in $CheckforError){
         if ($ErrorLine -match " ERR]"){
             $ErrorCount += 1
-            Write-Host "Error in HST-Imager:"$ErrorLine            
+            Write-Host "Error in HST-Imager:"$ErrorLine -ForegroundColor Red           
         }
     }
     if ($ErrorCount -ge 1){
@@ -257,7 +257,7 @@ function Read-AmigaTooltypes {
         $AmigaDrivetoCopytouse
 
     )
-    $Logoutput=($TempFoldertouse+'Test.txt')
+    $Logoutput=($TempFoldertouse+'LogOutputTemp.txt')
     Write-Host ("Extracting Tooltypes for info file(s): "+$DrivetoRead +":"+$InfoFiletoReadPath+" to "+$InfoTextFiletoWritePath) 
     & $HSTAmigaPathtouse icon tooltypes export $AmigaDrivetoCopytouse$DrivetoRead\$InfoFiletoReadPath $InfoTextFiletoWritePath >$Logoutput
     $CheckforError = Get-Content ($Logoutput)
@@ -265,7 +265,7 @@ function Read-AmigaTooltypes {
     foreach ($ErrorLine in $CheckforError){
         if ($ErrorLine -match " ERR]"){
             $ErrorCount += 1
-            Write-Host "Error in HST-Imager:"$ErrorLine            
+            Write-Host "Error in HST-Imager:"$ErrorLine -ForegroundColor Red           
         }
     }
     if ($ErrorCount -ge 1){
@@ -277,7 +277,7 @@ function Read-AmigaTooltypes {
 function Expand-AmigaZFiles {
     param (
         $LocationofZFiles,
-        $7zipPathtouse,
+        $SevenzipPathtouse,
         $WorkingFoldertouse
     )
     $ListofFilestoDecompress=Get-ChildItem -Path $LocationofZFiles -Recurse -Filter '*.Z'
@@ -285,7 +285,7 @@ function Expand-AmigaZFiles {
     foreach ($FiletoDecompress in $ListofFilestoDecompress){
         $InputFile=$FiletoDecompress.FullName
         set-location $FiletoDecompress.DirectoryName
-        & $7zipPathtouse e $InputFile -bso0 -bsp0 -y
+        & $SevenzipPathtouse e $InputFile -bso0 -bsp0 -y
     }      
     Set-Location $WorkingFoldertouse
     Write-Host ("Deleting .Z files in location: "+$LocationofZFiles)
@@ -532,7 +532,7 @@ function Find-LatestAminetPackage {
             return ($AminetURL+$line.href)
        }       
     }
-    Write-Host 'Could not find package! Unrrecoverable error!'
+    Write-Host 'Could not find package! Unrrecoverable error!' -ForegroundColor Red
     return                 
 }
 
@@ -689,7 +689,7 @@ function Compare-ADFHashes {
             Write-Host ('Found ADF file: '+$RequiredADF.FriendlyName)
         }
         if ($ADFFound -eq  $false){
-            write-host ('ADF file: '+$RequiredADF+' is missing from directory and/or hash is invalid Please check file!')
+            write-host ('ADF file: '+$RequiredADF.FriendlyName+' is missing from directory and/or hash is invalid Please check file!') -ForegroundColor Red
             $ErrorCount +=1
         }
     } 
@@ -765,5 +765,47 @@ function Get-StartupSequenceInjectionPointfromVersion {
         }    
         return           
 }
-    
+
+function Get-FolderPath {
+    param (
+        $NewFolderFlag,
+        $Description,
+        $ShowNewFolderButton,
+        $RootFolder    
+
+    )
+    Add-Type -AssemblyName System.Windows.Forms
+
+    $BrowseFolder = New-Object System.Windows.Forms.FolderBrowserDialog -Property @{
+        Description = $Description
+        ShowNewFolderButton = $ShowNewFolderButton   
+        RootFolder = 'MyComputer'
+#       InitialDirectory = 'MyDocuments'
+    }
+    $BrowseFolder.ShowDialog() | Out-Null
+    if (!$BrowseFolder.SelectedPath){
+        return
+    }
+    else {
+        return ($BrowseFolder.SelectedPath + "\")
+    }
+}
+
+#[Enum]::GetNames([System.Environment+SpecialFolder])
+
+function Test-ExistenceofFiles {
+    param (
+        $PathtoTest,
+        $PathType
+    )
+    if (-not (Test-Path $PathtoTest)){
+        Write-Host ('Error! '+$PathtoTest+' is not available! Please check your download of the tool!') -ForegroundColor Red
+        return 1 
+    }
+    else{
+        Write-Host ($PathtoTest+' is available!')
+        return 0
+    }
+}
+
 ### End Functions

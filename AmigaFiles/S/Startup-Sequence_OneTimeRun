@@ -16,13 +16,18 @@ IF NOT FAIL
    ELSE 
    version brcm-emmc.device >nil: 
       If NOT FAIL 
-         echo "Setting environment as Raspberry Pi 4 (or CM4)" 
+		if ${FIRSTTIMEBOOT} EQ "TRUE"
+			echo "First time boot!"
+			echo "Setting environment as Raspberry Pi 4 (or CM4)"
+		endif
          setenv System "PistormRaspi4" 
          ELSE 
          version brcm-sdhc.device 
           If NOT fail 
-            echo "Setting environment as Raspberry Pi 3 (or Zero2)" 
-            setenv System "PistormRaspi3" 
+		  	if ${FIRSTTIMEBOOT} EQ "TRUE"
+				echo "Setting environment as Raspberry Pi 3 (or Zero2)" 
+            endif
+			setenv System "PistormRaspi3" 
           ELSE 
             echo "Setting environment as Amiga" 
             setenv System "RealAmiga" 
@@ -36,14 +41,19 @@ IF NOT ${System} EQ "WinUAE"
             ASK "Running One Time Scripts. Press Enter to Continue" 
             Echo >T:RunTimeScript "Failat 21" 
             List >>T:RunTimeScript S:OneTimeRun PAT=~(#?.info) LFORMAT="Echo *"Running Script: %n*"*nEcho *"*"*nExecute *"%p%n*"*nDelete *"%p%n*"*n" ALL FILES
-            Execute T:RunTimeScript 
+            Execute T:RunTimeScript
             Delete >NIL: T:RunTimeScript 
        ENDIF 
    ENDIF 
 ENDIF 
-IF ${Reboot} EQ 1 
+IF ${Reboot} EQ "TRUE" 
       Ask "Press Enter and the Amiga will Reboot" 
       Diskchange SDH0:
       reboot 
-ENDIF 
+ENDIF
+if ${FIRSTTIMEBOOT} EQ "TRUE"
+	if NOT ${System} EQ "WINUAE"
+		echo "FALSE" > SYS:PREFS/ENV-ARCHIVE/FIRSTTIMEBOOT
+	endif
+endif
 failat 10

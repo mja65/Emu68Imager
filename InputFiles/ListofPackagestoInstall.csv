@@ -39,6 +39,8 @@ TRUE;3.1|3.2;Emucontrol - Pistorm Folder;FALSE;;;;Emu68;CopyOnly;Emu68Tools\EmuC
 TRUE;3.1|3.2;Emucontrol - Pistorm Folder;FALSE;;;;Emu68;CopyOnly;Emu68Tools\EmuControl\Emucontrol.info;;FALSE;;;System;PiStorm\;TRUE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;EMUControl - VC4Tweak;FALSE;;;;Emu68;CopyOnly;Emu68Tools\EmuControl\Emucontrol.info;;FALSE;;;System;PiStorm\;TRUE;VC4Tweak.info;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;EMUControl - VC4Tweak;FALSE;;;;Emu68;CopyOnly;Emu68Tools\VC4Tweak\VC4Tweak;;FALSE;;;System;PiStorm\;TRUE;;FALSE;FALSE;;;FALSE;FALSE
+TRUE;3.1|3.2;Environment Variable - FIRSTTIMEBOOT;FALSE;;;;Local;CopyOnly;Prefs\Env-Archive\FIRSTTIMEBOOT;;FALSE;;;System;Prefs\Env-Archive\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
+TRUE;3.1|3.2;Environment Variable - REBOOT;FALSE;;;;Local;CopyOnly;Prefs\Env-Archive\REBOOT;;FALSE;;;System;Prefs\Env-Archive\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;FAT95;FALSE;;;;Web;Full;https://aminet.net/disk/misc/fat95.lha;Fat95.lha;TRUE;B9BBC735FC367F830250D26FAA879B39;fat95\l\fat95;System;L\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;FileSysbox;FALSE;;;;Web;Full;http://aminet.net/util/libs/filesysbox.m68k-amigaos.lha;filesysbox.m68k-amigaos.lha;TRUE;C8AEB8CEFE87B98499963FE5330E2CA6;filesysbox\Libs\filesysbox.library.020;System;Libs\;FALSE;filesysbox.library;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;HippoPlayer;FALSE;;;;Web;Full;https://aminet.net/mus/play/hippoplayer.lha;hippoplayer.lha;TRUE;aa28f29175d968c4f4ccfd5a6c4f7ce4;HippoPlayer\HiP.*;System;Programs\HippoPlayer\;TRUE;;FALSE;FALSE;;;FALSE;FALSE
@@ -164,6 +166,7 @@ TRUE;3.1|3.2;SNTP;FALSE;;;;Web;Full;http://aminet.net/comm/net/sntp.lha;sntp.lha
 TRUE;3.1|3.2;SRename;FALSE;;;;Web;Full;http://aminet.net/util/cli/SRename.lha;SRename.lha;TRUE;CFDE201F18E7D97FC31DEE9442B4F32F;bin/68020/SRename;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;SysInfo;FALSE;;;;Web;Full;https://download.d0.se/pub/SysInfo.lha;SysInfo.lha;TRUE;8384493A31CF4C2A3F03FE51EF0341F7;SysInfo.info;System;Programs\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;SysInfo;FALSE;;;;Web;Full;https://download.d0.se/pub/SysInfo.lha;SysInfo.lha;TRUE;8384493A31CF4C2A3F03FE51EF0341F7;SysInfo\*;System;Programs\SysInfo\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
+TRUE;3.1|3.2;TTTool;FALSE;;;;Web;Full;http://aminet.net/util/batch/TTTool.lha;TTTool.lha;TRUE;F99CEB1C9FBEE3D8FB97EA2DE1F6D452;TTTool*\TTTool;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;TomCopy;FALSE;;;;Local;CopyOnly;C\TomCopy;;FALSE;;;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;TomDelete;FALSE;;;;Local;CopyOnly;C\TomDelete;;FALSE;;;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;Unzip;FALSE;;;;Web;Full;http://aminet.net/util/arc/UnZIP552.lha;Unzip552.lha;TRUE;A657AA4A7E323D504FBB0B7443292EE6;UnZip*\Unzip;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE

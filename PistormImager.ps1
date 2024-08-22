@@ -7,64 +7,105 @@ $HSTAmigareleases= 'https://api.github.com/repos/henrikstengaard/hst-amiga/relea
 $Emu68releases= 'https://api.github.com/repos/michalsc/Emu68/releases'
 $Emu68Toolsreleases= 'https://api.github.com/repos/michalsc/Emu68-tools/releases'
 
-$Scriptpath='C:\Users\Matt\OneDrive\Documents\Emu68Imager'
-$SourceProgramPath='C:\Users\Matt\OneDrive\Documents\Emu68Imager\Programs\'
-$InputFolder='C:\Users\Matt\OneDrive\Documents\Emu68Imager\InputFiles\'
+Read-host 'Pistorm Imager. Please press enter to start'
 
-Write-host 'Pistorm Imager'
+$Scriptpath = (Split-Path -Parent $MyInvocation.MyCommand.Definition)+'\'
+#$Scriptpath = 'C:\Users\Matt\OneDrive\Documents\Emu68Imager\'
 
-$WorkingFolder = Read-Host "Please enter the location of the Working Folder. Required folders will be created if the the working folder does not contain them"
+## Import Functions
+
+Import-Module ($Scriptpath+'\Functions.psm1')
+
+#Write-Host $Scriptpath
+#exit
+
+$SourceProgramPath=($Scriptpath+'Programs\')
+$InputFolder=($Scriptpath+'InputFiles\')
+$LocationofAmigaFiles=($Scriptpath+'AmigaFiles\')
+
+#Generate CSV MD5 Hashes - Begin (To be disabled or removed for production version)
+$CSVHashes = Get-FileHash ($InputFolder+'*.CSV') -Algorithm MD5
+
+'Name;Hash' | Out-File -FilePath ($InputFolder+'CSVHASH')
+Foreach ($CSVHash in $CSVHashes){
+    ((Split-Path $CSVHash.Path -Leaf)+';'+$CSVHash.Hash) | Out-File -FilePath ($InputFolder+'CSVHASH') -Append
+}
+
+#Generate CSV MD5 Hashes - End
+
+# Check Integrity of CSVs
+Write-Host ''
+Write-Host 'Performing integrity checks over input files'
+Write-Host ''
+$CSVHashestoCheck = Import-Csv -Path ($InputFolder+'CSVHASH') -Delimiter ';'
+foreach ($CSVHashtoCheck in $CSVHashestoCheck){
+    Write-Host ('Checking integrity of: '+$CSVHashtoCheck.Name)
+    foreach ($CSVHash in $CSVHashes){
+        if (($CSVHashtoCheck.Name+$CSVHashtoCheck.Hash) -eq ((split-path $CSVHash.Path -leaf)+($CSVHash.Hash))){
+            $HashMatch=$true
+        }
+    }
+    if ($HashMatch -eq $false) {
+        Write-Host 'ERROR! One or more of input files is missing and/or has been altered!' -ForegroundColor Red
+        exit
+    }
+    else{
+        Write-Host 'File OK!'
+    }
+}
+Write-Host 'Integrity checks complete!'
+Write-Host ''
+
+Write-host 'Checking existance of folders, programs, and files'
+Write-Host ''
+$ErrorCount = 0
+
+$ErrorCount+= Test-ExistenceofFiles -PathtoTest $SourceProgramPath -PathType 'Folder'
+$ErrorCount+= Test-ExistenceofFiles -PathtoTest $LocationofAmigaFiles -PathType 'Folder'
+$ErrorCount+= Test-ExistenceofFiles -PathtoTest ($SourceProgramPath+'hdf2emu68.exe') -PathType 'File'
+$ErrorCount+= Test-ExistenceofFiles -PathtoTest ($SourceProgramPath+'7z.exe') -PathType 'File'
+$ErrorCount+= Test-ExistenceofFiles -PathtoTest ($SourceProgramPath+'7z.dll') -PathType 'File'
+
+$ListofPackagestoInstall = Import-Csv ($InputFolder+'ListofPackagestoInstall.csv') -Delimiter ';' | Where-Object {$_.Source -eq 'Local'} | Where-Object {$_.InstallType -ne 'StartupSequenceOnly'} |Where-Object {$_.InstallFlag -eq 'TRUE'}
+$ListofPackagestoInstall |  Select-Object SourceLocation -Unique | Where-Object SourceLocation -NotMatch 'Onetime' | ForEach-Object {
+    $ErrorCount+= Test-ExistenceofFiles -PathtoTest ($LocationofAmigaFiles+$_.SourceLocation) -PathType 'File'
+}
+
+if ($ErrorCount -ge 1){
+    exit
+}
+else {
+    $null = $ErrorCount
+    Write-Host 'All folders and files exist!'
+}
+
+$HDF2emu68Path=($SourceProgramPath+'hdf2emu68.exe')
+$7zipPath=($SourceProgramPath+'7z.exe')
+
+$WorkingFolder =  Get-FolderPath -Description 'Please enter the location of the Working Folder. You can create a new folder if you wish. Required sub-folders will be created if the the working folder does not contain them' -ShowNewFolderButton $true -RootFolder 'MyComputer'
 if (!$WorkingFolder){
-    Write-host "No input. Using C:\Users\Matt\Downloads\Emu68Imager\" 
-    $WorkingFolder='C:\Users\Matt\Downloads\Emu68Imager\'
+    Write-Host 'Nothing selected. You are a Stronzo!' -ForegroundColor Red
+    exit
 }
 
 Set-Location $WorkingFolder
-
-$TempFolder=$WorkingFolder+'Temp\'
-if (-not (Test-Path $TempFolder)){
-    $null = New-Item $TempFolder -ItemType Directory
-}
 
 $ProgramsFolder=$WorkingFolder+'Programs\'
 if (-not (Test-Path $ProgramsFolder)){
     $null = New-Item $ProgramsFolder -ItemType Directory
 }
 
-$HDF2emu68Path=$WorkingFolder+'Programs\hdf2emu68.exe'
-$7zipPath=$WorkingFolder+'Programs\7z.exe'
-
-if (-not (Test-Path $HDF2emu68Path)){
-    $null = Copy-Item ($SourceProgramPath+'hdf2emu68.exe') $HDF2emu68Path
+$TempFolder=$WorkingFolder+'Temp\'
+if (-not (Test-Path $TempFolder)){
+    $null = New-Item $TempFolder -ItemType Directory
 }
-
-if (-not (Test-Path $7zipPath)){
-    $null = Copy-Item ($SourceProgramPath+'7z.exe') $7zipPath -Force
-    $null = Copy-Item ($SourceProgramPath+'7z.dll') ($ProgramsFolder+'7z.dll') -Force
-}
-
-if (-not (Test-Path $HDF2emu68Path)){
-    Write-Host 'HDF2emu68.exe not found! Error in installation!'
-    exit
-}
-
-if (-not (Test-Path $7zipPath)){
-    Write-Host '7zip.exe not found! Error in installation!'
-    exit
-}
-
-if (-not (Test-Path ($ProgramsFolder+'7z.dll'))){
-    Write-Host '7z.dll not found! Error in installation!'
-    exit
-}
-
 
 $HSTImagePath=$ProgramsFolder+'HST-Imager\hst.imager.exe'
 $HSTAmigaPath=$ProgramsFolder+'HST-Amiga\hst.amiga.exe'
 $LZXPath=$ProgramsFolder+'unlzx.exe'
 
 #$LocationofAmigaFiles=$WorkingFolder+'AmigaFiles\'
-$LocationofAmigaFiles='C:\Users\Matt\OneDrive\Documents\Emu68Imager\AmigaFiles\'
+
 #$InputFolder=$WorkingFolder+'InputFiles\'
 
 
@@ -84,9 +125,6 @@ $VolumeName_Other='Work'
 #$InstallPathAmiSSL='SYS:Programs/AmiSSL'
 $GlowIcons='TRUE'
 
-## Import Functions
-
-Import-Module ($Scriptpath+'\Functions.psm1')
 
 $SizeofImage = Read-Host "Please enter the size of image (in Megabytes)"
 if (!$SizeofImage){
@@ -119,21 +157,21 @@ $KickstartVersiontoUse = Read-Host "Please choose either Kickstart 3.2 or 3.1 (3
 
 $NameofImage=('Pistorm'+$KickstartVersiontoUse+'.HDF')
 
-$TransferLocation= Read-Host "Please enter location of files to transfer"
+$TransferLocation =  Get-FolderPath -Description 'Please enter location of files to transfer. If you do not want to transfer anything, press cancel.' -ShowNewFolderButton $false -RootFolder 'MyComputer'
 
 $SSID = Read-Host "Please enter your Wireless SSID"
 $WifiPassword= Read-Host "Please enter your wifi password" -MaskInput
 
-$ROMPath = Read-Host "Please enter the folder location of the Amiga Kickstart Rom"
-if (!$ROMPath) {
-        Write-host "No input. Using D:\Emulators\Amiga Files\Shared\rom\"
-    $ROMPath='D:\Emulators\Amiga Files\Shared\rom\'
+$ROMPath =  Get-FolderPath -Description 'Please enter the folder location of the Amiga Kickstart Rom' -ShowNewFolderButton $false -RootFolder 'MyComputer'
+if (!$ROMPath){
+    Write-Host 'Nothing selected. You are a Stronzo!' -ForegroundColor Red
+    exit
 }
 
-$ADFPath = Read-Host "Please enter the folder location of the Amiga Workbench ADF files"
-if (!$ADFPath) {
-    Write-host "No input. Using D:\Emulators\Amiga Files\Shared\adf\"
-    $ADFPath='D:\Emulators\Amiga Files\Shared\adf\'
+$ADFPath =  Get-FolderPath -Description 'Please enter the folder location of the Amiga Workbench ADF files' -ShowNewFolderButton $false -RootFolder 'MyComputer'
+if (!$ADFPath){
+    Write-Host 'Nothing selected. You are a Stronzo!' -ForegroundColor Red
+    exit
 }
 
 $ScreenMode = Read-Host "Please enter the screenmode"
@@ -236,19 +274,19 @@ foreach($Path in $PathstoTest){
 
 Write-Host "Downloading Emu68Pistorm"
 if (-not(Get-GithubRelease -GithubRelease $Emu68releases -Tag_Name "nightly" -Name 'Emu68-pistorm-' -LocationforDownload ($AmigaDownloads+'Emu68Pistorm.zip') -LocationforProgram ($tempfolder+'Emu68Pistorm\') -Sort_Flag 'SORT')){
-    Write-Host 'Error downloading Emu68Pistorm! Cannot continue!'
+    Write-Host 'Error downloading Emu68Pistorm! Cannot continue!' -ForegroundColor Red
     exit
 }
 
 Write-Host "Downloading Emu68Pistorm32lite"
 if (-not(Get-GithubRelease -GithubRelease $Emu68releases -Tag_Name "nightly" -Name 'Emu68-pistorm32lite' -LocationforDownload ($AmigaDownloads+'Emu68Pistorm32lite.zip') -LocationforProgram ($tempfolder+'Emu68Pistorm32lite\') -Sort_Flag 'SORT')){
-    Write-Host 'Error downloading Emu68Pistorm32lite! Cannot continue!'
+    Write-Host 'Error downloading Emu68Pistorm32lite! Cannot continue!' -ForegroundColor Red
     exit
 }
 
 Write-Host "Downloading Emu68Tools"
 if (-not(Get-GithubRelease -GithubRelease $Emu68Toolsreleases -Tag_Name "nightly" -Name 'Emu68-tools' -LocationforDownload ($AmigaDownloads+'Emu68Tools.zip') -LocationforProgram ($tempfolder+'Emu68Tools\') -Sort_Flag 'SORT')){
-    Write-Host 'Error downloading Emu68Tools! Cannot continue!'
+    Write-Host 'Error downloading Emu68Tools! Cannot continue!' -ForegroundColor Red
     exit
 }
 
@@ -258,11 +296,11 @@ if (-not(Get-GithubRelease -GithubRelease $Emu68Toolsreleases -Tag_Name "nightly
 
 Write-Host "Downloading UnLZX"
 If (-not (Get-AmigaFileWeb -URL $UnLZXURL -NameofDL 'W95unlzx.lha' -LocationforDL $TempFolder)){
-    Write-host "Error downloading UnLZX! Quitting"
+    Write-host "Error downloading UnLZX! Quitting" -ForegroundColor Red
     exit
 }
 
-if (-not(Expand-Zipfiles -7zipPathtouse $7zipPath -TempFoldertouse $TempFolder -InputFile ($TempFolder+'W95unlzx.lha') -OutputDirectory $ProgramsFolder -FiletoExtract 'unlzx.exe')){
+if (-not(Expand-Zipfiles -SevenzipPathtouse $7zipPath -TempFoldertouse $TempFolder -InputFile ($TempFolder+'W95unlzx.lha') -OutputDirectory $ProgramsFolder -FiletoExtract 'unlzx.exe')){
     Write-Host ('Deleting package '+($TempFolder+'W95unlzx.lha'))
     $null=Remove-Item -Path ($TempFolder+'W95unlzx.lha') -Force
     exit # Error in extracting
@@ -328,7 +366,7 @@ Foreach($InstallFileLine in $ListofInstallFiles){
     if ($InstallFileLine.Uncompress -eq "TRUE"){
         Write-host 'Extracting files'
         Start-HSTImager -Command 'fs extract' -ADFName $InstallFileLine.Path -ADFInputFiles ($InstallFileLine.AmigaFiletoInstall -replace '/','\') -Extract_Flag 'AmigaDrive' -DrivetoWrite 'System' -ADFLocationtoInstall $InstallFileLine.LocationtoInstall -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath -AmigaDrivetoCopytouse $AmigaDrivetoCopy
-        Expand-AmigaZFiles  -7zipPathtouse $7zipPath -WorkingFoldertouse $TempFolder -LocationofZFiles ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall+'\'+$InstallFileLine.LocationtoInstall)
+        Expand-AmigaZFiles  -SevenzipPathtouse $7zipPath -WorkingFoldertouse $TempFolder -LocationofZFiles ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall+'\'+$InstallFileLine.LocationtoInstall)
     }
     elseif (($InstallFileLine.NewFileName -ne "")  -or
             ($InstallFileLine.ModifyScript -ne 'FALSE') -or
@@ -381,8 +419,6 @@ Foreach($InstallFileLine in $ListofInstallFiles){
 
 $ListofPackagestoInstall = Import-Csv ($InputFolder+'ListofPackagestoInstall.csv') -Delimiter ';' |  Where-Object {$_.KickstartVersion -match $KickstartVersiontoUse} | Where-Object {$_.InstallFlag -eq 'TRUE'} #| Sort-Object -Property 'InstallSequence','PackageName'
 
-$ListofPackagestoInstall > C:\Users\Matt\Downloads\check.txt
-
 $PackageCheck=$null
 
 # Download and expand packages
@@ -417,13 +453,13 @@ foreach($PackagetoFind in $ListofPackagestoInstall) {
                 } 
                 else{
                     if (-not (Get-AmigaFileWeb -URL $PackagetoFind.SourceLocation -NameofDL $PackagetoFind.FileDownloadName -LocationforDL $AmigaDownloads)){
-                        Write-host "Unrecoverable error with download(s)!"
+                        Write-host "Unrecoverable error with download(s)!" -ForegroundColor Red
                         exit
                     }                    
                 }
                 if ($PackagetoFind.PerformHashCheck -eq 'TRUE'){
                     if (-not (Compare-FileHash -FiletoCheck ($AmigaDownloads+$PackagetoFind.FileDownloadName) -HashtoCheck $PackagetoFind.Hash)){
-                        Write-Host "Error in downloaded packages! Unable to continue!"
+                        Write-Host "Error in downloaded packages! Unable to continue!" -ForegroundColor Red
                         Write-Host ('Deleting package '+($AmigaDownloads+$PackagetoFind.FileDownloadName))
                         $null=Remove-Item -Path ($AmigaDownloads+$PackagetoFind.FileDownloadName) -Force 
                         exit
@@ -445,7 +481,7 @@ foreach($PackagetoFind in $ListofPackagestoInstall) {
                     Expand-LZXArchive -LZXPathtouse $LZXPath -WorkingFoldertouse $WorkingFolder -LZXFile ($AmigaDownloads+$PackagetoFind.FileDownloadName) -TempFoldertouse $TempFolder -DestinationPath ($TempFolder+$PackagetoFind.FileDownloadName) 
                 } 
                 if ([System.IO.Path]::GetExtension($PackagetoFind.FileDownloadName) -eq '.lha'){
-                    if (-not(Expand-Zipfiles -7zipPathtouse $7zipPath -TempFoldertouse $TempFolder -InputFile ($AmigaDownloads+$PackagetoFind.FileDownloadName) -OutputDirectory ($TempFolder+$PackagetoFind.FileDownloadName))){
+                    if (-not(Expand-Zipfiles -SevenzipPathtouse $7zipPath -TempFoldertouse $TempFolder -InputFile ($AmigaDownloads+$PackagetoFind.FileDownloadName) -OutputDirectory ($TempFolder+$PackagetoFind.FileDownloadName))){
                         Write-Host ('Deleting package '+($AmigaDownloads+$PackagetoFind.FileDownloadName))
                         $null=Remove-Item -Path ($AmigaDownloads+$PackagetoFind.FileDownloadName) -Force
                         exit # Error in extracting
@@ -514,7 +550,7 @@ foreach($PackagetoFind in $ListofPackagestoInstall) {
                $null = New-Item ($AmigaDrivetoCopy+$PackagetoFind.DrivetoInstall+'\'+$PackagetoFind.LocationtoInstall) -ItemType Directory
            }
            if ($PackagetoFind.CreateFolderInfoFile -eq 'TRUE'){
-               Add-AmigaFolder -AmigaFolderPath ($PackagetoFind.DrivetoInstall+'\'+$PackagetoFind.LocationtoInstall) -TempFoldertouse $TempFolder
+               Add-AmigaFolder -AmigaFolderPath ($PackagetoFind.DrivetoInstall+'\'+$PackagetoFind.LocationtoInstall) -TempFoldertouse $TempFolder -AmigaDrivetoCopytouse $AmigaDrivetoCopy
            }
            #### Copy Files
            if ($PackagetoFind.NewFileName.Length -ne 0){
@@ -690,8 +726,8 @@ foreach ($Line in $ConfigTxt) {
 Export-TextFileforAmiga -DatatoExport $RevisedConfigTxt -ExportFile ($FAT32Partition+'config.txt') -AddLineFeeds 'TRUE' 
 
 $null = copy-Item $KickstartPath -Destination ($FAT32Partition+$KickstartNameFAT32)
-Write-AmigaFilestoFS -HSTAmigaPathtouse $HSTAmigaPath -DrivetoRead 'System' -FilestoCopy '*' -DrivetoWrite $DeviceName_System -HDFFullPath ($LocationofImage+$NameofImage) -TempFoldertouse $TempFolder -AmigaDrivetoCopytouse $AmigaDrivetoCopy
-Write-AmigaFilestoFS -HSTAmigaPathtouse $HSTAmigaPath -DrivetoRead 'Work' -FilestoCopy '*' -DrivetoWrite $DeviceName_Other -HDFFullPath ($LocationofImage+$NameofImage) -TempFoldertouse $TempFolder -AmigaDrivetoCopytouse $AmigaDrivetoCopy
+Write-AmigaFilestoFS -HSTImagePathtouse $HSTImagePath -DrivetoRead 'System' -FilestoCopy '*' -DrivetoWrite $DeviceName_System -HDFFullPath ($LocationofImage+$NameofImage) -TempFoldertouse $TempFolder -AmigaDrivetoCopytouse $AmigaDrivetoCopy
+Write-AmigaFilestoFS -HSTImagePathtouse $HSTImagePath -DrivetoRead 'Work' -FilestoCopy '*' -DrivetoWrite $DeviceName_Other -HDFFullPath ($LocationofImage+$NameofImage) -TempFoldertouse $TempFolder -AmigaDrivetoCopytouse $AmigaDrivetoCopy
 
 ### Transfer files to Work
 

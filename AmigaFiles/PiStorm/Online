@@ -1,4 +1,5 @@
-run >NIL: screentext "STARTING WIFI..." FONT Topaz/11 T CC0000 F FFFF00 SS 0 D 1000
+;run >NIL: screentext "STARTING WIFI..." FONT Topaz/11 T CC0000 F FFFF00 SS 0 D 1000
+echo "Starting Wifi"
 failat 21
 ;assign libs: libs:Roadshow ADD
 
@@ -7,20 +8,30 @@ wait 1
 WaitUntilConnected device=wifipi.device UNIT=0 DELAY=100
 
 if NOT Warn
-        break name screentext
-	run >NIL: screentext "STARTING ROADSHOW..." FONT Topaz/11 T CC0000 F FFFF00 SS 0 D 1000
-	
+;    break name screentext
+;	run >NIL: screentext "STARTING ROADSHOW..." FONT Topaz/11 T CC0000 F FFFF00 SS 0 D 1000
+    echo "Starting Roadshow"	
 	;roadshowcontrol tcp.recvspace = 150000 >NIL:
 	;roadshowcontrol tcp.sendspace = 150000 >NIL:
 	roadshowcontrol tcp.recvspace = 16384 >nil:
 	roadshowcontrol tcp.sendspace = 16384 >nil:
+;	addnetinterface wifipi >NIL:
 	addnetinterface wifipi >NIL:
 	
-	sntp pool.ntp.org >NIL:
-        waitfortask sntp
-        c:SetDST NOASK NOREQ QUIET >NIL:
-
-        break name screentext
-	screentext "ROADSHOW ONLINE!" FONT Topaz/11 T CC0000 F FFFF00 SS 0
+;	sntp pool.ntp.org
+;	sntp pool.ntp.org >NIL:
+;    waitfortask sntp
+;    c:SetDST NOASK NOREQ QUIET >NIL:
+	If exists SYS:Prefs/ENV-ARCHIVE/TZONEOVERRIDE 
+		c:SetDST ZONE=${TZONEOVERRIDE}
+	else
+		c:SetDST NOASK NOREQ QUIET
+	endif
+;        break name screentext
+;	screentext "ROADSHOW ONLINE!" FONT Topaz/11 T CC0000 F FFFF00 SS 0
+echo ""
+date
+echo ""
+echo "You should now be online. You can close this window."
 endif
 failat 10
