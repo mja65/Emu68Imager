@@ -618,7 +618,7 @@ foreach($PackagetoFind in $ListofPackagestoInstall) {
 
 $PackageCheck=$null
 $UserStartup=$null
-$StartupSequence = Import-TextFileforAmiga -SystemType 'Amiga' -ImportFile ($AmigaDrivetoCopy+'System\S\Startup-Sequence') 
+$StartupSequence = Import-TextFileforAmiga -SystemType 'Amiga' -ImportFile ($AmigaDrivetoCopy+$VolumeName_System+'\S\Startup-Sequence') 
 $StartupSequenceversion = Get-StartupSequenceVersion -StartupSequencetoCheck $StartupSequence
 
 $TotalItems=(
@@ -711,7 +711,6 @@ foreach($PackagetoFind in $ListofPackagestoInstall) {
 }
 
 Write-Host 'Completed install of packages'
-Wr
 
 Export-TextFileforAmiga -ExportFile ($AmigaDrivetoCopy+$VolumeName_System+'\S\Startup-Sequence') -DatatoExport $StartupSequence -AddLineFeeds 'TRUE'
 Export-TextFileforAmiga -ExportFile ($AmigaDrivetoCopy+$VolumeName_System+'\S\User-Startup') -DatatoExport $UserStartup -AddLineFeeds 'TRUE'
