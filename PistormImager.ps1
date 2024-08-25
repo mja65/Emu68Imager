@@ -7,17 +7,46 @@ $HSTAmigareleases= 'https://api.github.com/repos/henrikstengaard/hst-amiga/relea
 $Emu68releases= 'https://api.github.com/repos/michalsc/Emu68/releases'
 $Emu68Toolsreleases= 'https://api.github.com/repos/michalsc/Emu68-tools/releases'
 
-Read-host 'Pistorm Imager. Please press enter to start'
+if ($env:TERM_PROGRAM){
+   Write-Host "Run from Visual Studio Code!"
+   $InteractiveMode=0
+} 
+elseif ($psISE){
+   Write-Host "Run from Powershell ISE!"
+   $InteractiveMode=0
+}
+else{
+   $InteractiveMode=1
+} 
 
-$Scriptpath = (Split-Path -Parent $MyInvocation.MyCommand.Definition)+'\'
-#$Scriptpath = 'C:\Users\Matt\OneDrive\Documents\Emu68Imager\'
+If ($InteractiveMode -eq 1){
+    Read-host 'Pistorm Imager. Please press enter to start'
+}
+
+if  ($InteractiveMode -eq 1){
+    $Scriptpath = (Split-Path -Parent $MyInvocation.MyCommand.Definition)+'\'
+} 
+
+if  ($InteractiveMode -eq 0){
+    $Scriptpath = 'C:\Users\Matt\OneDrive\Documents\Emu68Imager\'
+    $WorkingFolder = 'D:\Test of Weird Path\'
+    $SizeofImage='350'
+    $SizeofPartition_System='100'
+    $SizeofPartition_Other='100'
+    $SizeofFAT32 ='135'
+    $ROMPath = 'D:\Emulators\Amiga Files\Shared\rom\'
+    $ADFPath = 'D:\Emulators\Amiga Files\Shared\adf\'
+    $ScreenMode='1920*1080-60'
+    $TransferLocation='D:\Emulators\Amiga Files\Shared\adf\OS32\Update\'
+}
 
 ## Import Functions
 
-Import-Module ($Scriptpath+'\Functions.psm1')
+Import-Module ($Scriptpath+'Functions.psm1')
 
-#Write-Host $Scriptpath
-#exit
+if (Get-Check -NumberofIterations 5 -File ($Scriptpath+'check.dat')){
+    throw
+}
 
 $SourceProgramPath=($Scriptpath+'Programs\')
 $InputFolder=($Scriptpath+'InputFiles\')
@@ -47,7 +76,7 @@ foreach ($CSVHashtoCheck in $CSVHashestoCheck){
     }
     if ($HashMatch -eq $false) {
         Write-Host 'ERROR! One or more of input files is missing and/or has been altered!' -ForegroundColor Red
-        exit
+        throw
     }
     else{
         Write-Host 'File OK!'
@@ -72,7 +101,7 @@ $ListofPackagestoInstall |  Select-Object SourceLocation -Unique | Where-Object 
 }
 
 if ($ErrorCount -ge 1){
-    exit
+    throw
 }
 else {
     $null = $ErrorCount
@@ -82,10 +111,12 @@ else {
 $HDF2emu68Path=($SourceProgramPath+'hdf2emu68.exe')
 $7zipPath=($SourceProgramPath+'7z.exe')
 
-$WorkingFolder =  Get-FolderPath -Description 'Please enter the location of the Working Folder. You can create a new folder if you wish. Required sub-folders will be created if the the working folder does not contain them' -ShowNewFolderButton $true -RootFolder 'MyComputer'
-if (!$WorkingFolder){
-    Write-Host 'Nothing selected. You are a Stronzo!' -ForegroundColor Red
-    exit
+if ($InteractiveMode -eq 1){
+    $WorkingFolder =  Get-FolderPath -Description 'Please enter the location of the Working Folder. You can create a new folder if you wish. Required sub-folders will be created if the the working folder does not contain them' -ShowNewFolderButton $true -RootFolder 'MyComputer'
+    if (!$WorkingFolder){
+        Write-Host 'Nothing selected. You are a Stronzo!' -ForegroundColor Red
+        throw
+    }
 }
 
 Set-Location $WorkingFolder
@@ -104,11 +135,6 @@ $HSTImagePath=$ProgramsFolder+'HST-Imager\hst.imager.exe'
 $HSTAmigaPath=$ProgramsFolder+'HST-Amiga\hst.amiga.exe'
 $LZXPath=$ProgramsFolder+'unlzx.exe'
 
-#$LocationofAmigaFiles=$WorkingFolder+'AmigaFiles\'
-
-#$InputFolder=$WorkingFolder+'InputFiles\'
-
-
 $LocationofImage=$WorkingFolder+'OutputImage\'
 $AmigaDrivetoCopy=$WorkingFolder+'AmigaImageFiles\'
 $AmigaDownloads=$WorkingFolder+'AmigaDownloads\'
@@ -116,69 +142,74 @@ $FAT32Partition=$WorkingFolder+'FAT32Partition\'
 
 ## Amiga Variables
 
-$DeviceName_System='SDH0'
-$VolumeName_System='Workbench'
-$DeviceName_Other='SDH1'
-$VolumeName_Other='Work'
+$DeviceName_System ='SDH0'
+$VolumeName_System ='Workbench'
+$DeviceName_Other = 'SDH1'
+$VolumeName_Other = 'Work'
 #$InstallPathMUI='SYS:Programs/MUI'
 #$InstallPathPicasso96='SYS:Programs/Picasso96'
 #$InstallPathAmiSSL='SYS:Programs/AmiSSL'
 $GlowIcons='TRUE'
 
-
-$SizeofImage = Read-Host "Please enter the size of image (in Megabytes)"
-if (!$SizeofImage){
-    Write-host "No input. Using 350mb"
-    $SizeofImage='350'
+If ($InteractiveMode -eq 1){
+    $SizeofImage = Read-Host "Please enter the size of image (in Megabytes)"
 }
+
+
 $SizeofImage = $SizeofImage+'mb'
 
-$SizeofPartition_System = Read-Host "Please enter the size of Workbench partition (in Megabytes)"
-if (!$SizeofPartition_System){
-    Write-host "No input. Using 100mb"
-    $SizeofPartition_System='100'
+If ($InteractiveMode -eq 1){
+    $SizeofPartition_System = Read-Host "Please enter the size of Workbench partition (in Megabytes)"
 }
+
+
 $SizeofPartition_System = $SizeofPartition_System+'mb'
 
-$SizeofPartition_Other = Read-Host "Please enter the size of Work partition (in Megabytes)"
-if (!$SizeofPartition_Other){
-    Write-host "No input. Using 100mb"
-    $SizeofPartition_Other='100'
+If ($InteractiveMode -eq 1){
+    $SizeofPartition_Other = Read-Host "Please enter the size of Work partition (in Megabytes)"
 }
+
+
 $SizeofPartition_Other = $SizeofPartition_Other+'mb'
 
+If ($InteractiveMode -eq 1){
 $SizeofFAT32 = Read-Host "Please enter the size of FAT32 (in Megabytes)"
-if (!$SizeofFAT32) {
-    Write-host "No input. Using 135mb"
-    $SizeofFAT32 ='135'
 }
+
 
 $KickstartVersiontoUse = Read-Host "Please choose either Kickstart 3.2 or 3.1 (3.1, 3.2)"
 
 $NameofImage=('Pistorm'+$KickstartVersiontoUse+'.HDF')
 
-$TransferLocation =  Get-FolderPath -Description 'Please enter location of files to transfer. If you do not want to transfer anything, press cancel.' -ShowNewFolderButton $false -RootFolder 'MyComputer'
-
-$SSID = Read-Host "Please enter your Wireless SSID"
-$WifiPassword= Read-Host "Please enter your wifi password" -MaskInput
-
-$ROMPath =  Get-FolderPath -Description 'Please enter the folder location of the Amiga Kickstart Rom' -ShowNewFolderButton $false -RootFolder 'MyComputer'
-if (!$ROMPath){
-    Write-Host 'Nothing selected. You are a Stronzo!' -ForegroundColor Red
-    exit
+If ($InteractiveMode -eq 1){
+    $TransferLocation =  Get-FolderPath -Description 'Please enter location of files to transfer. If you do not want to transfer anything, press cancel.' -ShowNewFolderButton $false -RootFolder 'MyComputer'
 }
 
-$ADFPath =  Get-FolderPath -Description 'Please enter the folder location of the Amiga Workbench ADF files' -ShowNewFolderButton $false -RootFolder 'MyComputer'
-if (!$ADFPath){
-    Write-Host 'Nothing selected. You are a Stronzo!' -ForegroundColor Red
-    exit
+If ($InteractiveMode -eq 1){
+    $SSID = Read-Host "Please enter your Wireless SSID"
+    $WifiPassword= Read-Host "Please enter your wifi password" -MaskInput
 }
 
-$ScreenMode = Read-Host "Please enter the screenmode"
-if (!$ScreenMode) {
-    Write-host "No input. Using 1080p 60hz"
-    $ScreenMode='1920*1080-60'
+If ($InteractiveMode -eq 1){
+    $ROMPath =  Get-FolderPath -Description 'Please enter the folder location of the Amiga Kickstart Rom' -ShowNewFolderButton $false -RootFolder 'MyComputer'
+    if (!$ROMPath){
+        Write-Host 'Nothing selected. You are a Stronzo!' -ForegroundColor Red
+        throw
+    }
 }
+
+If ($InteractiveMode -eq 1){
+    $ADFPath =  Get-FolderPath -Description 'Please enter the folder location of the Amiga Workbench ADF files' -ShowNewFolderButton $false -RootFolder 'MyComputer'
+    if (!$ADFPath){
+        Write-Host 'Nothing selected. You are a Stronzo!' -ForegroundColor Red
+        throw
+    }
+}
+
+If ($InteractiveMode -eq 1){
+    $ScreenMode = Read-Host "Please enter the screenmode"
+}
+
 
 $StartDateandTime = (Get-Date -Format HH:mm:ss)
 
@@ -186,13 +217,18 @@ Write-Host "Starting execution at $StartDateandTime"
 
 ### Clean up
 
-$NewFolders =("Temp","OutputImage","AmigaImageFiles\System","AmigaImageFiles\Work","FAT32Partition")
+$NewFolders = ((split-path $TempFolder -leaf),(split-path $LocationofImage -leaf),((Split-Path $AmigaDrivetoCopy -Leaf)+'\'+$VolumeName_System),((Split-Path $AmigaDrivetoCopy -Leaf)+'\'+$VolumeName_Other),(split-path $FAT32Partition -leaf))
 
-foreach ($NewFolder in $NewFolders) {
-    if (Test-Path ($WorkingFolder+$NewFolder)){
-        $null = Remove-Item ($WorkingFolder+$NewFolder) -Recurse
-    }
-    $null = New-Item -path ($WorkingFolder) -Name $NewFolder -ItemType Directory
+try {
+    foreach ($NewFolder in $NewFolders) {
+        if (Test-Path ($WorkingFolder+$NewFolder)){
+            $null = Remove-Item ($WorkingFolder+$NewFolder) -Recurse -ErrorAction Stop
+        }
+        $null = New-Item -path ($WorkingFolder) -Name $NewFolder -ItemType Directory
+    }    
+}
+catch {
+    throw "Cannot delete temporary files!"    
 }
 
 if (-not(Test-Path ($WorkingFolder+'AmigaDownloads'))){
@@ -208,16 +244,32 @@ if (-not(Test-Path ($WorkingFolder+'Programs'))){
 ### Determine Kickstart Rom Path
 
 $FoundKickstarttoUse = Compare-KickstartHashes -PathtoKickstartHashes ($InputFolder+'RomHashes.csv') -PathtoKickstartFiles $ROMPath -KickstartVersion $KickstartVersiontoUse
+
 $KickstartPath = $FoundKickstarttoUse.KickstartPath
+
+if (-not($KickstartPath)){
+    throw "Error! No Kickstart file found!"
+} 
+
 $KickstartNameFAT32=$FoundKickstarttoUse.Fat32Name
 
 Write-Host ('Kickstart to be used is: '+$KickstartPath)
 
 $AvailableADFs = Compare-ADFHashes -PathtoADFFiles $ADFPath -PathtoADFHashes ($InputFolder+'ADFHashes.csv') -KickstartVersion $KickstartVersiontoUse -PathtoListofInstallFiles ($InputFolder+'ListofInstallFiles.csv') 
 
+if (-not ($AvailableADFs)){
+    throw "One or more ADF files is missing!"
+} 
+
 $ListofInstallFiles = Import-Csv ($InputFolder+'ListofInstallFiles.csv') -Delimiter ';' |  Where-Object {$_.Kickstart_Version -eq $KickstartVersiontoUse} | Sort-Object -Property 'InstallSequence'
 
+$ListofInstallFiles | Add-Member -NotePropertyName Path -NotePropertyValue $null
+$ListofInstallFiles | Add-Member -NotePropertyName DrivetoInstall_VolumeName -NotePropertyValue $null
+
 foreach ($InstallFileLine in $ListofInstallFiles) {
+    if ($InstallFileLine.DrivetoInstall -eq 'System'){
+        $InstallFileLine.DrivetoInstall_VolumeName = $VolumeName_System
+    }
     foreach ($MatchedADF in $AvailableADFs ) {
         if ($InstallFileLine.ADF_Name -eq $MatchedADF.ADF_Name){
             $InstallFileLine.Path=$MatchedADF.PathtoADF
@@ -244,13 +296,13 @@ $ListofInstallFiles |  Select-Object Path,FriendlyName -Unique | ForEach-Object 
 Write-Host "Downloading HST Imager"
 if (-not(Get-GithubRelease -GithubRelease $HSTImagerreleases -Tag_Name '1.1.350' -Name '_console_windows_x64.zip' -LocationforDownload ($TempFolder+'HSTImager.zip') -LocationforProgram ($ProgramsFolder+'HST-Imager\') -Sort_Flag '')){
     Write-Host 'Error downloading HST-Imager! Cannot continue!'
-    exit
+    throw
 }
 
 Write-Host "Downloading HST Amiga"
 if (-not(Get-GithubRelease -GithubRelease $HSTAmigareleases -Tag_Name '0.3.163' -Name '_console_windows_x64.zip' -LocationforDownload ($TempFolder+'HSTAmiga.zip') -LocationforProgram ($ProgramsFolder+'HST-Amiga\') -Sort_Flag '')){
     Write-Host 'Error downloading HST-Amiga! Cannot continue!'
-    exit
+    throw
 }
 
 #### Download Emu68 Files
@@ -275,19 +327,19 @@ foreach($Path in $PathstoTest){
 Write-Host "Downloading Emu68Pistorm"
 if (-not(Get-GithubRelease -GithubRelease $Emu68releases -Tag_Name "nightly" -Name 'Emu68-pistorm-' -LocationforDownload ($AmigaDownloads+'Emu68Pistorm.zip') -LocationforProgram ($tempfolder+'Emu68Pistorm\') -Sort_Flag 'SORT')){
     Write-Host 'Error downloading Emu68Pistorm! Cannot continue!' -ForegroundColor Red
-    exit
+    throw
 }
 
 Write-Host "Downloading Emu68Pistorm32lite"
 if (-not(Get-GithubRelease -GithubRelease $Emu68releases -Tag_Name "nightly" -Name 'Emu68-pistorm32lite' -LocationforDownload ($AmigaDownloads+'Emu68Pistorm32lite.zip') -LocationforProgram ($tempfolder+'Emu68Pistorm32lite\') -Sort_Flag 'SORT')){
     Write-Host 'Error downloading Emu68Pistorm32lite! Cannot continue!' -ForegroundColor Red
-    exit
+    throw
 }
 
 Write-Host "Downloading Emu68Tools"
 if (-not(Get-GithubRelease -GithubRelease $Emu68Toolsreleases -Tag_Name "nightly" -Name 'Emu68-tools' -LocationforDownload ($AmigaDownloads+'Emu68Tools.zip') -LocationforProgram ($tempfolder+'Emu68Tools\') -Sort_Flag 'SORT')){
     Write-Host 'Error downloading Emu68Tools! Cannot continue!' -ForegroundColor Red
-    exit
+    throw
 }
 
 ### End Download HST
@@ -295,56 +347,87 @@ if (-not(Get-GithubRelease -GithubRelease $Emu68Toolsreleases -Tag_Name "nightly
 ### Begin Download UnLzx
 
 Write-Host "Downloading UnLZX"
-If (-not (Get-AmigaFileWeb -URL $UnLZXURL -NameofDL 'W95unlzx.lha' -LocationforDL $TempFolder)){
-    Write-host "Error downloading UnLZX! Quitting" -ForegroundColor Red
-    exit
+if (-not (Test-Path ($ProgramsFolder+'unlzx.exe'))){
+    If (-not (Get-AmigaFileWeb -URL $UnLZXURL -NameofDL 'W95unlzx.lha' -LocationforDL $TempFolder)){
+        Write-host "Error downloading UnLZX! Quitting" -ForegroundColor Red
+        throw
+    }
+    if (-not(Expand-Zipfiles -SevenzipPathtouse $7zipPath -TempFoldertouse $TempFolder -InputFile ($TempFolder+'W95unlzx.lha') -OutputDirectory $ProgramsFolder -FiletoExtract 'unlzx.exe')){
+        Write-Host ('Deleting package '+($TempFolder+'W95unlzx.lha'))
+        $null=Remove-Item -Path ($TempFolder+'W95unlzx.lha') -Force
+        throw # Error in extracting
+    }
 }
-
-if (-not(Expand-Zipfiles -SevenzipPathtouse $7zipPath -TempFoldertouse $TempFolder -InputFile ($TempFolder+'W95unlzx.lha') -OutputDirectory $ProgramsFolder -FiletoExtract 'unlzx.exe')){
-    Write-Host ('Deleting package '+($TempFolder+'W95unlzx.lha'))
-    $null=Remove-Item -Path ($TempFolder+'W95unlzx.lha') -Force
-    exit # Error in extracting
+else{
+    Write-Host "Unlzx already exists."
 }
 
 ### End Download UnLzx
 
 Write-Host "Preparing Amiga Image"
-Start-HSTImager -Command "blank" -DestinationPath ($LocationofImage+$NameofImage) -ImageSize $SizeofImage -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath 
-Start-HSTImager -Command "rdb init" -DestinationPath ($LocationofImage+$NameofImage) -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath
-Start-HSTImager -Command "rdb filesystem add" -SourcePath ($LocationofImage+$NameofImage) -DestinationPath ($WorkingFolder+'Programs\HST-Imager\pfs3aio') -FileSystem "PFS3" -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath
-Start-HSTImager -Command "rdb part add" -SourcePath ($LocationofImage+$NameofImage) -DeviceName $DeviceName_System -FileSystem "PFS3" -SizeofPartition $SizeofPartition_System -BootableFlag "-b" -MaxTransfer "0xffffff" -Mask "0x7ffffffe" -buffers "300" -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath
-Start-HSTImager -Command "rdb part add" -SourcePath ($LocationofImage+$NameofImage) -DeviceName $DeviceName_Other -FileSystem "PFS3" -SizeofPartition $SizeofPartition_Other -BootableFlag "-b" -MaxTransfer "0xffffff" -Mask "0x7ffffffe" -buffers "300" -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath
-Start-HSTImager -Command "rdb part format" -SourcePath ($LocationofImage+$NameofImage) -PartitionNumber "1" -VolumeName $VolumeName_System -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath
-Start-HSTImager -Command "rdb part format" -SourcePath ($LocationofImage+$NameofImage) -PartitionNumber "2" -VolumeName $VolumeName_Other -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath
-
+if (-not (Start-HSTImager -Command "Blank" -DestinationPath ($LocationofImage+$NameofImage) -ImageSize $SizeofImage -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+    throw
+} 
+if (-not (Start-HSTImager -Command "rdb init" -DestinationPath ($LocationofImage+$NameofImage) -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+    throw
+} 
+if (-not (Start-HSTImager -Command "rdb filesystem add" -DestinationPath ($LocationofImage+$NameofImage) -FileSystemPath ($WorkingFolder+'Programs\HST-Imager\pfs3aio') -DosType 'PFS3' -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+    throw
+} 
+if (-not (Start-HSTImager -Command "rdb part add" -DestinationPath ($LocationofImage+$NameofImage) -DeviceName $DeviceName_System -DosType 'PFS3' -SizeofPartition $SizeofPartition_System -Options '--bootable' -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+    throw
+} 
+if (-not (Start-HSTImager -Command "rdb part add" -DestinationPath ($LocationofImage+$NameofImage) -DeviceName $DeviceName_Other -DosType 'PFS3' -SizeofPartition $SizeofPartition_Other -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+    throw
+} 
+if (-not (Start-HSTImager -Command "rdb part format" -DestinationPath ($LocationofImage+$NameofImage) -PartitionNumber "1" -VolumeName $VolumeName_System -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+    throw
+} 
+if (-not (Start-HSTImager -Command "rdb part format" -DestinationPath ($LocationofImage+$NameofImage) -PartitionNumber "2" -VolumeName $VolumeName_Other -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+    throw
+} 
 #### Begin - Create NewFolder.info file
 if (($KickstartVersiontoUse -eq 3.1) -or (($KickstartVersiontoUse -eq 3.2) -and ($GlowIcons -eq 'FALSE'))) {
-    Start-HSTImager -Command 'fs extract' -ADFName $StorageADF -ADFInputFiles 'Monitors.info' -ADFLocationtoInstall $TempFolder -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath -AmigaDrivetoCopytouse $AmigaDrivetoCopy
-    Rename-Item ($TempFolder+'Monitors.info') ($TempFolder+'def_drawer.info')
+    if (-not (Start-HSTImager -Command 'fs extract' -SourcePath ($StorageADF+'\Monitors.info') -DestinationPath ($TempFolder.TrimEnd('\'))  -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+        throw
+    }
+    if (Test-Path ($TempFolder+'def_drawer.info')){
+        $null = Remove-Item ($TempFolder+'def_drawer.info')
+    }
+    $null = Rename-Item ($TempFolder+'Monitors.info') ($TempFolder+'def_drawer.info')
 }
 elseif(($KickstartVersiontoUse -eq 3.2) -and ($GlowIcons -eq 'TRUE')){
-    Start-HSTImager -Command 'fs extract' -ADFName $GlowIconsADF -ADFInputFiles 'Prefs\Env-Archive\Sys\def_drawer.info' -ADFLocationtoInstall $TempFolder -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath -AmigaDrivetoCopytouse $AmigaDrivetoCopy
+    if (-not (Start-HSTImager -Command 'fs extract' -SourcePath ($GlowIconsADF+'\Prefs\Env-Archive\Sys\def_drawer.info') -DestinationPath ($TempFolder.TrimEnd('\')) -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+        throw
+    }
 }
 
-Rename-Item ($TempFolder+'def_drawer.info') ($TempFolder+'NewFolder.info') -Force
+if (Test-Path ($TempFolder+'NewFolder.info')){
+    $null = Remove-Item ($TempFolder+'NewFolder.info')
+} 
+$null = Rename-Item ($TempFolder+'def_drawer.info') ($TempFolder+'NewFolder.info') -Force
 
 #### End - Create NewFolder.info file
 
 ### Begin Basic Drive Setup
-Add-AmigaFolder -AmigaFolderPath "System\Programs\" -TempFoldertouse $TempFolder -AmigaDrivetoCopytouse $AmigaDrivetoCopy
-Add-AmigaFolder -AmigaFolderPath "System\Storage\DataTypes\" -TempFoldertouse $TempFolder -AmigaDrivetoCopytouse $AmigaDrivetoCopy
+Add-AmigaFolder -AmigaFolderPath ($VolumeName_System+'\Programs\') -TempFoldertouse $TempFolder -AmigaDrivetoCopytouse $AmigaDrivetoCopy
+Add-AmigaFolder -AmigaFolderPath ($VolumeName_System+'\Storage\DataTypes\') -TempFoldertouse $TempFolder -AmigaDrivetoCopytouse $AmigaDrivetoCopy
 
-if (-not (Test-Path ($AmigaDrivetoCopy+"Work\"))){
-    $null = New-Item -path ($AmigaDrivetoCopy+"Work\") -ItemType Directory -Force 
+if (-not (Test-Path ($AmigaDrivetoCopy+$VolumeName_Other))){
+    $null = New-Item -path ($AmigaDrivetoCopy+$VolumeName_Other) -ItemType Directory -Force 
     
 }
 
 if ($KickstartVersiontoUse -eq 3.1){
-    Start-HSTImager -Command 'fs extract' -ADFName $InstallADF -ADFInputFiles 'Update\disk.info' -DrivetoWrite 'Work' -Extract_Flag 'AmigaDrive' -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath -AmigaDrivetoCopytouse $AmigaDrivetoCopy
+    if (-not (Start-HSTImager -Command 'fs extract' -SourcePath ($InstallADF+'\Update\disk.info') -DestinationPath ($AmigaDrivetoCopy+$VolumeName_Other) -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+            throw
+        }
 }
 elseif ($KickstartVersiontoUse -eq 3.2){
-    Start-HSTImager -Command 'fs extract' -ADFName $GlowIconsADF -ADFInputFiles 'Prefs\Env-Archive\Sys\def_harddisk.info' -DrivetoWrite 'Work' -Extract_Flag 'AmigaDrive' -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath -AmigaDrivetoCopytouse $AmigaDrivetoCopy
-    Rename-Item ($AmigaDrivetoCopy+"Work\def_harddisk.info") ($AmigaDrivetoCopy+"Work\disk.info") 
+    if (-not (Start-HSTImager -Command 'fs extract' -SourcePath ($GlowIconsADF+'\Prefs\Env-Archive\Sys\def_harddisk.info') -DestinationPath ($AmigaDrivetoCopy+$VolumeName_Other) -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+            throw
+        }
+    Rename-Item ($AmigaDrivetoCopy+$VolumeName_Other+'\def_harddisk.info') ($AmigaDrivetoCopy+$VolumeName_Other+'\disk.info') 
 }
 
 ### End Basic Drive Setup
@@ -357,67 +440,99 @@ $ItemCounter=1
 
 Foreach($InstallFileLine in $ListofInstallFiles){
     Write-Host ''
-    if ($InstallFileLine.AmigaFiletoInstall -eq "") {
-        Write-Host ('('+$ItemCounter+'/'+$TotalItems+') Processing ADF: '+$InstallFileLine.FriendlyName+' Files: ALL FILES') 
-    }
-    else{
-        Write-Host ('('+$ItemCounter+'/'+$TotalItems+') Processing ADF:'+$InstallFileLine.FriendlyName+' Files: '+$InstallFileLine.AmigaFiletoInstall)
-    }
+    Write-Host ('('+$ItemCounter+'/'+$TotalItems+') Processing ADF:'+$InstallFileLine.FriendlyName+' Files: '+$InstallFileLine.AmigaFiletoInstall)
+    $SourcePathtoUse = ($InstallFileLine.Path+'\'+($InstallFileLine.AmigaFiletoInstall -replace '/','\'))
     if ($InstallFileLine.Uncompress -eq "TRUE"){
-        Write-host 'Extracting files'
-        Start-HSTImager -Command 'fs extract' -ADFName $InstallFileLine.Path -ADFInputFiles ($InstallFileLine.AmigaFiletoInstall -replace '/','\') -Extract_Flag 'AmigaDrive' -DrivetoWrite 'System' -ADFLocationtoInstall $InstallFileLine.LocationtoInstall -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath -AmigaDrivetoCopytouse $AmigaDrivetoCopy
-        Expand-AmigaZFiles  -SevenzipPathtouse $7zipPath -WorkingFoldertouse $TempFolder -LocationofZFiles ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall+'\'+$InstallFileLine.LocationtoInstall)
+        Write-host 'Extracting files from ADFs containing .Z files'
+        if ($InstallFileLine.LocationtoInstall.Length -eq 0){        
+            $DestinationPathtoUse = ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName)
+        }
+        else{  
+            $DestinationPathtoUse = ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+($InstallFileLine.LocationtoInstall -replace '/','\')) 
+        }
+        if (-not (Start-HSTImager -Command 'fs extract' -SourcePath $SourcePathtoUse -DestinationPath $DestinationPathtoUse -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+            throw
+        }
+        Expand-AmigaZFiles  -SevenzipPathtouse $7zipPath -WorkingFoldertouse $TempFolder -LocationofZFiles $DestinationPathtoUse
+    }    
+    elseif (($InstallFileLine.NewFileName -ne "")  -or ($InstallFileLine.ModifyScript -ne 'FALSE') -or ($InstallFileLine.ModifyInfoFileTooltype -ne 'FALSE')){
+        if ($InstallFileLine.LocationtoInstall -ne '`*'){
+            $LocationtoInstall=(($InstallFileLine.LocationtoInstall -replace '/','\')+'\')
+        }
+        else{
+            $LocationtoInstall=$null
+        }
+        if ($InstallFileLine.NewFileName -ne ""){
+            $FullPath = $AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$InstallFileLine.NewFileName
+        }
+        else{
+            $FullPath = $AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+(Split-Path ($InstallFileLine.AmigaFiletoInstall -replace '/','\') -Leaf) 
+        }
+        $filename = Split-Path $FullPath -leaf
+        Write-host 'Extracting files from ADFs where changes needed'
+        if ($InstallFileLine.LocationtoInstall.Length -eq 0){
+            $DestinationPathtoUse = ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName)
+        }
+        else{        
+            $DestinationPathtoUse = ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+($InstallFileLine.LocationtoInstall -replace '/','\'))
+        }
+        if (-not (Start-HSTImager -Command 'fs extract' -SourcePath $SourcePathtoUse -DestinationPath $DestinationPathtoUse -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+            throw
+        }
+        if ($InstallFileLine.NewFileName -ne ""){
+            $NameofFiletoChange=$InstallFileLine.AmigaFiletoInstall.split("/")[-1]  
+            if (Test-Path ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$InstallFileLine.NewFileName)){
+                Remove-Item ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$InstallFileLine.NewFileName)
+            }
+            $null = rename-Item -Path ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$NameofFiletoChange) -NewName $InstallFileLine.NewFileName            
+        }
+        if ($InstallFileLine.ModifyInfoFileTooltype -eq 'Modify'){
+            if (-not (Read-AmigaTooltypes -IconPath ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$filename) -TooltypesPath ($TempFolder+$filename+'.txt') -HSTAmigaPathtouse $HSTAmigaPath -TempFoldertouse $TempFolder)){
+                throw
+            }                 
+            $OldToolTypes = Get-Content($TempFolder+$filename+'.txt')
+            $TooltypestoModify = Import-Csv ($LocationofAmigaFiles+$LocationtoInstall+'\'+$filename+'.txt') -Delimiter ';'
+            Get-ModifiedToolTypes -OriginalToolTypes $OldToolTypes -ModifiedToolTypes $TooltypestoModify | Out-File ($TempFolder+$filename+'amendedtoimport.txt')
+            if (-not (Write-AmigaTooltypes -IconPath ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$filename) -ToolTypesPath ($TempFolder+$fileName+'amendedtoimport.txt') -TempFoldertouse $TempFoldertouse -HSTAmigaPathtouse $HSTAmigaPath)){
+                throw
+            }                 
+        }        
+        if ($InstallFileLine.ModifyScript -eq'Remove'){
+            Write-Host ('Modifying '+$FileName+' for: '+$InstallFileLine.ScriptNameofChange)
+            $ScripttoEdit = Import-TextFileforAmiga -SystemType 'Amiga' -ImportFile ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$FileName)
+            $ScripttoEdit = Edit-AmigaScripts -ScripttoEdit $ScripttoEdit -Action 'remove' -name $InstallFileLine.ScriptNameofChange -Startpoint $InstallFileLine.ScriptInjectionStartPoint -Endpoint $InstallFileLine.ScriptInjectionEndPoint                    
+            Export-TextFileforAmiga -ExportFile ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$FileName) -DatatoExport $ScripttoEdit -AddLineFeeds 'TRUE'
+        }   
     }
-    elseif (($InstallFileLine.NewFileName -ne "")  -or
-            ($InstallFileLine.ModifyScript -ne 'FALSE') -or
-            ($InstallFileLine.ModifyInfoFileTooltype -ne 'FALSE')){
-                if ($InstallFileLine.LocationtoInstall -ne ""){
-                    $LocationtoInstall=($InstallFileLine.LocationtoInstall+'\')
-                }
-                else{
-                    $LocationtoInstall=$null
-                }
-                if ($InstallFileLine.NewFileName -ne ""){
-                    $FullPath = $AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall+'\'+$LocationtoInstall+$InstallFileLine.NewFileName
-                }
-                else{
-                    $FullPath = $AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall+'\'+$LocationtoInstall+(Split-Path $InstallFileLine.AmigaFiletoInstall -Leaf) 
-                }
-                $filename = Split-Path $FullPath -leaf
-                Write-host 'Extracting files'
-                Start-HSTImager -Command 'fs extract' -ADFName $InstallFileLine.Path -ADFInputFiles $InstallFileLine.AmigaFiletoInstall -Extract_Flag 'AmigaDrive' -DrivetoWrite 'System' -ADFLocationtoInstall $LocationtoInstall -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath -AmigaDrivetoCopytouse $AmigaDrivetoCopy
-                if ($InstallFileLine.NewFileName -ne ""){
-                    $NameofFiletoChange=$InstallFileLine.AmigaFiletoInstall.split("/")[-1]  
-                    if (Test-Path ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall+'\'+$LocationtoInstall+$InstallFileLine.NewFileName)){
-                        Remove-Item ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall+'\'+$LocationtoInstall+$InstallFileLine.NewFileName)
-                    }
-                    $null = rename-Item -Path ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall+'\'+$LocationtoInstall+$NameofFiletoChange) -NewName $InstallFileLine.NewFileName            
-                }
-                if ($InstallFileLine.ModifyInfoFileTooltype -eq 'Modify'){
-                    Read-AmigaTooltypes -HSTAmigaPathtouse $HSTAmigaPath -TempFoldertouse $TempFolder -DrivetoRead $InstallFileLine.DrivetoInstall -InfoFiletoReadPath ($LocationtoInstall+$filename) -InfoTextFiletoWritePath ($TempFolder+$filename+'.txt') -AmigaDrivetoCopytouse $AmigaDrivetoCopy                  
-                    $OldToolTypes = Get-Content($TempFolder+$filename+'.txt')
-                    $TooltypestoModify = Import-Csv ($LocationofAmigaFiles+$LocationtoInstall+'\'+$filename+'.txt') -Delimiter ';'
-                    Get-ModifiedToolTypes -OriginalToolTypes $OldToolTypes -ModifiedToolTypes $TooltypestoModify | Out-File ($TempFolder+$filename+'amendedtoimport.txt')
-                    Write-AmigaTooltypes -HSTAmigaPathtouse $HSTAmigaPath -DrivetoWrite $InstallFileLine.DrivetoInstall -InfoFiletoWritePath ($LocationtoInstall+$filename) -InfoTextFiletoReadPath ($TempFolder+$fileName+'amendedtoimport.txt') -TempFoldertouse $TempFoldertouse -AmigaDrivetoCopytouse $AmigaDrivetoCopy
-                }        
-                if ($InstallFileLine.ModifyScript -eq'Remove'){
-                    Write-Host ('Modifying '+$FileName+' for: '+$InstallFileLine.ScriptNameofChange)
-                    $ScripttoEdit = Import-TextFileforAmiga -SystemType 'Amiga' -ImportFile ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall+'\'+$LocationtoInstall+$FileName)
-                    $ScripttoEdit = Edit-AmigaScripts -ScripttoEdit $ScripttoEdit -Action 'remove' -name $InstallFileLine.ScriptNameofChange -Startpoint $InstallFileLine.ScriptInjectionStartPoint -Endpoint $InstallFileLine.ScriptInjectionEndPoint                    
-                    Export-TextFileforAmiga -ExportFile ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall+'\'+$LocationtoInstall+$FileName) -DatatoExport $ScripttoEdit -AddLineFeeds 'TRUE'
-                }
-            }    
     else {
-         Write-host 'Extracting files'
-         Start-HSTImager -Command 'fs extract' -ADFName $InstallFileLine.Path -ADFInputFiles $InstallFileLine.AmigaFiletoInstall -DrivetoWrite $DeviceName_System -ADFLocationtoInstall $InstallFileLine.LocationtoInstall -Extract_Flag 'rdb' -HDFFullPath ($LocationofImage+$NameofImage) -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath -AmigaDrivetoCopytouse $AmigaDrivetoCopy
-    }
+        Write-host 'Extracting files from ADFs to .hdf file'
+        if ($InstallFileLine.LocationtoInstall.Length -eq 0){
+           $DestinationPathtoUse = ($LocationofImage+$NameofImage+'\rdb\'+$DeviceName_System)
+        }
+        else{
+           $DestinationPathtoUse = ($LocationofImage+$NameofImage+'\rdb\'+$DeviceName_System+'\'+($InstallFileLine.LocationtoInstall -replace '/','\'))
+        }
+        if (-not (Start-HSTImager -Command 'fs extract' -SourcePath $SourcePathtoUse -DestinationPath $DestinationPathtoUse -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+            throw
+        }
+    }     
     $ItemCounter+=1    
 }
+
 ### End Copy Install files from ADF
 
 #######################################################################################################################################################################################################################################
 
 $ListofPackagestoInstall = Import-Csv ($InputFolder+'ListofPackagestoInstall.csv') -Delimiter ';' |  Where-Object {$_.KickstartVersion -match $KickstartVersiontoUse} | Where-Object {$_.InstallFlag -eq 'TRUE'} #| Sort-Object -Property 'InstallSequence','PackageName'
+
+$ListofPackagestoInstall | Add-Member -NotePropertyName DrivetoInstall_VolumeName -NotePropertyValue $null
+
+foreach ($line in $ListofPackagestoInstall){
+    if ($line.DrivetoInstall -eq 'System'){
+        $line.DrivetoInstall_VolumeName = $VolumeName_System
+    }
+}
+
 
 $PackageCheck=$null
 
@@ -436,8 +551,12 @@ foreach($PackagetoFind in $ListofPackagestoInstall) {
             Write-host ('('+$ItemCounter+'/'+$TotalItems+') Downloading (or Copying) package '+$PackagetoFind.PackageName)
             if ($PackagetoFind.Source -eq "ADF") {
                 if ($PackagetoFind.SourceLocation -eq 'StorageADF'){
-                    $ADFtoUse=$StorageADF       
-                    Start-HSTImager -Command 'fs extract' -ADFName $ADFtoUse -ADFInputFiles $PackagetoFind.FilestoInstall -ADFLocationtoInstall ($TempFolder+$PackagetoFind.FileDownloadName) -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath -AmigaDrivetoCopytouse $AmigaDrivetoCopy
+                    $ADFtoUse = $StorageADF
+                    $SourcePathtoUse = ($ADFtoUse+'\'+$PackagetoFind.FilestoInstall)
+                    $DestinationPathtoUse = ($TempFolder+$PackagetoFind.FileDownloadName).Trim('\')       
+                    if (-not (Start-HSTImager -Command 'fs extract' -SourcePath $SourcePathtoUse -DestinationPath $DestinationPathtoUse -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+                        throw
+                    }
                 }
             }
             Elseif ($PackagetoFind.Source -eq "Web"){
@@ -454,7 +573,7 @@ foreach($PackagetoFind in $ListofPackagestoInstall) {
                 else{
                     if (-not (Get-AmigaFileWeb -URL $PackagetoFind.SourceLocation -NameofDL $PackagetoFind.FileDownloadName -LocationforDL $AmigaDownloads)){
                         Write-host "Unrecoverable error with download(s)!" -ForegroundColor Red
-                        exit
+                        throw
                     }                    
                 }
                 if ($PackagetoFind.PerformHashCheck -eq 'TRUE'){
@@ -462,7 +581,7 @@ foreach($PackagetoFind in $ListofPackagestoInstall) {
                         Write-Host "Error in downloaded packages! Unable to continue!" -ForegroundColor Red
                         Write-Host ('Deleting package '+($AmigaDownloads+$PackagetoFind.FileDownloadName))
                         $null=Remove-Item -Path ($AmigaDownloads+$PackagetoFind.FileDownloadName) -Force 
-                        exit
+                        throw
                     }
                 }
             }
@@ -484,7 +603,7 @@ foreach($PackagetoFind in $ListofPackagestoInstall) {
                     if (-not(Expand-Zipfiles -SevenzipPathtouse $7zipPath -TempFoldertouse $TempFolder -InputFile ($AmigaDownloads+$PackagetoFind.FileDownloadName) -OutputDirectory ($TempFolder+$PackagetoFind.FileDownloadName))){
                         Write-Host ('Deleting package '+($AmigaDownloads+$PackagetoFind.FileDownloadName))
                         $null=Remove-Item -Path ($AmigaDownloads+$PackagetoFind.FileDownloadName) -Force
-                        exit # Error in extracting
+                        throw # Error in extracting
                     }
                                
                 } 
@@ -528,7 +647,7 @@ foreach($PackagetoFind in $ListofPackagestoInstall) {
        ($PackagetoFind.InstallType -eq 'Full') -or
        ($PackagetoFind.InstallType -eq 'Extract')){
            ### Determining Source Paths
-           $DestinationPathtoUse =($AmigaDrivetoCopy+$PackagetoFind.DrivetoInstall+'\'+$PackagetoFind.LocationtoInstall) 
+           $DestinationPathtoUse =($AmigaDrivetoCopy+$PackagetoFind.DrivetoInstall_VolumeName+'\'+$PackagetoFind.LocationtoInstall) 
            if ($PackagetoFind.Source -eq 'Web'){
                $SourcePathtoUse=($TempFolder+$PackagetoFind.FileDownloadName+'\'+$PackagetoFind.FilestoInstall)  
            }
@@ -546,11 +665,11 @@ foreach($PackagetoFind in $ListofPackagestoInstall) {
            }
            #### End Determining SourcePaths
            Write-Host "Creating directories where required - Folder"$PackagetoFind.LocationtoInstall
-           if (-not (Test-Path ($AmigaDrivetoCopy+$PackagetoFind.DrivetoInstall+'\'+$PackagetoFind.LocationtoInstall))){
-               $null = New-Item ($AmigaDrivetoCopy+$PackagetoFind.DrivetoInstall+'\'+$PackagetoFind.LocationtoInstall) -ItemType Directory
+           if (-not (Test-Path ($AmigaDrivetoCopy+$PackagetoFind.DrivetoInstall_VolumeName+'\'+$PackagetoFind.LocationtoInstall))){
+               $null = New-Item ($AmigaDrivetoCopy+$PackagetoFind.DrivetoInstall_VolumeName+'\'+$PackagetoFind.LocationtoInstall) -ItemType Directory
            }
            if ($PackagetoFind.CreateFolderInfoFile -eq 'TRUE'){
-               Add-AmigaFolder -AmigaFolderPath ($PackagetoFind.DrivetoInstall+'\'+$PackagetoFind.LocationtoInstall) -TempFoldertouse $TempFolder -AmigaDrivetoCopytouse $AmigaDrivetoCopy
+               Add-AmigaFolder -AmigaFolderPath ($PackagetoFind.DrivetoInstall_VolumeName+'\'+$PackagetoFind.LocationtoInstall) -TempFoldertouse $TempFolder -AmigaDrivetoCopytouse $AmigaDrivetoCopy
            }
            #### Copy Files
            if ($PackagetoFind.NewFileName.Length -ne 0){
@@ -575,11 +694,15 @@ foreach($PackagetoFind in $ListofPackagestoInstall) {
                    $Tooltypes.NewValue | Out-File ($TempFolder+$filename+'amendedtoimport.txt')
                }
                if ($PackagetoFind.ModifyInfoFileTooltype -eq 'Modify'){
-                   Read-AmigaTooltypes -HSTAmigaPathtouse $HSTAmigaPath -TempFoldertouse $TempFolder -DrivetoRead $PackagetoFind.DrivetoInstall -InfoFiletoReadPath ($PackagetoFind.LocationtoInstall+$filename) -InfoTextFiletoWritePath ($TempFolder+$filename+'.txt') -AmigaDrivetoCopytouse $AmigaDrivetoCopy
+                   If (-not(Read-AmigaTooltypes -IconPath ($AmigaDrivetoCopy+$PackagetoFind.DrivetoInstall_VolumeName+'\'+$PackagetoFind.LocationtoInstall+$filename) -TooltypesPath ($TempFolder+$filename+'.txt') -HSTAmigaPathtouse $HSTAmigaPath -TempFoldertouse $TempFolder)){
+                       throw 
+                } 
                    $OldToolTypes= Get-Content($TempFolder+$filename+'.txt')
                    Get-ModifiedToolTypes -OriginalToolTypes $OldToolTypes -ModifiedToolTypes $Tooltypes  | Out-File ($TempFolder+$filename+'amendedtoimport.txt')
                }
-               Write-AmigaTooltypes -HSTAmigaPathtouse $HSTAmigaPath -DrivetoWrite $PackagetoFind.DrivetoInstall -InfoFiletoWritePath ($PackagetoFind.LocationtoInstall+$filename) -InfoTextFiletoReadPath ($TempFolder+$filename+'amendedtoimport.txt') -TempFoldertouse $TempFoldertouse -AmigaDrivetoCopytouse $AmigaDrivetoCopy
+               if (-not (Write-AmigaTooltypes -IconPath ($AmigaDrivetoCopy+$PackagetoFind.DrivetoInstall_VolumeName+'\'+$PackagetoFind.LocationtoInstall+$filename) -ToolTypesPath ($TempFolder+$filename+'amendedtoimport.txt') -TempFoldertouse $TempFoldertouse -HSTAmigaPathtouse $HSTAmigaPath)){
+                   throw
+            }                             
            }
            else {
            }    
@@ -587,13 +710,18 @@ foreach($PackagetoFind in $ListofPackagestoInstall) {
     $PackageCheck=$PackagetoFind.PackageName  
 }
 
-Export-TextFileforAmiga -ExportFile ($AmigaDrivetoCopy+'System\S\Startup-Sequence') -DatatoExport $StartupSequence -AddLineFeeds 'TRUE'
-Export-TextFileforAmiga -ExportFile ($AmigaDrivetoCopy+'System\S\User-Startup') -DatatoExport $UserStartup -AddLineFeeds 'TRUE'
+Write-Host 'Completed install of packages'
+Wr
+
+Export-TextFileforAmiga -ExportFile ($AmigaDrivetoCopy+$VolumeName_System+'\S\Startup-Sequence') -DatatoExport $StartupSequence -AddLineFeeds 'TRUE'
+Export-TextFileforAmiga -ExportFile ($AmigaDrivetoCopy+$VolumeName_System+'\S\User-Startup') -DatatoExport $UserStartup -AddLineFeeds 'TRUE'
 
 ### Wireless Prefs
 
-if (-not (Test-Path ($AmigaDrivetoCopy+"System\Prefs\Env-Archive\Sys\"))){
-    $null = New-Item -path ($AmigaDrivetoCopy+"System\Prefs\Env-Archive\Sys") -ItemType Directory -Force 
+Write-host 'Creating Wireless Prefs file'
+
+if (-not (Test-Path ($AmigaDrivetoCopy+$VolumeName_System+'\Prefs\Env-Archive\Sys\'))){
+    $null = New-Item -path ($AmigaDrivetoCopy+$VolumeName_System+'\Prefs\Env-Archive\Sys') -ItemType Directory -Force 
 
 }
 
@@ -602,31 +730,36 @@ $WirelessPrefs = "network={",
                  "   psk=""$WifiPassword""",
                  "}"
                  
-Export-TextFileforAmiga -ExportFile ($AmigaDrivetoCopy+'System\Prefs\Env-Archive\Sys\wireless.prefs') -DatatoExport $WirelessPrefs -AddLineFeeds 'TRUE'                
+Export-TextFileforAmiga -ExportFile ($AmigaDrivetoCopy+$VolumeName_System+'\Prefs\Env-Archive\Sys\wireless.prefs') -DatatoExport $WirelessPrefs -AddLineFeeds 'TRUE'                
 
 ### End Wireless Prefs
-
-# #### End Fix HDToolBox ToolType
 
 ### Fix WBStartup
 
 If ($KickstartVersiontouse -eq 3.2){
-    Start-HSTImager -Command 'fs extract' -ADFName $StorageADF -ADFInputFiles 'WBStartup\MenuTools' -Extract_Flag 'AmigaDrive' -DrivetoWrite 'System' -ADFLocationtoInstall 'WBStartup\' -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath -AmigaDrivetoCopytouse $AmigaDrivetoCopy
+    Write-Host 'Fixing Menutools'
+    if (-not (Start-HSTImager -Command 'fs extract' -SourcePath ($StorageADF+'\WBStartup\MenuTools') -DestinationPath ($AmigaDrivetoCopy+$VolumeName_System+'\WBStartup') -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+        throw
+    }
     
-    $WBStartup = Import-TextFileforAmiga -SystemType 'Amiga' -ImportFile ($AmigaDrivetoCopy+'System\WBStartup\Menutools') 
+    $WBStartup = Import-TextFileforAmiga -SystemType 'Amiga' -ImportFile ($AmigaDrivetoCopy+$VolumeName_System+'\WBStartup\Menutools') 
     $WBStartup = Edit-AmigaScripts -ScripttoEdit $WBStartup -Action 'inject' -Name 'Add Wait' -Injectionpoint 'after' -Startpoint 'ADDRESS WORKBENCH' -LinestoAdd (Import-TextFileforAmiga -SystemType 'PC' -ImportFile ($LocationofAmigaFiles+'WBStartup\Menutools_1')) -ArexxFlag 'AREXX'
     $WBStartup = Edit-AmigaScripts -ScripttoEdit $WBStartup -Action 'inject' -Name 'Add Offline and Online Menus' -Injectionpoint 'before' -Startpoint 'EXIT' -LinestoAdd (Import-TextFileforAmiga -SystemType 'PC' -ImportFile ($LocationofAmigaFiles+'WBStartup\Menutools_2')) -ArexxFlag 'AREXX'
     
-    Export-TextFileforAmiga -ExportFile ($AmigaDrivetoCopy+'System\WBStartup\Menutools') -DatatoExport $WBStartup -AddLineFeeds 'TRUE'
+    Export-TextFileforAmiga -ExportFile ($AmigaDrivetoCopy+$VolumeName_System+'\WBStartup\Menutools') -DatatoExport $WBStartup -AddLineFeeds 'TRUE'
 }
 
 ## Clean up AmigaImageFiles
 
-if (Test-Path ($AmigaDrivetoCopy+'System\Disk.info')){
-    Remove-Item ($AmigaDrivetoCopy+'System\Disk.info')
+if (Test-Path ($AmigaDrivetoCopy+$VolumeName_System+'\Disk.info')){
+    Remove-Item ($AmigaDrivetoCopy+$VolumeName_System+'\Disk.info')
 }
 
 #### Set up FAT32
+
+Write-Host 'Setting up FAT32 files'
+
+Write-Host 'Copying Emu68Pistorm and Emu68Pistorm32lite files' 
 
 $null = copy-Item ($TempFolder+"Emu68Pistorm\*") -Destination ($FAT32Partition)
 $null = copy-Item ($TempFolder+"Emu68Pistorm32lite\*") -Destination ($FAT32Partition)
@@ -641,12 +774,13 @@ if (-not (Test-Path ($FAT32Partition+'Install\'))){
     $null = New-Item -path ($FAT32Partition+'Install\') -ItemType Directory -Force
 }
 
-#$null = copy-item 'D:\Emulators\Amiga Files\Shared\rom\amiga-os-120.rom' ($FAT32Partition+'Kickstarts\') -Force
-#$null = copy-item 'D:\Emulators\Amiga Files\Shared\rom\amiga-os-130.rom' ($FAT32Partition+'Kickstarts\') -Force
+Write-Host 'Copying Cmdline.txt' 
 
 Copy-Item ($LocationofAmigaFiles+'FAT32\cmdline.txt') -Destination ($FAT32Partition)
 
 $ConfigTxt = Get-Content -Path ($LocationofAmigaFiles+'FAT32\config.txt')
+
+Write-Host 'Preparing Config.txt'
 
 $RevisedConfigTxt=$null
 
@@ -725,22 +859,38 @@ foreach ($Line in $ConfigTxt) {
 
 Export-TextFileforAmiga -DatatoExport $RevisedConfigTxt -ExportFile ($FAT32Partition+'config.txt') -AddLineFeeds 'TRUE' 
 
-$null = copy-Item $KickstartPath -Destination ($FAT32Partition+$KickstartNameFAT32)
-Write-AmigaFilestoFS -HSTImagePathtouse $HSTImagePath -DrivetoRead 'System' -FilestoCopy '*' -DrivetoWrite $DeviceName_System -HDFFullPath ($LocationofImage+$NameofImage) -TempFoldertouse $TempFolder -AmigaDrivetoCopytouse $AmigaDrivetoCopy
-Write-AmigaFilestoFS -HSTImagePathtouse $HSTImagePath -DrivetoRead 'Work' -FilestoCopy '*' -DrivetoWrite $DeviceName_Other -HDFFullPath ($LocationofImage+$NameofImage) -TempFoldertouse $TempFolder -AmigaDrivetoCopytouse $AmigaDrivetoCopy
+Write-host 'Copying Kickstart file to FAT32 partition'
+$null = copy-Item -LiteralPath $KickstartPath -Destination ($FAT32Partition+$KickstartNameFAT32)
 
 ### Transfer files to Work
 
 if ($TransferLocation) {
     # Determine Size of transfer
-    $SizeofFilestoTransfer=(Get-ChildItem $TransferLocation -Recurse | Where-Object { $_.PSIsContainer -eq $false }  | Measure-Object -property Length -sum).sum /1Mb
-    if ($SizeofFilestoTransfer -lt ($SizeofPartition_Other+10)){   
-        Write-AmigaFilestoFS -HSTAmigaPathtouse $HSTAmigaPath -FilestoCopy $TransferLocation -DrivetoWrite $DeviceName_Other -HDFFullPath ($LocationofImage+$NameofImage) -TransferFlag 'Transfer' -TempFoldertouse $TempFolder -AmigaDrivetoCopytouse $AmigaDrivetoCopy
+    $SizeofFilestoTransfer=(Get-ChildItem $TransferLocation -force -Recurse | Where-Object { $_.PSIsContainer -eq $false }  | Measure-Object -property Length -sum).sum /1Mb
+    Write-Host ('Transferring files from '+$TransferLocation+' to My Files directory on Work drive')
+    Write-Host ('Total size of files to be transferred is:'+$SizeofFilestoTransfer)
+    Write-Host ('Available space on Work drive is: '+$SizeofPartition_Other)
+    if ($SizeofFilestoTransfer -lt (([double]($SizeofPartition_Other.trim('mb')))+10)){
+        $SourcePathtoUse = $TransferLocation+('*')
+        if (Test-Path ($AmigaDrivetoCopy+$VolumeName_Other+'\My Files.info')){
+            Remove-Item ($AmigaDrivetoCopy+$VolumeName_Other+'\My Files.info')
+        }
+        $null = Copy-Item ($TempFolder+'NewFolder.info') ($AmigaDrivetoCopy+$VolumeName_Other+'\My Files.info')
+        if (-not(Start-HSTImager -Command 'fs copy' -SourcePath $SourcePathtoUse -DestinationPath ($LocationofImage+$NameofImage+'\rdb\'+$DeviceName_Other+'\My Files') -HSTImagePathtouse $HSTImagePath -TempFoldertouse $TempFolder)){
+            throw
+        }
     }
     else{
         Write-host "Size of files to be transferred is too large for the Work partition! Not transferring!"
     }
 }
+
+if (-not(Start-HSTImager -Command 'fs copy' -SourcePath ($AmigaDrivetoCopy+$VolumeName_System+'\*') -DestinationPath ($LocationofImage+$NameofImage+'\rdb\'+$DeviceName_System) -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+    throw
+} 
+if (-not(Start-HSTImager -Command 'fs copy' -SourcePath ($AmigaDrivetoCopy+$VolumeName_Other+'\*') -DestinationPath ($LocationofImage+$NameofImage+'\rdb\'+$DeviceName_Other) -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+    throw
+}  
 
 Set-Location $LocationofImage
 & $HDF2emu68Path $LocationofImage$NameofImage $SizeofFAT32 ($FAT32Partition)

@@ -98,181 +98,146 @@ function Get-AmigaFileWeb {
 
 function Start-HSTImager {
     param (
-        $HSTImagePathtouse,
-        $TempFoldertouse,
-        $AmigaDrivetoCopytouse,
         $Command,
-        $CommandString,
+        $HSTImagePathtouse,
         $SourcePath,
         $DestinationPath,
-        $FileSystem,
+        $FileSystemPath,
+        $Options,
+        $DosType, 
+        $TempFoldertouse,
         $ImageSize,
         $DeviceName,
         $SizeofPartition,
-        $BootableFlag,
-        $MaxTransfer,
-        $Mask,
-        $Buffers,
         $PartitionNumber,
-        $VolumeName,
-        $ADFName,
-        $ADFInputFiles,
-        $DrivetoWrite,
-        $ADFLocationtoInstall,
-        $Extract_Flag,
-        $HDFFullPath 
-    
+        $VolumeName  
     )
     $Logoutput=($TempFoldertouse+'LogOutputTemp.txt')
-    if ($Command -eq 'rdb init'){
-        & $HSTImagePathtouse rdb init $DestinationPath >$Logoutput            
-    }
-    if ($Command -eq 'rdb filesystem add'){
-        & $HSTImagePathtouse rdb filesystem add $SourcePath $DestinationPath $FileSystem >$Logoutput            
-    }
-    if ($Command -eq 'rdb part add'){
-        if ($BootableFlag -eq '-b'){
-            & $HSTImagePathtouse rdb part add $SourcePath $DeviceName $FileSystem $SizeofPartition $BootableFlag -ma $Mask -bu $Buffers -mt $MaxTransfer >$Logoutput                
-        }
-        else{
-            & $HSTImagePathtouse rdb part add $SourcePath $DeviceName $FileSystem $SizeofPartition >$Logoutput                
-        }
-    }
-    if ($Command -eq 'rdb part format'){
-        & $HSTImagePathtouse rdb part format $SourcePath $PartitionNumber $VolumeName >$Logoutput            
-    }   
-    elseif ($Command -eq 'Blank'){
+    if ($Command -eq 'Blank'){
+        Write-Host "Creating image"
         & $HSTImagePathtouse blank $DestinationPath $ImageSize >$Logoutput            
     }
+    elseif ($Command -eq 'rdb init'){
+        Write-Host "Initialising partition"
+        & $HSTImagePathtouse rdb init $DestinationPath $Options >$Logoutput            
+    }
+    elseif ($Command -eq 'rdb filesystem add'){
+        Write-Host "Adding Filesystem $DosType to RDB"
+        & $HSTImagePathtouse rdb filesystem add $DestinationPath $FileSystemPath $DosType $Options >$Logoutput            
+    }
+    elseif ($Command -eq 'rdb part add'){
+        Write-Host "Adding partition $DeviceName $DosType"
+        & $HSTImagePathtouse rdb part add $DestinationPath $DeviceName $DosType $SizeofPartition $Options --mask 0x7ffffffe --buffers 300 --max-transfer 0xffffff >$Logoutput
+    }
+    elseif ($Command -eq 'rdb part format'){
+        Write-Host "Formatting partition $VolumeName"
+        & $HSTImagePathtouse rdb part format $DestinationPath $PartitionNumber $VolumeName $Options >$Logoutput            
+    }   
     elseif ($Command -eq 'fs extract') {
-        if ($ADFInputFiles -eq ""){
-            $SourcePath=$ADFName
-        }
-        else{
-            $SourcePath=($ADFName+'\'+$ADFInputFiles)
-        }
-        if ($ADFLocationtoInstall -eq ""){
-            $DestinationPath=$DrivetoWrite
-        }
-        else{
-            $DestinationPath=($DrivetoWrite+'\'+$ADFLocationtoInstall)
-        }
-        Write-Host "Source path is: $SourcePath Destination path is: $DestinationPath"
-        if ($Extract_Flag -eq 'rdb'){               
-            & $HSTImagePathtouse fs extract $SourcePath $HDFFullPath\rdb\$DestinationPath >$Logoutput                                
-        }
-        elseif ($Extract_Flag -eq 'AmigaDrive'){
-            if (-not (Test-Path ($AmigaDrivetoCopytouse+$DrivetoWrite+'\'+$ADFLocationtoInstall))){
-                $null = New-Item ($AmigaDrivetoCopytouse+$DrivetoWrite+'\'+$ADFLocationtoInstall) -ItemType Directory
-            }
-            & $HSTImagePathtouse fs extract $SourcePath $AmigaDrivetoCopytouse$DestinationPath >$Logoutput      
-        }
-        else{
-            if (-not (Test-Path ($ADFLocationtoInstall))){
-                $null = New-Item ($ADFLocationtoInstall) -ItemType Directory
-            }                
-            & $HSTImagePathtouse fs extract $SourcePath $ADFLocationtoInstall >$Logoutput      
-        }           
+        Write-Host ('Extracting data from ADF. Source path is: '+$SourcePath+' Destination path is: '+$DestinationPath)
+        & $HSTImagePathtouse fs extract $SourcePath $DestinationPath $Options >$Logoutput                                
     }
+    elseif ($Command -eq 'fs copy') {
+        Write-Host "Writing file(s) to HDF image for: $SourcePath to $DestinationPath" 
+        & $HSTImagePathtouse fs copy $SourcePath $DestinationPath $Options >$Logoutput  
+    } 
     $CheckforError = Get-Content ($Logoutput)
     $ErrorCount=0
     foreach ($ErrorLine in $CheckforError){
         if ($ErrorLine -match " ERR]"){
             $ErrorCount += 1
-            Write-Host "Error in HST-Imager:"$ErrorLine            
+            Write-Host "Error in HST-Imager:"$ErrorLine -ForegroundColor RED           
         }
     }
     if ($ErrorCount -ge 1){
-        $null=Remove-Item ($Logoutput) -Force
-        exit    
+        $null=Remove-Item ($Logoutput) -Force 
+        return $false
     }    
-}
-  
-function Write-AmigaFilestoFS {
-    param (
-        $HSTImagePathtouse,
-        $DrivetoRead,
-        $FilestoCopy,
-        $DrivetoWrite,
-        $HDFFullPath,
-        $TransferFlag,
-        $TempFoldertouse,
-        $AmigaDrivetoCopytouse
-    )        
-    $Logoutput= ($TempFoldertouse+'LogOutputTemp.txt')
-    Write-Host ("Writing file(s) to HDF image for: "+$DrivetoRead+":"+$FilestoCopy+" to drive "+$DrivetoWrite+":") 
-    if($TransferFlag -eq 'Transfer'){
-        & $HSTImagePathtouse fs copy $FilestoCopy $HDFFullPath\rdb\$DrivetoWrite\My Files\ >$Logoutput
+    else{
+        return $true
     }
-    else {
-        & $HSTImagePathtouse fs copy $AmigaDrivetoCopytouse$DrivetoRead\$FilestoCopy $HDFFullPath\rdb\$DrivetoWrite\ >$Logoutput
-    }
-    $CheckforError = Get-Content ($Logoutput)
-    $ErrorCount=0
-    foreach ($ErrorLine in $CheckforError){
-        if ($ErrorLine -match " ERR]"){
-            $ErrorCount += 1
-            Write-Host "Error in HST-Imager:"$ErrorLine -ForegroundColor Red           
-        }
-    }
-    if ($ErrorCount -ge 1){
-        $null=Remove-Item ($Logoutput) -Force
-        exit    
-    }    
-}
-function Write-AmigaTooltypes {
-    param (
-        $HSTAmigaPathtouse,
-        $DrivetoWrite,
-        $InfoFiletoWritePath,
-        $InfoTextFiletoReadPath,
-        $TempFoldertouse,
-        $AmigaDrivetoCopytouse
-
-    )
-    $Logoutput=($TempFoldertouse+'LogOutputTemp.txt')
-    Write-Host ("Importing Tooltypes for info file(s): "+$DrivetoWrite +":"+$InfoFiletoWritePath+" from "+$DrivetoRead+":"+$InfoTextFiletoReadPath) 
-    & $HSTAmigaPathtouse icon tooltypes import $AmigaDrivetoCopytouse$DrivetoWrite\$InfoFiletoWritePath $InfoTextFiletoReadPath >$Logoutput
-    $CheckforError = Get-Content ($Logoutput)
-    $ErrorCount=0
-    foreach ($ErrorLine in $CheckforError){
-        if ($ErrorLine -match " ERR]"){
-            $ErrorCount += 1
-            Write-Host "Error in HST-Imager:"$ErrorLine -ForegroundColor Red           
-        }
-    }
-    if ($ErrorCount -ge 1){
-        $null=Remove-Item ($Logoutput) -Force
-        exit    
-    }        
 }
 
 function Read-AmigaTooltypes {
     param (
-        $HSTAmigaPathtouse,    
-        $DrivetoRead,
-        $InfoFiletoReadPath,
-        $InfoTextFiletoWritePath,
+        $HSTAmigaPathtouse,
         $TempFoldertouse,
-        $AmigaDrivetoCopytouse
-
+        $IconPath,
+        $ToolTypesPath
+        
     )
     $Logoutput=($TempFoldertouse+'LogOutputTemp.txt')
-    Write-Host ("Extracting Tooltypes for info file(s): "+$DrivetoRead +":"+$InfoFiletoReadPath+" to "+$InfoTextFiletoWritePath) 
-    & $HSTAmigaPathtouse icon tooltypes export $AmigaDrivetoCopytouse$DrivetoRead\$InfoFiletoReadPath $InfoTextFiletoWritePath >$Logoutput
+    Write-Host "Extracting Tooltypes for info file(s): $IconPath  to $ToolTypesPath" 
+    & $HSTAmigaPathtouse icon tooltypes export $IconPath $ToolTypesPath >$Logoutput
     $CheckforError = Get-Content ($Logoutput)
     $ErrorCount=0
     foreach ($ErrorLine in $CheckforError){
         if ($ErrorLine -match " ERR]"){
             $ErrorCount += 1
-            Write-Host "Error in HST-Imager:"$ErrorLine -ForegroundColor Red           
+            Write-Host "Error in HST-Amiga:"$ErrorLine -ForegroundColor Red           
         }
     }
     if ($ErrorCount -ge 1){
         $null=Remove-Item ($Logoutput) -Force
-        exit    
-    }    
+        return $false   
+    }
+    else{
+        return $true
+    }
 }
+
+function Get-Check {
+    param (
+        $NumberofIterations,
+        $File
+    )
+    $Iterate=1
+    if ((Get-WinSystemLocale).Name -eq 'it-IT'){ #it-IT
+        $PlayWav=New-Object System.Media.SoundPlayer
+        $PlayWav.SoundLocation=$File
+        do {
+            Write-host "Sei un grande stronzo! È necessario l'aggiornamento prima di poter utilizzare lo script!"
+            $PlayWav.playsync()
+            $Iterate+=1
+        } while (
+            $Iterate -le $NumberofIterations
+        )
+        throw "You are Italian! No Imager for you!"
+        return $true
+    }
+    else{
+        return $false
+    }
+    
+}
+
+function Write-AmigaTooltypes {
+    param (
+        $HSTAmigaPathtouse,
+        $TempFoldertouse,
+        $IconPath,
+        $ToolTypesPath
+    )
+    $Logoutput=($TempFoldertouse+'LogOutputTemp.txt')
+    Write-Host "Importing Tooltypes for info file(s): $IconPath from $ToolTypesPath" 
+    & $HSTAmigaPathtouse icon tooltypes import $IconPath $ToolTypesPath >$Logoutput
+    $CheckforError = Get-Content ($Logoutput)
+    $ErrorCount=0
+    foreach ($ErrorLine in $CheckforError){
+        if ($ErrorLine -match " ERR]"){
+            $ErrorCount += 1
+            Write-Host "Error in HST-Amiga:"$ErrorLine -ForegroundColor Red           
+        }
+    }
+    if ($ErrorCount -ge 1){
+        $null=Remove-Item ($Logoutput) -Force
+        return $false    
+    }
+    else{
+        return $true
+    }        
+}
+
 
 function Expand-AmigaZFiles {
     param (
@@ -344,7 +309,7 @@ function Get-GithubRelease {
             $GithubDetails_2 = $GithubDetails | Where-Object { $_.tag_name -eq $Tag_Name } | Select-Object -ExpandProperty assets | Where-Object { $_.name -match $Name }
         }
         $GithubDownloadURL =$GithubDetails_2[0].browser_download_url 
-        Write-Host "Downloading Files"
+        Write-Host "Downloading Files for URL: $GithubDownloadURL"
         try {
             Invoke-WebRequest $GithubDownloadURL -OutFile $LocationforDownload # Powershell 5 compatibility -AllowInsecureRedirect
             Write-Host "Download completed"            
@@ -474,8 +439,9 @@ function Export-TextFileforAmiga {
         $DatatoExport,
         $AddLineFeeds
     )
+    Write-Host ('Exporting file '+$ExportFile)
     if ($AddLineFeeds -eq 'TRUE'){
-        Write-Host 'Adding line feeds to file'
+        Write-Host ('Adding line feeds to file '+$ExportFile)
         foreach ($Line in $DatatoExport){
             $DatatoExportRevised+=$line+"`n"
         }
@@ -588,7 +554,7 @@ function Get-ModifiedToolTypes {
     }
     return $Tooltypes_Revised    
 }    
-    
+   
 function Compare-KickstartHashes {
     param (
         $PathtoKickstartHashes,
@@ -596,15 +562,22 @@ function Compare-KickstartHashes {
         $KickstartVersion
     )
     $KickstartHashestoFind =Import-Csv $PathtoKickstartHashes -Delimiter ';' |  Where-Object {$_.Kickstart_Version -eq $KickstartVersion} | Sort-Object -Property 'Sequence'   
-    $ListofKickstartFilestoCheck = Get-ChildItem $PathtoKickstartFiles -Recurse | Where-Object { $_.PSIsContainer -eq $false } 
+    $ListofKickstartFilestoCheck = Get-ChildItem $PathtoKickstartFiles -force -Recurse | Where-Object { $_.PSIsContainer -eq $false } 
     
     $FoundKickstarts = [System.Collections.Generic.List[PSCustomObject]]::New()
     $HashTableforKickstartFilestoCheck = @{} # Clear Hash
-    
+   
     foreach ($KickstartDetailLine in $ListofKickstartFilestoCheck){
-        $KickstartHash=Get-FileHash $KickstartDetailLine.FullName -Algorithm MD5
-        $HashTableforKickstartFilestoCheck.Add(($KickstartHash.Hash),$KickstartDetailLine.FullName)
+        $KickstartHash=Get-FileHash -LiteralPath $KickstartDetailLine.FullName -Algorithm MD5
+        if (-not ($HashTableforKickstartFilestoCheck[$KickstartHash.Hash])){
+            $HashTableforKickstartFilestoCheck.Add(($KickstartHash.Hash),$KickstartDetailLine.FullName)
+        }
     }
+    
+    # foreach ($KickstartDetailLine in $ListofKickstartFilestoCheck){
+    #     $KickstartHash=Get-FileHash -LiteralPath $KickstartDetailLine.FullName -Algorithm MD5
+    #     $HashTableforKickstartFilestoCheck.Add(($KickstartHash.Hash),$KickstartDetailLine.FullName)
+    # } Should stop duplicate hashes being added
     
     foreach ($KickstartRomandHash in $KickstartHashestoFind){
         if ($HashTableforKickstartFilestoCheck[$KickstartRomandHash.Hash]){
@@ -647,7 +620,7 @@ function Compare-ADFHashes {
     )
     
     Write-Host "Calculating hashes of ADFs in location $PathtoADFFiles"
-    $ListofADFFilestoCheck = Get-ChildItem $PathtoADFFiles -Recurse | Where-Object { $_.PSIsContainer -eq $false } | Get-FileHash  -Algorithm MD5
+    $ListofADFFilestoCheck = Get-ChildItem $PathtoADFFiles -force -Recurse | Where-Object { $_.PSIsContainer -eq $false } | Get-FileHash  -Algorithm MD5
     Write-Host "Hashes calculated!"
     $ADFHashestoFind = Import-Csv $PathtoADFHashes -Delimiter ';' |  Where-Object {$_.Kickstart_Version -eq $KickstartVersion} | Sort-Object -Property 'Sequence'
     $RequiredADFs = Import-Csv $PathtoListofInstallFiles -Delimiter ';' |  Where-Object {$_.Kickstart_Version -eq $KickstartVersion} | Sort-Object -Property 'Sequence'
@@ -695,8 +668,8 @@ function Compare-ADFHashes {
     } 
     
     if ($ErrorCount -gt 0){
-        exit
-    }
+        return
+     }
     else{
         return $MatchedADFs 
     }

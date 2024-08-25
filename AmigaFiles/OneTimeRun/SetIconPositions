@@ -15,53 +15,16 @@ If Warn
 
     iconpos >NIL: "Sys:System" type=DRAWER 164 4 DXPOS 150 DYPOS 80 DWIDTH 273 DHEIGHT 110
 
-    iconpos >NIL: "Sys:Tools" type=DRAWER 85 35 DXPOS 182 DYPOS 82 DWIDTH 358 DHEIGHT 156
+    iconpos >NIL: "Sys:Tools" type=DRAWER 85 35 DXPOS 118 DYPOS 66 DWIDTH 495 DHEIGHT 154
 
-    iconpos >NIL: "Sys:Disk" type=DISK 25 4 DXPOS 114 DYPOS 33 DWIDTH 500 DHEIGHT 89
+    iconpos >NIL: "Sys:Disk" type=DISK 3 4 DXPOS 114 DYPOS 33 DWIDTH 500 DHEIGHT 89
 
-    iconpos >NIL: "Sys:Pistorm" type=DRAWER 398 18 DXPOS 91 DYPOS 77 DWIDTH 549 DHEIGHT 169
+    iconpos >NIL: "Sys:PiStorm" type=DRAWER 398 18 DXPOS 91 DYPOS 77 DWIDTH 549 DHEIGHT 169
 
-    iconpos >NIL: "Sys:Programs" type=DRAWER 319 4 DXPOS 173 DYPOS 80 DWIDTH 381 DHEIGHT 138
+    iconpos >NIL: "Sys:Programs" type=DRAWER 319 4 DXPOS 173 DYPOS 80 DWIDTH 458 DHEIGHT 138
 
     iconpos >NIL: "Sys:Storage" type=DRAWER 243 35 DXPOS 195 DYPOS 102 DWIDTH 257 DHEIGHT 94
 
-    iconpos >NIL: "Sys:Devs/DataTypes" type=DRAWER 10 4 DXPOS 229 DYPOS 115 DWIDTH 264 DHEIGHT 110
-
-    iconpos >NIL: "Sys:Devs/DOSDrivers" type=DRAWER 10 35 DXPOS 265 DYPOS 131 DWIDTH 170 DHEIGHT 71
-
-    iconpos >NIL: "Sys:Devs/Keymaps" type=DRAWER 90 4 DXPOS 280 DYPOS 134 DWIDTH 182 DHEIGHT 79
-
-    iconpos >NIL: "Sys:Devs/Monitors" type=DRAWER 90 35 DXPOS 248 DYPOS 124 DWIDTH 181 DHEIGHT 79
-
-    iconpos >NIL: "Sys:Devs/Printers" type=DRAWER 162 4 DXPOS 256 DYPOS 118 DWIDTH 150 DHEIGHT 71
-
-    iconpos >NIL: "Sys:Devs/DataTypes/8SVX" type=PROJECT 12 4
-    iconpos >NIL: "Sys:Devs/DataTypes/AmigaGuide" type=PROJECT 12 44
-    iconpos >NIL: "Sys:Devs/DataTypes/ANIM" type=PROJECT 90 4
-    iconpos >NIL: "Sys:Devs/DataTypes/CDXL" type=PROJECT 90 44
-    iconpos >NIL: "Sys:Devs/DataTypes/FTXT" type=PROJECT 159 4
-    iconpos >NIL: "Sys:Devs/DataTypes/ILBM" type=PROJECT 159 44
-    iconpos >NIL: "Sys:Devs/DOSDrivers/PIPE" type=PROJECT 3 4
-    iconpos >NIL: "Sys:Devs/DOSDrivers/SD0" type=PROJECT FREEX FREEY
-    iconpos >NIL: "Sys:Devs/Monitors/Videocore" type=TOOL 97 4
-    iconpos >NIL: "Sys:Devs/Monitors/PAL" type=TOOL FREEX FREEY
-    iconpos >NIL: "Sys:Devs/Printers/Generic" type=PROJECT 3 4
-    iconpos >NIL: "Sys:Devs/Internet/groups" type=PROJECT FREEX FREEY
-    iconpos >NIL: "Sys:Devs/Internet/hosts" type=PROJECT FREEX FREEY
-    iconpos >NIL: "Sys:Devs/Internet/name_resolution" type=PROJECT FREEX FREEY
-    iconpos >NIL: "Sys:Devs/Internet/networks" type=PROJECT FREEX FREEY
-    iconpos >NIL: "Sys:Devs/Internet/protocols" type=PROJECT FREEX FREEY
-    iconpos >NIL: "Sys:Devs/Internet/routes" type=PROJECT FREEX FREEY
-    iconpos >NIL: "Sys:Devs/Internet/rpc" type=PROJECT FREEX FREEY
-    iconpos >NIL: "Sys:Devs/Internet/servers" type=PROJECT FREEX FREEY
-    iconpos >NIL: "Sys:Devs/Internet/services" type=PROJECT FREEX FREEY
-    iconpos >NIL: "Sys:Devs/Internet/users" type=PROJECT FREEX FREEY
-    iconpos >NIL: "Sys:Devs/NetInterfaces/wifipi" type=PROJECT FREEX FREEY
-    iconpos >NIL: "Sys:Locale/Unnamed1" type=DRAWER 101 -2147483648 DXPOS 50 DYPOS 50 DWIDTH 400 DHEIGHT 100
-
-    iconpos >NIL: "Sys:S/WHDLoad-Wrapper/UpdateDBs" type=PROJECT FREEX FREEY
-    iconpos >NIL: "Sys:Utilities/Clock" type=TOOL 3 4
-    iconpos >NIL: "Sys:Utilities/MultiView" type=TOOL 73 4
     iconpos >NIL: "Sys:Storage/Disk" type=DISK FREEX FREEY DXPOS 50 DYPOS 50 DWIDTH 193 DHEIGHT 134
 
     iconpos >NIL: "Sys:Storage/DOSDrivers" type=DRAWER 10 35 DXPOS 93 DYPOS 111 DWIDTH 348 DHEIGHT 109
@@ -81,19 +44,19 @@ If Warn
     iconpos >NIL: "Sys:Storage/DOSDrivers/RAD" type=PROJECT 240 4
     iconpos >NIL: "Sys:Storage/DOSDrivers/CF0" type=PROJECT 3 4
     iconpos >NIL: "Sys:Storage/DOSDrivers/SMB0" type=PROJECT 240 43
-    iconpos >NIL: "Sys:Storage/Keymaps/cdn" type=PROJECT FREEX FREEY
-    iconpos >NIL: "Sys:Storage/Keymaps/ch1" type=PROJECT FREEX FREEY
-    iconpos >NIL: "Sys:Storage/Keymaps/ch2" type=PROJECT FREEX FREEY
-    iconpos >NIL: "Sys:Storage/Keymaps/d" type=PROJECT FREEX FREEY
-    iconpos >NIL: "Sys:Storage/Keymaps/dk" type=PROJECT FREEX FREEY
-    iconpos >NIL: "Sys:Storage/Keymaps/e" type=PROJECT FREEX FREEY
-    iconpos >NIL: "Sys:Storage/Keymaps/f" type=PROJECT FREEX FREEY
-    iconpos >NIL: "Sys:Storage/Keymaps/gb" type=PROJECT FREEX FREEY
-    iconpos >NIL: "Sys:Storage/Keymaps/i" type=PROJECT FREEX FREEY
-    iconpos >NIL: "Sys:Storage/Keymaps/n" type=PROJECT FREEX FREEY
-    iconpos >NIL: "Sys:Storage/Keymaps/po" type=PROJECT FREEX FREEY
-    iconpos >NIL: "Sys:Storage/Keymaps/s" type=PROJECT FREEX FREEY
-    iconpos >NIL: "Sys:Storage/Keymaps/usa2" type=PROJECT FREEX FREEY
+    iconpos >NIL: "Sys:Storage/KeyMaps/cdn" type=PROJECT FREEX FREEY
+    iconpos >NIL: "Sys:Storage/KeyMaps/ch1" type=PROJECT FREEX FREEY
+    iconpos >NIL: "Sys:Storage/KeyMaps/ch2" type=PROJECT FREEX FREEY
+    iconpos >NIL: "Sys:Storage/KeyMaps/d" type=PROJECT FREEX FREEY
+    iconpos >NIL: "Sys:Storage/KeyMaps/dk" type=PROJECT FREEX FREEY
+    iconpos >NIL: "Sys:Storage/KeyMaps/e" type=PROJECT FREEX FREEY
+    iconpos >NIL: "Sys:Storage/KeyMaps/f" type=PROJECT FREEX FREEY
+    iconpos >NIL: "Sys:Storage/KeyMaps/gb" type=PROJECT FREEX FREEY
+    iconpos >NIL: "Sys:Storage/KeyMaps/i" type=PROJECT FREEX FREEY
+    iconpos >NIL: "Sys:Storage/KeyMaps/n" type=PROJECT FREEX FREEY
+    iconpos >NIL: "Sys:Storage/KeyMaps/po" type=PROJECT FREEX FREEY
+    iconpos >NIL: "Sys:Storage/KeyMaps/s" type=PROJECT FREEX FREEY
+    iconpos >NIL: "Sys:Storage/KeyMaps/usa2" type=PROJECT FREEX FREEY
     iconpos >NIL: "Sys:Storage/Monitors/A2024" type=TOOL FREEX FREEY
     iconpos >NIL: "Sys:Storage/Monitors/DblNTSC" type=TOOL FREEX FREEY
     iconpos >NIL: "Sys:Storage/Monitors/DblPAL" type=TOOL FREEX FREEY
@@ -166,6 +129,42 @@ If Warn
     iconpos >NIL: "Sys:Storage/NetInterfaces/ENC624J600" type=PROJECT FREEX FREEY
     iconpos >NIL: "Sys:Storage/NetInterfaces/IOBlix" type=PROJECT FREEX FREEY
     iconpos >NIL: "Sys:Storage/NetInterfaces/MediatorFast" type=PROJECT FREEX FREEY
+    iconpos >NIL: "Sys:Fonts/Disk" type=DISK FREEX FREEY DXPOS 50 DYPOS 50 DWIDTH 400 DHEIGHT 100
+
+    iconpos >NIL: "Sys:Devs/DataTypes" type=DRAWER 10 4 DXPOS 229 DYPOS 115 DWIDTH 264 DHEIGHT 110
+
+    iconpos >NIL: "Sys:Devs/DOSDrivers" type=DRAWER 10 35 DXPOS 265 DYPOS 131 DWIDTH 170 DHEIGHT 71
+
+    iconpos >NIL: "Sys:Devs/Keymaps" type=DRAWER 90 4 DXPOS 280 DYPOS 134 DWIDTH 182 DHEIGHT 79
+
+    iconpos >NIL: "Sys:Devs/Monitors" type=DRAWER 90 35 DXPOS 248 DYPOS 124 DWIDTH 181 DHEIGHT 79
+
+    iconpos >NIL: "Sys:Devs/Printers" type=DRAWER 162 4 DXPOS 256 DYPOS 118 DWIDTH 150 DHEIGHT 71
+
+    iconpos >NIL: "Sys:Devs/DataTypes/8SVX" type=PROJECT 12 4
+    iconpos >NIL: "Sys:Devs/DataTypes/AmigaGuide" type=PROJECT 12 44
+    iconpos >NIL: "Sys:Devs/DataTypes/ANIM" type=PROJECT 90 4
+    iconpos >NIL: "Sys:Devs/DataTypes/CDXL" type=PROJECT 90 44
+    iconpos >NIL: "Sys:Devs/DataTypes/FTXT" type=PROJECT 159 4
+    iconpos >NIL: "Sys:Devs/DataTypes/ILBM" type=PROJECT 159 44
+    iconpos >NIL: "Sys:Devs/DOSDrivers/PIPE" type=PROJECT 3 4
+    iconpos >NIL: "Sys:Devs/DOSDrivers/SD0" type=PROJECT FREEX FREEY
+    iconpos >NIL: "Sys:Devs/Printers/Generic" type=PROJECT 3 4
+    iconpos >NIL: "Sys:Devs/Internet/groups" type=PROJECT FREEX FREEY
+    iconpos >NIL: "Sys:Devs/Internet/hosts" type=PROJECT FREEX FREEY
+    iconpos >NIL: "Sys:Devs/Internet/name_resolution" type=PROJECT FREEX FREEY
+    iconpos >NIL: "Sys:Devs/Internet/networks" type=PROJECT FREEX FREEY
+    iconpos >NIL: "Sys:Devs/Internet/protocols" type=PROJECT FREEX FREEY
+    iconpos >NIL: "Sys:Devs/Internet/routes" type=PROJECT FREEX FREEY
+    iconpos >NIL: "Sys:Devs/Internet/rpc" type=PROJECT FREEX FREEY
+    iconpos >NIL: "Sys:Devs/Internet/servers" type=PROJECT FREEX FREEY
+    iconpos >NIL: "Sys:Devs/Internet/services" type=PROJECT FREEX FREEY
+    iconpos >NIL: "Sys:Devs/Internet/users" type=PROJECT FREEX FREEY
+    iconpos >NIL: "Sys:Devs/Monitors/Videocore" type=TOOL 97 4
+    iconpos >NIL: "Sys:Devs/NetInterfaces/wifipi" type=PROJECT FREEX FREEY
+    iconpos >NIL: "Sys:S/WHDLoad-Wrapper/UpdateDBs" type=PROJECT FREEX FREEY
+    iconpos >NIL: "Sys:Utilities/Clock" type=TOOL 3 4
+    iconpos >NIL: "Sys:Utilities/MultiView" type=TOOL 73 4
     iconpos >NIL: "Sys:Prefs/WBPattern" type=TOOL 330 4
     iconpos >NIL: "Sys:Prefs/Picasso96Mode" type=TOOL 421 4
     iconpos >NIL: "Sys:Prefs/PVS.guide" type=PROJECT 526 56
@@ -187,20 +186,29 @@ If Warn
     iconpos >NIL: "Sys:Prefs/Serial" type=TOOL 247 90
     iconpos >NIL: "Sys:Prefs/Sound" type=TOOL 330 47
     iconpos >NIL: "Sys:Prefs/Time" type=TOOL 330 90
+    iconpos >NIL: "Sys:Prefs/Env-Archive/Sys/def_RAM" type=DISK 24 70 DXPOS 50 DYPOS 50 DWIDTH 400 DHEIGHT 100
+
     iconpos >NIL: "Sys:System/FixFonts" type=TOOL 4 4
     iconpos >NIL: "Sys:System/Format" type=TOOL 4 43
     iconpos >NIL: "Sys:System/NoFastMem" type=TOOL 79 4
     iconpos >NIL: "Sys:System/RexxMast" type=TOOL 79 45
     iconpos >NIL: "Sys:System/Shell" type=PROJECT 166 4
     iconpos >NIL: "Sys:System/Intellifont" type=TOOL 166 43
-    iconpos >NIL: "Sys:Tools/HDBackup" type=TOOL 204 4
+    iconpos >NIL: "Sys:Tools/HDBackup" type=TOOL 193 44
     iconpos >NIL: "Sys:Tools/Calculator" type=TOOL 16 4
     iconpos >NIL: "Sys:Tools/CMD" type=TOOL 12 44
     iconpos >NIL: "Sys:Tools/Commodities" type=DRAWER 14 84 DXPOS 188 DYPOS 16 DWIDTH 359 DHEIGHT 160
 
-    iconpos >NIL: "Sys:Tools/GraphicDump" type=TOOL 115 4
-    iconpos >NIL: "Sys:Tools/IconEdit" type=TOOL 114 44
-    iconpos >NIL: "Sys:Tools/HDToolbox" type=TOOL 211 53
+    iconpos >NIL: "Sys:Tools/GraphicDump" type=TOOL 111 4
+    iconpos >NIL: "Sys:Tools/IconEdit" type=TOOL 111 82
+    iconpos >NIL: "Sys:Tools/InitPrinter" type=TOOL 111 43
+    iconpos >NIL: "Sys:Tools/KeyShow" type=TOOL 206 4
+    iconpos >NIL: "Sys:Tools/Lacer" type=TOOL 206 89
+    iconpos >NIL: "Sys:Tools/MEmacs" type=TOOL 297 4
+    iconpos >NIL: "Sys:Tools/PrepCard" type=TOOL 297 44
+    iconpos >NIL: "Sys:Tools/PrintFiles" type=TOOL 297 83
+    iconpos >NIL: "Sys:Tools/ShowConfig" type=TOOL 384 4
+    iconpos >NIL: "Sys:Tools/HDToolBox" type=TOOL 379 43
     iconpos >NIL: "Sys:Tools/Commodities/AutoPoint" type=TOOL FREEX FREEY
     iconpos >NIL: "Sys:Tools/Commodities/Blanker" type=TOOL FREEX FREEY
     iconpos >NIL: "Sys:Tools/Commodities/ClickToFront" type=TOOL FREEX FREEY
@@ -209,27 +217,36 @@ If Warn
     iconpos >NIL: "Sys:Tools/Commodities/FKey" type=TOOL FREEX FREEY
     iconpos >NIL: "Sys:Tools/Commodities/MouseBlanker" type=TOOL FREEX FREEY
     iconpos >NIL: "Sys:Tools/Commodities/NoCapsLock" type=TOOL FREEX FREEY
-    iconpos >NIL: "Sys:Pistorm/Emu68Info.r" type=PROJECT 112 12
-    iconpos >NIL: "Sys:Pistorm/Emu68Meter" type=TOOL 201 12
-    iconpos >NIL: "Sys:Pistorm/EmuControl" type=TOOL 16 4
-    iconpos >NIL: "Sys:Pistorm/Install Packages" type=PROJECT 431 81
-    iconpos >NIL: "Sys:Pistorm/Offline" type=PROJECT 106 81
-    iconpos >NIL: "Sys:Pistorm/Online" type=PROJECT 20 81
-    iconpos >NIL: "Sys:Pistorm/SMB Config" type=PROJECT 325 11
-    iconpos >NIL: "Sys:Pistorm/TransferKick" type=PROJECT 431 11
-    iconpos >NIL: "Sys:Pistorm/Wifi Config" type=PROJECT 199 81
-    iconpos >NIL: "Sys:Pistorm/VC4Tweak" type=TOOL 320 73
-    iconpos >NIL: "Sys:Programs/AmiSpeedTest" type=DRAWER 103 82 DXPOS 173 DYPOS 80 DWIDTH 294 DHEIGHT 149
+    iconpos >NIL: "Sys:Locale/Disk" type=DISK FREEX FREEY DXPOS 50 DYPOS 50 DWIDTH 400 DHEIGHT 100
+
+    iconpos >NIL: "Sys:PiStorm/CheckMD5s" type=PROJECT FREEX FREEY
+    iconpos >NIL: "Sys:PiStorm/Emu68Info.r" type=PROJECT 112 12
+    iconpos >NIL: "Sys:PiStorm/Emu68Meter" type=TOOL 201 12
+    iconpos >NIL: "Sys:PiStorm/Emucontrol" type=TOOL 16 4
+    iconpos >NIL: "Sys:PiStorm/Install Packages" type=PROJECT 431 81
+    iconpos >NIL: "Sys:PiStorm/Offline" type=PROJECT 106 81
+    iconpos >NIL: "Sys:PiStorm/Online" type=PROJECT 20 81
+    iconpos >NIL: "Sys:PiStorm/SMB Config" type=PROJECT 325 11
+    iconpos >NIL: "Sys:PiStorm/TransferKick" type=PROJECT 431 11
+    iconpos >NIL: "Sys:PiStorm/VC4Tweak" type=TOOL 320 73
+    iconpos >NIL: "Sys:PiStorm/Wifi Config" type=PROJECT 199 81
+    iconpos >NIL: "Sys:Programs/AmiSpeedTest" type=DRAWER 103 82 DXPOS 173 DYPOS 80 DWIDTH 292 DHEIGHT 97
+
+    iconpos >NIL: "Sys:Programs/AMISSL" type=DRAWER 352 77 DXPOS 173 DYPOS 80 DWIDTH 294 DHEIGHT 149
 
     iconpos >NIL: "Sys:Programs/DOpus" type=DRAWER 5 4 DXPOS 111 DYPOS 37 DWIDTH 256 DHEIGHT 163
 
+    iconpos >NIL: "Sys:Programs/HippoPlayer" type=DRAWER 234 36 DXPOS 173 DYPOS 80 DWIDTH 389 DHEIGHT 147
+
     iconpos >NIL: "Sys:Programs/Ibrowse" type=DRAWER 78 4 DXPOS 248 DYPOS 164 DWIDTH 284 DHEIGHT 199
 
-    iconpos >NIL: "Sys:Programs/mui" type=DRAWER 268 29 DXPOS 78 DYPOS 87 DWIDTH 541 DHEIGHT 200
+    iconpos >NIL: "Sys:Programs/JanoEditor" type=DRAWER 204 81 DXPOS 173 DYPOS 80 DWIDTH 355 DHEIGHT 132
 
-    iconpos >NIL: "Sys:Programs/Picasso96" type=DRAWER 272 80 DXPOS 77 DYPOS 84 DWIDTH 258 DHEIGHT 298
+    iconpos >NIL: "Sys:Programs/mui" type=DRAWER 351 10 DXPOS 78 DYPOS 87 DWIDTH 541 DHEIGHT 200
 
-    iconpos >NIL: "Sys:Programs/SnoopDOS" type=DRAWER 151 36 DXPOS 173 DYPOS 80 DWIDTH 294 DHEIGHT 149
+    iconpos >NIL: "Sys:Programs/Picasso96" type=DRAWER 352 47 DXPOS 77 DYPOS 84 DWIDTH 258 DHEIGHT 298
+
+    iconpos >NIL: "Sys:Programs/SnoopDOS" type=DRAWER 151 36 DXPOS 202 DYPOS 82 DWIDTH 256 DHEIGHT 158
 
     iconpos >NIL: "Sys:Programs/SysInfo" type=DRAWER 0 82 DXPOS 12 DYPOS 108 DWIDTH 628 DHEIGHT 77
 
@@ -244,19 +261,82 @@ If Warn
     iconpos >NIL: "Sys:Programs/DOpus/DOpus416JRbin.readme" type=PROJECT 40 72
     iconpos >NIL: "Sys:Programs/DOpus/Docs/English" type=DRAWER 3 4 DXPOS 208 DYPOS 203 DWIDTH 225 DHEIGHT 181
 
-    iconpos >NIL: "Sys:Programs/DOpus/Docs/Espa∂ol" type=DRAWER 3 73 DXPOS 209 DYPOS 203 DWIDTH 225 DHEIGHT 181
+    iconpos >NIL: "Sys:Programs/DOpus/Docs/Espa켹l" type=DRAWER 3 73 DXPOS 209 DYPOS 203 DWIDTH 225 DHEIGHT 181
 
     iconpos >NIL: "Sys:Programs/DOpus/Docs/English/DOpus4 Manual" type=PROJECT 25 4
     iconpos >NIL: "Sys:Programs/DOpus/Docs/English/History.txt" type=PROJECT 27 68
     iconpos >NIL: "Sys:Programs/DOpus/Docs/English/License.txt" type=PROJECT 110 4
-    iconpos >NIL: "Sys:Programs/DOpus/Docs/Espa∂ol/Historial.txt" type=PROJECT 36 68
-    iconpos >NIL: "Sys:Programs/DOpus/Docs/Espa∂ol/Licencia.txt" type=PROJECT 130 4
-    iconpos >NIL: "Sys:Programs/DOpus/Docs/Espa∂ol/Manual de DOpus4" type=PROJECT 34 4
+    iconpos >NIL: "Sys:Programs/DOpus/Docs/Espa켹l/Historial.txt" type=PROJECT 36 68
+    iconpos >NIL: "Sys:Programs/DOpus/Docs/Espa켹l/Licencia.txt" type=PROJECT 130 4
+    iconpos >NIL: "Sys:Programs/DOpus/Docs/Espa켹l/Manual de DOpus4" type=PROJECT 34 4
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Brushes" type=DRAWER 130 35 DXPOS 17 DYPOS 58 DWIDTH 92 DHEIGHT 78
+
+    iconpos >NIL: "Sys:Programs/HippoPlayer/HiP.doc" type=PROJECT 202 4
+    iconpos >NIL: "Sys:Programs/HippoPlayer/HiP.guide" type=PROJECT 276 4
+    iconpos >NIL: "Sys:Programs/HippoPlayer/HiP" type=TOOL 20 4
+    iconpos >NIL: "Sys:Programs/HippoPlayer/HippoPlayerDocs" type=DRAWER 30 71 DXPOS 89 DYPOS 26 DWIDTH 150 DHEIGHT 217
+
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Icons" type=DRAWER 130 97 DXPOS 3 DYPOS 29 DWIDTH 557 DHEIGHT 135
+
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Me.png" type=PROJECT 209 43
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Scopes" type=DRAWER 130 66 DXPOS 14 DYPOS 24 DWIDTH 547 DHEIGHT 171
+
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Support" type=DRAWER 130 4 DXPOS 95 DYPOS 59 DWIDTH 256 DHEIGHT 83
+
+    iconpos >NIL: "Sys:Programs/HippoPlayer/ARexx/hip.HiP" type=PROJECT 469 187
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Brushes/HippoPl" type=PROJECT 12 4
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Icons/Drawer_MWB" type=DRAWER 441 43 DXPOS 217 DYPOS 91 DWIDTH 263 DHEIGHT 112
+
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Icons/Drawer_MWB2" type=DRAWER 441 4 DXPOS 98 DYPOS 130 DWIDTH 279 DHEIGHT 228
+
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Icons/Drawer_MWB3" type=DRAWER 346 4 DXPOS 98 DYPOS 130 DWIDTH 279 DHEIGHT 228
+
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Icons/Drawer_MWB4" type=DRAWER 252 62 DXPOS 98 DYPOS 130 DWIDTH 279 DHEIGHT 228
+
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Icons/Drawer_MWB5" type=DRAWER 358 43 DXPOS 217 DYPOS 91 DWIDTH 263 DHEIGHT 112
+
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Icons/HiP_MWB" type=TOOL 86 63
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Icons/HiP_MWB2" type=TOOL 3 63
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Icons/HiP_MWB3" type=TOOL 74 4
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Icons/HiP_MWB4" type=TOOL 169 4
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Icons/HiP_MWB5" type=TOOL 169 52 DXPOS 50 DYPOS 50 DWIDTH 400 DHEIGHT 100
+
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Icons/HiP_NI" type=TOOL 262 4
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Icons/HiP_NI2" type=TOOL FREEX FREEY
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Icons/HiP2" type=TOOL 4 4
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Scopes/VUMeter" type=TOOL 428 4 DXPOS 50 DYPOS 50 DWIDTH 400 DHEIGHT 100
+
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Scopes/BigScope" type=TOOL 301 100 DXPOS 50 DYPOS 50 DWIDTH 400 DHEIGHT 100
+
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Scopes/FQuadraScope" type=TOOL 301 4 DXPOS 50 DYPOS 50 DWIDTH 400 DHEIGHT 100
+
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Scopes/FQuadraScopeSmall" type=TOOL 301 52 DXPOS 50 DYPOS 50 DWIDTH 400 DHEIGHT 100
+
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Scopes/FreqAnalyzer" type=TOOL 35 100 DXPOS 50 DYPOS 50 DWIDTH 400 DHEIGHT 100
+
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Scopes/HippoScope" type=TOOL 166 4 DXPOS 50 DYPOS 50 DWIDTH 400 DHEIGHT 100
+
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Scopes/HippoScopeSmall" type=TOOL 166 51 DXPOS 50 DYPOS 50 DWIDTH 400 DHEIGHT 100
+
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Scopes/PatternScope" type=TOOL 166 100 DXPOS 50 DYPOS 50 DWIDTH 400 DHEIGHT 100
+
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Scopes/QuadraScope" type=TOOL 35 4 DXPOS 50 DYPOS 50 DWIDTH 400 DHEIGHT 100
+
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Scopes/QuadraScopeSmall" type=TOOL 35 52 DXPOS 50 DYPOS 50 DWIDTH 400 DHEIGHT 100
+
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Scopes/Scopes.readme" type=PROJECT 429 52
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Support/14Bit_Calibration" type=TOOL 36 4
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Support/14bit.Doc" type=PROJECT 150 4
     iconpos >NIL: "Sys:Programs/Ibrowse/IBrowse" type=TOOL 108 16
     iconpos >NIL: "Sys:Programs/Ibrowse/ReadMe.html" type=PROJECT 187 83
     iconpos >NIL: "Sys:Programs/Ibrowse/ReadMe.mui" type=PROJECT 23 83
     iconpos >NIL: "Sys:Programs/Ibrowse/ReadMe.txt" type=PROJECT 103 83
     iconpos >NIL: "Sys:Programs/Ibrowse/images/Picture" type=PROJECT FREEX FREEY
+    iconpos >NIL: "Sys:Programs/JanoEditor/JanoEditor.guide.fr" type=PROJECT 372 4
+    iconpos >NIL: "Sys:Programs/JanoEditor/JanoEditor.guide.sp" type=PROJECT 54 51
+    iconpos >NIL: "Sys:Programs/JanoEditor/JanoEditor.guide.uk" type=PROJECT 218 51
+    iconpos >NIL: "Sys:Programs/JanoEditor/JanoEditor" type=TOOL 47 4
+    iconpos >NIL: "Sys:Programs/JanoEditor/JanoPrefs" type=TOOL 208 4
     iconpos >NIL: "Sys:Programs/MUI/Docs" type=DRAWER 192 26 DXPOS 78 DYPOS 101 DWIDTH 493 DHEIGHT 174
 
     iconpos >NIL: "Sys:Programs/MUI/Goodies" type=DRAWER 447 26 DXPOS 78 DYPOS 101 DWIDTH 284 DHEIGHT 186
@@ -306,9 +386,9 @@ If Warn
     iconpos >NIL: "Sys:Programs/Picasso96/Picasso96/Debug/CheckBoards" type=TOOL FREEX FREEY
     iconpos >NIL: "Sys:Programs/Picasso96/Picasso96/P96Speed/P96Speed.guide" type=PROJECT 118 67
     iconpos >NIL: "Sys:Programs/Picasso96/Picasso96/P96Speed/P96Speed" type=TOOL FREEX FREEY
-    iconpos >NIL: "Sys:Programs/SnoopDOS/Readme_latest" type=PROJECT 316 7
-    iconpos >NIL: "Sys:Programs/SnoopDOS/Readme.first" type=PROJECT 21 7
-    iconpos >NIL: "Sys:Programs/SnoopDOS/SnoopDos.guide" type=PROJECT 203 7
+    iconpos >NIL: "Sys:Programs/SnoopDOS/Readme_latest" type=PROJECT 111 96
+    iconpos >NIL: "Sys:Programs/SnoopDOS/Readme.first" type=PROJECT 44 53
+    iconpos >NIL: "Sys:Programs/SnoopDOS/SnoopDos.guide" type=PROJECT 160 53
     iconpos >NIL: "Sys:Programs/SnoopDOS/SnoopDos" type=TOOL 107 7
     iconpos >NIL: "Sys:Programs/SysInfo/SysInfo.guide" type=PROJECT 175 10
     iconpos >NIL: "Sys:Programs/SysInfo/SysInfo.history" type=PROJECT 319 10
@@ -337,11 +417,15 @@ else
 
     iconpos >NIL: "Sys:Disk" type=DISK 15 4 DXPOS 84 DYPOS 30 DWIDTH 533 DHEIGHT 163
 
-    iconpos >NIL: "Sys:Pistorm" type=DRAWER 412 4 DXPOS 77 DYPOS 64 DWIDTH 558 DHEIGHT 165
+    iconpos >NIL: "Sys:PiStorm" type=DRAWER 412 4 DXPOS 77 DYPOS 64 DWIDTH 558 DHEIGHT 165
 
-    iconpos >NIL: "Sys:Programs" type=DRAWER 325 76 DXPOS 119 DYPOS 81 DWIDTH 454 DHEIGHT 149
+    iconpos >NIL: "Sys:Programs" type=DRAWER 325 76 DXPOS 119 DYPOS 81 DWIDTH 492 DHEIGHT 151
+
+    iconpos >NIL: "Sys:Locale/Disk" type=DISK FREEX FREEY DXPOS 47 DYPOS 27 DWIDTH 395 DHEIGHT 118
 
     iconpos >NIL: "Sys:S/WHDLoad-Wrapper/UpdateDBs" type=PROJECT FREEX FREEY
+    iconpos >NIL: "Sys:Fonts/Disk" type=DISK FREEX FREEY DXPOS 47 DYPOS 27 DWIDTH 395 DHEIGHT 118
+
     iconpos >NIL: "Sys:Devs/DataTypes" type=DRAWER 21 4 DXPOS 110 DYPOS 20 DWIDTH 513 DHEIGHT 150
 
     iconpos >NIL: "Sys:Devs/DOSDrivers" type=DRAWER 107 4 DXPOS 390 DYPOS 76 DWIDTH 228 DHEIGHT 69
@@ -390,7 +474,6 @@ else
     iconpos >NIL: "Sys:Devs/Keymaps/rusuae" type=PROJECT 793 4
     iconpos >NIL: "Sys:Devs/Keymaps/rusus" type=PROJECT 793 65
     iconpos >NIL: "Sys:Devs/Monitors/Videocore" type=TOOL 22 4
-    iconpos >NIL: "Sys:Devs/Monitors/PAL" type=TOOL FREEX FREEY
     iconpos >NIL: "Sys:Devs/Printers/Generic" type=PROJECT 432 4
     iconpos >NIL: "Sys:Devs/Printers/PostScript" type=PROJECT 301 220
     iconpos >NIL: "Sys:Devs/Printers/EpsonQ" type=PROJECT 43 4
@@ -454,8 +537,10 @@ else
     iconpos >NIL: "Sys:Prefs/Env-Archive/Sys/def_project" type=PROJECT FREEX FREEY
     iconpos >NIL: "Sys:Prefs/Env-Archive/Sys/def_sys" type=DISK FREEX FREEY DXPOS 28 DYPOS 29 DWIDTH 462 DHEIGHT 93
 
+    iconpos >NIL: "Sys:Prefs/Env-Archive/Sys/def_tool" type=TOOL FREEX FREEY
     iconpos >NIL: "Sys:Prefs/Env-Archive/Sys/def_trashcan" type=GARBAGE FREEX FREEY DXPOS 50 DYPOS 50 DWIDTH 400 DHEIGHT 100
 
+    iconpos >NIL: "Sys:Prefs/Env-Archive/Sys/def_video" type=PROJECT FREEX FREEY
     iconpos >NIL: "Sys:Prefs/Env-Archive/Sys/def_work" type=DISK FREEX FREEY DXPOS 28 DYPOS 29 DWIDTH 462 DHEIGHT 93
 
     iconpos >NIL: "Sys:Prefs/Env-Archive/Sys/def_adf" type=PROJECT FREEX FREEY
@@ -487,8 +572,6 @@ else
     iconpos >NIL: "Sys:Prefs/Env-Archive/Sys/def_script" type=PROJECT FREEX FREEY
     iconpos >NIL: "Sys:Prefs/Env-Archive/Sys/def_sound" type=PROJECT FREEX FREEY
     iconpos >NIL: "Sys:Prefs/Env-Archive/Sys/def_src" type=PROJECT FREEX FREEY
-    iconpos >NIL: "Sys:Prefs/Env-Archive/Sys/def_tool" type=TOOL FREEX FREEY
-    iconpos >NIL: "Sys:Prefs/Env-Archive/Sys/def_video" type=PROJECT FREEX FREEY
     iconpos >NIL: "Sys:Prefs/Presets/Backdrops" type=DRAWER 22 4 DXPOS 131 DYPOS 118 DWIDTH 240 DHEIGHT 89
 
     iconpos >NIL: "Sys:Prefs/Presets/Pointers" type=DRAWER 99 4 DXPOS 142 DYPOS 80 DWIDTH 438 DHEIGHT 187
@@ -518,20 +601,6 @@ else
 
     iconpos >NIL: "Sys:Storage/DataTypes" type=DRAWER 21 4 DXPOS 314 DYPOS 53 DWIDTH 265 DHEIGHT 64
 
-    iconpos >NIL: "Sys:Storage/Printers/PostScript" type=PROJECT FREEX FREEY
-    iconpos >NIL: "Sys:Storage/Printers/EpsonQ" type=PROJECT FREEX FREEY
-    iconpos >NIL: "Sys:Storage/Printers/EpsonX" type=PROJECT FREEX FREEY
-    iconpos >NIL: "Sys:Storage/Printers/EpsonXOld" type=PROJECT FREEX FREEY
-    iconpos >NIL: "Sys:Storage/Printers/HP_DeskJet_340" type=PROJECT FREEX FREEY
-    iconpos >NIL: "Sys:Storage/Printers/HP_DeskJet_400" type=PROJECT FREEX FREEY
-    iconpos >NIL: "Sys:Storage/Printers/HP_DeskJet_600" type=PROJECT FREEX FREEY
-    iconpos >NIL: "Sys:Storage/Printers/HP_DeskJet_895C" type=PROJECT FREEX FREEY
-    iconpos >NIL: "Sys:Storage/Printers/HP_DeskJet" type=PROJECT FREEX FREEY
-    iconpos >NIL: "Sys:Storage/Printers/HP_LaserJet_2100" type=PROJECT FREEX FREEY
-    iconpos >NIL: "Sys:Storage/Printers/HP_LaserJet_4" type=PROJECT FREEX FREEY
-    iconpos >NIL: "Sys:Storage/Printers/HP_LaserJet_III" type=PROJECT FREEX FREEY
-    iconpos >NIL: "Sys:Storage/Printers/HP_LaserJet" type=PROJECT FREEX FREEY
-    iconpos >NIL: "Sys:Storage/Printers/NEC_Pinwriter" type=PROJECT FREEX FREEY
     iconpos >NIL: "Sys:Storage/KeyMaps/ruswin" type=PROJECT FREEX FREEY
     iconpos >NIL: "Sys:Storage/KeyMaps/s" type=PROJECT FREEX FREEY
     iconpos >NIL: "Sys:Storage/KeyMaps/tr" type=PROJECT FREEX FREEY
@@ -554,6 +623,20 @@ else
     iconpos >NIL: "Sys:Storage/KeyMaps/rusgb" type=PROJECT FREEX FREEY
     iconpos >NIL: "Sys:Storage/KeyMaps/rusuae" type=PROJECT FREEX FREEY
     iconpos >NIL: "Sys:Storage/KeyMaps/rusus" type=PROJECT FREEX FREEY
+    iconpos >NIL: "Sys:Storage/Printers/PostScript" type=PROJECT FREEX FREEY
+    iconpos >NIL: "Sys:Storage/Printers/EpsonQ" type=PROJECT FREEX FREEY
+    iconpos >NIL: "Sys:Storage/Printers/EpsonX" type=PROJECT FREEX FREEY
+    iconpos >NIL: "Sys:Storage/Printers/EpsonXOld" type=PROJECT FREEX FREEY
+    iconpos >NIL: "Sys:Storage/Printers/HP_DeskJet_340" type=PROJECT FREEX FREEY
+    iconpos >NIL: "Sys:Storage/Printers/HP_DeskJet_400" type=PROJECT FREEX FREEY
+    iconpos >NIL: "Sys:Storage/Printers/HP_DeskJet_600" type=PROJECT FREEX FREEY
+    iconpos >NIL: "Sys:Storage/Printers/HP_DeskJet_895C" type=PROJECT FREEX FREEY
+    iconpos >NIL: "Sys:Storage/Printers/HP_DeskJet" type=PROJECT FREEX FREEY
+    iconpos >NIL: "Sys:Storage/Printers/HP_LaserJet_2100" type=PROJECT FREEX FREEY
+    iconpos >NIL: "Sys:Storage/Printers/HP_LaserJet_4" type=PROJECT FREEX FREEY
+    iconpos >NIL: "Sys:Storage/Printers/HP_LaserJet_III" type=PROJECT FREEX FREEY
+    iconpos >NIL: "Sys:Storage/Printers/HP_LaserJet" type=PROJECT FREEX FREEY
+    iconpos >NIL: "Sys:Storage/Printers/NEC_Pinwriter" type=PROJECT FREEX FREEY
     iconpos >NIL: "Sys:Storage/DOSDrivers/AUX" type=PROJECT 8 4
     iconpos >NIL: "Sys:Storage/DOSDrivers/CD0" type=PROJECT 64 4
     iconpos >NIL: "Sys:Storage/DOSDrivers/MACCD0" type=PROJECT 180 4
@@ -620,14 +703,16 @@ else
     iconpos >NIL: "Sys:Tools/Commodities" type=DRAWER 209 4 DXPOS 90 DYPOS 64 DWIDTH 370 DHEIGHT 254
 
     iconpos >NIL: "Sys:Tools/GraphicDump" type=TOOL 307 4
+    iconpos >NIL: "Sys:Tools/HDToolBox" type=TOOL 25 65
+    iconpos >NIL: "Sys:Tools/IconEdit" type=TOOL 116 65
     iconpos >NIL: "Sys:Tools/InitPrinter" type=TOOL 209 65
     iconpos >NIL: "Sys:Tools/KeyShow" type=TOOL 307 65
     iconpos >NIL: "Sys:Tools/PrepCard" type=TOOL 25 126
     iconpos >NIL: "Sys:Tools/PrintFiles" type=TOOL 115 126
     iconpos >NIL: "Sys:Tools/ShowConfig" type=TOOL 209 126
     iconpos >NIL: "Sys:Tools/TextEdit" type=TOOL 307 126
-    iconpos >NIL: "Sys:Tools/IconEdit" type=TOOL 111 89
-    iconpos >NIL: "Sys:Tools/HDToolbox" type=TOOL 25 65
+    iconpos >NIL: "Sys:Tools/HDToolBoxPi3" type=TOOL  25 65
+    iconpos >NIL: "Sys:Tools/HDToolBoxPi4" type=TOOL  25 65
     iconpos >NIL: "Sys:Tools/Commodities/AutoPoint" type=TOOL 259 146
     iconpos >NIL: "Sys:Tools/Commodities/Blanker" type=TOOL 259 75
     iconpos >NIL: "Sys:Tools/Commodities/ClickToFront" type=TOOL 259 4
@@ -645,29 +730,36 @@ else
     iconpos >NIL: "Sys:WBStartup/DefIcons" type=TOOL 27 77
     iconpos >NIL: "Sys:WBStartup/MenuTools" type=TOOL 140 77
     iconpos >NIL: "Sys:WBStartup/RAWBInfo" type=TOOL 252 77
-    iconpos >NIL: "Sys:Pistorm/Emu68Info.r" type=PROJECT 208 12
-    iconpos >NIL: "Sys:Pistorm/Emu68Meter" type=TOOL 109 12
-    iconpos >NIL: "Sys:Pistorm/EmuControl" type=TOOL 16 4
-    iconpos >NIL: "Sys:Pistorm/Install Packages" type=PROJECT 438 80
-    iconpos >NIL: "Sys:Pistorm/Offline" type=PROJECT 106 81
-    iconpos >NIL: "Sys:Pistorm/Online" type=PROJECT 20 81
-    iconpos >NIL: "Sys:Pistorm/SMB Config" type=PROJECT 326 80
-    iconpos >NIL: "Sys:Pistorm/TransferKick" type=PROJECT 439 12
-    iconpos >NIL: "Sys:Pistorm/Wifi Config" type=PROJECT 209 81
-    iconpos >NIL: "Sys:Pistorm/VC4Tweak" type=TOOL 324 4
-    iconpos >NIL: "Sys:Programs/AmiSpeedTest" type=DRAWER 183 61 DXPOS 314 DYPOS 53 DWIDTH 301 DHEIGHT 89
+    iconpos >NIL: "Sys:PiStorm/CheckMD5s" type=PROJECT FREEX FREEY
+    iconpos >NIL: "Sys:PiStorm/Emu68Info.r" type=PROJECT 208 12
+    iconpos >NIL: "Sys:PiStorm/Emu68Meter" type=TOOL 109 12
+    iconpos >NIL: "Sys:PiStorm/Emucontrol" type=TOOL 16 4
+    iconpos >NIL: "Sys:PiStorm/Install Packages" type=PROJECT 438 80
+    iconpos >NIL: "Sys:PiStorm/Offline" type=PROJECT 106 81
+    iconpos >NIL: "Sys:PiStorm/Online" type=PROJECT 20 81
+    iconpos >NIL: "Sys:PiStorm/SMB Config" type=PROJECT 326 80
+    iconpos >NIL: "Sys:PiStorm/TransferKick" type=PROJECT 439 12
+    iconpos >NIL: "Sys:PiStorm/VC4Tweak" type=TOOL 324 4
+    iconpos >NIL: "Sys:PiStorm/Wifi Config" type=PROJECT 209 81
+    iconpos >NIL: "Sys:Programs/AmiSpeedTest" type=DRAWER 138 64 DXPOS 314 DYPOS 53 DWIDTH 301 DHEIGHT 89
 
-    iconpos >NIL: "Sys:Programs/DOpus" type=DRAWER 33 4 DXPOS 111 DYPOS 37 DWIDTH 256 DHEIGHT 163
+    iconpos >NIL: "Sys:Programs/AMISSL" type=DRAWER 225 64 DXPOS 314 DYPOS 53 DWIDTH 273 DHEIGHT 112
 
-    iconpos >NIL: "Sys:Programs/Ibrowse" type=DRAWER 118 4 DXPOS 248 DYPOS 164 DWIDTH 284 DHEIGHT 199
+    iconpos >NIL: "Sys:Programs/DOpus" type=DRAWER 13 4 DXPOS 111 DYPOS 37 DWIDTH 256 DHEIGHT 163
 
-    iconpos >NIL: "Sys:Programs/mui" type=DRAWER 337 69 DXPOS 78 DYPOS 87 DWIDTH 541 DHEIGHT 200
+    iconpos >NIL: "Sys:Programs/HippoPlayer" type=DRAWER 272 4 DXPOS 265 DYPOS 43 DWIDTH 369 DHEIGHT 117
 
-    iconpos >NIL: "Sys:Programs/Picasso96" type=DRAWER 339 38 DXPOS 77 DYPOS 84 DWIDTH 258 DHEIGHT 298
+    iconpos >NIL: "Sys:Programs/Ibrowse" type=DRAWER 102 4 DXPOS 248 DYPOS 164 DWIDTH 284 DHEIGHT 199
 
-    iconpos >NIL: "Sys:Programs/SnoopDOS" type=DRAWER 211 3 DXPOS 314 DYPOS 53 DWIDTH 265 DHEIGHT 64
+    iconpos >NIL: "Sys:Programs/JanoEditor" type=DRAWER 308 64 DXPOS 278 DYPOS 50 DWIDTH 358 DHEIGHT 137
 
-    iconpos >NIL: "Sys:Programs/SysInfo" type=DRAWER 63 93 DXPOS 12 DYPOS 108 DWIDTH 628 DHEIGHT 77
+    iconpos >NIL: "Sys:Programs/mui" type=DRAWER 381 66 DXPOS 78 DYPOS 87 DWIDTH 541 DHEIGHT 200
+
+    iconpos >NIL: "Sys:Programs/Picasso96" type=DRAWER 381 37 DXPOS 77 DYPOS 84 DWIDTH 258 DHEIGHT 298
+
+    iconpos >NIL: "Sys:Programs/SnoopDOS" type=DRAWER 189 4 DXPOS 314 DYPOS 53 DWIDTH 265 DHEIGHT 64
+
+    iconpos >NIL: "Sys:Programs/SysInfo" type=DRAWER 25 96 DXPOS 12 DYPOS 108 DWIDTH 628 DHEIGHT 77
 
     iconpos >NIL: "Sys:Programs/AmiSpeedTest/AmiSpeedTest.guide" type=PROJECT 163 4
     iconpos >NIL: "Sys:Programs/AmiSpeedTest/AmiSpeedTest" type=TOOL 33 5
@@ -688,11 +780,76 @@ else
     iconpos >NIL: "Sys:Programs/DOpus/Docs/Espa∂ol/Historial.txt" type=PROJECT 36 68
     iconpos >NIL: "Sys:Programs/DOpus/Docs/Espa∂ol/Licencia.txt" type=PROJECT 130 4
     iconpos >NIL: "Sys:Programs/DOpus/Docs/Espa∂ol/Manual de DOpus4" type=PROJECT 34 4
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Brushes" type=DRAWER 130 33 DXPOS 17 DYPOS 58 DWIDTH 92 DHEIGHT 78
+
+    iconpos >NIL: "Sys:Programs/HippoPlayer/HiP.doc" type=PROJECT 198 33
+    iconpos >NIL: "Sys:Programs/HippoPlayer/HiP.guide" type=PROJECT 270 51
+    iconpos >NIL: "Sys:Programs/HippoPlayer/HiP" type=TOOL 23 4
+    iconpos >NIL: "Sys:Programs/HippoPlayer/HippoPlayerDocs" type=DRAWER 33 69 DXPOS 89 DYPOS 26 DWIDTH 150 DHEIGHT 217
+
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Icons" type=DRAWER 196 4 DXPOS 3 DYPOS 29 DWIDTH 557 DHEIGHT 135
+
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Me.png" type=PROJECT 277 4 DXPOS 50 DYPOS 50 DWIDTH 400 DHEIGHT 100
+
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Scopes" type=DRAWER 130 62 DXPOS 14 DYPOS 24 DWIDTH 547 DHEIGHT 171
+
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Support" type=DRAWER 130 4 DXPOS 95 DYPOS 59 DWIDTH 256 DHEIGHT 83
+
+    iconpos >NIL: "Sys:Programs/HippoPlayer/ARexx/hip.HiP" type=PROJECT 469 187
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Brushes/HippoPl" type=PROJECT 12 4
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Icons/Drawer_MWB" type=DRAWER 441 43 DXPOS 217 DYPOS 91 DWIDTH 263 DHEIGHT 112
+
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Icons/Drawer_MWB2" type=DRAWER 441 4 DXPOS 98 DYPOS 130 DWIDTH 279 DHEIGHT 228
+
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Icons/Drawer_MWB3" type=DRAWER 346 4 DXPOS 98 DYPOS 130 DWIDTH 279 DHEIGHT 228
+
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Icons/Drawer_MWB4" type=DRAWER 252 62 DXPOS 98 DYPOS 130 DWIDTH 279 DHEIGHT 228
+
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Icons/Drawer_MWB5" type=DRAWER 358 43 DXPOS 217 DYPOS 91 DWIDTH 263 DHEIGHT 112
+
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Icons/HiP_MWB" type=TOOL 86 63
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Icons/HiP_MWB2" type=TOOL 3 63
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Icons/HiP_MWB3" type=TOOL 74 4
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Icons/HiP_MWB4" type=TOOL 169 4
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Icons/HiP_MWB5" type=TOOL 169 52 DXPOS 50 DYPOS 50 DWIDTH 400 DHEIGHT 100
+
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Icons/HiP_NI" type=TOOL 262 4
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Icons/HiP_NI2" type=TOOL FREEX FREEY
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Icons/HiP2" type=TOOL 4 4
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Scopes/VUMeter" type=TOOL 428 4 DXPOS 50 DYPOS 50 DWIDTH 400 DHEIGHT 100
+
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Scopes/BigScope" type=TOOL 301 100 DXPOS 50 DYPOS 50 DWIDTH 400 DHEIGHT 100
+
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Scopes/FQuadraScope" type=TOOL 301 4 DXPOS 50 DYPOS 50 DWIDTH 400 DHEIGHT 100
+
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Scopes/FQuadraScopeSmall" type=TOOL 301 52 DXPOS 50 DYPOS 50 DWIDTH 400 DHEIGHT 100
+
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Scopes/FreqAnalyzer" type=TOOL 35 100 DXPOS 50 DYPOS 50 DWIDTH 400 DHEIGHT 100
+
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Scopes/HippoScope" type=TOOL 166 4 DXPOS 50 DYPOS 50 DWIDTH 400 DHEIGHT 100
+
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Scopes/HippoScopeSmall" type=TOOL 166 51 DXPOS 50 DYPOS 50 DWIDTH 400 DHEIGHT 100
+
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Scopes/PatternScope" type=TOOL 166 100 DXPOS 50 DYPOS 50 DWIDTH 400 DHEIGHT 100
+
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Scopes/QuadraScope" type=TOOL 35 4 DXPOS 50 DYPOS 50 DWIDTH 400 DHEIGHT 100
+
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Scopes/QuadraScopeSmall" type=TOOL 35 52 DXPOS 50 DYPOS 50 DWIDTH 400 DHEIGHT 100
+
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Scopes/Scopes.readme" type=PROJECT 429 52
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Support/14Bit_Calibration" type=TOOL 36 4
+    iconpos >NIL: "Sys:Programs/HippoPlayer/Support/14bit.Doc" type=PROJECT 150 4
     iconpos >NIL: "Sys:Programs/Ibrowse/IBrowse" type=TOOL 108 16
     iconpos >NIL: "Sys:Programs/Ibrowse/ReadMe.html" type=PROJECT 187 83
     iconpos >NIL: "Sys:Programs/Ibrowse/ReadMe.mui" type=PROJECT 23 83
     iconpos >NIL: "Sys:Programs/Ibrowse/ReadMe.txt" type=PROJECT 103 83
     iconpos >NIL: "Sys:Programs/Ibrowse/images/Picture" type=PROJECT FREEX FREEY
+    iconpos >NIL: "Sys:Programs/JanoEditor/JanoEditor.guide.fr" type=PROJECT 287 4
+    iconpos >NIL: "Sys:Programs/JanoEditor/JanoEditor.guide.sp" type=PROJECT 95 4
+    iconpos >NIL: "Sys:Programs/JanoEditor/JanoEditor.guide.uk" type=PROJECT 192 4
+    iconpos >NIL: "Sys:Programs/JanoEditor/JanoEditor" type=TOOL 185 59 DXPOS 50 DYPOS 50 DWIDTH 400 DHEIGHT 100
+
+    iconpos >NIL: "Sys:Programs/JanoEditor/JanoPrefs" type=TOOL 90 59
     iconpos >NIL: "Sys:Programs/MUI/Docs" type=DRAWER 192 26 DXPOS 78 DYPOS 101 DWIDTH 493 DHEIGHT 174
 
     iconpos >NIL: "Sys:Programs/MUI/Goodies" type=DRAWER 447 26 DXPOS 78 DYPOS 101 DWIDTH 284 DHEIGHT 186
