@@ -1,3 +1,2 @@
-makedir SYS:STORAGE/DataTypes >NiL:
 delete SYS:Fonts/Disk.info QUIET
 delete SYS:Locale/Disk.info QUIET

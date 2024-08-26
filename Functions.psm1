@@ -573,12 +573,7 @@ function Compare-KickstartHashes {
             $HashTableforKickstartFilestoCheck.Add(($KickstartHash.Hash),$KickstartDetailLine.FullName)
         }
     }
-    
-    # foreach ($KickstartDetailLine in $ListofKickstartFilestoCheck){
-    #     $KickstartHash=Get-FileHash -LiteralPath $KickstartDetailLine.FullName -Algorithm MD5
-    #     $HashTableforKickstartFilestoCheck.Add(($KickstartHash.Hash),$KickstartDetailLine.FullName)
-    # } Should stop duplicate hashes being added
-    
+      
     foreach ($KickstartRomandHash in $KickstartHashestoFind){
         if ($HashTableforKickstartFilestoCheck[$KickstartRomandHash.Hash]){
             $FoundKickstarts += [PSCustomObject]@{
