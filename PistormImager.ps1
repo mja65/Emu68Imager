@@ -422,6 +422,10 @@ if ($KickstartVersiontouse -eq 3.1){
 
 }
 
+ if (-not (test-path ($AmigaDrivetoCopy + $VolumeName_System + '\Expansion\'))) {
+    $null = new-item ($AmigaDrivetoCopy + $VolumeName_System + '\Expansion\') -ItemType Directory -Force
+}  
+
 if (-not (Test-Path ($AmigaDrivetoCopy+$VolumeName_Other))){
     $null = New-Item -path ($AmigaDrivetoCopy+$VolumeName_Other) -ItemType Directory -Force 
     
