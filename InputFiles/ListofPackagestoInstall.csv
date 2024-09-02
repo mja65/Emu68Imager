@@ -17,6 +17,7 @@ TRUE;3.1|3.2;CFD133;FALSE;;;;Web;Full;http://aminet.net/driver/media/CFD133.lha;
 TRUE;3.1|3.2;CFD133;FALSE;;;;Web;Full;http://aminet.net/driver/media/CFD133.lha;CFD133.lha;TRUE;41EFA7D5CDEDC94811D27226DA30644F;CFD133\Devs\CF0;System;Storage\DOSDrivers\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;CFD133;FALSE;;;;Web;Full;http://aminet.net/driver/media/CFD133.lha;CFD133.lha;TRUE;41EFA7D5CDEDC94811D27226DA30644F;CFD133\Devs\CF0.info;System;Storage\DOSDrivers\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 FALSE;3.1|3.2;ChangeBootPri;FALSE;;;;Web;Full;https://thomas-rapp.hier-im-netz.de/downloads/changebootpri.lha;changebootpri.lha;TRUE;0759E839F03608D70CB6BD8486DEB382;changebootpri;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
+TRUE;3.1;CopyReplace;FALSE;;;;Web;Full;http://aminet.net/util/sys/CopyReplace.lha;CopyReplace.lha;TRUE;e23160b39f50d879d7a2a1a93658a0c5;Copy;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;DirectoryOpus.CFG;FALSE;;;;Local;CopyOnly;S\DirectoryOpus.CFG;;FALSE;;;System;S\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;DOpus416;FALSE;;;;Web;Full;http://aminet.net/util/dopus/DOpus416JRbin.lha;DOpus416JRbin.lha;TRUE;19C6CDEA1F01EBDFE8154C16E7DABF23;DOpus.info;System;Programs\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;DOpus416;FALSE;;;;Web;Full;http://aminet.net/util/dopus/DOpus416JRbin.lha;DOpus416JRbin.lha;TRUE;19C6CDEA1F01EBDFE8154C16E7DABF23;DOpus\DOpus416JRbin.readme;System;Programs\DOpus\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
@@ -118,7 +119,7 @@ TRUE;3.1|3.2;Picasso96;FALSE;;;;Web;Full;http://aminet.net/driver/video/Picasso9
 TRUE;3.1|3.2;Picasso96;FALSE;;;;Web;Full;http://aminet.net/driver/video/Picasso96.lha;Picasso96.lha;TRUE;16287F92CE6DDEA23F5456CEB4525189;Picasso96Install\Devs\Monitors\Picasso96;System;Devs\Monitors\;FALSE;Videocore;TRUE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;Picasso96;FALSE;;;;Web;Full;http://aminet.net/driver/video/Picasso96.lha;Picasso96.lha;TRUE;16287F92CE6DDEA23F5456CEB4525189;Picasso96Install\Libs\*;System;Libs\;FALSE;;TRUE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;Picasso96;FALSE;;;;Web;Full;http://aminet.net/driver/video/Picasso96.lha;Picasso96.lha;TRUE;16287F92CE6DDEA23F5456CEB4525189;Picasso96Install\Prefs\*;System;Prefs\;FALSE;;TRUE;FALSE;;;FALSE;FALSE
-TRUE;3.1|3.2;Picasso96;FALSE;;;;Web;Full;http://aminet.net/driver/video/Picasso96.lha;Picasso96.lha;TRUE;16287F92CE6DDEA23F5456CEB4525189;Picasso96Install\Picasso96\;System;Programs\Picasso96\;FALSE;;TRUE;FALSE;;;FALSE;FALSE
+TRUE;3.1|3.2;Picasso96;FALSE;;;;Web;Full;http://aminet.net/driver/video/Picasso96.lha;Picasso96.lha;TRUE;16287F92CE6DDEA23F5456CEB4525189;Picasso96Install\Picasso96\*;System;Programs\Picasso96\;FALSE;;TRUE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;Picasso96;FALSE;;;;Web;Full;http://aminet.net/driver/video/Picasso96.lha;Picasso96.lha;TRUE;16287F92CE6DDEA23F5456CEB4525189;Picasso96Install\Picasso96.info;System;Programs\;FALSE;;TRUE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;Picasso96Settings;FALSE;;;;Local;CopyOnly;Devs\Picasso96Settings;;FALSE;;;System;Devs\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;Pistorm Folder - Check MD5s;FALSE;;;;Local;CopyOnly;Pistorm\CheckMD5s;;FALSE;;;System;PiStorm\;TRUE;;FALSE;FALSE;;;FALSE;FALSE
@@ -147,7 +148,7 @@ TRUE;3.1|3.2;ReqTools;FALSE;;;;Web;Full;http://aminet.net/util/libs/Reqtools-Wid
 TRUE;3.1|3.2;ReqTools Prefs ;FALSE;;;;Local;CopyOnly;Prefs\Env-Archive\ReqTools.prefs;;FALSE;;;System;Prefs\Env-Archive\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;Roadshow;FALSE;;;;Local;Full;Roadshow-Demo-1.15.lha;Roadshow.lha;FALSE;25471647C76D8EAB98F78D24945B3FC6;Roadshow-Demo-*\Workbench\*;System;;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;Roadshow;FALSE;;;;Local;Full;Roadshow-Demo-1.15.lha;Roadshow.lha;FALSE;25471647C76D8EAB98F78D24945B3FC6;Roadshow-Demo-*\Workbench\Storage\NetInterfaces\CNet16.info;System;Devs\NetInterfaces\;FALSE;wifipi.info;FALSE;FALSE;;;FALSE;FALSE
-TRUE;3.1|3.2;Screentext;FALSE;;;;Web;Full;https://thomas-rapp.hier-im-netz.de/downloads/ScreenText.lha;ScreenText.lha;TRUE;D500457A41A18D73C01DD6B27DCE5A41;Screentext;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
+FALSE;3.1|3.2;Screentext;FALSE;;;;Web;Full;https://thomas-rapp.hier-im-netz.de/downloads/ScreenText.lha;ScreenText.lha;TRUE;D500457A41A18D73C01DD6B27DCE5A41;Screentext;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;SD0 Device;FALSE;;;;Local;CopyOnly;Devs\DosDrivers\SD0pi3;;FALSE;;;System;Devs\DosDrivers\;FALSE;;FALSE;FALSE;;;FALSE;TRUE
 TRUE;3.1|3.2;SD0 Device;FALSE;;;;Local;CopyOnly;Devs\DosDrivers\SD0pi4;;FALSE;;;System;Devs\DosDrivers\;FALSE;;FALSE;FALSE;;;FALSE;TRUE
 TRUE;3.1|3.2;SD0 Device - info file;FALSE;;;;ADF;Extract;StorageADF;DosDrivers\;FALSE;;DosDrivers\PC0.info;System;Devs\DosDrivers\;FALSE;SD0.info;FALSE;FALSE;;;Replace;FALSE
@@ -186,7 +187,7 @@ TRUE;3.1|3.2;WHDLoadWrapper;TRUE;;;;Web;Full;;WHDLoadWrapper.lha;FALSE;9482600ED
 TRUE;3.1|3.2;WHDLoadWrapper;TRUE;;;;Web;Full;;WHDLoadWrapper.lha;FALSE;9482600EDA83D5E5046F66C3574D3FBF;WHDLoadWrapper\C\checkagatest;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;WHDLoadWrapper;TRUE;;;;Web;Full;;WHDLoadWrapper.lha;FALSE;9482600EDA83D5E5046F66C3574D3FBF;WHDLoadWrapper\C\Emu68Downclocker;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;WHDLoadWrapper;TRUE;;;;Web;Full;;WHDLoadWrapper.lha;FALSE;9482600EDA83D5E5046F66C3574D3FBF;WHDLoadWrapper\C\RemakeDisplay;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
-FALSE;3.1|3.2;WHDLoadWrapper;TRUE;;;;Web;Full;;WHDLoadWrapper.lha;FALSE;9482600EDA83D5E5046F66C3574D3FBF;WHDLoadWrapper\C\ScreenText;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
+TRUE;3.1|3.2;WHDLoadWrapper;TRUE;;;;Web;Full;;WHDLoadWrapper.lha;FALSE;9482600EDA83D5E5046F66C3574D3FBF;WHDLoadWrapper\C\ScreenText;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;WHDLoadWrapper;TRUE;;;;Web;Full;;WHDLoadWrapper.lha;FALSE;9482600EDA83D5E5046F66C3574D3FBF;WHDLoadWrapper\C\tude;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;WHDLoadWrapper;TRUE;;;;Web;Full;;WHDLoadWrapper.lha;FALSE;9482600EDA83D5E5046F66C3574D3FBF;WHDLoadWrapper\C\uae-configuration;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1|3.2;WHDLoadWrapper;TRUE;;;;Web;Full;;WHDLoadWrapper.lha;FALSE;9482600EDA83D5E5046F66C3574D3FBF;WHDLoadWrapper\C\WHDLoadWrapper;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE

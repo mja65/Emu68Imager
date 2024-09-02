@@ -1,0 +1,1463 @@
+if ($env:TERM_PROGRAM){
+    Write-Host "Run from Visual Studio Code!"
+    $InteractiveMode=0
+ } 
+ elseif ($psISE){
+    Write-Host "Run from Powershell ISE!"
+    $InteractiveMode=0
+ }
+ else{
+    $InteractiveMode=1
+ } 
+ 
+ if  ($InteractiveMode -eq 1){
+     $Scriptpath = (Split-Path -Parent $MyInvocation.MyCommand.Definition)+'\'
+ } 
+
+ if ($InteractiveMode -eq 0){
+     $Scriptpath = 'C:\Users\Matt\OneDrive\Documents\Emu68Imager\'    
+ }
+ 
+ $Global:HSTDiskName = $null
+ $Global:ScreenModetoUse = $null 
+ $Global:KickstartVersiontoUse = $null
+ $Global:SSID = $null
+ $Global:WifiPassword = $null
+ $Global:SizeofFAT32 = $null 
+ $Global:SizeofImage = $null 
+ $Global:SizeofPartition_System = $null
+ $Global:SizeofPartition_Other = $null
+ $Global:WorkingPath = $null
+ $Global:ROMPath = $null
+ $Global:ADFPath = $null
+
+ $SourceProgramPath=($Scriptpath+'Programs\')
+ $InputFolder=($Scriptpath+'InputFiles\')
+ $LocationofAmigaFiles=($Scriptpath+'AmigaFiles\')
+
+$inputXML_UserInterface_Missing = @" 
+
+ <Window
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="450" Width="800">
+    <TextBox x:Name="MissingInputs_TextBox" HorizontalAlignment="Left" Margin="200,122,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Width="120"/>
+
+</Window>
+
+"@
+
+
+$inputXML_UserInterface = @"
+<Window x:Name="MainWindow" 
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="450" Width="900" ResizeMode="NoResize" UseLayoutRounding="True">
+    <Grid>
+        <Grid Background="#FFE5E5E5" Margin="-1,0,1,0">
+            <Button x:Name="Start_Button" Content="Button" HorizontalAlignment="Left" Margin="749,365,0,0" VerticalAlignment="Top" Width="127"/>
+            <ComboBox x:Name="ScreenMode_Dropdown" HorizontalAlignment="Left" Margin="576,79,0,0" VerticalAlignment="Top" Width="300"/>
+            <ComboBox x:Name="KickstartVersion_DropDown" HorizontalAlignment="Left" Margin="16,259,0,0" VerticalAlignment="Top" Width="200"/>
+            <Button x:Name="Rompath_Button" Content="Button" HorizontalAlignment="Left" Margin="10,290,0,0" VerticalAlignment="Top" Width="160" Height="30"/>
+            <Button x:Name="ADFpath_Button" Content="Button" HorizontalAlignment="Left" Margin="10,325,0,0" VerticalAlignment="Top" Width="160" Height="30"/>
+            <Label x:Name="ScreenMode_Label" Content="Label" HorizontalAlignment="Left" Margin="554,38,0,0" VerticalAlignment="Top" Width="300" HorizontalContentAlignment="Center"/>
+            <Label x:Name="KickstartVersion_Label" Content="Label" HorizontalAlignment="Left" Margin="16,228,0,0" VerticalAlignment="Top" Width="200" HorizontalContentAlignment="Center"/>
+            <Button x:Name="MigratedFiles_Button" Content="Button" HorizontalAlignment="Left" Margin="10,360,0,0" VerticalAlignment="Top" Width="160" Height="30"/>
+            <Label x:Name="RomPath_Label" Content="PLACEHOLDER" HorizontalAlignment="Left" Margin="180,290,0,0" VerticalAlignment="Top" Width="188"/>
+            <Label x:Name="MigratedPath_Label" Content="PLACEHOLDER" HorizontalAlignment="Left" Margin="180,360,0,0" VerticalAlignment="Top" Width="188"/>
+            <Label x:Name="ADFPath_Label" Content="PLACEHOLDER" HorizontalAlignment="Left" Margin="180,325,0,0" VerticalAlignment="Top" Width="188"/>
+            <Label x:Name="SSID_Label" Content="Label" HorizontalAlignment="Left" Margin="554,155,0,0" VerticalAlignment="Top" Width="152" />
+            <Label x:Name="Password_Label" Content="Label" HorizontalAlignment="Left" Margin="554,189,0,0" VerticalAlignment="Top" Width="152"/>
+            <TextBox x:Name="SSID_Textbox" HorizontalAlignment="Left" Margin="721,155,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Width="120"/>
+            <TextBox x:Name="Password_Textbox" HorizontalAlignment="Left" Margin="721,189,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Width="120"/>
+            <ComboBox x:Name="MediaSelect_DropDown" HorizontalAlignment="Left" Margin="10,40,0,0" VerticalAlignment="Top" Width="341"/>
+            <Label x:Name="MediaSelect_Label" Content="Label" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="315" HorizontalContentAlignment="Center"/>
+            <Button x:Name="MediaSelect_Refresh" Content="Button" HorizontalAlignment="Left" Margin="376,38,0,0" VerticalAlignment="Top"/>
+            <TextBox x:Name="ImageSize_Value" Text="" HorizontalAlignment="Left" Margin="140,79,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120"/>
+            <Label x:Name="ImageSize_Label" Content="Label" HorizontalAlignment="Left" Margin="265,75,0,0" VerticalAlignment="Top" Width="200"/>
+            <Label x:Name="WorkbenchSize_Label" Content="Label" HorizontalAlignment="Left" Margin="10,127,0,0" VerticalAlignment="Top" Width="121" Height="26" HorizontalContentAlignment="Center"/>
+            <TextBox x:Name="WorkbenchSize_Value" Text="" HorizontalAlignment="Left" Margin="9,174,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120"/>
+            <TextBox x:Name="WorkSize_Value" Text="" HorizontalAlignment="Left" Margin="286,176,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="130"/>
+            <Label x:Name="WorkSize_Label" Content="Label" HorizontalAlignment="Left" Margin="282,127,0,0" VerticalAlignment="Top" Width="130" HorizontalContentAlignment="Center"/>
+            <TextBox x:Name="FAT32Size_Value" Text="" HorizontalAlignment="Left" Margin="140,202,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120"/>
+            <Label x:Name="FAT32Size_Label" Content="Label" HorizontalAlignment="Left" Margin="266,197,0,0" VerticalAlignment="Top" Width="184"/>
+            <Slider x:Name="ImageSize_Slider" HorizontalAlignment="Left" Margin="16,73,0,0" VerticalAlignment="Top" Width="120" Maximum="100" TickPlacement="TopLeft" AutoToolTipPlacement="BottomRight" LargeChange="0.5" SmallChange="0.1" IsSnapToTickEnabled="True" TickFrequency="0.1" />
+            <Slider x:Name="WorkbenchSize_Slider" HorizontalAlignment="Left" Margin="133,169,0,0" VerticalAlignment="Top" Width="120" Maximum="{Binding Value, ElementName=ImageSize_Slider, UpdateSourceTrigger=PropertyChanged}" TickPlacement="TopLeft" AutoToolTipPlacement="BottomRight" LargeChange="0.5" SmallChange="0.1" IsSnapToTickEnabled="True" TickFrequency="0.1"/>
+            <Slider x:Name="WorkSize_Slider" HorizontalAlignment="Left" Margin="504,285,0,0" VerticalAlignment="Top" Width="120" Maximum="{Binding Value, ElementName=ImageSize_Slider, UpdateSourceTrigger=PropertyChanged}" TickPlacement="TopLeft" AutoToolTipPlacement="BottomRight" LargeChange="0.5" SmallChange="0.1" Visibility="Hidden" IsSnapToTickEnabled="True" TickFrequency="0.1"/>
+            <Slider x:Name="FAT32Size_Slider" HorizontalAlignment="Left" Margin="16,202,0,0" VerticalAlignment="Top" Width="120" Maximum="{Binding Value, ElementName=ImageSize_Slider, UpdateSourceTrigger=PropertyChanged}" TickPlacement="TopLeft" AutoToolTipPlacement="BottomRight" LargeChange="0.5" SmallChange="0.1" IsSnapToTickEnabled="True" TickFrequency="0.1"/>
+            <Label x:Name="WorkbenchSize_Label2ndLine" Content="Label" HorizontalAlignment="Left" Margin="9,143,0,0" VerticalAlignment="Top" Width="121" Height="26" HorizontalContentAlignment="Center"/>
+            <Label x:Name="Worksize_Label2ndLine" Content="Label" HorizontalAlignment="Left" Margin="286,143,0,0" VerticalAlignment="Top" Width="121" Height="26" HorizontalContentAlignment="Center"/>
+
+        </Grid>
+
+    </Grid>
+</Window>
+
+
+"@
+
+
+#[void][System.Reflection.Assembly]::LoadWithPartialName('presentationframework')
+Add-Type -AssemblyName PresentationFramework
+Add-Type -AssemblyName System.Windows.Forms
+Import-Module ($Scriptpath+'Functions-GUI.psm1')
+
+if  ($InteractiveMode -eq 1){
+    if (-not (Test-Administrator)){
+        [System.Windows.MessageBox]::Show('Error - you must run this as Administrator! Restart again in Administrator Mode')
+        throw
+    }
+}
+
+$inputXML_UserInterface = $inputXML_UserInterface -replace 'mc:Ignorable="d"','' -replace "x:N",'N' -replace '^<Win.*', '<Window'
+[xml]$XAML_UserInterface = $inputXML_UserInterface
+$Form_UserInterface = Read-XAML -xaml $XAML_UserInterface 
+
+$inputXML_UserInterface_Missing = $inputXML_UserInterface_Missing -replace 'mc:Ignorable="d"','' -replace "x:N",'N' -replace '^<Win.*', '<Window'
+[xml]$XAML_UserInterface_Missing = $inputXML_UserInterface_Missing
+$Form_UserInterface_Missing = Read-XAML -xaml $XAML_UserInterface_Missing 
+
+
+#===========================================================================
+# Load XAML Objects In PowerShell
+#===========================================================================
+ 
+Remove-Variable -Name WPF_UI_*
+
+$XAML_UserInterface.SelectNodes("//*[@Name]") | ForEach-Object{
+#    "Trying item $($_.Name)";
+    try {
+        Set-Variable -Name "WPF_UI_$($_.Name)" -Value $Form_UserInterface.FindName($_.Name) -ErrorAction Stop
+    }
+    catch{
+        throw
+    }
+}
+
+# Get-FormVariables
+
+$XAML_UserInterface_Missing.SelectNodes("//*[@Name]") | ForEach-Object{
+#    "Trying item $($_.Name)";
+    try {
+        Set-Variable -Name "WPF_UI_Missing_$($_.Name)" -Value $Form_UserInterface_Missing.FindName($_.Name) -ErrorAction Stop
+    }
+    catch{
+        throw
+    }
+}
+
+Get-FormVariables
+
+#===========================================================================
+# Use this space to add code to the various form elements in your GUI
+#===========================================================================
+
+$WPF_UI_RomPath_Label.Content='No ROM path selected'
+$WPF_UI_ADFPath_Label.Content='No ADF path selected'
+$WPF_UI_MigratedPath_Label.Content='No transfer path selected'
+$WPF_UI_ImageSize_Slider.Maximum = 0
+$WPF_UI_FAT32Size_Slider.Maximum = 0
+$WPF_UI_WorkSize_Slider.Maximum = 0
+$WPF_UI_WorkbenchSize_Slider.Maximum = 0
+
+$WPF_UI_MediaSelect_Label.Content = 'Select Media to Use'
+
+$RemovableMedia = Get-RemovableMedia
+foreach ($Disk in $RemovableMedia){
+    $WPF_UI_MediaSelect_Dropdown.AddChild($Disk.FriendlyName)
+}
+
+$WPF_UI_MediaSelect_Dropdown.Add_SelectionChanged({
+    If (-not($RemovableMedia)){
+        $RemovableMedia = Get-RemovableMedia
+    }
+    foreach ($Disk in $RemovableMedia){
+        if ($Disk.FriendlyName -eq $WPF_UI_MediaSelect_DropDown.SelectedItem){
+            $WPF_UI_FAT32Size_Slider.Minimum = 0.035 # Limit of Tool
+            $WPF_UI_WorkSize_Slider.Minimum = 0.5
+            $WPF_UI_WorkbenchSize_Slider.Minimum = 0.5
+            $WPF_UI_ImageSize_Slider.Minimum = ($WPF_UI_WorkbenchSize_Slider.Minimum)+($WPF_UI_WorkSize_Slider.Minimum)+($WPF_UI_FAT32Size_Slider.Minimum)
+            $WPF_UI_ImageSize_Slider.Maximum = [math]::truncate(($Disk.Size/1GB)*1000)/1000
+            $WPF_UI_FAT32Size_Slider.Maximum = $WPF_UI_ImageSize_Slider.Value
+            $WPF_UI_WorkSize_Slider.Maximum = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-$WPF_UI_WorkbenchSize_Slider.Value
+            $WPF_UI_WorkbenchSize_Slider.Maximum = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-$WPF_UI_WorkSize_Slider.Value
+            $WPF_UI_ImageSize_Slider.Value = $WPF_UI_ImageSize_Slider.Maximum 
+#            $WPF_UI_WorkbenchSize_Slider.Value = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-$WPF_UI_WorkSize_Slider.Value
+            $Global:HSTDiskName = $Disk.HSTDiskName
+        }
+    }
+})
+
+
+$WPF_UI_MediaSelect_Refresh.Content = 'Refresh Available Media'
+$WPF_UI_MediaSelect_Refresh.Add_Click({
+    $RemovableMedia = Get-RemovableMedia
+    $WPF_UI_MediaSelect_Dropdown.Items.Clear()
+    foreach ($Disk in $RemovableMedia){
+        $WPF_UI_MediaSelect_Dropdown.AddChild($Disk.FriendlyName)
+    }
+})
+
+$WPF_UI_ImageSize_Slider.Add_ValueChanged({
+#    $WPF_UI_ImageSize_Slider.Value = [math]::Round($WPF_UI_ImageSize_Slider.Value,2)
+    $WPF_UI_ImageSize_Value.Text = $WPF_UI_ImageSize_Slider.Value   
+    $WPF_UI_FAT32Size_Slider.Maximum = $WPF_UI_ImageSize_Slider.Value
+    $WPF_UI_FAT32Size_Slider.Minimum = 0.035 # Limit of Tool
+    $WPF_UI_WorkSize_Slider.Minimum = 0.5
+    $WPF_UI_WorkbenchSize_Slider.Minimum = 0.5
+    $WPF_UI_WorkSize_Slider.Maximum = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-$WPF_UI_WorkbenchSize_Slider.Value
+    $WPF_UI_WorkbenchSize_Slider.Maximum = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)
+#    $WPF_UI_WorkbenchSize_Slider.Value = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-$WPF_UI_WorkSize_Slider.Value
+    $WPF_UI_WorkSize_Slider.Value = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-($WPF_UI_WorkbenchSize_Slider.Value)
+    $WPF_UI_WorkSize_Value.Text = $WPF_UI_WorkSize_Slider.Value
+})
+
+$WPF_UI_FAT32Size_Slider.Add_ValueChanged({
+    $WPF_UI_FAT32Size_Value.Text = $WPF_UI_FAT32Size_Slider.Value
+    $WPF_UI_FAT32Size_Slider.Maximum = $WPF_UI_ImageSize_Slider.Value
+    $WPF_UI_FAT32Size_Slider.Minimum = 0.035 # Limit of Tool
+    $WPF_UI_WorkSize_Slider.Minimum = 0.5
+    $WPF_UI_WorkbenchSize_Slider.Minimum = 0.5
+    $WPF_UI_WorkSize_Slider.Maximum = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-$WPF_UI_WorkbenchSize_Slider.Value
+    $WPF_UI_WorkbenchSize_Slider.Maximum = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)
+#    $WPF_UI_WorkbenchSize_Slider.Value = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-$WPF_UI_WorkSize_Slider.Value
+    $WPF_UI_WorkSize_Slider.Value = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-($WPF_UI_WorkbenchSize_Slider.Value)
+    $WPF_UI_WorkSize_Value.Text = $WPF_UI_WorkSize_Slider.Value
+})
+
+$WPF_UI_WorkbenchSize_Slider.Add_ValueChanged({
+    $WPF_UI_WorkbenchSize_Value.Text = $WPF_UI_WorkbenchSize_Slider.Value
+    $WPF_UI_FAT32Size_Slider.Maximum = $WPF_UI_ImageSize_Slider.Value
+    $WPF_UI_FAT32Size_Slider.Minimum = 0.035 # Limit of Tool
+    $WPF_UI_WorkSize_Slider.Minimum = 0.5
+    $WPF_UI_WorkbenchSize_Slider.Minimum = 0.5
+    $WPF_UI_WorkSize_Slider.Maximum = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-$WPF_UI_WorkbenchSize_Slider.Value
+    $WPF_UI_WorkbenchSize_Slider.Maximum = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)
+#    $WPF_UI_WorkbenchSize_Slider.Value = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-$WPF_UI_WorkSize_Slider.Value
+    $WPF_UI_WorkSize_Slider.Value = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-($WPF_UI_WorkbenchSize_Slider.Value)
+    $WPF_UI_WorkSize_Value.Text = $WPF_UI_WorkSize_Slider.Value
+})
+
+$WPF_UI_WorkSize_Slider.Add_ValueChanged({
+    $WPF_UI_WorkSize_Value.Text = $WPF_UI_WorkSize_Slider.Value
+    $WPF_UI_FAT32Size_Slider.Maximum = $WPF_UI_ImageSize_Slider.Value
+    $WPF_UI_FAT32Size_Slider.Minimum = 0.035 # Limit of Tool
+    $WPF_UI_WorkSize_Slider.Minimum = 0.5
+    $WPF_UI_WorkbenchSize_Slider.Minimum = 0.5
+    $WPF_UI_WorkSize_Slider.Maximum = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-$WPF_UI_WorkbenchSize_Slider.Value
+    $WPF_UI_WorkbenchSize_Slider.Maximum = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)
+#    $WPF_UI_WorkbenchSize_Slider.Value = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-$WPF_UI_WorkSize_Slider.Value
+    $WPF_UI_WorkSize_Slider.Value = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-($WPF_UI_WorkbenchSize_Slider.Value)
+})
+
+
+#$WPF_UI_WorkSize_Value.Add_PreviewTextInput({
+#    if ($WPF_UI_WorkSize_Value.Text -match "^[\d\.]+$"){
+#        return
+#    }
+#   else{
+#   $WPF_UI_WorkSize_Value = $WPF_UI_WorkSize_Value
+#   }
+#})
+
+
+$WPF_UI_WorkSize_Value.Add_TextChanged({
+    if ($WPF_UI_WorkSize_Value.Text -match "^[\d\.]+$"){
+        $WPF_UI_WorkSize_Slider.Value = $WPF_UI_WorkSize_Value.Text
+    }
+    
+})
+
+$WPF_UI_WorkbenchSize_Value.Add_TextChanged({
+    if ($WPF_UI_WorkBenchSize_Value.Text -match "^[\d\.]+$"){
+        $WPF_UI_WorkBenchSize_Slider.Value = $WPF_UI_WorkBenchSize_Value.Text
+    }
+})
+
+$WPF_UI_FAT32Size_Value.Add_TextChanged({
+    if ($WPF_UI_FAT32Size_Value.Text -match "^[\d\.]+$"){
+        $WPF_UI_FAT32Size_Slider.Value = $WPF_UI_FAT32Size_Value.Text
+    }
+})
+
+$WPF_UI_ImageSize_Value.Add_TextChanged({
+    if ($WPF_UI_ImageSize_Value.Text -match "^[\d\.]+$"){
+        $WPF_UI_ImageSize_Slider.Value = $WPF_UI_ImageSize_Value.Text
+    }
+})
+
+$WPF_UI_Start_Button.Content = 'Run Tool'
+$WPF_UI_Start_Button.Background = 'Red'
+
+$WPF_UI_Start_Button.Width = '100'
+$WPF_UI_Start_Button.Height = '20'
+$WPF_UI_Start_Button.Add_Click({
+    foreach ($ScreenMode in $AvailableScreenModes) {
+        if ($ScreenMode.FriendlyName -eq $WPF_UI_ScreenMode_Dropdown.SelectedItem){
+ #           write-host ('Selected ScreenMode is: '+$ScreenMode.Name)
+            $Global:ScreenModetoUse = $ScreenMode.Name           
+        }
+    }
+    $Global:KickstartVersiontoUse = $WPF_UI_KickstartVersion_Dropdown.SelectedItem
+    $Global:SSID = $WPF_UI_SSID_Textbox.Text
+    $Global:WifiPassword = $WPF_UI_Password_Textbox.Text
+    $Global:SizeofFAT32 = $WPF_UI_FAT32Size_Slider.Value
+    $Global:SizeofImage = $WPF_UI_ImageSize_Slider.Value
+    $Global:SizeofPartition_System = $WPF_UI_WorkBenchSize_Slider.Value
+    $Global:SizeofPartition_Other = $WPF_UI_WorkSize_Slider.Value
+    
+    $AvailableSpace = (Confirm-DiskSpace -PathtoCheck $Scriptpath)/1Mb
+    $RequiredSpace = (($Global:SizeofImage*1024*1024*1024)/1Mb) + `
+                25 + ` #Workbench
+                80      #Other Files
+
+    If ($AvailableSpace -le $RequiredSpace){
+        [System.Windows.MessageBox]::Show('Insufficient Space on Drive! Select location with sufficient space')
+        $Global:WorkingPath = Get-FolderPath -Message 'Select location for Working Path' -RootFolder 'MyComputer'-ShowNewFolderButton
+        $AvailableSpace_revised = (Confirm-DiskSpace -PathtoCheck $Global:WorkingPath)/1Mb
+        if ($AvailableSpace_revised -le $RequiredSpace){
+            Throw 'Still insufficient space! Exiting!'
+        }
+    } 
+    else {
+        $Global:WorkingPath = ($Scriptpath+'Working Folder\') 
+    }
+    $ErrorCheck = Confirm-UIFields
+    if ($ErrorCheck){
+        [System.Windows.MessageBox]::Show($ErrorCheck, 'Error! Go back and correct')
+    }
+    else {
+        $Form_UserInterface.Close() | out-null
+        $RunMethod = 1
+#        Open-OutputWindow
+#        Update-OutputWindow -Error_Grid_Hidden 'TRUE'
+    }
+
+})
+
+$WPF_UI_RomPath_Button.Content = 'Click to Set Rom Path'
+$WPF_UI_RomPath_Button.Height = 30
+$WPF_UI_RomPath_Button.Width = 160 
+$WPF_UI_RomPath_Button.Add_Click({
+    $Global:ROMPath = Get-FolderPath -Message 'Select path to Roms' -RootFolder 'MyComputer'
+    if ($Global:ROMPath){
+        if(Confirm-UIFields){
+            $WPF_UI_Start_Button.Background = 'Red'
+        }
+        else{
+            $WPF_UI_Start_Button.Background = 'Green'
+        }
+        $WPF_UI_RomPath_Label.Content = ($Global:ROMPath)
+        $WPF_UI_RomPath_Button.Background = 'Green'
+    }
+    else{
+        $WPF_UI_RomPath_Button.Background = '#FFDDDDDD'
+    }
+})
+
+$WPF_UI_ADFPath_Button.Content = 'Click to Set ADF Path'
+$WPF_UI_ADFPath_Button.Height = 30
+$WPF_UI_ADFPath_Button.Width = 160 
+$WPF_UI_ADFPath_Button.Add_Click({
+    $Global:ADFPath = Get-FolderPath -Message 'Select path to ADFs' -RootFolder 'MyComputer'
+    if ($Global:ADFPath){
+        if(Confirm-UIFields){
+            $WPF_UI_Start_Button.Background = 'Red'
+        }
+        else{
+            $WPF_UI_Start_Button.Background = 'Green'
+        }
+        $WPF_UI_ADFPath_Label.Content=($Global:ADFPath)
+        $WPF_UI_ADFPath_Button.Background = 'Green'
+    } 
+    else{
+        $WPF_UI_ADFPath_Button.Background = '#FFDDDDDD'
+    }
+})
+
+# $WPF_UI_WorkingPath_Button.Content = 'Set Folder'
+# $WPF_UI_WorkingPath_Button.Height = 30
+# $WPF_UI_WorkingPath_Button.Width = 70 
+# $WPF_UI_WorkingPath_Button.Add_Click({
+#     $Global:WorkingPath = Get-FolderPath -ShowNewFolderButton $true -RootFolder 'MyComputer'
+#     if($Global:WorkingPath){
+#         if(Confirm-UIFields){
+#             $WPF_UI_Start_Button.Background = 'Red'
+#         }
+#         else{
+#             $WPF_UI_Start_Button.Background = 'Green'
+#         }
+#     }
+#     $WPF_UI_WorkingPath_Output.Items.Clear()
+#     $WPF_UI_WorkingPath_Output.AddChild($WorkingPath)
+# })
+
+
+$WPF_UI_MigratedFiles_Button.Content = 'Click to Set Transfer Folder'
+$WPF_UI_MigratedFiles_Button.Height = 30
+$WPF_UI_MigratedFiles_Button.Width = 160
+$WPF_UI_MigratedFiles_Button.Add_Click({
+    $Global:TransferLocation = Get-FolderPath -Message 'Select transfer folder' -RootFolder 'MyComputer'
+    if ($Global:TransferLocation){
+        $WPF_UI_MigratedPath_Label.Content = ($Global:TransferLocation)
+        $WPF_UI_MigratedFiles_Button.Background = 'Green'
+    }
+    else{
+        $WPF_UI_MigratedFiles_Button.Background = '#FFDDDDDD'
+    }
+})
+
+$WPF_UI_KickstartVersion_Label.Content = 'Select KickstartVersion'
+$AvailableKickstarts = Import-Csv ($InputFolder+'ListofInstallFiles.csv') -delimiter ';' | Where-Object 'Kickstart_Version' -ne ""| Select-Object 'Kickstart_Version' -unique
+
+foreach ($Kickstart in $AvailableKickstarts) {
+    $WPF_UI_KickstartVersion_Dropdown.AddChild($Kickstart.Kickstart_Version)
+}
+
+$WPF_UI_KickstartVersion_Dropdown.Add_SelectionChanged({
+    if(Confirm-UIFields){
+        $WPF_UI_Start_Button.Background = 'Red'
+    }
+    else{
+        $WPF_UI_Start_Button.Background = 'Green'
+    }
+})
+
+$WPF_UI_ScreenMode_Label.Content = 'Select ScreenMode'
+$AvailableScreenModes = Import-Csv ($InputFolder+'ScreenModes.csv') -delimiter ';'
+
+foreach ($ScreenMode in $AvailableScreenModes) {
+    $WPF_UI_ScreenMode_Dropdown.AddChild($ScreenMode.FriendlyName)
+}
+
+$WPF_UI_ScreenMode_Dropdown.Add_SelectionChanged({
+    if(Confirm-UIFields){
+        $WPF_UI_Start_Button.Background = 'Red'
+    }
+    else{
+        $WPF_UI_Start_Button.Background = 'Green'
+    }
+})
+
+$WPF_UI_ImageSize_Label.Content = 'Total Image Size (Gb)'  
+$WPF_UI_WorkbenchSize_Label.Content = 'Size of Workbench'  
+$WPF_UI_WorkbenchSize_Label2ndline.Content = 'Partition (Gb)'  
+$WPF_UI_WorkSize_Label.Content = 'Size of Work'
+$WPF_UI_WorkSize_Label2ndline.Content = 'Partition (Gb)'
+$WPF_UI_FAT32Size_Label.Content = 'Size of FAT32 Partition (Gb)' 
+
+$WPF_UI_Password_Label.Content = 'Enter your Wifi password'
+$WPF_UI_SSID_Label.Content = 'Enter your SSID' 
+
+#########################################################################
+##Run interface
+
+#$Form_UserInterface.Add_Closed({ 
+#    throw 'You Stronzo! You closed the window!'
+#})
+
+$Form_UserInterface.ShowDialog() | out-null
+
+$Global:WorkingPath
+
+if (-not ($RunMethod -eq 1)){
+    throw 'Stronzo!'
+}
+
+#$Form_UserInterface_Missing.ShowDialog() | out-null
+ 
+#[System.Windows.Window].GetEvents() | select Name, *Method, EventHandlerType
+
+#[System.Windows.Controls.TextBox].GetEvents() | select Name, *Method, EventHandlerType
+
+#closing event
+#$SyncHash.Status_Window.Add_Closing({ Write-Host 'Wibbling'})
+
+
+
+$WorkingFolder = $Global:WorkingPath#+'\'
+
+Write-host ('Creating Working Folder under '+$Scriptpath+' (if it does not exist)')
+        if (-not (Test-Path ($Scriptpath+'Working Folder\'))){
+            $null = New-Item ($Scriptpath+'Working Folder\') -ItemType Directory
+        }
+
+
+if (($Global:SizeofImage -eq 0) -or ($Global:SizeofPartition_System -eq 0) -or ($Global:SizeofPartition_Other -eq 0) -or ($Global:SizeofFAT32 -eq 0))  {
+    Update-OutputWindow -Progress_Grid_Hidden 'TRUE' -Error_Grid_Hidden 'FALSE' -OutputConsole_Error_Line_Text 'ERROR! Cannot create an image of this size! Cannot Continue!'
+    throw   
+}
+
+$SizeofImage = ([math]::Round((($Global:SizeofImage*1024)-0.5),0).ToString()+'mb')
+$SizeofPartition_System = ([math]::Round((($Global:SizeofPartition_System*1024)-0.5),0).ToString()+'mb')
+$SizeofPartition_Other = ([math]::Round((($Global:SizeofPartition_Other*1024)-0.5),0).ToString()+'mb')
+
+$SizeofFAT32 = [math]::Round((($Global:SizeofFAT32*1024)-0.5),0).ToString()
+$HSTDiskName = $Global:HSTDiskName
+# if  ($InteractiveMode -eq 0){
+#     #    $WorkingFolder = 'D:\Test of Weird Path\'
+#         $SizeofImage='350mb'
+#         $SizeofPartition_System='100mb'
+#         $SizeofPartition_Other='100mb'
+#         $SizeofFAT32 ='135'
+#     }
+
+##### Script
+
+$UnLZXURL='http://aminet.net/util/arc/W95unlzx.lha'
+
+$HSTImagerreleases= 'https://api.github.com/repos/henrikstengaard/hst-imager/releases'
+$HSTAmigareleases= 'https://api.github.com/repos/henrikstengaard/hst-amiga/releases'
+$Emu68releases= 'https://api.github.com/repos/michalsc/Emu68/releases'
+$Emu68Toolsreleases= 'https://api.github.com/repos/michalsc/Emu68-tools/releases'
+
+#Generate CSV MD5 Hashes - Begin (To be disabled or removed for production version)
+$CSVHashes = Get-FileHash ($InputFolder+'*.CSV') -Algorithm MD5
+
+'Name;Hash' | Out-File -FilePath ($InputFolder+'CSVHASH')
+Foreach ($CSVHash in $CSVHashes){
+    ((Split-Path $CSVHash.Path -Leaf)+';'+$CSVHash.Hash) | Out-File -FilePath ($InputFolder+'CSVHASH') -Append
+}
+
+#Generate CSV MD5 Hashes - End
+
+# Check Integrity of CSVs
+
+Update-OutputWindow -OutputConsole_Title_Text 'Performing integrity checks over input files' -ProgressbarValue_Overall 1 -ProgressbarValue_Overall_Text '1%'
+
+#Write-Host ''
+#Write-Host 'Performing integrity checks over input files'
+#Write-Host ''
+$CSVHashestoCheck = Import-Csv -Path ($InputFolder+'CSVHASH') -Delimiter ';'
+foreach ($CSVHashtoCheck in $CSVHashestoCheck){
+    Update-OutputWindow -OutputConsole_Detail_Text ('Checking integrity of: '+$CSVHashtoCheck.Name) 
+    #Write-Host ('Checking integrity of: '+$CSVHashtoCheck.Name)
+    foreach ($CSVHash in $CSVHashes){
+        if (($CSVHashtoCheck.Name+$CSVHashtoCheck.Hash) -eq ((split-path $CSVHash.Path -leaf)+($CSVHash.Hash))){
+            $HashMatch=$true
+        }
+    }
+    if ($HashMatch -eq $false) {
+        Update-OutputWindow -Progress_Grid_Hidden 'TRUE' -Error_Grid_Hidden 'FALSE' -OutputConsole_Error_Line_Text 'ERROR! One or more of input files is missing and/or has been altered! Cannot Continue!'
+        #Write-Host 'ERROR! One or more of input files is missing and/or has been altered!' -ForegroundColor Red
+        throw
+    }
+    else{
+        #Write-Host 'File OK!'
+    }
+}
+
+#Update-OutputWindow -OutputConsole_Detail_Text 'Integrity checks complete!'
+#Write-Host 'Integrity checks complete!'
+#Write-Host ''
+
+#Update-OutputWindow -OutputConsole_Title_Text 'Checking existance of folders, programs, and files' -ProgressbarValue_Overall 2 -ProgressbarValue_Overall_Text '2%'
+
+#Write-host 'Checking existance of folders, programs, and files'
+#Write-Host ''
+$ErrorCount = 0
+
+$ErrorCount+= Test-ExistenceofFiles -PathtoTest $SourceProgramPath -PathType 'Folder'
+$ErrorCount+= Test-ExistenceofFiles -PathtoTest $LocationofAmigaFiles -PathType 'Folder'
+$ErrorCount+= Test-ExistenceofFiles -PathtoTest ($SourceProgramPath+'hdf2emu68.exe') -PathType 'File'
+$ErrorCount+= Test-ExistenceofFiles -PathtoTest ($SourceProgramPath+'7z.exe') -PathType 'File'
+$ErrorCount+= Test-ExistenceofFiles -PathtoTest ($SourceProgramPath+'7z.dll') -PathType 'File'
+
+$ListofPackagestoInstall = Import-Csv ($InputFolder+'ListofPackagestoInstall.csv') -Delimiter ';' | Where-Object {$_.Source -eq 'Local'} | Where-Object {$_.InstallType -ne 'StartupSequenceOnly'} |Where-Object {$_.InstallFlag -eq 'TRUE'}
+$ListofPackagestoInstall |  Select-Object SourceLocation -Unique | Where-Object SourceLocation -NotMatch 'Onetime' | ForEach-Object {
+    $ErrorCount+= Test-ExistenceofFiles -PathtoTest ($LocationofAmigaFiles+$_.SourceLocation) -PathType 'File'
+}
+
+if ($ErrorCount -ge 1){
+    Update-OutputWindow -Progress_Grid_Hidden 'TRUE' -Error_Grid_Hidden 'FALSE' -OutputConsole_Error_Line_Text 'ERROR! One or more Programs is missing and/or has been altered! Cannot Continue!'
+    throw
+}
+else {
+    $null = $ErrorCount
+    Update-OutputWindow -OutputConsole_Detail_Text 'All folders and files exist!'
+#    Write-Host 'All folders and files exist!'
+}
+
+$HDF2emu68Path=($SourceProgramPath+'hdf2emu68.exe')
+$7zipPath=($SourceProgramPath+'7z.exe')
+
+Set-Location $WorkingFolder
+
+$ProgramsFolder=$WorkingFolder+'Programs\'
+if (-not (Test-Path $ProgramsFolder)){
+    $null = New-Item $ProgramsFolder -ItemType Directory
+}
+
+$TempFolder=$WorkingFolder+'Temp\'
+if (-not (Test-Path $TempFolder)){
+    $null = New-Item $TempFolder -ItemType Directory
+}
+
+$HSTImagePath=$ProgramsFolder+'HST-Imager\hst.imager.exe'
+$HSTAmigaPath=$ProgramsFolder+'HST-Amiga\hst.amiga.exe'
+$LZXPath=$ProgramsFolder+'unlzx.exe'
+
+$LocationofImage=$WorkingFolder+'OutputImage\'
+$AmigaDrivetoCopy=$WorkingFolder+'AmigaImageFiles\'
+$AmigaDownloads=$WorkingFolder+'AmigaDownloads\'
+$FAT32Partition=$WorkingFolder+'FAT32Partition\'
+
+## Amiga Variables
+
+$DeviceName_Prefix = 'SDH'
+$DeviceName_System = ($DeviceName_Prefix+'0')
+$VolumeName_System ='Workbench'
+$DeviceName_Other = ($DeviceName_Prefix+'1')
+$VolumeName_Other = 'Work'
+$MigratedFilesFolder='My Files'
+#$InstallPathMUI='SYS:Programs/MUI'
+#$InstallPathPicasso96='SYS:Programs/Picasso96'
+#$InstallPathAmiSSL='SYS:Programs/AmiSSL'
+$GlowIcons='TRUE'
+
+$KickstartVersiontoUse = $Global:KickstartVersiontoUse
+$TransferLocation =  $Global:TransferLocation
+
+if ($Global:WifiPassword -eq 'TextBox'){
+    $WifiPassword = ''
+}
+else{
+    $WifiPassword = $Global:WifiPassword
+}
+
+if ($Global:SSID -eq 'TextBox'){
+    $SSID = ''
+}
+else{
+    $SSID = $Global:SSID
+}
+
+$RomPath = $Global:ROMPath
+$ADFPath = $Global:ADFPath
+$ScreenMode = $Global:ScreenModetoUse
+
+$NameofImage=('Pistorm'+$KickstartVersiontoUse+'.HDF')
+
+$StartDateandTime = (Get-Date -Format HH:mm:ss)
+
+Write-Host "Starting execution at $StartDateandTime"
+
+### Clean up
+
+#Update-OutputWindow -OutputConsole_Title_Text 'Performing Cleanup' -ProgressbarValue_Overall 5 -ProgressbarValue_Overall_Text '5%'
+
+$NewFolders = ((split-path $TempFolder -leaf),(split-path $LocationofImage -leaf),((Split-Path $AmigaDrivetoCopy -Leaf)+'\'+$VolumeName_System),((Split-Path $AmigaDrivetoCopy -Leaf)+'\'+$VolumeName_Other),(split-path $FAT32Partition -leaf))
+
+try {
+    foreach ($NewFolder in $NewFolders) {
+        if (Test-Path ($WorkingFolder+$NewFolder)){
+            $null = Remove-Item ($WorkingFolder+$NewFolder) -Recurse -ErrorAction Stop
+        }
+        $null = New-Item -path ($WorkingFolder) -Name $NewFolder -ItemType Directory
+    }    
+}
+catch {
+    throw "Cannot delete temporary files!"    
+}
+
+if (-not(Test-Path ($WorkingFolder+'AmigaDownloads'))){
+    $null = New-Item -path ($WorkingFolder) -Name 'AmigaDownloads' -ItemType Directory    
+}
+
+if (-not(Test-Path ($WorkingFolder+'Programs'))){
+    $null = New-Item -path ($WorkingFolder) -Name 'Programs' -ItemType Directory      
+}
+
+### End Clean up
+
+### Determine Kickstart Rom Path
+
+#Update-OutputWindow -OutputConsole_Title_Text 'Determining Kickstarts to Use' -ProgressbarValue_Overall 7 -ProgressbarValue_Overall_Text '7%'
+
+$FoundKickstarttoUse = Compare-KickstartHashes -PathtoKickstartHashes ($InputFolder+'RomHashes.csv') -PathtoKickstartFiles $ROMPath -KickstartVersion $KickstartVersiontoUse
+
+$KickstartPath = $FoundKickstarttoUse.KickstartPath
+
+if (-not($KickstartPath)){
+    throw "Error! No Kickstart file found!"
+} 
+
+$KickstartNameFAT32=$FoundKickstarttoUse.Fat32Name
+
+Write-Host ('Kickstart to be used is: '+$KickstartPath)
+
+#Update-OutputWindow -OutputConsole_Title_Text 'Determining ADFs to Use' -ProgressbarValue_Overall 9 -ProgressbarValue_Overall_Text '9%'
+
+$AvailableADFs = Compare-ADFHashes -PathtoADFFiles $ADFPath -PathtoADFHashes ($InputFolder+'ADFHashes.csv') -KickstartVersion $KickstartVersiontoUse -PathtoListofInstallFiles ($InputFolder+'ListofInstallFiles.csv') 
+
+if (-not ($AvailableADFs)){
+    throw "One or more ADF files is missing!"
+} 
+
+$ListofInstallFiles = Import-Csv ($InputFolder+'ListofInstallFiles.csv') -Delimiter ';' |  Where-Object {$_.Kickstart_Version -eq $KickstartVersiontoUse} | Sort-Object -Property 'InstallSequence'
+
+$ListofInstallFiles | Add-Member -NotePropertyName Path -NotePropertyValue $null
+$ListofInstallFiles | Add-Member -NotePropertyName DrivetoInstall_VolumeName -NotePropertyValue $null
+
+foreach ($InstallFileLine in $ListofInstallFiles) {
+    if ($InstallFileLine.DrivetoInstall -eq 'System'){
+        $InstallFileLine.DrivetoInstall_VolumeName = $VolumeName_System
+    }
+    foreach ($MatchedADF in $AvailableADFs ) {
+        if ($InstallFileLine.ADF_Name -eq $MatchedADF.ADF_Name){
+            $InstallFileLine.Path=$MatchedADF.PathtoADF
+        }
+        if ($MatchedADF.ADF_Name -match "GlowIcons"){
+            $GlowIconsADF=$MatchedADF.PathtoADF
+        }
+        if ($MatchedADF.ADF_Name -match "Storage"){
+            $StorageADF=$MatchedADF.PathtoADF
+        }
+        if ($MatchedADF.ADF_Name -match "Install"){
+            $InstallADF=$MatchedADF.PathtoADF
+        }
+    }    
+}
+
+Write-Host 'ADF install images to be used are:'
+$ListofInstallFiles |  Select-Object Path,FriendlyName -Unique | ForEach-Object {
+    Write-host ($_.FriendlyName+' ('+$_.Path+')')
+} 
+
+### Download HST-Imager and HST-Amiga
+
+#Update-OutputWindow -OutputConsole_Title_Text 'Downloading HST Packages' -ProgressbarValue_Overall 12 -ProgressbarValue_Overall_Text '12%'
+
+Write-Host "Downloading HST Imager"
+if (-not(Get-GithubRelease -GithubRelease $HSTImagerreleases -Tag_Name '1.1.350' -Name '_console_windows_x64.zip' -LocationforDownload ($TempFolder+'HSTImager.zip') -LocationforProgram ($ProgramsFolder+'HST-Imager\') -Sort_Flag '')){
+    Write-Host 'Error downloading HST-Imager! Cannot continue!'
+    throw
+}
+
+Write-Host "Downloading HST Amiga"
+if (-not(Get-GithubRelease -GithubRelease $HSTAmigareleases -Tag_Name '0.3.163' -Name '_console_windows_x64.zip' -LocationforDownload ($TempFolder+'HSTAmiga.zip') -LocationforProgram ($ProgramsFolder+'HST-Amiga\') -Sort_Flag '')){
+    Write-Host 'Error downloading HST-Amiga! Cannot continue!'
+    throw
+}
+
+#### Download Emu68 Files
+
+#Update-OutputWindow -OutputConsole_Title_Text 'Downloading Emu 68 Packages' -ProgressbarValue_Overall 15 -ProgressbarValue_Overall_Text '15%'
+
+$PathstoTest='Emu68Pistorm','Emu68Pistorm32Lite','Emu68Tools'
+
+foreach($Path in $PathstoTest){
+    if(Test-Path ($TempFolder+$Path)){
+        Remove-Item ($TempFolder+$Path) -Force -Recurse
+    }
+}
+
+$PathstoTest='Emu68Pistorm.zip','Emu68Pistorm32Lite.zip','Emu68Tools.zip'
+
+foreach($Path in $PathstoTest){
+    if(Test-Path ($AmigaDownloads+$Path)){
+        Remove-Item ($AmigaDownloads+$Path) -Force -Recurse
+    }
+}
+
+Write-Host "Downloading Emu68Pistorm"
+if (-not(Get-GithubRelease -GithubRelease $Emu68releases -Tag_Name "nightly" -Name 'Emu68-pistorm-' -LocationforDownload ($AmigaDownloads+'Emu68Pistorm.zip') -LocationforProgram ($tempfolder+'Emu68Pistorm\') -Sort_Flag 'SORT')){
+    Write-Host 'Error downloading Emu68Pistorm! Cannot continue!' -ForegroundColor Red
+    throw
+}
+
+Write-Host "Downloading Emu68Pistorm32lite"
+if (-not(Get-GithubRelease -GithubRelease $Emu68releases -Tag_Name "nightly" -Name 'Emu68-pistorm32lite' -LocationforDownload ($AmigaDownloads+'Emu68Pistorm32lite.zip') -LocationforProgram ($tempfolder+'Emu68Pistorm32lite\') -Sort_Flag 'SORT')){
+    Write-Host 'Error downloading Emu68Pistorm32lite! Cannot continue!' -ForegroundColor Red
+    throw
+}
+
+Write-Host "Downloading Emu68Tools"
+if (-not(Get-GithubRelease -GithubRelease $Emu68Toolsreleases -Tag_Name "nightly" -Name 'Emu68-tools' -LocationforDownload ($AmigaDownloads+'Emu68Tools.zip') -LocationforProgram ($tempfolder+'Emu68Tools\') -Sort_Flag 'SORT')){
+    Write-Host 'Error downloading Emu68Tools! Cannot continue!' -ForegroundColor Red
+    throw
+}
+
+### End Download HST
+
+### Begin Download UnLzx
+
+#Update-OutputWindow -OutputConsole_Title_Text 'Downloading UnLZX' -ProgressbarValue_Overall 16 -ProgressbarValue_Overall_Text '16%'
+
+Write-Host "Downloading UnLZX"
+if (-not (Test-Path ($ProgramsFolder+'unlzx.exe'))){
+    If (-not (Get-AmigaFileWeb -URL $UnLZXURL -NameofDL 'W95unlzx.lha' -LocationforDL $TempFolder)){
+        Write-host "Error downloading UnLZX! Quitting" -ForegroundColor Red
+        throw
+    }
+    if (-not(Expand-Zipfiles -SevenzipPathtouse $7zipPath -TempFoldertouse $TempFolder -InputFile ($TempFolder+'W95unlzx.lha') -OutputDirectory $ProgramsFolder -FiletoExtract 'unlzx.exe')){
+        Write-Host ('Deleting package '+($TempFolder+'W95unlzx.lha'))
+        $null=Remove-Item -Path ($TempFolder+'W95unlzx.lha') -Force
+        throw # Error in extracting
+    }
+}
+else{
+    Write-Host "Unlzx already exists."
+}
+
+### End Download UnLzx
+
+## Setting up Amiga Partitions List
+
+$AmigaPartitionsList = [System.Collections.Generic.List[PSCustomObject]]::New()
+
+$PartitionNumbertoPopulate =1
+
+$AmigaPartitionsList += [PSCustomObject]@{
+    PartitionNumber = $PartitionNumbertoPopulate 
+    SizeofPartition =  $SizeofPartition_System
+    DosType = 'PFS'
+    VolumeName = $VolumeName_System
+    DeviceName = $DeviceName_System  
+}
+
+$PartitionNumbertoPopulate ++
+$CapacitytoFill = $SizeofPartition_Other 
+
+do {
+    if ($CapacitytoFill -le 100*1024){
+        $CapacityofPartition = $CapacitytoFill
+    }
+    else{
+        $CapacityofPartition = 100*1024
+    }
+    if ($PartitionNumbertoPopulate -eq 2){
+        $VolumeNametoPopulate = $VolumeName_Other
+        $DeviceNametoPopulate = $DeviceName_Other
+    }
+    else{
+        $VolumeNametoPopulate = ($VolumeName_Other+(($PartitionNumbertoPopulate-1).ToString()))
+        $DeviceNametoPopulate = ($DeviceName_Prefix+(($PartitionNumbertoPopulate-1).ToString()))
+       
+    }
+    $AmigaPartitionsList += [PSCustomObject]@{
+        PartitionNumber = $PartitionNumbertoPopulate 
+        SizeofPartition =  (($CapacityofPartition.ToString())+'mb')
+        DosType = 'PFS'
+        VolumeName = $VolumeNametoPopulate
+        DeviceName = $DeviceNametoPopulate    
+    }
+    $PartitionNumbertoPopulate ++
+    $CapacitytoFill = $CapacitytoFill - $CapacityofPartition
+} until (
+    $CapacitytoFill -le  0
+)
+
+Write-Host "Preparing Amiga Image"
+if (-not (Start-HSTImager -Command "Blank" -DestinationPath ($LocationofImage+$NameofImage) -ImageSize $SizeofImage -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+    throw
+} 
+if (-not (Start-HSTImager -Command "rdb init" -DestinationPath ($LocationofImage+$NameofImage) -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+    throw
+} 
+if (-not (Start-HSTImager -Command "rdb filesystem add" -DestinationPath ($LocationofImage+$NameofImage) -FileSystemPath ($WorkingFolder+'Programs\HST-Imager\pfs3aio') -DosType 'PFS3' -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+    throw
+} 
+
+foreach ($AmigaPartition in $AmigaPartitionsList) {
+    Write-Host ('Preparing Partition Device: '+$AmigaPartition.DeviceName+' VolumeName '+$AmigaPartition.VolumeName)
+    if ($AmigaPartition.VolumeName = $VolumeName_System){
+        if (-not (Start-HSTImager -Command "rdb part add" -DestinationPath ($LocationofImage+$NameofImage) -DeviceName $AmigaPartition.DeviceName -DosType $AmigaPartition.DosType -SizeofPartition $AmigaPartition.SizeofPartition -Options '--bootable' -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+            throw
+        } 
+    }
+    else{
+        if (-not (Start-HSTImager -Command "rdb part add" -DestinationPath ($LocationofImage+$NameofImage) -DeviceName $AmigaPartition.DeviceName -DosType $AmigaPartition.DosType -SizeofPartition $AmigaPartition.SizeofPartition -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+            throw
+        } 
+    }
+    if (-not (Start-HSTImager -Command "rdb part format" -DestinationPath ($LocationofImage+$NameofImage) -PartitionNumber $AmigaPartition.PartitionNumber -VolumeName $AmigaPartition.VolumeName -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+        throw
+    } 
+}
+
+#### Begin - Create NewFolder.info file
+if (($KickstartVersiontoUse -eq 3.1) -or (($KickstartVersiontoUse -eq 3.2) -and ($GlowIcons -eq 'FALSE'))) {
+    if (-not (Start-HSTImager -Command 'fs extract' -SourcePath ($StorageADF+'\Monitors.info') -DestinationPath ($TempFolder.TrimEnd('\'))  -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+        throw
+    }
+    if (Test-Path ($TempFolder+'def_drawer.info')){
+        $null = Remove-Item ($TempFolder+'def_drawer.info')
+    }
+    $null = Rename-Item ($TempFolder+'Monitors.info') ($TempFolder+'def_drawer.info')
+}
+elseif(($KickstartVersiontoUse -eq 3.2) -and ($GlowIcons -eq 'TRUE')){
+    if (-not (Start-HSTImager -Command 'fs extract' -SourcePath ($GlowIconsADF+'\Prefs\Env-Archive\Sys\def_drawer.info') -DestinationPath ($TempFolder.TrimEnd('\')) -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+        throw
+    }
+}
+
+if (Test-Path ($TempFolder+'NewFolder.info')){
+    $null = Remove-Item ($TempFolder+'NewFolder.info')
+} 
+$null = Rename-Item ($TempFolder+'def_drawer.info') ($TempFolder+'NewFolder.info') -Force
+
+#### End - Create NewFolder.info file
+
+### Begin Basic Drive Setup
+Add-AmigaFolder -AmigaFolderPath ($VolumeName_System+'\Programs\') -TempFoldertouse $TempFolder -AmigaDrivetoCopytouse $AmigaDrivetoCopy
+Add-AmigaFolder -AmigaFolderPath ($VolumeName_System+'\Storage\DataTypes\') -TempFoldertouse $TempFolder -AmigaDrivetoCopytouse $AmigaDrivetoCopy
+
+if ($KickstartVersiontouse -eq 3.1){
+
+    if (-not (test-path ($AmigaDrivetoCopy+$VolumeName_System+'\WBStartup\'))){
+        $null = new-item ($AmigaDrivetoCopy+$VolumeName_System+'\WBStartup\') -ItemType Directory
+    } 
+
+    if (-not (test-path ($AmigaDrivetoCopy+$VolumeName_System+'\Devs\Keymaps\'))){
+        $null = new-item ($AmigaDrivetoCopy+$VolumeName_System+'\Devs\Keymaps\') -ItemType Directory -Force
+    }  
+
+}
+
+ if (-not (test-path ($AmigaDrivetoCopy + $VolumeName_System + '\Expansion\'))) {
+    $null = new-item ($AmigaDrivetoCopy + $VolumeName_System + '\Expansion\') -ItemType Directory -Force
+}  
+
+if (-not (Test-Path ($AmigaDrivetoCopy+$VolumeName_Other))){
+    $null = New-Item -path ($AmigaDrivetoCopy+$VolumeName_Other) -ItemType Directory -Force 
+    
+}
+
+if ($KickstartVersiontoUse -eq 3.1){
+    $SourcePath = ($InstallADF+'\Update\disk.info') 
+}
+
+elseif ($KickstartVersiontoUse -eq 3.2){
+    $SourcePath = ($GlowIconsADF+'\Prefs\Env-Archive\Sys\def_harddisk.info') 
+}
+
+foreach ($AmigaPartition in $AmigaPartitionsList){
+    if (-not ($AmigaPartition.VolumeName -eq $VolumeName_System)){
+        If ($AmigaPartition.PartitionNumber -ge 3){
+            $DestinationPathtoUse = ($LocationofImage+$NameofImage+'\rdb\'+$AmigaPartition.DeviceName+'\')
+        }
+        else{
+            $DestinationPathtoUse = ($AmigaDrivetoCopy+$VolumeName_Other) 
+        }
+        write-host ('Copying Icons to Work Partition. Source is: '+$SourcePath+' Destination is: '+$DestinationPathtoUse)
+        if (-not (Start-HSTImager -Command 'fs extract' -SourcePath $SourcePath -DestinationPath $DestinationPathtoUse -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+                    throw
+        }
+        if ($AmigaPartition.PartitionNumber -le 3){
+            Rename-Item ($AmigaDrivetoCopy+$VolumeName_Other+'\def_harddisk.info') ($AmigaDrivetoCopy+$VolumeName_Other+'\disk.info') 
+        }
+    }
+}
+
+### End Basic Drive Setup
+
+### Begin Copy Install files from ADF
+
+#Update-OutputWindow -OutputConsole_Title_Text 'Process and Install ADFs' -ProgressbarValue_Overall 18 -ProgressbarValue_Overall_Text '18%'
+
+$TotalItems=$ListofInstallFiles.Count
+
+$ItemCounter=1
+
+Foreach($InstallFileLine in $ListofInstallFiles){
+    Write-Host ''
+    Write-Host ('('+$ItemCounter+'/'+$TotalItems+') Processing ADF:'+$InstallFileLine.FriendlyName+' Files: '+$InstallFileLine.AmigaFiletoInstall)
+    $SourcePathtoUse = ($InstallFileLine.Path+'\'+($InstallFileLine.AmigaFiletoInstall -replace '/','\'))
+    if ($InstallFileLine.Uncompress -eq "TRUE"){
+        Write-host 'Extracting files from ADFs containing .Z files'
+        if ($InstallFileLine.LocationtoInstall.Length -eq 0){        
+            $DestinationPathtoUse = ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName)
+        }
+        else{  
+            $DestinationPathtoUse = ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+($InstallFileLine.LocationtoInstall -replace '/','\')) 
+        }
+        if (-not (Start-HSTImager -Command 'fs extract' -SourcePath $SourcePathtoUse -DestinationPath $DestinationPathtoUse -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+            throw
+        }
+        Expand-AmigaZFiles  -SevenzipPathtouse $7zipPath -WorkingFoldertouse $TempFolder -LocationofZFiles $DestinationPathtoUse
+    }    
+    elseif (($InstallFileLine.NewFileName -ne "")  -or ($InstallFileLine.ModifyScript -ne 'FALSE') -or ($InstallFileLine.ModifyInfoFileTooltype -ne 'FALSE')){
+        if ($InstallFileLine.LocationtoInstall -ne '`*'){
+            $LocationtoInstall=(($InstallFileLine.LocationtoInstall -replace '/','\')+'\')
+        }
+        else{
+            $LocationtoInstall=$null
+        }
+        if ($InstallFileLine.NewFileName -ne ""){
+            $FullPath = $AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$InstallFileLine.NewFileName
+        }
+        else{
+            $FullPath = $AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+(Split-Path ($InstallFileLine.AmigaFiletoInstall -replace '/','\') -Leaf) 
+        }
+        $filename = Split-Path $FullPath -leaf
+        Write-host 'Extracting files from ADFs where changes needed'
+        if ($InstallFileLine.LocationtoInstall.Length -eq 0){
+            $DestinationPathtoUse = ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName)
+        }
+        else{        
+            $DestinationPathtoUse = ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+($InstallFileLine.LocationtoInstall -replace '/','\'))
+        }
+        if (-not (Start-HSTImager -Command 'fs extract' -SourcePath $SourcePathtoUse -DestinationPath $DestinationPathtoUse -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+            throw
+        }
+        if ($InstallFileLine.NewFileName -ne ""){
+            $NameofFiletoChange=$InstallFileLine.AmigaFiletoInstall.split("/")[-1]  
+            if (Test-Path ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$InstallFileLine.NewFileName)){
+                Remove-Item ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$InstallFileLine.NewFileName)
+            }
+            $null = rename-Item -Path ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$NameofFiletoChange) -NewName $InstallFileLine.NewFileName            
+        }
+        if ($InstallFileLine.ModifyInfoFileTooltype -eq 'Modify'){
+            if (-not (Read-AmigaTooltypes -IconPath ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$filename) -TooltypesPath ($TempFolder+$filename+'.txt') -HSTAmigaPathtouse $HSTAmigaPath -TempFoldertouse $TempFolder)){
+                throw
+            }                 
+            $OldToolTypes = Get-Content($TempFolder+$filename+'.txt')
+            $TooltypestoModify = Import-Csv ($LocationofAmigaFiles+$LocationtoInstall+'\'+$filename+'.txt') -Delimiter ';'
+            Get-ModifiedToolTypes -OriginalToolTypes $OldToolTypes -ModifiedToolTypes $TooltypestoModify | Out-File ($TempFolder+$filename+'amendedtoimport.txt')
+            if (-not (Write-AmigaTooltypes -IconPath ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$filename) -ToolTypesPath ($TempFolder+$fileName+'amendedtoimport.txt') -TempFoldertouse $TempFolder -HSTAmigaPathtouse $HSTAmigaPath)){
+                throw
+            }                 
+        }        
+        if ($InstallFileLine.ModifyScript -eq'Remove'){
+            Write-Host ('Modifying '+$FileName+' for: '+$InstallFileLine.ScriptNameofChange)
+            $ScripttoEdit = Import-TextFileforAmiga -SystemType 'Amiga' -ImportFile ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$FileName)
+            $ScripttoEdit = Edit-AmigaScripts -ScripttoEdit $ScripttoEdit -Action 'remove' -name $InstallFileLine.ScriptNameofChange -Startpoint $InstallFileLine.ScriptInjectionStartPoint -Endpoint $InstallFileLine.ScriptInjectionEndPoint                    
+            Export-TextFileforAmiga -ExportFile ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$FileName) -DatatoExport $ScripttoEdit -AddLineFeeds 'TRUE'
+        }   
+    }
+    else {
+        Write-host 'Extracting files from ADFs to .hdf file'
+        if ($InstallFileLine.LocationtoInstall.Length -eq 0){
+           $DestinationPathtoUse = ($LocationofImage+$NameofImage+'\rdb\'+$DeviceName_System)
+        }
+        else{
+           $DestinationPathtoUse = ($LocationofImage+$NameofImage+'\rdb\'+$DeviceName_System+'\'+($InstallFileLine.LocationtoInstall -replace '/','\'))
+        }
+        if (-not (Start-HSTImager -Command 'fs extract' -SourcePath $SourcePathtoUse -DestinationPath $DestinationPathtoUse -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+            throw
+        }
+    }     
+    $ItemCounter+=1    
+}
+
+### End Copy Install files from ADF
+
+#######################################################################################################################################################################################################################################
+
+$ListofPackagestoInstall = Import-Csv ($InputFolder+'ListofPackagestoInstall.csv') -Delimiter ';' |  Where-Object {$_.KickstartVersion -match $KickstartVersiontoUse} | Where-Object {$_.InstallFlag -eq 'TRUE'} #| Sort-Object -Property 'InstallSequence','PackageName'
+
+$ListofPackagestoInstall | Add-Member -NotePropertyName DrivetoInstall_VolumeName -NotePropertyValue $null
+
+foreach ($line in $ListofPackagestoInstall){
+    if ($line.DrivetoInstall -eq 'System'){
+        $line.DrivetoInstall_VolumeName = $VolumeName_System
+    }
+}
+
+
+$PackageCheck=$null
+
+# Download and expand packages
+
+Update-OutputWindow -OutputConsole_Title_Text 'Download Packages' -ProgressbarValue_Overall 22 -ProgressbarValue_Overall_Text '22%'
+
+$TotalItems=(
+    $ListofPackagestoInstall | Where-Object InstallType -ne 'CopyOnly' |  Where-Object InstallType -ne 'StartupSequenceOnly' | Select-Object -Unique -Property PackageName
+    ).count 
+
+$ItemCounter=1
+
+foreach($PackagetoFind in $ListofPackagestoInstall) {
+    if (($PackagetoFind.InstallType -ne 'CopyOnly') -and ($PackagetoFind.InstallType -ne 'StartupSequenceOnly')){
+        if ($PackageCheck -ne $PackagetoFind.PackageName){
+            Write-Host ''
+            Write-host ('('+$ItemCounter+'/'+$TotalItems+') Downloading (or Copying) package '+$PackagetoFind.PackageName)
+            if ($PackagetoFind.Source -eq "ADF") {
+                if ($PackagetoFind.SourceLocation -eq 'StorageADF'){
+                    $ADFtoUse = $StorageADF
+                    $SourcePathtoUse = ($ADFtoUse+'\'+$PackagetoFind.FilestoInstall)
+                    $DestinationPathtoUse = ($TempFolder+$PackagetoFind.FileDownloadName).Trim('\')       
+                    if (-not (Start-HSTImager -Command 'fs extract' -SourcePath $SourcePathtoUse -DestinationPath $DestinationPathtoUse -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+                        throw
+                    }
+                }
+            }
+            Elseif ($PackagetoFind.Source -eq "Web"){
+                if(($PackagetoFind.SearchforUpdatedPackage -eq 'TRUE') -and ($PackagetoFind.PackageName -ne 'WHDLoadWrapper')){
+                    $PackagetoFind.SourceLocation=Find-LatestAminetPackage -PackagetoFind $PackagetoFind.PackageName -Exclusion $PackagetoFind.UpdatePackageSearchExclusionTerm -DateNewerthan $PackagetoFind.UpdatePackageSearchMinimumDate -Architecture 'm68k-amigaos'
+                   # Write-Host $PackagetoFind.SourceLocation           
+                }
+                if(($PackagetoFind.SearchforUpdatedPackage -eq 'TRUE') -and ($PackagetoFind.PackageName -eq 'WHDLoadWrapper')){
+                    $PackagetoFind.SourceLocation=(Find-WHDLoadWrapperURL -SearchCriteria 'WHDLoadWrapper' -ResultLimit '10') 
+                }
+                if (Test-Path ($AmigaDownloads+$PackagetoFind.FileDownloadName)){
+                    Write-Host "Download already completed"
+                } 
+                else{
+                    if (-not (Get-AmigaFileWeb -URL $PackagetoFind.SourceLocation -NameofDL $PackagetoFind.FileDownloadName -LocationforDL $AmigaDownloads)){
+                        Write-host "Unrecoverable error with download(s)!" -ForegroundColor Red
+                        throw
+                    }                    
+                }
+                if ($PackagetoFind.PerformHashCheck -eq 'TRUE'){
+                    if (-not (Compare-FileHash -FiletoCheck ($AmigaDownloads+$PackagetoFind.FileDownloadName) -HashtoCheck $PackagetoFind.Hash)){
+                        Write-Host "Error in downloaded packages! Unable to continue!" -ForegroundColor Red
+                        Write-Host ('Deleting package '+($AmigaDownloads+$PackagetoFind.FileDownloadName))
+                        $null=Remove-Item -Path ($AmigaDownloads+$PackagetoFind.FileDownloadName) -Force 
+                        throw
+                    }
+                }
+            }
+            Elseif (($PackagetoFind.Source -eq "Local") -and ($PackagetoFind.InstallType -eq "Full")){
+                Write-host "Copying local file"$PackagetoFind.SourceLocation
+                if (Test-Path ($AmigaDownloads+$PackagetoFind.FileDownloadName)){
+                    Write-host 'File already copied'
+                }
+                else {
+                    Copy-Item ($LocationofAmigaFiles+$PackagetoFind.SourceLocation) ($AmigaDownloads+$PackagetoFind.FileDownloadName)
+                }
+            }
+            if ($PackagetoFind.InstallType -eq "Full"){
+                Write-Host 'Expanding archive file for package'$PackagetoFind.PackageName
+                if ([System.IO.Path]::GetExtension($PackagetoFind.FileDownloadName) -eq '.lzx'){
+                    Expand-LZXArchive -LZXPathtouse $LZXPath -WorkingFoldertouse $WorkingFolder -LZXFile ($AmigaDownloads+$PackagetoFind.FileDownloadName) -TempFoldertouse $TempFolder -DestinationPath ($TempFolder+$PackagetoFind.FileDownloadName) 
+                } 
+                if ([System.IO.Path]::GetExtension($PackagetoFind.FileDownloadName) -eq '.lha'){
+                    if (-not(Expand-Zipfiles -SevenzipPathtouse $7zipPath -TempFoldertouse $TempFolder -InputFile ($AmigaDownloads+$PackagetoFind.FileDownloadName) -OutputDirectory ($TempFolder+$PackagetoFind.FileDownloadName))){
+                        Write-Host ('Deleting package '+($AmigaDownloads+$PackagetoFind.FileDownloadName))
+                        $null=Remove-Item -Path ($AmigaDownloads+$PackagetoFind.FileDownloadName) -Force
+                        throw # Error in extracting
+                    }
+                               
+                } 
+            }
+
+            $ItemCounter+=1    
+        }
+        $PackageCheck=$PackagetoFind.PackageName
+            
+    }
+}
+
+$PackageCheck=$null
+$UserStartup=$null
+$StartupSequence = Import-TextFileforAmiga -SystemType 'Amiga' -ImportFile ($AmigaDrivetoCopy+$VolumeName_System+'\S\Startup-Sequence') 
+$StartupSequenceversion = Get-StartupSequenceVersion -StartupSequencetoCheck $StartupSequence
+
+#Update-OutputWindow -OutputConsole_Title_Text 'Install Packages' -ProgressbarValue_Overall 30 -ProgressbarValue_Overall_Text '30%'
+
+$TotalItems=(
+    $ListofPackagestoInstall | Select-Object -Unique -Property PackageName
+    ).count 
+
+$ItemCounter=1
+
+foreach($PackagetoFind in $ListofPackagestoInstall) {
+    if ($PackageCheck -ne $PackagetoFind.PackageName){
+        Write-host ''
+        Write-host ('('+$ItemCounter+'/'+$TotalItems+') Installing package '+$PackagetoFind.PackageName)       
+        if ($PackagetoFind.ModifyUserStartup -eq'TRUE'){
+            Write-Host 'Modifying S/User-Startup file for:'$PackagetoFind.PackageName
+            $UserStartup += Edit-AmigaScripts -name $PackagetoFind.PackageName -Action 'Append' -LinestoAdd (Import-TextFileforAmiga -SystemType 'PC' -ImportFile ($LocationofAmigaFiles+'S\User-Startup_'+$PackagetoFind.PackageName))
+            
+        }
+        if ($PackagetoFind.ModifyStartupSequence -eq'Add'){
+            Write-Host 'Modifying S/Startup-Sequence file for:'$PackagetoFind.PackageName 
+            $InjectionPoint=Get-StartupSequenceInjectionPointfromVersion -SSversion $StartupSequenceversion -InjectionPointtoParse $PackagetoFind.StartupSequenceInjectionStartPoint
+            $StartupSequence = Edit-AmigaScripts -ScripttoEdit $StartupSequence -Action 'inject' -injectionpoint 'before' -name $PackagetoFind.PackageName -Startpoint $InjectionPoint -LinestoAdd (Import-TextFileforAmiga -SystemType 'PC' -ImportFile ($LocationofAmigaFiles+'S\Startup-Sequence_'+$PackagetoFind.PackageName))            
+        }
+        $ItemCounter+=1    
+    }   
+    if (($PackagetoFind.InstallType -eq 'CopyOnly') -or
+       ($PackagetoFind.InstallType -eq 'Full') -or
+       ($PackagetoFind.InstallType -eq 'Extract')){
+           ### Determining Source Paths
+           $DestinationPathtoUse =($AmigaDrivetoCopy+$PackagetoFind.DrivetoInstall_VolumeName+'\'+$PackagetoFind.LocationtoInstall) 
+           if ($PackagetoFind.Source -eq 'Web'){
+               $SourcePathtoUse=($TempFolder+$PackagetoFind.FileDownloadName+'\'+$PackagetoFind.FilestoInstall)  
+           }
+           if ($PackagetoFind.Source -eq 'Emu68' ){
+               $SourcePathtoUse=($TempFolder+$PackagetoFind.SourceLocation)       
+           }
+           elseif ($PackagetoFind.Source -eq 'ADF' ) {
+               $SourcePathtoUse=($TempFolder+$PackagetoFind.FilestoInstall)     
+           }
+           elseif (($PackagetoFind.Source -eq 'Local') -and ($PackagetoFind.InstallType -eq 'CopyOnly')){
+               $SourcePathtoUse=($LocationofAmigaFiles+$PackagetoFind.SourceLocation)
+           }
+           elseif (($PackagetoFind.Source -eq 'Local') -and ($PackagetoFind.InstallType -eq 'Full')){
+               $SourcePathtoUse=($TempFolder+$PackagetoFind.FileDownloadName+'\'+$PackagetoFind.FilestoInstall)     
+           }
+           #### End Determining SourcePaths
+           Write-Host "Creating directories where required - Folder"$PackagetoFind.LocationtoInstall
+           if (-not (Test-Path ($AmigaDrivetoCopy+$PackagetoFind.DrivetoInstall_VolumeName+'\'+$PackagetoFind.LocationtoInstall))){
+               $null = New-Item ($AmigaDrivetoCopy+$PackagetoFind.DrivetoInstall_VolumeName+'\'+$PackagetoFind.LocationtoInstall) -ItemType Directory
+           }
+           if ($PackagetoFind.CreateFolderInfoFile -eq 'TRUE'){
+               Add-AmigaFolder -AmigaFolderPath ($PackagetoFind.DrivetoInstall_VolumeName+'\'+$PackagetoFind.LocationtoInstall) -TempFoldertouse $TempFolder -AmigaDrivetoCopytouse $AmigaDrivetoCopy
+           }
+           #### Copy Files
+           if ($PackagetoFind.NewFileName.Length -ne 0){
+               $DestinationPathtoUse=$DestinationPathtoUse+$PackagetoFind.NewFileName
+               Write-host ('Copying files to drive. Source path is: '+$SourcePathtoUse+' Destination path is: '+$DestinationPathtoUse+' (New Name is '+$PackagetoFind.NewFileName+')')
+           }
+           else{
+               Write-host ('Copying files to drive. Source path is: '+$SourcePathtoUse+' Destination path is: '+$DestinationPathtoUse)        
+           }
+           Copy-Item -Path $SourcePathtoUse  -Destination $DestinationPathtoUse -Recurse -force  
+           #### End Copy Files
+           if (($PackagetoFind.ModifyInfoFileTooltype -eq 'Replace') -or ($PackagetoFind.ModifyInfoFileTooltype -eq 'Modify')) {
+               Write-Host 'Tooltypes for relevant .info files for:'$PackagetoFind.PackageName
+               if ($PackagetoFind.NewFileName){
+                   $filename=$PackagetoFind.NewFileName
+               }
+               else{
+                   $filename=(Split-Path $PackagetoFind.FilestoInstall -Leaf)
+               }        
+               $Tooltypes=Import-Csv ($LocationofAmigaFiles+$PackagetoFind.LocationtoInstall+$filename+'.txt') -Delimiter ';'
+               if ($PackagetoFind.ModifyInfoFileTooltype -eq 'Replace'){
+                   $Tooltypes.NewValue | Out-File ($TempFolder+$filename+'amendedtoimport.txt')
+               }
+               if ($PackagetoFind.ModifyInfoFileTooltype -eq 'Modify'){
+                   If (-not(Read-AmigaTooltypes -IconPath ($AmigaDrivetoCopy+$PackagetoFind.DrivetoInstall_VolumeName+'\'+$PackagetoFind.LocationtoInstall+$filename) -TooltypesPath ($TempFolder+$filename+'.txt') -HSTAmigaPathtouse $HSTAmigaPath -TempFoldertouse $TempFolder)){
+                       throw 
+                } 
+                   $OldToolTypes= Get-Content($TempFolder+$filename+'.txt')
+                   Get-ModifiedToolTypes -OriginalToolTypes $OldToolTypes -ModifiedToolTypes $Tooltypes  | Out-File ($TempFolder+$filename+'amendedtoimport.txt')
+               }
+               if (-not (Write-AmigaTooltypes -IconPath ($AmigaDrivetoCopy+$PackagetoFind.DrivetoInstall_VolumeName+'\'+$PackagetoFind.LocationtoInstall+$filename) -ToolTypesPath ($TempFolder+$filename+'amendedtoimport.txt') -TempFoldertouse $TempFolder -HSTAmigaPathtouse $HSTAmigaPath)){
+                   throw
+            }                             
+           }
+           else {
+           }    
+       }
+    $PackageCheck=$PackagetoFind.PackageName  
+}
+
+Write-Host 'Completed install of packages'
+
+Export-TextFileforAmiga -ExportFile ($AmigaDrivetoCopy+$VolumeName_System+'\S\Startup-Sequence') -DatatoExport $StartupSequence -AddLineFeeds 'TRUE'
+Export-TextFileforAmiga -ExportFile ($AmigaDrivetoCopy+$VolumeName_System+'\S\User-Startup') -DatatoExport $UserStartup -AddLineFeeds 'TRUE'
+
+### Wireless Prefs
+
+#Update-OutputWindow -OutputConsole_Title_Text 'Creating Wireless Prefs file' -ProgressbarValue_Overall 50 -ProgressbarValue_Overall_Text '50%'
+
+Write-host 'Creating Wireless Prefs file'
+
+if (-not (Test-Path ($AmigaDrivetoCopy+$VolumeName_System+'\Prefs\Env-Archive\Sys\'))){
+    $null = New-Item -path ($AmigaDrivetoCopy+$VolumeName_System+'\Prefs\Env-Archive\Sys') -ItemType Directory -Force 
+
+}
+
+$WirelessPrefs = "network={",
+                 "   ssid=""$SSID""",
+                 "   psk=""$WifiPassword""",
+                 "}"
+                 
+Export-TextFileforAmiga -ExportFile ($AmigaDrivetoCopy+$VolumeName_System+'\Prefs\Env-Archive\Sys\wireless.prefs') -DatatoExport $WirelessPrefs -AddLineFeeds 'TRUE'                
+
+### End Wireless Prefs
+
+### Fix WBStartup
+
+#Update-OutputWindow -OutputConsole_Title_Text 'Fix WBStartup' -ProgressbarValue_Overall 51 -ProgressbarValue_Overall_Text '51%'
+
+If ($KickstartVersiontouse -eq 3.2){
+    Write-Host 'Fixing Menutools'
+    if (-not (Start-HSTImager -Command 'fs extract' -SourcePath ($StorageADF+'\WBStartup\MenuTools') -DestinationPath ($AmigaDrivetoCopy+$VolumeName_System+'\WBStartup') -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+        throw
+    }
+    
+    $WBStartup = Import-TextFileforAmiga -SystemType 'Amiga' -ImportFile ($AmigaDrivetoCopy+$VolumeName_System+'\WBStartup\Menutools') 
+    $WBStartup = Edit-AmigaScripts -ScripttoEdit $WBStartup -Action 'inject' -Name 'Add Wait' -Injectionpoint 'after' -Startpoint 'ADDRESS WORKBENCH' -LinestoAdd (Import-TextFileforAmiga -SystemType 'PC' -ImportFile ($LocationofAmigaFiles+'WBStartup\Menutools_1')) -ArexxFlag 'AREXX'
+    $WBStartup = Edit-AmigaScripts -ScripttoEdit $WBStartup -Action 'inject' -Name 'Add Offline and Online Menus' -Injectionpoint 'before' -Startpoint 'EXIT' -LinestoAdd (Import-TextFileforAmiga -SystemType 'PC' -ImportFile ($LocationofAmigaFiles+'WBStartup\Menutools_2')) -ArexxFlag 'AREXX'
+    
+    Export-TextFileforAmiga -ExportFile ($AmigaDrivetoCopy+$VolumeName_System+'\WBStartup\Menutools') -DatatoExport $WBStartup -AddLineFeeds 'TRUE'
+}
+
+## Clean up AmigaImageFiles
+
+if (Test-Path ($AmigaDrivetoCopy+$VolumeName_System+'\Disk.info')){
+    Remove-Item ($AmigaDrivetoCopy+$VolumeName_System+'\Disk.info')
+}
+
+#### Set up FAT32
+
+Write-Host 'Setting up FAT32 files'
+
+#Update-OutputWindow -OutputConsole_Title_Text 'Setup FAT32 Files' -ProgressbarValue_Overall 52 -ProgressbarValue_Overall_Text '52%'
+
+Write-Host 'Copying Emu68Pistorm and Emu68Pistorm32lite files' 
+
+$null = copy-Item ($TempFolder+"Emu68Pistorm\*") -Destination ($FAT32Partition)
+$null = copy-Item ($TempFolder+"Emu68Pistorm32lite\*") -Destination ($FAT32Partition)
+$null= Remove-Item ($FAT32Partition+'config.txt')
+$null = copy-Item ($LocationofAmigaFiles+'FAT32\ps32lite-stealth-firmware.gz') -Destination ($FAT32Partition)
+
+if (-not (Test-Path ($FAT32Partition+'Kickstarts\'))){
+    $null = New-Item -path ($FAT32Partition+'Kickstarts\') -ItemType Directory -Force
+}
+
+if (-not (Test-Path ($FAT32Partition+'Install\'))){
+    $null = New-Item -path ($FAT32Partition+'Install\') -ItemType Directory -Force
+}
+
+#Update-OutputWindow -ProgressbarValue 15 -ProgressbarValue_Text '15%'
+
+Write-Host 'Copying Cmdline.txt' 
+
+Copy-Item ($LocationofAmigaFiles+'FAT32\cmdline_'+$KickstartVersiontoUse+'.txt') -Destination ($FAT32Partition+'cmdline.txt') #Temporary workaround until Michal fixes buptest for 3.1
+
+#Update-OutputWindow -ProgressbarValue 30 -ProgressbarValue_Text '30%'
+
+$ConfigTxt = Get-Content -Path ($LocationofAmigaFiles+'FAT32\config.txt')
+
+Write-Host 'Preparing Config.txt'
+
+$RevisedConfigTxt=$null
+
+$AvailableScreenModes = Import-Csv ($InputFolder+'ScreenModes.CSV') -Delimiter (';')
+foreach ($AvailableScreenMode in $AvailableScreenModes){
+    if ($AvailableScreenMode.Name -eq $ScreenMode){
+        $AvailableScreenMode.Selected = $true
+    }
+}
+
+foreach ($Line in $ConfigTxt) {
+    if ($line -eq '[ROMPATH]'){
+        $RevisedConfigTxt+=('initramfs '+$KickstartNameFAT32)+"`n"
+    }
+    elseif ($line -eq '[VIDEOMODES]'){
+        $RevisedConfigTxt+="# The following section defines the screenmode for your monitor for output from the Raspberry Pi. If you wish to `n"
+        $RevisedConfigTxt+="# select a different screenmode you can comment out the existing mode and remove the comment marks from the new one.`n"
+        foreach ($AvailableScreenMode in ($AvailableScreenModes | Sort-Object -Property 'Selected' -Descending)){
+            if ($AvailableScreenMode.Selected -eq $true){
+                $RevisedConfigTxt+="`n"
+                $RevisedConfigTxt+=('# ScreenMode: '+$AvailableScreenMode.FriendlyName)+' (Currently Selected)'+"`n"
+                if (-not ($AvailableScreenMode.hdmi_group.Length -eq 0)){
+                    $RevisedConfigTxt+=('hdmi_group='+$AvailableScreenMode.hdmi_group)+"`n"
+                }
+                if (-not ($AvailableScreenMode.hdmi_mode.Length -eq 0)){
+                    $RevisedConfigTxt+=('hdmi_mode='+$AvailableScreenMode.hdmi_mode)+"`n"
+                }
+                if (-not ($AvailableScreenMode.hdmi_cvt.length -eq 0)){
+                    $RevisedConfigTxt+=('hdmi_cvt='+$AvailableScreenMode.hdmi_cvt)+"`n"
+                }
+                if (-not ($AvailableScreenMode.max_framebuffer_width.length -eq 0)){
+                    $RevisedConfigTxt+=('max_framebuffer_width='+$AvailableScreenMode.max_framebuffer_width)+"`n"
+                }
+                if (-not ($AvailableScreenMode.max_framebuffer_height.length -eq 0)){
+                    $RevisedConfigTxt+=('max_framebuffer_height='+$AvailableScreenMode.max_framebuffer_height)+"`n"
+                }
+                if (-not ($AvailableScreenMode.hdmi_pixel_freq_limit.length -eq 0)){
+                    $RevisedConfigTxt+=('hdmi_pixel_freq_limit='+$AvailableScreenMode.hdmi_pixel_freq_limit)+"`n"
+                }
+                if (-not ($AvailableScreenMode.disable_overscan.length -eq 0)){
+                    $RevisedConfigTxt+=('disable_overscan='+$AvailableScreenMode.disable_overscan)+"`n"
+                }
+            }
+            else{
+                $RevisedConfigTxt+="`n"
+                $RevisedConfigTxt+=('# ScreenMode: '+$AvailableScreenMode.FriendlyName)+"`n"
+                if (-not ($AvailableScreenMode.hdmi_group.Length -eq 0)){
+                    $RevisedConfigTxt+=('# hdmi_group='+$AvailableScreenMode.hdmi_group)+"`n"
+                }
+                if (-not ($AvailableScreenMode.hdmi_mode.Length -eq 0)){
+                    $RevisedConfigTxt+=('# hdmi_mode='+$AvailableScreenMode.hdmi_mode)+"`n"
+                }
+                if (-not ($AvailableScreenMode.hdmi_cvt.length -eq 0)){
+                    $RevisedConfigTxt+=('# hdmi_cvt='+$AvailableScreenMode.hdmi_cvt)+"`n"
+                }
+                if (-not ($AvailableScreenMode.max_framebuffer_width.length -eq 0)){
+                    $RevisedConfigTxt+=('# max_framebuffer_width='+$AvailableScreenMode.max_framebuffer_width)+"`n"
+                }
+                if (-not ($AvailableScreenMode.max_framebuffer_height.length -eq 0)){
+                    $RevisedConfigTxt+=('# max_framebuffer_height='+$AvailableScreenMode.max_framebuffer_height)+"`n"
+                }
+                if (-not ($AvailableScreenMode.hdmi_pixel_freq_limit.length -eq 0)){
+                    $RevisedConfigTxt+=('# hdmi_pixel_freq_limit='+$AvailableScreenMode.hdmi_pixel_freq_limit)+"`n"
+                }
+                if (-not ($AvailableScreenMode.disable_overscan.length -eq 0)){
+                    $RevisedConfigTxt+=('# disable_overscan='+$AvailableScreenMode.disable_overscan)+"`n"
+                }            
+            }            
+        }
+    }
+    else{
+        $RevisedConfigTxt += ($Line+"`n")
+    }    
+}
+
+#Update-OutputWindow -ProgressbarValue 66 -ProgressbarValue_Text '66%'
+
+Export-TextFileforAmiga -DatatoExport $RevisedConfigTxt -ExportFile ($FAT32Partition+'config.txt') -AddLineFeeds 'TRUE' 
+
+Write-host 'Copying Kickstart file to FAT32 partition'
+$null = copy-Item -LiteralPath $KickstartPath -Destination ($FAT32Partition+$KickstartNameFAT32)
+
+
+#Update-OutputWindow -ProgressbarValue 100 -ProgressbarValue_Text '100%'
+
+#Update-OutputWindow -OutputConsole_Title_Text 'Transferring Files to Work Partition' -ProgressbarValue_Overall 53 -ProgressbarValue_Overall_Text '53%'
+
+### Transfer files to Work partition
+
+
+if ($TransferLocation) {
+    # Determine Size of transfer
+    $SizeofFilestoTransfer=(Get-ChildItem $TransferLocation -force -Recurse | Where-Object { $_.PSIsContainer -eq $false }  | Measure-Object -property Length -sum).sum /1Mb
+    Write-Host ('Transferring files from '+$TransferLocation+' to "'+$MigratedFilesFolder+'" directory on Work drive')
+    Write-Host ('Total size of files to be transferred is: '+(([Math]::Round($SizeofFilestoTransfer, 2)).tostring())+'mb')
+    Write-Host ('Available space on Work drive is: '+$SizeofPartition_Other)
+    if ($SizeofFilestoTransfer -lt (([double]($SizeofPartition_Other.trim('mb')))+10)){
+        $SourcePathtoUse = $TransferLocation+('*')
+        if (Test-Path ($AmigaDrivetoCopy+$VolumeName_Other+'\'+$MigratedFilesFolder+'.info')){
+            Remove-Item ($AmigaDrivetoCopy+$VolumeName_Other+'\'+$MigratedFilesFolder+'.info')
+        }
+        $null = Copy-Item ($TempFolder+'NewFolder.info') ($AmigaDrivetoCopy+$VolumeName_Other+'\'+$MigratedFilesFolder+'.info')
+        if (-not(Start-HSTImager -Command 'fs copy' -SourcePath $SourcePathtoUse -DestinationPath ($LocationofImage+$NameofImage+'\rdb\'+$DeviceName_Other+'\'+$MigratedFilesFolder) -HSTImagePathtouse $HSTImagePath -TempFoldertouse $TempFolder)){
+            throw
+        }
+    }
+    else{
+        Write-host "Size of files to be transferred is too large for the Work partition! Not transferring!"
+    }
+}
+
+#Update-OutputWindow -OutputConsole_Title_Text 'Transferring Amiga Files to Image' -ProgressbarValue_Overall 63 -ProgressbarValue_Overall_Text '63%'
+
+if (-not(Start-HSTImager -Command 'fs copy' -SourcePath ($AmigaDrivetoCopy+$VolumeName_System) -DestinationPath ($LocationofImage+$NameofImage+'\rdb\'+$DeviceName_System) -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+    throw
+} 
+if (-not(Start-HSTImager -Command 'fs copy' -SourcePath ($AmigaDrivetoCopy+$VolumeName_Other) -DestinationPath ($LocationofImage+$NameofImage+'\rdb\'+$DeviceName_Other) -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+    throw
+}  
+
+Set-Location $LocationofImage
+
+#Update-OutputWindow -OutputConsole_Title_Text 'Creating Image' -ProgressbarValue_Overall 83 -ProgressbarValue_Overall_Text '83%'
+
+& $HDF2emu68Path $LocationofImage$NameofImage $SizeofFAT32 ($FAT32Partition).Trim('\')
+
+$null= Rename-Item ($LocationofImager+'emu68_converted.img') -NewName ('Emu68Kickstart'+$KickstartVersiontoUse+'.img')
+Set-location $WorkingFolder
+
+if (-not (Start-HSTImager -Command "Write" -SourcePath ($LocationofImage+'Emu68Kickstart'+$KickstartVersiontoUse+'.img') -DestinationPath $HSTDiskName -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+    throw
+} 
+
+#Update-OutputWindow -OutputConsole_Title_Text 'Completed' -ProgressbarValue_Overall 100 -ProgressbarValue_Overall_Text '100%'
+
+$EndDateandTime = (Get-Date -Format HH:mm:ss)
+$ElapsedTime = (New-TimeSpan -Start $StartDateandTime -End $EndDateandTime).TotalSeconds
+
+Write-Host "Started at: $StartDateandTime Finished at: $EndDateandTime. Total time to run (in seconds) was: $ElapsedTime" 
