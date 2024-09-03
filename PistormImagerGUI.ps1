@@ -136,6 +136,8 @@ $XAML_UserInterface.SelectNodes("//*[@Name]") | ForEach-Object{
 # Use this space to add code to the various form elements in your GUI
 #===========================================================================
 
+$WPF_UI_SSID_Textbox.Text=''
+$WPF_UI_Password_Textbox.Text=''
 $WPF_UI_RomPath_Label.Content='No ROM path selected'
 $WPF_UI_ADFPath_Label.Content='No ADF path selected'
 $WPF_UI_MigratedPath_Label.Content='No transfer path selected'
@@ -158,8 +160,8 @@ $WPF_UI_MediaSelect_Dropdown.Add_SelectionChanged({
     foreach ($Disk in $RemovableMedia){
         if ($Disk.FriendlyName -eq $WPF_UI_MediaSelect_DropDown.SelectedItem){
             $WPF_UI_FAT32Size_Slider.Minimum = 0.035 # Limit of Tool
-            $WPF_UI_WorkSize_Slider.Minimum = 0.5
-            $WPF_UI_WorkbenchSize_Slider.Minimum = 0.5
+            $WPF_UI_WorkSize_Slider.Minimum = 0.1
+            $WPF_UI_WorkbenchSize_Slider.Minimum = 0.1
             $WPF_UI_ImageSize_Slider.Minimum = ($WPF_UI_WorkbenchSize_Slider.Minimum)+($WPF_UI_WorkSize_Slider.Minimum)+($WPF_UI_FAT32Size_Slider.Minimum)
             $WPF_UI_ImageSize_Slider.Maximum = [math]::truncate(($Disk.Size/1GB)*1000)/1000
             $WPF_UI_FAT32Size_Slider.Maximum = $WPF_UI_ImageSize_Slider.Value
@@ -187,53 +189,68 @@ $WPF_UI_ImageSize_Slider.Add_ValueChanged({
     $WPF_UI_ImageSize_Value.Text = $WPF_UI_ImageSize_Slider.Value   
     $WPF_UI_FAT32Size_Slider.Maximum = $WPF_UI_ImageSize_Slider.Value
     $WPF_UI_FAT32Size_Slider.Minimum = 0.035 # Limit of Tool
-    $WPF_UI_WorkSize_Slider.Minimum = 0.5
-    $WPF_UI_WorkbenchSize_Slider.Minimum = 0.5
+    $WPF_UI_WorkSize_Slider.Minimum = 0.1
+    $WPF_UI_WorkbenchSize_Slider.Minimum = 0.1
     $WPF_UI_WorkSize_Slider.Maximum = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-$WPF_UI_WorkbenchSize_Slider.Value
     $WPF_UI_WorkbenchSize_Slider.Maximum = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)
 #    $WPF_UI_WorkbenchSize_Slider.Value = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-$WPF_UI_WorkSize_Slider.Value
     $WPF_UI_WorkSize_Slider.Value = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-($WPF_UI_WorkbenchSize_Slider.Value)
     $WPF_UI_WorkSize_Value.Text = $WPF_UI_WorkSize_Slider.Value
+    $Global:SizeofFAT32 = $WPF_UI_FAT32Size_Slider.Value
+    $Global:SizeofImage = $WPF_UI_ImageSize_Slider.Value
+    $Global:SizeofPartition_System = $WPF_UI_WorkBenchSize_Slider.Value
+    $Global:SizeofPartition_Other = $WPF_UI_WorkSize_Slider.Value
 })
 
 $WPF_UI_FAT32Size_Slider.Add_ValueChanged({
     $WPF_UI_FAT32Size_Value.Text = $WPF_UI_FAT32Size_Slider.Value
     $WPF_UI_FAT32Size_Slider.Maximum = $WPF_UI_ImageSize_Slider.Value
     $WPF_UI_FAT32Size_Slider.Minimum = 0.035 # Limit of Tool
-    $WPF_UI_WorkSize_Slider.Minimum = 0.5
-    $WPF_UI_WorkbenchSize_Slider.Minimum = 0.5
+    $WPF_UI_WorkSize_Slider.Minimum = 0.1
+    $WPF_UI_WorkbenchSize_Slider.Minimum = 0.1
     $WPF_UI_WorkSize_Slider.Maximum = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-$WPF_UI_WorkbenchSize_Slider.Value
     $WPF_UI_WorkbenchSize_Slider.Maximum = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)
 #    $WPF_UI_WorkbenchSize_Slider.Value = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-$WPF_UI_WorkSize_Slider.Value
     $WPF_UI_WorkSize_Slider.Value = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-($WPF_UI_WorkbenchSize_Slider.Value)
     $WPF_UI_WorkSize_Value.Text = $WPF_UI_WorkSize_Slider.Value
+    $Global:SizeofFAT32 = $WPF_UI_FAT32Size_Slider.Value*1024                              #Convert to Megabytes
+    $Global:SizeofImage = $WPF_UI_ImageSize_Slider.Value*1024*1024                         #Convert to Kilobytes
+    $Global:SizeofPartition_System = $WPF_UI_WorkBenchSize_Slider.Value*1024*1024          #Convert to Kilobytes
+    $Global:SizeofPartition_Other = $WPF_UI_WorkSize_Slider.Value*1024*1024                #Convert to Kilobytes
 })
 
 $WPF_UI_WorkbenchSize_Slider.Add_ValueChanged({
     $WPF_UI_WorkbenchSize_Value.Text = $WPF_UI_WorkbenchSize_Slider.Value
     $WPF_UI_FAT32Size_Slider.Maximum = $WPF_UI_ImageSize_Slider.Value
     $WPF_UI_FAT32Size_Slider.Minimum = 0.035 # Limit of Tool
-    $WPF_UI_WorkSize_Slider.Minimum = 0.5
-    $WPF_UI_WorkbenchSize_Slider.Minimum = 0.5
+    $WPF_UI_WorkSize_Slider.Minimum = 0.1
+    $WPF_UI_WorkbenchSize_Slider.Minimum = 0.1
     $WPF_UI_WorkSize_Slider.Maximum = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-$WPF_UI_WorkbenchSize_Slider.Value
     $WPF_UI_WorkbenchSize_Slider.Maximum = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)
 #    $WPF_UI_WorkbenchSize_Slider.Value = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-$WPF_UI_WorkSize_Slider.Value
     $WPF_UI_WorkSize_Slider.Value = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-($WPF_UI_WorkbenchSize_Slider.Value)
     $WPF_UI_WorkSize_Value.Text = $WPF_UI_WorkSize_Slider.Value
+    $Global:SizeofFAT32 = $WPF_UI_FAT32Size_Slider.Value*1024                           #Convert to Megabytes
+    $Global:SizeofImage = $WPF_UI_ImageSize_Slider.Value*1024*1024                      #Convert to Kilobytes
+    $Global:SizeofPartition_System = $WPF_UI_WorkBenchSize_Slider.Value*1024*1024       #Convert to Kilobytes  
+    $Global:SizeofPartition_Other = $WPF_UI_WorkSize_Slider.Value*1024*1024             #Convert to Kilobytes
 })
 
 $WPF_UI_WorkSize_Slider.Add_ValueChanged({
     $WPF_UI_WorkSize_Value.Text = $WPF_UI_WorkSize_Slider.Value
     $WPF_UI_FAT32Size_Slider.Maximum = $WPF_UI_ImageSize_Slider.Value
     $WPF_UI_FAT32Size_Slider.Minimum = 0.035 # Limit of Tool
-    $WPF_UI_WorkSize_Slider.Minimum = 0.5
-    $WPF_UI_WorkbenchSize_Slider.Minimum = 0.5
+    $WPF_UI_WorkSize_Slider.Minimum = 0.1
+    $WPF_UI_WorkbenchSize_Slider.Minimum = 0.1
     $WPF_UI_WorkSize_Slider.Maximum = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-$WPF_UI_WorkbenchSize_Slider.Value
     $WPF_UI_WorkbenchSize_Slider.Maximum = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)
 #    $WPF_UI_WorkbenchSize_Slider.Value = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-$WPF_UI_WorkSize_Slider.Value
     $WPF_UI_WorkSize_Slider.Value = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-($WPF_UI_WorkbenchSize_Slider.Value)
+    $Global:SizeofFAT32 = $WPF_UI_FAT32Size_Slider.Value*1024                      #Convert to Megabytes
+    $Global:SizeofImage = $WPF_UI_ImageSize_Slider.Value*1024*1024                 #Convert to Kilobytes
+    $Global:SizeofPartition_System = $WPF_UI_WorkBenchSize_Slider.Value*1024*1024  #Convert to Kilobytes
+    $Global:SizeofPartition_Other = $WPF_UI_WorkSize_Slider.Value*1024*1024        #Convert to Kilobytes
 })
-
 
 #$WPF_UI_WorkSize_Value.Add_PreviewTextInput({
 #    if ($WPF_UI_WorkSize_Value.Text -match "^[\d\.]+$"){
@@ -244,8 +261,8 @@ $WPF_UI_WorkSize_Slider.Add_ValueChanged({
 #   }
 #})
 
-
 $WPF_UI_WorkSize_Value.Add_TextChanged({
+    Start-Sleep -Milliseconds 20
     if ($WPF_UI_WorkSize_Value.Text -match "^[\d\.]+$"){
         $WPF_UI_WorkSize_Slider.Value = $WPF_UI_WorkSize_Value.Text
     }
@@ -253,20 +270,35 @@ $WPF_UI_WorkSize_Value.Add_TextChanged({
 })
 
 $WPF_UI_WorkbenchSize_Value.Add_TextChanged({
+    Start-Sleep -Milliseconds 20
     if ($WPF_UI_WorkBenchSize_Value.Text -match "^[\d\.]+$"){
+        $WPF_UI_WorkBenchSize_Value.Background = 'White'
         $WPF_UI_WorkBenchSize_Slider.Value = $WPF_UI_WorkBenchSize_Value.Text
+    }
+    else{
+        $WPF_UI_WorkBenchSize_Value.Background = 'Red'
     }
 })
 
 $WPF_UI_FAT32Size_Value.Add_TextChanged({
+    Start-Sleep -Milliseconds 20
     if ($WPF_UI_FAT32Size_Value.Text -match "^[\d\.]+$"){
+        $WPF_UI_FAT32Size_Value.Background = 'White'
         $WPF_UI_FAT32Size_Slider.Value = $WPF_UI_FAT32Size_Value.Text
+    }
+    else{
+        $WPF_UI_FAT32Size_Value.Background = 'Red'
     }
 })
 
 $WPF_UI_ImageSize_Value.Add_TextChanged({
+    Start-Sleep -Milliseconds 20
     if ($WPF_UI_ImageSize_Value.Text -match "^[\d\.]+$"){
+        $WPF_UI_ImageSize_Value.Background = 'White'
         $WPF_UI_ImageSize_Slider.Value = $WPF_UI_ImageSize_Value.Text
+    }
+    else{
+        $WPF_UI_ImageSize_Value.Background = 'Red'
     }
 })
 
@@ -276,31 +308,49 @@ $WPF_UI_Start_Button.Background = 'Red'
 $WPF_UI_Start_Button.Width = '100'
 $WPF_UI_Start_Button.Height = '20'
 $WPF_UI_Start_Button.Add_Click({
-    foreach ($ScreenMode in $AvailableScreenModes) {
-        if ($ScreenMode.FriendlyName -eq $WPF_UI_ScreenMode_Dropdown.SelectedItem){
-            $Global:ScreenModetoUse = $ScreenMode.Name           
-        }
-    }
-    $Global:KickstartVersiontoUse = $WPF_UI_KickstartVersion_Dropdown.SelectedItem
     $Global:SSID = $WPF_UI_SSID_Textbox.Text
-    $Global:WifiPassword = $WPF_UI_Password_Textbox.Text
-    $Global:SizeofFAT32 = $WPF_UI_FAT32Size_Slider.Value
-    $Global:SizeofImage = $WPF_UI_ImageSize_Slider.Value
-    $Global:SizeofPartition_System = $WPF_UI_WorkBenchSize_Slider.Value
-    $Global:SizeofPartition_Other = $WPF_UI_WorkSize_Slider.Value
-    
+    $Global:WifiPassword = $WPF_UI_Password_Textbox.Text   
+    [System.Windows.MessageBox]::Show('Checking for space on drive!','Space Check',0,32)
     $AvailableSpace = (Confirm-DiskSpace -PathtoCheck $Scriptpath)/1Mb
-    $RequiredSpace = (($Global:SizeofImage*1024*1024*1024)/1Mb) + `
+    $RequiredSpace = (($Global:SizeofImage*1024)/1Mb) + `
                 25 + ` #Workbench
                 80      #Other Files
 
     If ($AvailableSpace -le $RequiredSpace){
-        [System.Windows.MessageBox]::Show('Insufficient Space on Drive! Select location with sufficient space')
-        $Global:WorkingPath = Get-FolderPath -Message 'Select location for Working Path' -RootFolder 'MyComputer'-ShowNewFolderButton
-        $AvailableSpace_revised = (Confirm-DiskSpace -PathtoCheck $Global:WorkingPath)/1Mb
-        if ($AvailableSpace_revised -le $RequiredSpace){
-            Throw 'Still insufficient space! Exiting!'
+        $Msg = @'
+You do not have sufficient space on your drive to run the tool!
+
+Either select a location with sufficient space or press cancel to quit the tool
+'@
+        $ValueofAction = [System.Windows.MessageBox]::Show($Msg, 'Error - Insufficient Space!',1,48)
+        if ($ValueofAction -eq 'OK'){
+            $SufficientSpace_Flag =$null
+            do {
+                $Global:WorkingPath = Get-FolderPath -Message 'Select location for Working Path' -RootFolder 'MyComputer'-ShowNewFolderButton
+                $AvailableSpace_revised = (Confirm-DiskSpace -PathtoCheck $Global:WorkingPath)/1Mb
+                if ($AvailableSpace_revised -le $RequiredSpace){
+                    $Msg = @'
+You still do not have sufficient space on your drive to run the tool!
+                  
+Either select a location with sufficient space or press cancel to quit the tool
+'@    
+                    $ValueofAction = [System.Windows.MessageBox]::Show($Msg, 'Error - Insufficient Space!',1,48)
+                    if ($ValueofAction -eq 'Cancel'){
+                        $Form_UserInterface.Close() | out-null
+                        $Global:RunMethod =2 
+                    }    
+                }
+                else{
+                    $SufficientSpace_Flag = $true    
+                }
+            } until (
+                $SufficientSpace_Flag -eq $true
+            )        
         }
+        elseif ($ValueofAction -eq 'Cancel'){
+            $Form_UserInterface.Close() | out-null
+            $Global:RunMethod =2
+        }      
     } 
     else {
         $Global:WorkingPath = ($Scriptpath+'Working Folder\') 
@@ -313,7 +363,6 @@ $WPF_UI_Start_Button.Add_Click({
         $Form_UserInterface.Close() | out-null
         $Global:RunMethod = 1
     }
-
 })
 
 $WPF_UI_RomPath_Button.Content = 'Click to Set Rom Path'
@@ -378,6 +427,7 @@ foreach ($Kickstart in $AvailableKickstarts) {
 }
 
 $WPF_UI_KickstartVersion_Dropdown.Add_SelectionChanged({
+    $Global:KickstartVersiontoUse = $WPF_UI_KickstartVersion_Dropdown.SelectedItem
     if(Confirm-UIFields){
         $WPF_UI_Start_Button.Background = 'Red'
     }
@@ -394,6 +444,11 @@ foreach ($ScreenMode in $AvailableScreenModes) {
 }
 
 $WPF_UI_ScreenMode_Dropdown.Add_SelectionChanged({
+    foreach ($ScreenMode in $AvailableScreenModes) {
+        if ($ScreenMode.FriendlyName -eq $WPF_UI_ScreenMode_Dropdown.SelectedItem){
+            $Global:ScreenModetoUse = $ScreenMode.Name           
+        }
+    }
     if(Confirm-UIFields){
         $WPF_UI_Start_Button.Background = 'Red'
     }
@@ -402,12 +457,14 @@ $WPF_UI_ScreenMode_Dropdown.Add_SelectionChanged({
     }
 })
 
-$WPF_UI_ImageSize_Label.Content = 'Total Image Size (Gb)'  
+
+
+$WPF_UI_ImageSize_Label.Content = 'Total Image Size (GiB)'  
 $WPF_UI_WorkbenchSize_Label.Content = 'Size of Workbench'  
-$WPF_UI_WorkbenchSize_Label2ndline.Content = 'Partition (Gb)'  
+$WPF_UI_WorkbenchSize_Label2ndline.Content = 'Partition (GiB)'  
 $WPF_UI_WorkSize_Label.Content = 'Size of Work'
-$WPF_UI_WorkSize_Label2ndline.Content = 'Partition (Gb)'
-$WPF_UI_FAT32Size_Label.Content = 'Size of FAT32 Partition (Gb)' 
+$WPF_UI_WorkSize_Label2ndline.Content = 'Partition (GiB)'
+$WPF_UI_FAT32Size_Label.Content = 'Size of FAT32 Partition (GiB)' 
 
 $WPF_UI_Password_Label.Content = 'Enter your Wifi password'
 $WPF_UI_SSID_Label.Content = 'Enter your SSID' 
@@ -540,29 +597,25 @@ if (-not ($Global:IsDisclaimerAccepted -eq $true)){
 
 
 $Form_UserInterface.ShowDialog() | out-null
-if (-not ($Global:RunMethod -eq 1)){
+
+if ($Global:RunMethod -eq 2){
+    Write-ErrorMessage -Message 'Exiting - User has insufficient space'
+    throw 
+}
+elseif (-not ($Global:RunMethod -eq 1)){
     throw 'Exiting - UI Window was closed'
 }
 
+
 #[System.Windows.Window].GetEvents() | select Name, *Method, EventHandlerType
 
-$WorkingFolder = $Global:WorkingPath#+'\'
+$WorkingFolder = $Global:WorkingPath
 
-Write-host ('Creating Working Folder under '+$Scriptpath+' (if it does not exist)')
-        if (-not (Test-Path ($Scriptpath+'Working Folder\'))){
-            $null = New-Item ($Scriptpath+'Working Folder\') -ItemType Directory
-        }
+$SizeofImage = ($Global:SizeofImage.ToString()+'kb')
+$SizeofPartition_System = ($Global:SizeofPartition_System.ToString()+'kb')
+$SizeofPartition_Other = $Global:SizeofPartition_Other
 
-
-if (($Global:SizeofImage -eq 0) -or ($Global:SizeofPartition_System -eq 0) -or ($Global:SizeofPartition_Other -eq 0) -or ($Global:SizeofFAT32 -eq 0))  {
-    throw 'ERROR! Cannot create an image of this size! Cannot Continue!'  
-}
-
-$SizeofImage = ([math]::Round((($Global:SizeofImage*1024)-0.5),0).ToString()+'mb')
-$SizeofPartition_System = ([math]::Round((($Global:SizeofPartition_System*1024)-0.5),0).ToString())
-$SizeofPartition_Other = ([math]::Round((($Global:SizeofPartition_Other*1024)-0.5),0).ToString())
-
-$SizeofFAT32 = [math]::Round((($Global:SizeofFAT32*1024)-0.5),0).ToString()
+$SizeofFAT32 = $Global:SizeofFAT32.ToString()
 $HSTDiskName = $Global:HSTDiskName
 
 ##### Script
@@ -614,6 +667,13 @@ foreach ($CSVHashtoCheck in $CSVHashestoCheck){
 Write-TaskCompleteMessage -Message 'Performing integrity checks over input files - Complete!' -SectionNumber '1' -TotalSections $TotalSections
 
 Write-StartTaskMessage -Message 'Checking existance of folders, programs, and files' -SectionNumber '2' -TotalSections $TotalSections
+
+if (((split-path $WorkingFolder -Parent)+'\') -eq $Scriptpath) {
+    Write-InformationMessage -Message ('Creating Working Folder under '+$Scriptpath+' (if it does not exist)')
+    if (-not (Test-Path ($Scriptpath+'Working Folder\'))){
+        $null = New-Item ($Scriptpath+'Working Folder\') -ItemType Directory
+    }
+}
 
 $ErrorCount = 0
 
@@ -668,7 +728,7 @@ $VolumeName_System ='Workbench'
 $DeviceName_Other = ($DeviceName_Prefix+'1')
 $VolumeName_Other = 'Work'
 $MigratedFilesFolder='My Files'
-$PFSLimit = 100
+$PFSLimit = 101*1024*1024 #Kilobytes
 #$InstallPathMUI='SYS:Programs/MUI'
 #$InstallPathPicasso96='SYS:Programs/Picasso96'
 #$InstallPathAmiSSL='SYS:Programs/AmiSSL'
@@ -910,7 +970,7 @@ do {
     }
     $AmigaPartitionsList += [PSCustomObject]@{
         PartitionNumber = $PartitionNumbertoPopulate 
-        SizeofPartition =  ((($WorkPartitionSize*1024).ToString())+'mb')
+        SizeofPartition =  ((($WorkPartitionSize).ToString())+'kb')
         DosType = 'PFS'
         VolumeName = $VolumeNametoPopulate
         DeviceName = $DeviceNametoPopulate    
