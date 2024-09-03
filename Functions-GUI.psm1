@@ -67,7 +67,7 @@ function Format-XMLtoXAML{
     return $XAML
 }
 
-Function Test-Administrator{  
+Function Test-Administrator {  
     $user = [Security.Principal.WindowsIdentity]::GetCurrent();
     (New-Object Security.Principal.WindowsPrincipal $user).IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)  
 }
@@ -76,6 +76,23 @@ function Confirm-DiskSpace {
         $PathtoCheck
     )
     (Get-Volume -DriveLetter (Split-Path -Qualifier $PathtoCheck).Replace(':','')).SizeRemaining
+}
+
+function Get-UICapturedData {
+    param (
+
+    )
+    Write-InformationMessage -message "HSTDiskName is: $Global:HSTDiskName" 
+    Write-InformationMessage -message "ScreenModetoUse is: $Global:ScreenModetoUse"
+    Write-InformationMessage -message "KickstartVersiontoUse is: $Global:KickstartVersiontoUse"
+    Write-InformationMessage -message "SSID is: $Global:SSID" 
+    Write-InformationMessage -message "WifiPassword is: $Global:WifiPassword" 
+    Write-InformationMessage -message "SizeofFAT32 is: $Global:SizeofFAT32" 
+    Write-InformationMessage -message "SizeofImage is: $Global:SizeofImage"
+    Write-InformationMessage -message "SizeofPartition_System is: $Global:SizeofPartition_System"
+    Write-InformationMessage -message "SizeofPartition_Other is: $Global:SizeofPartition_Other"
+    Write-InformationMessage -message "WorkingPathis: $Global:WorkingPath"
+    Write-InformationMessage -message "ROMPath is: $Global:ROMPath"
 }
 
 function Confirm-UIFields {
@@ -161,272 +178,7 @@ Function Get-FormVariables{
         }
         return $RemovableMediaList
     }
-
-    function Open-OutputWindow {
- 
-        $Global:SyncHash = [hashtable]::Synchronized(@{})
-        $newRunspace =[runspacefactory]::CreateRunspace()
-        $newRunspace.ApartmentState = "STA"
-        $newRunspace.ThreadOptions = "ReuseThread"         
-        $newRunspace.Open()
-        $newRunspace.SessionStateProxy.SetVariable("syncHash",$syncHash)   
-        
-        $Global:PsCmd = [PowerShell]::Create().AddScript({
-    
-            $OutputWindowXML = '
-    
-<Window
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" x:Name="Status_Window"
-        mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid x:Name="Grid_Main" Visibility="Visible">
-        <Grid x:Name="Grid_Progress" Visibility="Visible">
-            <ProgressBar x:Name="ProgressBar_Overall" HorizontalAlignment="Left" Height="40" Margin="56,159,0,0" VerticalAlignment="Top" Width="728" Value="0"  Maximum="100" Minimum="0" Visibility="Visible"/>
-            <TextBlock x:Name="OutputConsole_Detail" HorizontalAlignment="Left" Margin="68,310,0,0" TextWrapping="Wrap" Text="TextBlock" VerticalAlignment="Top" Width="722" Height="117" Visibility="Visible"/>
-            <TextBlock x:Name="OutputConsole_Title" HorizontalAlignment="Left" Margin="59,57,0,0" TextWrapping="Wrap" Text="TextBlock" VerticalAlignment="Top" Width="722" Height="62" Visibility="Visible"/>
-            <ProgressBar x:Name="ProgressBar" HorizontalAlignment="Left" Height="40" Margin="62,249,0,0" VerticalAlignment="Top" Width="728" Value="0"  Maximum="100" Minimum="0" Visibility="Visible"/>
-            <Label x:Name="ProgressBar_Overall_Title" Content="Overall Progress" HorizontalAlignment="Left" Margin="56,119,0,0" VerticalAlignment="Top" Width="728" HorizontalContentAlignment="Center" Visibility="Visible"/>
-            <Label x:Name="ProgressBar_Title" Content="Progress of Task" HorizontalAlignment="Center" Margin="41,217,0,0" VerticalAlignment="Top" Width="728" HorizontalContentAlignment="Center" Visibility="Visible"/>
-            <Label x:Name="ProgressBar_Overall_TextBox" Content="Label" HorizontalAlignment="Center" Margin="0,166,0,0" VerticalAlignment="Top" Visibility="Visible"/>
-            <Label x:Name="ProgressBar_TextBox" Content="Label" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,256,0,0" Visibility="Visible"/>
-        </Grid>
-        <Grid x:Name="Grid_Error" Visibility="Visible">
-            <TextBlock x:Name="OutputConsole_Error_Line" HorizontalAlignment="Left" Margin="62,172,0,0" TextWrapping="Wrap" Text="TextBlock" VerticalAlignment="Top" Width="722" Height="40" FontSize="16" FontFamily="Arial" Foreground="Red" Visibility="Visible"/>
-        </Grid>
-    </Grid>
-</Window>
-            
-            '
-            
-            $OutputWindowXML = $OutputWindowXML -replace 'mc:Ignorable="d"','' -replace "x:N",'N' -replace '^<Win.*', '<Window'
-            [xml]$XAML = $OutputWindowXML
-            
-            $reader=(New-Object System.Xml.XmlNodeReader $XAML)
-            $syncHash.Window=[Windows.Markup.XamlReader]::Load( $reader )
-            
-            $XAML.SelectNodes("//*[@Name]") | ForEach-Object {
-                try {
-                    Write-Output "Adding $($_.Name)"
-                    $syncHash.Add($_.Name,$syncHash.Window.FindName($_.Name))
-                } catch {
-                    throw
-                }
-            }
-            $syncHash.Window.ShowDialog() | Out-Null
-            $SyncHash.Error = $Error
-    
-        })   
-        
-        #Setup the runspace
-        $PsCmd.Runspace = $NewRunspace
-        $null = $PsCmd.BeginInvoke()  
-                    #Wait 1 second for the thread to setup
-        Start-Sleep -Seconds 1
-    }
-
-# 
-    
-
-    Function Update-OutputWindow {
-        Param
-        (
-            $OutputConsole_Title_Text,
-            $OutputConsole_Detail_Text,
-            $ProgressbarValue_Overall,
-            $ProgressbarValue,
-            $ProgressbarValue_Text,
-            $ProgressbarValue_Overall_Text,
-            $OutputConsole_Error_Line_Text,
-
-            $Progress_Grid_Hidden,
-            $Error_Grid_Hidden,
-            $ProgressBar_Overall_Title_Hidden,
-            $ProgressBar_Title_Hidden,
-            $OutputConsole_Title_Text_Hidden,
-            $OutputConsole_Detail_Text_Hidden,          
-            $ProgressbarValue_Overall_Hidden,
-            $ProgressbarValue_Hidden,
-            $ProgressbarValue_Text_Hidden,
-            $ProgressbarValue_Overall_Text_Hidden,
-            $OutputConsole_Error_Line_Text_Hidden
-
-        )
-      
-        If ($Error_Grid_Hidden -eq 'TRUE'){        
-            $SyncHash.Grid_Error.Dispatcher.Invoke(
-                [Action]{$SyncHash.Grid_Error.Visibility='Hidden'}
-                )
-        }
-        elseif ($Error_Grid_Hidden -eq 'FALSE'){
-            $SyncHash.Grid_Error.Dispatcher.Invoke(
-                [Action]{$SyncHash.Grid_Error.Visibility='Visible'}
-                )
-        }
-
-        If ($Progress_Grid_Hidden -eq 'TRUE'){        
-            $SyncHash.Grid_Progress.Dispatcher.Invoke(
-                [Action]{$SyncHash.Grid_Progress.Visibility='Hidden'}
-                )
-        }
-        elseif ($Progress_Grid_Hidden -eq 'FALSE'){
-            $SyncHash.Grid_Progress.Dispatcher.Invoke(
-                [Action]{$SyncHash.Grid_Progress.Visibility='Visible'}
-                )
-        }
-
-        If ($ProgressBar_Overall_Title_Hidden -eq 'TRUE'){        
-            $SyncHash.ProgressBar_Overall_Title.Dispatcher.Invoke(
-                [Action]{$SyncHash.ProgressBar_Overall_Title.Visibility='Hidden'}
-                )
-        }
-        elseif ($ProgressBar_Overall_Title_Hidden -eq 'FALSE'){
-            $SyncHash.ProgressBar_Overall_Title.Dispatcher.Invoke(
-                [Action]{$SyncHash.ProgressBar_Overall_Title.Visibility='Visible'}
-                )
-        }
-
-        If ($ProgressBar_Title_Hidden -eq 'TRUE'){        
-            $SyncHash.ProgressBar_Title.Dispatcher.Invoke(
-                [Action]{$SyncHash.ProgressBar_Title.Visibility='Hidden'}
-                )
-        }
-        elseif ($ProgressBar_Title_Hidden -eq 'FALSE'){
-            $SyncHash.ProgressBar_Title.Dispatcher.Invoke(
-                [Action]{$SyncHash.ProgressBar_Title.Visibility='Visible'}
-                )
-        }
-
-
-        If ($OutputConsole_Error_Line_Text_Hidden -eq 'TRUE'){        
-            $SyncHash.OutputConsole_Error_Line.Dispatcher.Invoke(
-                [Action]{$SyncHash.OutputConsole_Error_Line.Visibility='Hidden'}
-                )
-        }
-        elseif ($OutputConsole_Error_Line_Text_Hidden -eq 'FALSE'){
-            $SyncHash.OutputConsole_Error_Line.Dispatcher.Invoke(
-                [Action]{$SyncHash.OutputConsole_Error_Line.Visibility='Visible'}
-                )
-        }
-
-        If ($ProgressbarValue_Overall_Text_Hidden -eq 'TRUE'){        
-            $SyncHash.ProgressBar_Overall_TextBox.Dispatcher.Invoke(
-                [Action]{$SyncHash.ProgressBar_Overall_TextBox.Visibility='Hidden'}
-                )
-        }
-        elseif ($ProgressbarValue_Overall_Text_Hidden -eq 'FALSE'){
-            $SyncHash.ProgressBar_Overall_TextBox.Dispatcher.Invoke(
-                [Action]{$SyncHash.ProgressBar_Overall_TextBox.Visibility='Visible'}
-                )
-        }
-
-        If ($ProgressbarValue_Text_Hidden -eq 'TRUE'){        
-            $SyncHash.ProgressBar_TextBox.Dispatcher.Invoke(
-                [Action]{$SyncHash.ProgressBar_TextBox.Visibility='Hidden'}
-                )
-        }
-        elseif ($ProgressbarValue_Text_Hidden -eq 'FALSE'){
-            $SyncHash.ProgressBar_TextBox.Dispatcher.Invoke(
-                [Action]{$SyncHash.ProgressBar_TextBox.Visibility='Visible'}
-                )
-        }
-
-
-        If ($ProgressbarValue_Hidden -eq 'TRUE'){        
-            $SyncHash.ProgressBar.Dispatcher.Invoke(
-                [Action]{$SyncHash.ProgressBar.Visibility='Hidden'}
-                )
-        }
-        elseif ($ProgressbarValue_Hidden -eq 'FALSE'){
-            $SyncHash.ProgressBar.Dispatcher.Invoke(
-                [Action]{$SyncHash.ProgressBar.Visibility='Visible'}
-                )
-        }
-
-        If ($ProgressbarValue_Overall_Hidden -eq 'TRUE'){        
-            $SyncHash.ProgressBar_Overall.Dispatcher.Invoke(
-                [Action]{$SyncHash.ProgressBar_Overall.Visibility='Hidden'}
-                )
-        }
-        elseif ($ProgressbarValue_Overall_Hidden -eq 'FALSE'){
-            $SyncHash.ProgressBar_Overall.Dispatcher.Invoke(
-                [Action]{$SyncHash.ProgressBar_Overall.Visibility='Visible'}
-                )
-        }
-
-        If ($OutputConsole_Detail_Text_Hidden -eq 'TRUE'){        
-            $SyncHash.OutputConsole_Detail.Dispatcher.Invoke(
-                [Action]{$SyncHash.OutputConsole_Detail.Visibility='Hidden'}
-                )
-        }
-        elseif ($OutputConsole_Detail_Text_Hidden -eq 'FALSE'){
-            $SyncHash.OutputConsole_Detail.Dispatcher.Invoke(
-                [Action]{$SyncHash.OutputConsole_Detail.Visibility='Visible'}
-                )
-        }
-
-        If ($OutputConsole_Title_Text_Hidden -eq 'TRUE'){        
-            $SyncHash.OutputConsole_Title.Dispatcher.Invoke(
-                [Action]{$SyncHash.OutputConsole_Title.Visibility='Hidden'}
-                )
-        }
-        elseif ($OutputConsole_Title_Text_Hidden -eq 'FALSE'){
-            $SyncHash.OutputConsole_Title.Dispatcher.Invoke(
-                [Action]{$SyncHash.OutputConsole_Title.Visibility='Visible'}
-                )
-        }
-
-        If($null -ne $ProgressbarValue_Overall_Text){
-        
-            $SyncHash.ProgressBar_Overall_TextBox.Dispatcher.Invoke(
-                [Action]{$SyncHash.ProgressBar_Overall_TextBox.Content=$ProgressbarValue_Overall_Text}
-                )
-        }
-
-        If($null -ne $ProgressbarValue_Text){
-        
-            $SyncHash.ProgressBar_TextBox.Dispatcher.Invoke(
-                [Action]{$SyncHash.ProgressBar_TextBox.Content=$ProgressbarValue_Text}
-                )
-        }
-        
-        If($null -ne $OutputConsole_Title_Text){
-        
-            $SyncHash.OutputConsole_Title.Dispatcher.Invoke(
-                [Action]{$SyncHash.OutputConsole_Title.Text=$OutputConsole_Title_Text}
-                )
-        }
-        If($null -ne $OutputConsole_Error_Line_Text){
-        
-            $SyncHash.OutputConsole_Error_Line.Dispatcher.Invoke(
-                [Action]{$SyncHash.OutputConsole_Error_Line.Text=$OutputConsole_Error_Line_Text}
-                )
-        }
-
-        If($null -ne $OutputConsole_Detail_Text){
-        
-            $SyncHash.OutputConsole_Detail.Dispatcher.Invoke(
-                [Action]{$SyncHash.OutputConsole_Detail.Text=$OutputConsole_Detail_Text}
-                )
-        }
-    
-        If($null -ne $ProgressbarValue){
-        
-            $SyncHash.ProgressBar.Dispatcher.Invoke(
-                [Action]{[INT]$SyncHash.ProgressBar.Value =$ProgressbarValue}
-                )
-        }
-        
-        If($null -ne $ProgressbarValue_Overall){
-        
-            $SyncHash.ProgressBar_Overall.Dispatcher.Invoke(
-                [Action]{[INT]$SyncHash.ProgressBar_Overall.Value =$ProgressbarValue_Overall}
-                )
-        }
-    }
-
+  
 ### Functions
 
 function Compare-FileHash {
@@ -456,7 +208,7 @@ function Expand-Zipfiles {
         $SevenzipPathtouse,
         $TempFoldertouse
     )
-    Write-InformationMessage -Message "Extracting from"$InputFile
+    Write-InformationMessage -Message ('Extracting from: '+$InputFile)
     & $SevenzipPathtouse x ('-o'+$OutputDirectory) $InputFile $FiletoExtract -y >($TempFoldertouse+'LogOutputTemp.txt')
     if ($LASTEXITCODE -ne 0) {
         Write-ErrorMessage -Message ('Error extracting '+$InputFile+'! Cannot continue!')
@@ -569,10 +321,6 @@ function Start-HSTImager {
         Write-InformationMessage -Message ('Writing file(s) to HDF image for: '+$SourcePath+' to '+$DestinationPath) 
         & $HSTImagePathtouse fs copy $SourcePath $DestinationPath $Options >$Logoutput  
     } 
-    elseif ($Command -eq 'write') {
-        Write-InformationMessage -Message ('Writing Image to Disk for: '+$SourcePath+' to '+$DestinationPath) 
-        & $HSTImagePathtouse write $SourcePath $DestinationPath
-    }    
     $CheckforError = Get-Content ($Logoutput)
     $ErrorCount=0
     foreach ($ErrorLine in $CheckforError){
@@ -588,6 +336,17 @@ function Start-HSTImager {
     else{
         return $true
     }
+}
+
+function Write-Image {
+    param (
+        $HSTImagePathtouse,
+        $SourcePath,
+        $DestinationPath
+    )
+    $arguments ='write "{0}" {1}' -f $SourcePath,$DestinationPath
+    Write-InformationMessage -Message 'Opening new window to write image. Please wait for this to finish!'
+    Start-Process -FilePath $HSTImagePathtouse -ArgumentList $arguments
 }
 
 function Read-AmigaTooltypes {
