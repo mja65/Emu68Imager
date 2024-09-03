@@ -1,3 +1,5 @@
+####################################################################### Check Runtime Environment ##################################################################################################
+
 if ($env:TERM_PROGRAM){
     Write-Host "Run from Visual Studio Code!"
     $InteractiveMode=0
@@ -18,6 +20,13 @@ if ($env:TERM_PROGRAM){
      $Scriptpath = 'C:\Users\Matt\OneDrive\Documents\Emu68Imager\'    
  }
  
+ Import-Module ($Scriptpath+'Functions-GUI.psm1')
+
+####################################################################### End Check Runtime Environment ###############################################################################################
+
+####################################################################### Null out Global Variables ###################################################################################################
+
+
  $Global:HSTDiskName = $null
  $Global:ScreenModetoUse = $null 
  $Global:KickstartVersiontoUse = $null
@@ -31,25 +40,25 @@ if ($env:TERM_PROGRAM){
  $Global:ROMPath = $null
  $Global:ADFPath = $null
 
+ ####################################################################### End Null out Global Variables ###############################################################################################
+
+ ####################################################################### Set Script Path dependent  Variables ########################################################################################
+
  $SourceProgramPath=($Scriptpath+'Programs\')
  $InputFolder=($Scriptpath+'InputFiles\')
  $LocationofAmigaFiles=($Scriptpath+'AmigaFiles\')
 
-$inputXML_UserInterface_Missing = @" 
+ ####################################################################### End Script Path dependent  Variables ########################################################################################
 
- <Window
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <TextBox x:Name="MissingInputs_TextBox" HorizontalAlignment="Left" Margin="200,122,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Width="120"/>
+####################################################################### Add GUI Types ################################################################################################################
 
-</Window>
+#[void][System.Reflection.Assembly]::LoadWithPartialName('presentationframework')
+Add-Type -AssemblyName PresentationFramework
+Add-Type -AssemblyName System.Windows.Forms
 
-"@
+####################################################################### End GUI Types ################################################################################################################
 
+####################################################################### GUI XML for Main Environment ##################################################################################################
 
 $inputXML_UserInterface = @"
 <Window x:Name="MainWindow" 
@@ -102,27 +111,8 @@ $inputXML_UserInterface = @"
 
 "@
 
-
-#[void][System.Reflection.Assembly]::LoadWithPartialName('presentationframework')
-Add-Type -AssemblyName PresentationFramework
-Add-Type -AssemblyName System.Windows.Forms
-Import-Module ($Scriptpath+'Functions-GUI.psm1')
-
-if  ($InteractiveMode -eq 1){
-    if (-not (Test-Administrator)){
-        [System.Windows.MessageBox]::Show('Error - you must run this as Administrator! Restart again in Administrator Mode')
-        throw
-    }
-}
-
-$inputXML_UserInterface = $inputXML_UserInterface -replace 'mc:Ignorable="d"','' -replace "x:N",'N' -replace '^<Win.*', '<Window'
-[xml]$XAML_UserInterface = $inputXML_UserInterface
+$XAML_UserInterface = Format-XMLtoXAML -inputXML $inputXML_UserInterface 
 $Form_UserInterface = Read-XAML -xaml $XAML_UserInterface 
-
-$inputXML_UserInterface_Missing = $inputXML_UserInterface_Missing -replace 'mc:Ignorable="d"','' -replace "x:N",'N' -replace '^<Win.*', '<Window'
-[xml]$XAML_UserInterface_Missing = $inputXML_UserInterface_Missing
-$Form_UserInterface_Missing = Read-XAML -xaml $XAML_UserInterface_Missing 
-
 
 #===========================================================================
 # Load XAML Objects In PowerShell
@@ -140,19 +130,7 @@ $XAML_UserInterface.SelectNodes("//*[@Name]") | ForEach-Object{
     }
 }
 
-# Get-FormVariables
-
-$XAML_UserInterface_Missing.SelectNodes("//*[@Name]") | ForEach-Object{
-#    "Trying item $($_.Name)";
-    try {
-        Set-Variable -Name "WPF_UI_Missing_$($_.Name)" -Value $Form_UserInterface_Missing.FindName($_.Name) -ErrorAction Stop
-    }
-    catch{
-        throw
-    }
-}
-
-Get-FormVariables
+# Get-FormVariables - If we need variables
 
 #===========================================================================
 # Use this space to add code to the various form elements in your GUI
@@ -455,20 +433,144 @@ $WPF_UI_FAT32Size_Label.Content = 'Size of FAT32 Partition (Gb)'
 $WPF_UI_Password_Label.Content = 'Enter your Wifi password'
 $WPF_UI_SSID_Label.Content = 'Enter your SSID' 
 
+####################################################################### End GUI XML for Main Environment ##################################################################################################
+
+
+####################################################################### GUI XML for Test Administrator ##################################################################################################
+$InputXML_AdministratorWindow = @"
+
+<Window x:Name="NoAdministratorMode" 
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:WpfApp14"
+        mc:Ignorable="d"
+        Title="Not Run as Administrator" Height="450" Width="800" HorizontalAlignment="Center" HorizontalContentAlignment="Center" UseLayoutRounding="True" ScrollViewer.VerticalScrollBarVisibility="Disabled" ResizeMode="NoResize">
+    <Grid>
+        <Button x:Name="Button_Acknowledge" Content="Acknowledge" HorizontalAlignment="Left" Margin="259,360,0,0" VerticalAlignment="Top" Width="320"/>
+        <TextBox x:Name="TextBox_Message" HorizontalAlignment="Left" Margin="259,167,0,0" TextWrapping="Wrap" Text="You must run the tool in Administrator Mode!" VerticalAlignment="Top" Width="307" IsReadOnly="True"/>        
+    </Grid>
+</Window>
+"@
+
+$XAML_AdministratorWindow = Format-XMLtoXAML -inputXML $InputXML_AdministratorWindow
+$Form_Administrator = Read-XAML -xaml $XAML_AdministratorWindow
+
+#===========================================================================
+# Load XAML Objects In PowerShell
+#===========================================================================
+
+Remove-Variable -Name WPF_Admin_*
+
+$XAML_AdministratorWindow.SelectNodes("//*[@Name]") | ForEach-Object{
+    #    "Trying item $($_.Name)";
+    try {
+        Set-Variable -Name "WPF_Admin_$($_.Name)" -Value $Form_Administrator.FindName($_.Name) -ErrorAction Stop
+    }
+    catch{
+        throw
+    }
+}
+
+# Get-FormVariables - If we need variables
+
+$WPF_Admin_Button_Acknowledge.Add_Click({
+    $Form_Administrator.Close() | out-null
+    $IsAdministrator = $false
+})
+
+####################################################################### End GUI XML for Test Administrator ##################################################################################################
+
+####################################################################### Test for Administrator ############################################################################################################
+
+if  ($InteractiveMode -eq 1){
+    if (-not (Test-Administrator)){
+        $Form_Administrator.ShowDialog() | out-null
+    }
+    else {
+        $IsAdministrator = $true 
+    }
+}
+
+if  ($InteractiveMode -eq 1){
+    if (-not ($IsAdministrator)){
+        exit
+    
+    }
+}
+
+####################################################################### End Test for Administrator ############################################################################################################
+
+
+####################################################################### GUI XML for Disclaimer ##################################################################################################
+
+$InputXML_DisclaimerWindow = @"
+<Window x:Name="Disclaimer" 
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:WpfApp14"
+        mc:Ignorable="d"
+        Title="Disclaimer" Height="450" Width="800" HorizontalAlignment="Center" HorizontalContentAlignment="Center" UseLayoutRounding="True" ScrollViewer.VerticalScrollBarVisibility="Disabled" ResizeMode="NoResize" WindowStyle="ToolWindow">
+    <Grid Margin="0,-10,0,10">
+        <Button x:Name="Button_Acknowledge" Content="Acknowledge" HorizontalAlignment="Left" Margin="259,382,0,0" VerticalAlignment="Top" Width="320"/>
+        <TextBox x:Name="TextBox_Message" HorizontalAlignment="Left" Margin="259,167,0,0" TextWrapping="Wrap" Text="This might harm your computer if you are a stronzo and don't know what you are doing" VerticalAlignment="Top" Width="307" IsReadOnly="True"/>
+    </Grid>
+</Window>
+"@
+
+$XAML_DisclaimerWindow = Format-XMLtoXAML -inputXML $InputXML_DisclaimerWindow
+$Form_Disclaimer = Read-XAML -xaml $XAML_DisclaimerWindow
+
+#===========================================================================
+# Load XAML Objects In PowerShell
+#===========================================================================
+
+Remove-Variable -Name WPF_Disclaimer_*
+
+$XAML_DisclaimerWindow.SelectNodes("//*[@Name]") | ForEach-Object{
+    #    "Trying item $($_.Name)";
+    try {
+        Set-Variable -Name "WPF_Disclaimer_$($_.Name)" -Value $Form_Disclaimer.FindName($_.Name) -ErrorAction Stop
+    }
+    catch{
+        throw
+    }
+}
+
+# Get-FormVariables - If we need variables
+
+$WPF_Disclaimer_Button_Acknowledge.Add_Click({
+    $Form_Disclaimer.Close() | out-null
+    $Global:IsDisclaimerAccepted = $True
+    Write-Host 'Disclaimer'
+})
+
+
+$Form_Disclaimer.ShowDialog() | out-null
+
+if (-not ($Global:IsDisclaimerAccepted -eq $true)){
+    throw 'Exiting - Disclaimer Not Accepted'
+}
+
+####################################################################### End GUI XML for Disclaimer ##################################################################################################
+
+####################################################################### Show Main Gui     ##################################################################################################################
+
+
+$Form_UserInterface.ShowDialog() | out-null
+if (-not ($RunMethod -eq 1)){
+    throw 'Exiting - UI Window was closed'
+}
+
 #########################################################################
 ##Run interface
 
 #$Form_UserInterface.Add_Closed({ 
 #    throw 'You Stronzo! You closed the window!'
 #})
-
-$Form_UserInterface.ShowDialog() | out-null
-
-$Global:WorkingPath
-
-if (-not ($RunMethod -eq 1)){
-    throw 'Stronzo!'
-}
 
 #$Form_UserInterface_Missing.ShowDialog() | out-null
  
@@ -480,7 +582,6 @@ if (-not ($RunMethod -eq 1)){
 #$SyncHash.Status_Window.Add_Closing({ Write-Host 'Wibbling'})
 
 
-
 $WorkingFolder = $Global:WorkingPath#+'\'
 
 Write-host ('Creating Working Folder under '+$Scriptpath+' (if it does not exist)')
@@ -490,23 +591,16 @@ Write-host ('Creating Working Folder under '+$Scriptpath+' (if it does not exist
 
 
 if (($Global:SizeofImage -eq 0) -or ($Global:SizeofPartition_System -eq 0) -or ($Global:SizeofPartition_Other -eq 0) -or ($Global:SizeofFAT32 -eq 0))  {
-    Update-OutputWindow -Progress_Grid_Hidden 'TRUE' -Error_Grid_Hidden 'FALSE' -OutputConsole_Error_Line_Text 'ERROR! Cannot create an image of this size! Cannot Continue!'
-    throw   
+    #Update-OutputWindow -Progress_Grid_Hidden 'TRUE' -Error_Grid_Hidden 'FALSE' -OutputConsole_Error_Line_Text 'ERROR! Cannot create an image of this size! Cannot Continue!'
+    throw 'ERROR! Cannot create an image of this size! Cannot Continue!'  
 }
 
 $SizeofImage = ([math]::Round((($Global:SizeofImage*1024)-0.5),0).ToString()+'mb')
-$SizeofPartition_System = ([math]::Round((($Global:SizeofPartition_System*1024)-0.5),0).ToString()+'mb')
-$SizeofPartition_Other = ([math]::Round((($Global:SizeofPartition_Other*1024)-0.5),0).ToString()+'mb')
+$SizeofPartition_System = ([math]::Round((($Global:SizeofPartition_System*1024)-0.5),0).ToString())
+$SizeofPartition_Other = ([math]::Round((($Global:SizeofPartition_Other*1024)-0.5),0).ToString())
 
 $SizeofFAT32 = [math]::Round((($Global:SizeofFAT32*1024)-0.5),0).ToString()
 $HSTDiskName = $Global:HSTDiskName
-# if  ($InteractiveMode -eq 0){
-#     #    $WorkingFolder = 'D:\Test of Weird Path\'
-#         $SizeofImage='350mb'
-#         $SizeofPartition_System='100mb'
-#         $SizeofPartition_Other='100mb'
-#         $SizeofFAT32 ='135'
-#     }
 
 ##### Script
 
@@ -529,24 +623,23 @@ Foreach ($CSVHash in $CSVHashes){
 
 # Check Integrity of CSVs
 
-Update-OutputWindow -OutputConsole_Title_Text 'Performing integrity checks over input files' -ProgressbarValue_Overall 1 -ProgressbarValue_Overall_Text '1%'
+#Update-OutputWindow -OutputConsole_Title_Text 'Performing integrity checks over input files' -ProgressbarValue_Overall 1 -ProgressbarValue_Overall_Text '1%'
 
 #Write-Host ''
 #Write-Host 'Performing integrity checks over input files'
 #Write-Host ''
 $CSVHashestoCheck = Import-Csv -Path ($InputFolder+'CSVHASH') -Delimiter ';'
 foreach ($CSVHashtoCheck in $CSVHashestoCheck){
-    Update-OutputWindow -OutputConsole_Detail_Text ('Checking integrity of: '+$CSVHashtoCheck.Name) 
-    #Write-Host ('Checking integrity of: '+$CSVHashtoCheck.Name)
+    #Update-OutputWindow -OutputConsole_Detail_Text ('Checking integrity of: '+$CSVHashtoCheck.Name) 
+    Write-Host ('Checking integrity of: '+$CSVHashtoCheck.Name)
     foreach ($CSVHash in $CSVHashes){
         if (($CSVHashtoCheck.Name+$CSVHashtoCheck.Hash) -eq ((split-path $CSVHash.Path -leaf)+($CSVHash.Hash))){
             $HashMatch=$true
         }
     }
     if ($HashMatch -eq $false) {
-        Update-OutputWindow -Progress_Grid_Hidden 'TRUE' -Error_Grid_Hidden 'FALSE' -OutputConsole_Error_Line_Text 'ERROR! One or more of input files is missing and/or has been altered! Cannot Continue!'
-        #Write-Host 'ERROR! One or more of input files is missing and/or has been altered!' -ForegroundColor Red
-        throw
+        #Update-OutputWindow -Progress_Grid_Hidden 'TRUE' -Error_Grid_Hidden 'FALSE' -OutputConsole_Error_Line_Text 'ERROR! One or more of input files is missing and/or has been altered! Cannot Continue!'
+        throw 'ERROR! One or more of input files is missing and/or has been altered!' 
     }
     else{
         #Write-Host 'File OK!'
@@ -554,13 +647,13 @@ foreach ($CSVHashtoCheck in $CSVHashestoCheck){
 }
 
 #Update-OutputWindow -OutputConsole_Detail_Text 'Integrity checks complete!'
-#Write-Host 'Integrity checks complete!'
-#Write-Host ''
+Write-Host 'Integrity checks complete!'
+Write-Host ''
 
 #Update-OutputWindow -OutputConsole_Title_Text 'Checking existance of folders, programs, and files' -ProgressbarValue_Overall 2 -ProgressbarValue_Overall_Text '2%'
 
-#Write-host 'Checking existance of folders, programs, and files'
-#Write-Host ''
+Write-host 'Checking existance of folders, programs, and files'
+Write-Host ''
 $ErrorCount = 0
 
 $ErrorCount+= Test-ExistenceofFiles -PathtoTest $SourceProgramPath -PathType 'Folder'
@@ -575,13 +668,13 @@ $ListofPackagestoInstall |  Select-Object SourceLocation -Unique | Where-Object 
 }
 
 if ($ErrorCount -ge 1){
-    Update-OutputWindow -Progress_Grid_Hidden 'TRUE' -Error_Grid_Hidden 'FALSE' -OutputConsole_Error_Line_Text 'ERROR! One or more Programs is missing and/or has been altered! Cannot Continue!'
-    throw
+    #Update-OutputWindow -Progress_Grid_Hidden 'TRUE' -Error_Grid_Hidden 'FALSE' -OutputConsole_Error_Line_Text 'ERROR! One or more Programs is missing and/or has been altered! Cannot Continue!'
+    throw 'ERROR! One or more Programs is missing and/or has been altered! Cannot Continue!'
 }
 else {
     $null = $ErrorCount
-    Update-OutputWindow -OutputConsole_Detail_Text 'All folders and files exist!'
-#    Write-Host 'All folders and files exist!'
+    #Update-OutputWindow -OutputConsole_Detail_Text 'All folders and files exist!'
+    Write-Host 'All folders and files exist!'
 }
 
 $HDF2emu68Path=($SourceProgramPath+'hdf2emu68.exe')
@@ -652,6 +745,8 @@ Write-Host "Starting execution at $StartDateandTime"
 
 #Update-OutputWindow -OutputConsole_Title_Text 'Performing Cleanup' -ProgressbarValue_Overall 5 -ProgressbarValue_Overall_Text '5%'
 
+Write-Host 'Performing Cleanup'
+
 $NewFolders = ((split-path $TempFolder -leaf),(split-path $LocationofImage -leaf),((Split-Path $AmigaDrivetoCopy -Leaf)+'\'+$VolumeName_System),((Split-Path $AmigaDrivetoCopy -Leaf)+'\'+$VolumeName_Other),(split-path $FAT32Partition -leaf))
 
 try {
@@ -680,6 +775,8 @@ if (-not(Test-Path ($WorkingFolder+'Programs'))){
 
 #Update-OutputWindow -OutputConsole_Title_Text 'Determining Kickstarts to Use' -ProgressbarValue_Overall 7 -ProgressbarValue_Overall_Text '7%'
 
+Write-Host 'Determining Kickstarts to Use' 
+
 $FoundKickstarttoUse = Compare-KickstartHashes -PathtoKickstartHashes ($InputFolder+'RomHashes.csv') -PathtoKickstartFiles $ROMPath -KickstartVersion $KickstartVersiontoUse
 
 $KickstartPath = $FoundKickstarttoUse.KickstartPath
@@ -693,6 +790,8 @@ $KickstartNameFAT32=$FoundKickstarttoUse.Fat32Name
 Write-Host ('Kickstart to be used is: '+$KickstartPath)
 
 #Update-OutputWindow -OutputConsole_Title_Text 'Determining ADFs to Use' -ProgressbarValue_Overall 9 -ProgressbarValue_Overall_Text '9%'
+
+Write-Host 'Determining ADFs to Use'
 
 $AvailableADFs = Compare-ADFHashes -PathtoADFFiles $ADFPath -PathtoADFHashes ($InputFolder+'ADFHashes.csv') -KickstartVersion $KickstartVersiontoUse -PathtoListofInstallFiles ($InputFolder+'ListofInstallFiles.csv') 
 
@@ -734,6 +833,9 @@ $ListofInstallFiles |  Select-Object Path,FriendlyName -Unique | ForEach-Object 
 
 #Update-OutputWindow -OutputConsole_Title_Text 'Downloading HST Packages' -ProgressbarValue_Overall 12 -ProgressbarValue_Overall_Text '12%'
 
+Write-host ''
+Write-host 'Downloading HST Packages' 
+Write-host ''
 Write-Host "Downloading HST Imager"
 if (-not(Get-GithubRelease -GithubRelease $HSTImagerreleases -Tag_Name '1.1.350' -Name '_console_windows_x64.zip' -LocationforDownload ($TempFolder+'HSTImager.zip') -LocationforProgram ($ProgramsFolder+'HST-Imager\') -Sort_Flag '')){
     Write-Host 'Error downloading HST-Imager! Cannot continue!'
@@ -749,6 +851,8 @@ if (-not(Get-GithubRelease -GithubRelease $HSTAmigareleases -Tag_Name '0.3.163' 
 #### Download Emu68 Files
 
 #Update-OutputWindow -OutputConsole_Title_Text 'Downloading Emu 68 Packages' -ProgressbarValue_Overall 15 -ProgressbarValue_Overall_Text '15%'
+
+Write-Host 'Downloading Emu 68 Packages' 
 
 $PathstoTest='Emu68Pistorm','Emu68Pistorm32Lite','Emu68Tools'
 
@@ -962,6 +1066,8 @@ foreach ($AmigaPartition in $AmigaPartitionsList){
 
 #Update-OutputWindow -OutputConsole_Title_Text 'Process and Install ADFs' -ProgressbarValue_Overall 18 -ProgressbarValue_Overall_Text '18%'
 
+Write-Host 'Processing and Installing ADFs' 
+
 $TotalItems=$ListofInstallFiles.Count
 
 $ItemCounter=1
@@ -1068,6 +1174,8 @@ $PackageCheck=$null
 
 Update-OutputWindow -OutputConsole_Title_Text 'Download Packages' -ProgressbarValue_Overall 22 -ProgressbarValue_Overall_Text '22%'
 
+Write-host 'Downloading Packages' 
+
 $TotalItems=(
     $ListofPackagestoInstall | Where-Object InstallType -ne 'CopyOnly' |  Where-Object InstallType -ne 'StartupSequenceOnly' | Select-Object -Unique -Property PackageName
     ).count 
@@ -1152,6 +1260,8 @@ $StartupSequence = Import-TextFileforAmiga -SystemType 'Amiga' -ImportFile ($Ami
 $StartupSequenceversion = Get-StartupSequenceVersion -StartupSequencetoCheck $StartupSequence
 
 #Update-OutputWindow -OutputConsole_Title_Text 'Install Packages' -ProgressbarValue_Overall 30 -ProgressbarValue_Overall_Text '30%'
+
+Write-Host 'Installing Packages'
 
 $TotalItems=(
     $ListofPackagestoInstall | Select-Object -Unique -Property PackageName

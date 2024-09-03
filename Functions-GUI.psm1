@@ -1,3 +1,26 @@
+function Read-XAML {
+    param (
+        $xaml
+    )
+    $reader=(New-Object System.Xml.XmlNodeReader $xaml)
+    try{
+        $Form=[Windows.Markup.XamlReader]::Load( $reader )
+    }
+    catch{
+        Write-Warning "Unable to parse XML, with error: $($Error[0])`n Ensure that there are NO SelectionChanged or TextChanged properties in your textboxes (PowerShell cannot process them)"
+        throw
+    }
+    return $Form
+}
+function Format-XMLtoXAML{
+    param (
+        $inputXML 
+    )
+    $inputXML = $inputXML -replace 'mc:Ignorable="d"','' -replace "x:N",'N' -replace '^<Win.*', '<Window'
+    [xml]$XAML = $inputXML
+    return $XAML
+}
+
 Function Test-Administrator{  
     $user = [Security.Principal.WindowsIdentity]::GetCurrent();
     (New-Object Security.Principal.WindowsPrincipal $user).IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)  
@@ -29,20 +52,7 @@ function Confirm-UIFields {
     return $ErrorMessage
 }
 
-function Read-XAML {
-    param (
-        $xaml
-    )
-    $reader=(New-Object System.Xml.XmlNodeReader $xaml)
-    try{
-        $Form=[Windows.Markup.XamlReader]::Load( $reader )
-    }
-    catch{
-        Write-Warning "Unable to parse XML, with error: $($Error[0])`n Ensure that there are NO SelectionChanged or TextChanged properties in your textboxes (PowerShell cannot process them)"
-        throw
-    }
-    return $Form
-}
+
 Function Get-FormVariables{
     if ($global:ReadmeDisplay -ne $true){Write-host "If you need to reference this display again, run Get-FormVariables" -ForegroundColor Yellow;$global:ReadmeDisplay=$true}
 #    write-host "Found the following interactable elements from our form" -ForegroundColor Cyan
