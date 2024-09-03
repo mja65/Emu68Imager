@@ -278,7 +278,6 @@ $WPF_UI_Start_Button.Height = '20'
 $WPF_UI_Start_Button.Add_Click({
     foreach ($ScreenMode in $AvailableScreenModes) {
         if ($ScreenMode.FriendlyName -eq $WPF_UI_ScreenMode_Dropdown.SelectedItem){
- #           write-host ('Selected ScreenMode is: '+$ScreenMode.Name)
             $Global:ScreenModetoUse = $ScreenMode.Name           
         }
     }
@@ -312,9 +311,7 @@ $WPF_UI_Start_Button.Add_Click({
     }
     else {
         $Form_UserInterface.Close() | out-null
-        $RunMethod = 1
-#        Open-OutputWindow
-#        Update-OutputWindow -Error_Grid_Hidden 'TRUE'
+        $Global:RunMethod = 1
     }
 
 })
@@ -358,24 +355,6 @@ $WPF_UI_ADFPath_Button.Add_Click({
         $WPF_UI_ADFPath_Button.Background = '#FFDDDDDD'
     }
 })
-
-# $WPF_UI_WorkingPath_Button.Content = 'Set Folder'
-# $WPF_UI_WorkingPath_Button.Height = 30
-# $WPF_UI_WorkingPath_Button.Width = 70 
-# $WPF_UI_WorkingPath_Button.Add_Click({
-#     $Global:WorkingPath = Get-FolderPath -ShowNewFolderButton $true -RootFolder 'MyComputer'
-#     if($Global:WorkingPath){
-#         if(Confirm-UIFields){
-#             $WPF_UI_Start_Button.Background = 'Red'
-#         }
-#         else{
-#             $WPF_UI_Start_Button.Background = 'Green'
-#         }
-#     }
-#     $WPF_UI_WorkingPath_Output.Items.Clear()
-#     $WPF_UI_WorkingPath_Output.AddChild($WorkingPath)
-# })
-
 
 $WPF_UI_MigratedFiles_Button.Content = 'Click to Set Transfer Folder'
 $WPF_UI_MigratedFiles_Button.Height = 30
@@ -561,26 +540,11 @@ if (-not ($Global:IsDisclaimerAccepted -eq $true)){
 
 
 $Form_UserInterface.ShowDialog() | out-null
-if (-not ($RunMethod -eq 1)){
+if (-not ($Global:RunMethod -eq 1)){
     throw 'Exiting - UI Window was closed'
 }
 
-#########################################################################
-##Run interface
-
-#$Form_UserInterface.Add_Closed({ 
-#    throw 'You Stronzo! You closed the window!'
-#})
-
-#$Form_UserInterface_Missing.ShowDialog() | out-null
- 
 #[System.Windows.Window].GetEvents() | select Name, *Method, EventHandlerType
-
-#[System.Windows.Controls.TextBox].GetEvents() | select Name, *Method, EventHandlerType
-
-#closing event
-#$SyncHash.Status_Window.Add_Closing({ Write-Host 'Wibbling'})
-
 
 $WorkingFolder = $Global:WorkingPath#+'\'
 
@@ -591,7 +555,6 @@ Write-host ('Creating Working Folder under '+$Scriptpath+' (if it does not exist
 
 
 if (($Global:SizeofImage -eq 0) -or ($Global:SizeofPartition_System -eq 0) -or ($Global:SizeofPartition_Other -eq 0) -or ($Global:SizeofFAT32 -eq 0))  {
-    #Update-OutputWindow -Progress_Grid_Hidden 'TRUE' -Error_Grid_Hidden 'FALSE' -OutputConsole_Error_Line_Text 'ERROR! Cannot create an image of this size! Cannot Continue!'
     throw 'ERROR! Cannot create an image of this size! Cannot Continue!'  
 }
 
@@ -621,17 +584,19 @@ Foreach ($CSVHash in $CSVHashes){
 
 #Generate CSV MD5 Hashes - End
 
+$TotalSections=20
+
 # Check Integrity of CSVs
 
-#Update-OutputWindow -OutputConsole_Title_Text 'Performing integrity checks over input files' -ProgressbarValue_Overall 1 -ProgressbarValue_Overall_Text '1%'
+$StartDateandTime = (Get-Date -Format HH:mm:ss)
 
-#Write-Host ''
-#Write-Host 'Performing integrity checks over input files'
-#Write-Host ''
+Write-InformationMessage -Message "Starting execution at $StartDateandTime"
+
+Write-StartTaskMessage -Message 'Performing integrity checks over input files' -SectionNumber '1' -TotalSections $TotalSections
+
 $CSVHashestoCheck = Import-Csv -Path ($InputFolder+'CSVHASH') -Delimiter ';'
 foreach ($CSVHashtoCheck in $CSVHashestoCheck){
-    #Update-OutputWindow -OutputConsole_Detail_Text ('Checking integrity of: '+$CSVHashtoCheck.Name) 
-    Write-Host ('Checking integrity of: '+$CSVHashtoCheck.Name)
+    Write-InformationMessage -Message ('Checking integrity of: '+$CSVHashtoCheck.Name)
     foreach ($CSVHash in $CSVHashes){
         if (($CSVHashtoCheck.Name+$CSVHashtoCheck.Hash) -eq ((split-path $CSVHash.Path -leaf)+($CSVHash.Hash))){
             $HashMatch=$true
@@ -642,18 +607,14 @@ foreach ($CSVHashtoCheck in $CSVHashestoCheck){
         throw 'ERROR! One or more of input files is missing and/or has been altered!' 
     }
     else{
-        #Write-Host 'File OK!'
+        Write-InformationMessage -Message 'File OK!'
     }
 }
 
-#Update-OutputWindow -OutputConsole_Detail_Text 'Integrity checks complete!'
-Write-Host 'Integrity checks complete!'
-Write-Host ''
+Write-TaskCompleteMessage -Message 'Performing integrity checks over input files - Complete!' -SectionNumber '1' -TotalSections $TotalSections
 
-#Update-OutputWindow -OutputConsole_Title_Text 'Checking existance of folders, programs, and files' -ProgressbarValue_Overall 2 -ProgressbarValue_Overall_Text '2%'
+Write-StartTaskMessage -Message 'Checking existance of folders, programs, and files' -SectionNumber '2' -TotalSections $TotalSections
 
-Write-host 'Checking existance of folders, programs, and files'
-Write-Host ''
 $ErrorCount = 0
 
 $ErrorCount+= Test-ExistenceofFiles -PathtoTest $SourceProgramPath -PathType 'Folder'
@@ -668,13 +629,11 @@ $ListofPackagestoInstall |  Select-Object SourceLocation -Unique | Where-Object 
 }
 
 if ($ErrorCount -ge 1){
-    #Update-OutputWindow -Progress_Grid_Hidden 'TRUE' -Error_Grid_Hidden 'FALSE' -OutputConsole_Error_Line_Text 'ERROR! One or more Programs is missing and/or has been altered! Cannot Continue!'
     throw 'ERROR! One or more Programs is missing and/or has been altered! Cannot Continue!'
 }
 else {
     $null = $ErrorCount
-    #Update-OutputWindow -OutputConsole_Detail_Text 'All folders and files exist!'
-    Write-Host 'All folders and files exist!'
+    Write-TaskCompleteMessage -Message 'Checking existance of folders, programs, and files - Complete!' -SectionNumber '2' -TotalSections $TotalSections
 }
 
 $HDF2emu68Path=($SourceProgramPath+'hdf2emu68.exe')
@@ -709,6 +668,7 @@ $VolumeName_System ='Workbench'
 $DeviceName_Other = ($DeviceName_Prefix+'1')
 $VolumeName_Other = 'Work'
 $MigratedFilesFolder='My Files'
+$PFSLimit = 100
 #$InstallPathMUI='SYS:Programs/MUI'
 #$InstallPathPicasso96='SYS:Programs/Picasso96'
 #$InstallPathAmiSSL='SYS:Programs/AmiSSL'
@@ -737,15 +697,9 @@ $ScreenMode = $Global:ScreenModetoUse
 
 $NameofImage=('Pistorm'+$KickstartVersiontoUse+'.HDF')
 
-$StartDateandTime = (Get-Date -Format HH:mm:ss)
-
-Write-Host "Starting execution at $StartDateandTime"
-
 ### Clean up
 
-#Update-OutputWindow -OutputConsole_Title_Text 'Performing Cleanup' -ProgressbarValue_Overall 5 -ProgressbarValue_Overall_Text '5%'
-
-Write-Host 'Performing Cleanup'
+Write-StartTaskMessage -Message 'Performing Cleanup' -SectionNumber '3' -TotalSections $TotalSections
 
 $NewFolders = ((split-path $TempFolder -leaf),(split-path $LocationofImage -leaf),((Split-Path $AmigaDrivetoCopy -Leaf)+'\'+$VolumeName_System),((Split-Path $AmigaDrivetoCopy -Leaf)+'\'+$VolumeName_Other),(split-path $FAT32Partition -leaf))
 
@@ -769,13 +723,15 @@ if (-not(Test-Path ($WorkingFolder+'Programs'))){
     $null = New-Item -path ($WorkingFolder) -Name 'Programs' -ItemType Directory      
 }
 
+Write-TaskCompleteMessage -Message 'Performing Cleanup - Complete!' -SectionNumber '3' -TotalSections $TotalSections
+
 ### End Clean up
 
 ### Determine Kickstart Rom Path
 
 #Update-OutputWindow -OutputConsole_Title_Text 'Determining Kickstarts to Use' -ProgressbarValue_Overall 7 -ProgressbarValue_Overall_Text '7%'
 
-Write-Host 'Determining Kickstarts to Use' 
+Write-StartTaskMessage -Message 'Determining Kickstarts to Use' -SectionNumber '4' -TotalSections $TotalSections
 
 $FoundKickstarttoUse = Compare-KickstartHashes -PathtoKickstartHashes ($InputFolder+'RomHashes.csv') -PathtoKickstartFiles $ROMPath -KickstartVersion $KickstartVersiontoUse
 
@@ -787,11 +743,11 @@ if (-not($KickstartPath)){
 
 $KickstartNameFAT32=$FoundKickstarttoUse.Fat32Name
 
-Write-Host ('Kickstart to be used is: '+$KickstartPath)
+Write-InformationMessage -Message ('Kickstart to be used is: '+$KickstartPath)
 
-#Update-OutputWindow -OutputConsole_Title_Text 'Determining ADFs to Use' -ProgressbarValue_Overall 9 -ProgressbarValue_Overall_Text '9%'
+Write-TaskCompleteMessage -Message 'Determining Kickstarts to Use - Complete!' -SectionNumber '4' -TotalSections $TotalSections
 
-Write-Host 'Determining ADFs to Use'
+Write-StartTaskMessage -Message 'Determining ADFs to Use' -SectionNumber '5' -TotalSections $TotalSections
 
 $AvailableADFs = Compare-ADFHashes -PathtoADFFiles $ADFPath -PathtoADFHashes ($InputFolder+'ADFHashes.csv') -KickstartVersion $KickstartVersiontoUse -PathtoListofInstallFiles ($InputFolder+'ListofInstallFiles.csv') 
 
@@ -824,35 +780,36 @@ foreach ($InstallFileLine in $ListofInstallFiles) {
     }    
 }
 
-Write-Host 'ADF install images to be used are:'
+Write-InformationMessage -Message 'ADF install images to be used are:'
 $ListofInstallFiles |  Select-Object Path,FriendlyName -Unique | ForEach-Object {
-    Write-host ($_.FriendlyName+' ('+$_.Path+')')
+    Write-InformationMessage -Message ($_.FriendlyName+' ('+$_.Path+')')
 } 
+
+Write-TaskCompleteMessage -Message 'Determining ADFs to Use - Complete!' -SectionNumber '5' -TotalSections $TotalSections
 
 ### Download HST-Imager and HST-Amiga
 
-#Update-OutputWindow -OutputConsole_Title_Text 'Downloading HST Packages' -ProgressbarValue_Overall 12 -ProgressbarValue_Overall_Text '12%'
+Write-StartTaskMessage -Message 'Downloading HST Packages' -SectionNumber '6' -TotalSections $TotalSections
 
-Write-host ''
-Write-host 'Downloading HST Packages' 
-Write-host ''
-Write-Host "Downloading HST Imager"
+Write-StartSubTaskMessage -Message 'Downloading HST Imager' -SubtaskNumber '1' -TotalSubtasks '2'
+
 if (-not(Get-GithubRelease -GithubRelease $HSTImagerreleases -Tag_Name '1.1.350' -Name '_console_windows_x64.zip' -LocationforDownload ($TempFolder+'HSTImager.zip') -LocationforProgram ($ProgramsFolder+'HST-Imager\') -Sort_Flag '')){
-    Write-Host 'Error downloading HST-Imager! Cannot continue!'
+    Write-ErrorMessage -Message 'Error downloading HST-Imager! Cannot continue!'
     throw
 }
 
-Write-Host "Downloading HST Amiga"
+Write-StartSubTaskMessage -Message 'Downloading HST Amiga' -SubtaskNumber '2' -TotalSubtasks '2'
+
 if (-not(Get-GithubRelease -GithubRelease $HSTAmigareleases -Tag_Name '0.3.163' -Name '_console_windows_x64.zip' -LocationforDownload ($TempFolder+'HSTAmiga.zip') -LocationforProgram ($ProgramsFolder+'HST-Amiga\') -Sort_Flag '')){
-    Write-Host 'Error downloading HST-Amiga! Cannot continue!'
+    Write-ErrorMessage -Message 'Error downloading HST-Amiga! Cannot continue!'
     throw
 }
+
+Write-TaskCompleteMessage -Message 'Downloading HST Packages - Complete!' -SectionNumber '6' -TotalSections $TotalSections
 
 #### Download Emu68 Files
 
-#Update-OutputWindow -OutputConsole_Title_Text 'Downloading Emu 68 Packages' -ProgressbarValue_Overall 15 -ProgressbarValue_Overall_Text '15%'
-
-Write-Host 'Downloading Emu 68 Packages' 
+Write-StartTaskMessage -Message 'Downloading Emu68 Packages' -SectionNumber '7' -TotalSections $TotalSections
 
 $PathstoTest='Emu68Pistorm','Emu68Pistorm32Lite','Emu68Tools'
 
@@ -870,45 +827,53 @@ foreach($Path in $PathstoTest){
     }
 }
 
+Write-StartSubTaskMessage -Message 'Downloading Emu68Pistorm' -SubtaskNumber '1' -TotalSubtasks '3'
+
 Write-Host "Downloading Emu68Pistorm"
 if (-not(Get-GithubRelease -GithubRelease $Emu68releases -Tag_Name "nightly" -Name 'Emu68-pistorm-' -LocationforDownload ($AmigaDownloads+'Emu68Pistorm.zip') -LocationforProgram ($tempfolder+'Emu68Pistorm\') -Sort_Flag 'SORT')){
-    Write-Host 'Error downloading Emu68Pistorm! Cannot continue!' -ForegroundColor Red
+    Write-ErrorMessage -Message'Error downloading Emu68Pistorm! Cannot continue!'
     throw
 }
 
-Write-Host "Downloading Emu68Pistorm32lite"
+Write-StartSubTaskMessage -Message 'Downloading Emu68Pistorm32lite' -SubtaskNumber '2' -TotalSubtasks '3'
+
 if (-not(Get-GithubRelease -GithubRelease $Emu68releases -Tag_Name "nightly" -Name 'Emu68-pistorm32lite' -LocationforDownload ($AmigaDownloads+'Emu68Pistorm32lite.zip') -LocationforProgram ($tempfolder+'Emu68Pistorm32lite\') -Sort_Flag 'SORT')){
-    Write-Host 'Error downloading Emu68Pistorm32lite! Cannot continue!' -ForegroundColor Red
+    Write-ErrorMessage -Message 'Error downloading Emu68Pistorm32lite! Cannot continue!'
     throw
 }
 
-Write-Host "Downloading Emu68Tools"
+Write-StartSubTaskMessage -Message 'Downloading Emu68Tools' -SubtaskNumber '3' -TotalSubtasks '3'
+
 if (-not(Get-GithubRelease -GithubRelease $Emu68Toolsreleases -Tag_Name "nightly" -Name 'Emu68-tools' -LocationforDownload ($AmigaDownloads+'Emu68Tools.zip') -LocationforProgram ($tempfolder+'Emu68Tools\') -Sort_Flag 'SORT')){
-    Write-Host 'Error downloading Emu68Tools! Cannot continue!' -ForegroundColor Red
+    Write-ErrorMessage -Message 'Error downloading Emu68Tools! Cannot continue!'
     throw
 }
 
-### End Download HST
+Write-TaskCompleteMessage -Message 'Downloading Emu68 Packages - Complete' -SectionNumber '7' -TotalSections $TotalSections
+
+### End Download Emu68
 
 ### Begin Download UnLzx
 
-#Update-OutputWindow -OutputConsole_Title_Text 'Downloading UnLZX' -ProgressbarValue_Overall 16 -ProgressbarValue_Overall_Text '16%'
+Write-StartTaskMessage -Message 'Downloading UnLZX' -SectionNumber '8' -TotalSections $TotalSections
 
-Write-Host "Downloading UnLZX"
 if (-not (Test-Path ($ProgramsFolder+'unlzx.exe'))){
     If (-not (Get-AmigaFileWeb -URL $UnLZXURL -NameofDL 'W95unlzx.lha' -LocationforDL $TempFolder)){
-        Write-host "Error downloading UnLZX! Quitting" -ForegroundColor Red
+        Write-ErrorMessage -Message 'Error downloading UnLZX! Quitting'
         throw
     }
     if (-not(Expand-Zipfiles -SevenzipPathtouse $7zipPath -TempFoldertouse $TempFolder -InputFile ($TempFolder+'W95unlzx.lha') -OutputDirectory $ProgramsFolder -FiletoExtract 'unlzx.exe')){
-        Write-Host ('Deleting package '+($TempFolder+'W95unlzx.lha'))
+        Write-InformationMessage -Message ('Deleting package '+($TempFolder+'W95unlzx.lha'))
         $null=Remove-Item -Path ($TempFolder+'W95unlzx.lha') -Force
-        throw # Error in extracting
+        Write-ErrorMessage -Message 'Error extracting UnLZX! Quitting'
+        throw
     }
 }
 else{
-    Write-Host "Unlzx already exists."
+    Write-InformationMessage -Message "Unlzx already exists."
 }
+
+Write-TaskCompleteMessage -Message 'Downloading LZX - Complete!' -SectionNumber '8' -TotalSections $TotalSections
 
 ### End Download UnLzx
 
@@ -927,15 +892,13 @@ $AmigaPartitionsList += [PSCustomObject]@{
 }
 
 $PartitionNumbertoPopulate ++
-$CapacitytoFill = $SizeofPartition_Other 
+$CapacitytoFill = $SizeofPartition_Other
+
+$TotalNumberWorkPartitions = [math]::ceiling($CapacitytoFill/$PFSLimit)
+
+$WorkPartitionSize = $SizeofPartition_Other/$TotalNumberWorkPartitions
 
 do {
-    if ($CapacitytoFill -le 100*1024){
-        $CapacityofPartition = $CapacitytoFill
-    }
-    else{
-        $CapacityofPartition = 100*1024
-    }
     if ($PartitionNumbertoPopulate -eq 2){
         $VolumeNametoPopulate = $VolumeName_Other
         $DeviceNametoPopulate = $DeviceName_Other
@@ -947,18 +910,18 @@ do {
     }
     $AmigaPartitionsList += [PSCustomObject]@{
         PartitionNumber = $PartitionNumbertoPopulate 
-        SizeofPartition =  (($CapacityofPartition.ToString())+'mb')
+        SizeofPartition =  ((($WorkPartitionSize*1024).ToString())+'mb')
         DosType = 'PFS'
         VolumeName = $VolumeNametoPopulate
         DeviceName = $DeviceNametoPopulate    
     }
     $PartitionNumbertoPopulate ++
-    $CapacitytoFill = $CapacitytoFill - $CapacityofPartition
 } until (
-    $CapacitytoFill -le  0
+    $PartitionNumbertoPopulate -ge  $TotalNumberWorkPartitions
 )
 
-Write-Host "Preparing Amiga Image"
+Write-StartTaskMessage -Message 'Preparing Amiga Image' -SectionNumber '9' -TotalSections $TotalSections
+
 if (-not (Start-HSTImager -Command "Blank" -DestinationPath ($LocationofImage+$NameofImage) -ImageSize $SizeofImage -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
     throw
 } 
@@ -970,7 +933,7 @@ if (-not (Start-HSTImager -Command "rdb filesystem add" -DestinationPath ($Locat
 } 
 
 foreach ($AmigaPartition in $AmigaPartitionsList) {
-    Write-Host ('Preparing Partition Device: '+$AmigaPartition.DeviceName+' VolumeName '+$AmigaPartition.VolumeName)
+    Write-InformationMessage -Message ('Preparing Partition Device: '+$AmigaPartition.DeviceName+' VolumeName '+$AmigaPartition.VolumeName)
     if ($AmigaPartition.VolumeName = $VolumeName_System){
         if (-not (Start-HSTImager -Command "rdb part add" -DestinationPath ($LocationofImage+$NameofImage) -DeviceName $AmigaPartition.DeviceName -DosType $AmigaPartition.DosType -SizeofPartition $AmigaPartition.SizeofPartition -Options '--bootable' -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
             throw
@@ -1050,7 +1013,7 @@ foreach ($AmigaPartition in $AmigaPartitionsList){
         else{
             $DestinationPathtoUse = ($AmigaDrivetoCopy+$VolumeName_Other) 
         }
-        write-host ('Copying Icons to Work Partition. Source is: '+$SourcePath+' Destination is: '+$DestinationPathtoUse)
+        Write-InformationMessage -Message ('Copying Icons to Work Partition. Source is: '+$SourcePath+' Destination is: '+$DestinationPathtoUse)
         if (-not (Start-HSTImager -Command 'fs extract' -SourcePath $SourcePath -DestinationPath $DestinationPathtoUse -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
                     throw
         }
@@ -1060,24 +1023,23 @@ foreach ($AmigaPartition in $AmigaPartitionsList){
     }
 }
 
+Write-TaskCompleteMessage -Message 'Preparing Amiga Image - Complete!' -SectionNumber '9' -TotalSections $TotalSections
+
 ### End Basic Drive Setup
 
 ### Begin Copy Install files from ADF
 
-#Update-OutputWindow -OutputConsole_Title_Text 'Process and Install ADFs' -ProgressbarValue_Overall 18 -ProgressbarValue_Overall_Text '18%'
-
-Write-Host 'Processing and Installing ADFs' 
+Write-StartTaskMessage -Message 'Processing and Installing ADFs' -SectionNumber '10' -TotalSections $TotalSections
 
 $TotalItems=$ListofInstallFiles.Count
 
 $ItemCounter=1
 
 Foreach($InstallFileLine in $ListofInstallFiles){
-    Write-Host ''
-    Write-Host ('('+$ItemCounter+'/'+$TotalItems+') Processing ADF:'+$InstallFileLine.FriendlyName+' Files: '+$InstallFileLine.AmigaFiletoInstall)
+    Write-StartSubTaskMessage -SubtaskNumber $ItemCounter -TotalSubtasks $TotalItems -Message ('Processing ADF:'+$InstallFileLine.FriendlyName+' Files: '+$InstallFileLine.AmigaFiletoInstall)
     $SourcePathtoUse = ($InstallFileLine.Path+'\'+($InstallFileLine.AmigaFiletoInstall -replace '/','\'))
     if ($InstallFileLine.Uncompress -eq "TRUE"){
-        Write-host 'Extracting files from ADFs containing .Z files'
+        WWrite-InformationMessage -Message 'Extracting files from ADFs containing .Z files'
         if ($InstallFileLine.LocationtoInstall.Length -eq 0){        
             $DestinationPathtoUse = ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName)
         }
@@ -1103,7 +1065,7 @@ Foreach($InstallFileLine in $ListofInstallFiles){
             $FullPath = $AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+(Split-Path ($InstallFileLine.AmigaFiletoInstall -replace '/','\') -Leaf) 
         }
         $filename = Split-Path $FullPath -leaf
-        Write-host 'Extracting files from ADFs where changes needed'
+        Write-InformationMessage -Message 'Extracting files from ADFs where changes needed'
         if ($InstallFileLine.LocationtoInstall.Length -eq 0){
             $DestinationPathtoUse = ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName)
         }
@@ -1132,14 +1094,14 @@ Foreach($InstallFileLine in $ListofInstallFiles){
             }                 
         }        
         if ($InstallFileLine.ModifyScript -eq'Remove'){
-            Write-Host ('Modifying '+$FileName+' for: '+$InstallFileLine.ScriptNameofChange)
+            Write-InformationMessage -Message  ('Modifying '+$FileName+' for: '+$InstallFileLine.ScriptNameofChange)
             $ScripttoEdit = Import-TextFileforAmiga -SystemType 'Amiga' -ImportFile ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$FileName)
             $ScripttoEdit = Edit-AmigaScripts -ScripttoEdit $ScripttoEdit -Action 'remove' -name $InstallFileLine.ScriptNameofChange -Startpoint $InstallFileLine.ScriptInjectionStartPoint -Endpoint $InstallFileLine.ScriptInjectionEndPoint                    
             Export-TextFileforAmiga -ExportFile ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$FileName) -DatatoExport $ScripttoEdit -AddLineFeeds 'TRUE'
         }   
     }
     else {
-        Write-host 'Extracting files from ADFs to .hdf file'
+        Write-InformationMessage -Message 'Extracting files from ADFs to .hdf file'
         if ($InstallFileLine.LocationtoInstall.Length -eq 0){
            $DestinationPathtoUse = ($LocationofImage+$NameofImage+'\rdb\'+$DeviceName_System)
         }
@@ -1149,9 +1111,11 @@ Foreach($InstallFileLine in $ListofInstallFiles){
         if (-not (Start-HSTImager -Command 'fs extract' -SourcePath $SourcePathtoUse -DestinationPath $DestinationPathtoUse -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
             throw
         }
-    }     
+    }         
     $ItemCounter+=1    
 }
+
+Write-TaskCompleteMessage -Message 'Processing and Installing ADFs - Complete!' -SectionNumber '10' -TotalSections $TotalSections
 
 ### End Copy Install files from ADF
 
@@ -1167,14 +1131,12 @@ foreach ($line in $ListofPackagestoInstall){
     }
 }
 
-
 $PackageCheck=$null
 
 # Download and expand packages
 
-Update-OutputWindow -OutputConsole_Title_Text 'Download Packages' -ProgressbarValue_Overall 22 -ProgressbarValue_Overall_Text '22%'
+Write-StartTaskMessage -Message 'Downloading Packages' -SectionNumber '11' -TotalSections $TotalSections
 
-Write-host 'Downloading Packages' 
 
 $TotalItems=(
     $ListofPackagestoInstall | Where-Object InstallType -ne 'CopyOnly' |  Where-Object InstallType -ne 'StartupSequenceOnly' | Select-Object -Unique -Property PackageName
@@ -1185,8 +1147,7 @@ $ItemCounter=1
 foreach($PackagetoFind in $ListofPackagestoInstall) {
     if (($PackagetoFind.InstallType -ne 'CopyOnly') -and ($PackagetoFind.InstallType -ne 'StartupSequenceOnly')){
         if ($PackageCheck -ne $PackagetoFind.PackageName){
-            Write-Host ''
-            Write-host ('('+$ItemCounter+'/'+$TotalItems+') Downloading (or Copying) package '+$PackagetoFind.PackageName)
+            Write-StartSubTaskMessage -SubtaskNumber $ItemCounter -TotalSubtasks $TotalItems -Message ('Downloading (or Copying) package '+$PackagetoFind.PackageName)
             if ($PackagetoFind.Source -eq "ADF") {
                 if ($PackagetoFind.SourceLocation -eq 'StorageADF'){
                     $ADFtoUse = $StorageADF
@@ -1199,49 +1160,49 @@ foreach($PackagetoFind in $ListofPackagestoInstall) {
             }
             Elseif ($PackagetoFind.Source -eq "Web"){
                 if(($PackagetoFind.SearchforUpdatedPackage -eq 'TRUE') -and ($PackagetoFind.PackageName -ne 'WHDLoadWrapper')){
-                    $PackagetoFind.SourceLocation=Find-LatestAminetPackage -PackagetoFind $PackagetoFind.PackageName -Exclusion $PackagetoFind.UpdatePackageSearchExclusionTerm -DateNewerthan $PackagetoFind.UpdatePackageSearchMinimumDate -Architecture 'm68k-amigaos'
-                   # Write-Host $PackagetoFind.SourceLocation           
+                    $PackagetoFind.SourceLocation=Find-LatestAminetPackage -PackagetoFind $PackagetoFind.PackageName -Exclusion $PackagetoFind.UpdatePackageSearchExclusionTerm -DateNewerthan $PackagetoFind.UpdatePackageSearchMinimumDate -Architecture 'm68k-amigaos'   
                 }
                 if(($PackagetoFind.SearchforUpdatedPackage -eq 'TRUE') -and ($PackagetoFind.PackageName -eq 'WHDLoadWrapper')){
                     $PackagetoFind.SourceLocation=(Find-WHDLoadWrapperURL -SearchCriteria 'WHDLoadWrapper' -ResultLimit '10') 
                 }
                 if (Test-Path ($AmigaDownloads+$PackagetoFind.FileDownloadName)){
-                    Write-Host "Download already completed"
+                    Write-InformationMessage -Message "Download already completed"
                 } 
                 else{
                     if (-not (Get-AmigaFileWeb -URL $PackagetoFind.SourceLocation -NameofDL $PackagetoFind.FileDownloadName -LocationforDL $AmigaDownloads)){
-                        Write-host "Unrecoverable error with download(s)!" -ForegroundColor Red
+                        Write-ErrorMessage -Message 'Unrecoverable error with download(s)!'
                         throw
                     }                    
                 }
                 if ($PackagetoFind.PerformHashCheck -eq 'TRUE'){
                     if (-not (Compare-FileHash -FiletoCheck ($AmigaDownloads+$PackagetoFind.FileDownloadName) -HashtoCheck $PackagetoFind.Hash)){
-                        Write-Host "Error in downloaded packages! Unable to continue!" -ForegroundColor Red
-                        Write-Host ('Deleting package '+($AmigaDownloads+$PackagetoFind.FileDownloadName))
+                        Write-ErrorMessage -Message 'Error in downloaded packages! Unable to continue!'
+                        Write-InformationMessage -Message ('Deleting package '+($AmigaDownloads+$PackagetoFind.FileDownloadName))
                         $null=Remove-Item -Path ($AmigaDownloads+$PackagetoFind.FileDownloadName) -Force 
                         throw
                     }
                 }
             }
             Elseif (($PackagetoFind.Source -eq "Local") -and ($PackagetoFind.InstallType -eq "Full")){
-                Write-host "Copying local file"$PackagetoFind.SourceLocation
+                Write-InformationMessage -Message ('Copying local file '+$PackagetoFind.SourceLocation)
                 if (Test-Path ($AmigaDownloads+$PackagetoFind.FileDownloadName)){
-                    Write-host 'File already copied'
+                    Write-InformationMessage -Message 'File already copied'
                 }
                 else {
                     Copy-Item ($LocationofAmigaFiles+$PackagetoFind.SourceLocation) ($AmigaDownloads+$PackagetoFind.FileDownloadName)
                 }
             }
             if ($PackagetoFind.InstallType -eq "Full"){
-                Write-Host 'Expanding archive file for package'$PackagetoFind.PackageName
+                Write-InformationMessage -Message ('Expanding archive file for package '+$PackagetoFind.PackageName)
                 if ([System.IO.Path]::GetExtension($PackagetoFind.FileDownloadName) -eq '.lzx'){
                     Expand-LZXArchive -LZXPathtouse $LZXPath -WorkingFoldertouse $WorkingFolder -LZXFile ($AmigaDownloads+$PackagetoFind.FileDownloadName) -TempFoldertouse $TempFolder -DestinationPath ($TempFolder+$PackagetoFind.FileDownloadName) 
                 } 
                 if ([System.IO.Path]::GetExtension($PackagetoFind.FileDownloadName) -eq '.lha'){
                     if (-not(Expand-Zipfiles -SevenzipPathtouse $7zipPath -TempFoldertouse $TempFolder -InputFile ($AmigaDownloads+$PackagetoFind.FileDownloadName) -OutputDirectory ($TempFolder+$PackagetoFind.FileDownloadName))){
-                        Write-Host ('Deleting package '+($AmigaDownloads+$PackagetoFind.FileDownloadName))
+                        Write-ErrorMessage -Message 'Error in extracting!' 
+                        Write-InformationMessage -Message ('Deleting package '+($AmigaDownloads+$PackagetoFind.FileDownloadName))
                         $null=Remove-Item -Path ($AmigaDownloads+$PackagetoFind.FileDownloadName) -Force
-                        throw # Error in extracting
+                        throw
                     }
                                
                 } 
@@ -1254,14 +1215,14 @@ foreach($PackagetoFind in $ListofPackagestoInstall) {
     }
 }
 
+Write-TaskCompleteMessage -Message 'Downloading Packages - Complete!' -SectionNumber '11' -TotalSections $TotalSections
+
 $PackageCheck=$null
 $UserStartup=$null
 $StartupSequence = Import-TextFileforAmiga -SystemType 'Amiga' -ImportFile ($AmigaDrivetoCopy+$VolumeName_System+'\S\Startup-Sequence') 
 $StartupSequenceversion = Get-StartupSequenceVersion -StartupSequencetoCheck $StartupSequence
 
-#Update-OutputWindow -OutputConsole_Title_Text 'Install Packages' -ProgressbarValue_Overall 30 -ProgressbarValue_Overall_Text '30%'
-
-Write-Host 'Installing Packages'
+Write-StartTaskMessage -Message 'Installing Packages' -SectionNumber '12' -TotalSections $TotalSections
 
 $TotalItems=(
     $ListofPackagestoInstall | Select-Object -Unique -Property PackageName
@@ -1271,15 +1232,14 @@ $ItemCounter=1
 
 foreach($PackagetoFind in $ListofPackagestoInstall) {
     if ($PackageCheck -ne $PackagetoFind.PackageName){
-        Write-host ''
-        Write-host ('('+$ItemCounter+'/'+$TotalItems+') Installing package '+$PackagetoFind.PackageName)       
+        Write-StartSubTaskMessage -SubtaskNumber $ItemCounter -TotalSubtasks $TotalItems -Message ('Installing package '+$PackagetoFind.PackageName)       
         if ($PackagetoFind.ModifyUserStartup -eq'TRUE'){
-            Write-Host 'Modifying S/User-Startup file for:'$PackagetoFind.PackageName
+            Write-InformationMessage -Message ('Modifying S/User-Startup file for: '+$PackagetoFind.PackageName)
             $UserStartup += Edit-AmigaScripts -name $PackagetoFind.PackageName -Action 'Append' -LinestoAdd (Import-TextFileforAmiga -SystemType 'PC' -ImportFile ($LocationofAmigaFiles+'S\User-Startup_'+$PackagetoFind.PackageName))
             
         }
         if ($PackagetoFind.ModifyStartupSequence -eq'Add'){
-            Write-Host 'Modifying S/Startup-Sequence file for:'$PackagetoFind.PackageName 
+            Write-InformationMessage -Message ('Modifying S/Startup-Sequence file for: '+$PackagetoFind.PackageName) 
             $InjectionPoint=Get-StartupSequenceInjectionPointfromVersion -SSversion $StartupSequenceversion -InjectionPointtoParse $PackagetoFind.StartupSequenceInjectionStartPoint
             $StartupSequence = Edit-AmigaScripts -ScripttoEdit $StartupSequence -Action 'inject' -injectionpoint 'before' -name $PackagetoFind.PackageName -Startpoint $InjectionPoint -LinestoAdd (Import-TextFileforAmiga -SystemType 'PC' -ImportFile ($LocationofAmigaFiles+'S\Startup-Sequence_'+$PackagetoFind.PackageName))            
         }
@@ -1306,7 +1266,7 @@ foreach($PackagetoFind in $ListofPackagestoInstall) {
                $SourcePathtoUse=($TempFolder+$PackagetoFind.FileDownloadName+'\'+$PackagetoFind.FilestoInstall)     
            }
            #### End Determining SourcePaths
-           Write-Host "Creating directories where required - Folder"$PackagetoFind.LocationtoInstall
+           Write-InformationMessage -Message ('Creating directories where required - Folder '+$PackagetoFind.LocationtoInstall)
            if (-not (Test-Path ($AmigaDrivetoCopy+$PackagetoFind.DrivetoInstall_VolumeName+'\'+$PackagetoFind.LocationtoInstall))){
                $null = New-Item ($AmigaDrivetoCopy+$PackagetoFind.DrivetoInstall_VolumeName+'\'+$PackagetoFind.LocationtoInstall) -ItemType Directory
            }
@@ -1316,15 +1276,15 @@ foreach($PackagetoFind in $ListofPackagestoInstall) {
            #### Copy Files
            if ($PackagetoFind.NewFileName.Length -ne 0){
                $DestinationPathtoUse=$DestinationPathtoUse+$PackagetoFind.NewFileName
-               Write-host ('Copying files to drive. Source path is: '+$SourcePathtoUse+' Destination path is: '+$DestinationPathtoUse+' (New Name is '+$PackagetoFind.NewFileName+')')
+               Write-InformationMessage -Message ('Copying files to drive. Source path is: '+$SourcePathtoUse+' Destination path is: '+$DestinationPathtoUse+' (New Name is '+$PackagetoFind.NewFileName+')')
            }
            else{
-               Write-host ('Copying files to drive. Source path is: '+$SourcePathtoUse+' Destination path is: '+$DestinationPathtoUse)        
+            Write-InformationMessage -Message ('Copying files to drive. Source path is: '+$SourcePathtoUse+' Destination path is: '+$DestinationPathtoUse)        
            }
            Copy-Item -Path $SourcePathtoUse  -Destination $DestinationPathtoUse -Recurse -force  
            #### End Copy Files
            if (($PackagetoFind.ModifyInfoFileTooltype -eq 'Replace') -or ($PackagetoFind.ModifyInfoFileTooltype -eq 'Modify')) {
-               Write-Host 'Tooltypes for relevant .info files for:'$PackagetoFind.PackageName
+            Write-InformationMessage -Message  ('Tooltypes for relevant .info files for: '+$PackagetoFind.PackageName)
                if ($PackagetoFind.NewFileName){
                    $filename=$PackagetoFind.NewFileName
                }
@@ -1352,7 +1312,7 @@ foreach($PackagetoFind in $ListofPackagestoInstall) {
     $PackageCheck=$PackagetoFind.PackageName  
 }
 
-Write-Host 'Completed install of packages'
+Write-TaskCompleteMessage -Message 'Installing Packages -Complete!' -SectionNumber '12' -TotalSections $TotalSections
 
 Export-TextFileforAmiga -ExportFile ($AmigaDrivetoCopy+$VolumeName_System+'\S\Startup-Sequence') -DatatoExport $StartupSequence -AddLineFeeds 'TRUE'
 Export-TextFileforAmiga -ExportFile ($AmigaDrivetoCopy+$VolumeName_System+'\S\User-Startup') -DatatoExport $UserStartup -AddLineFeeds 'TRUE'
@@ -1361,7 +1321,7 @@ Export-TextFileforAmiga -ExportFile ($AmigaDrivetoCopy+$VolumeName_System+'\S\Us
 
 #Update-OutputWindow -OutputConsole_Title_Text 'Creating Wireless Prefs file' -ProgressbarValue_Overall 50 -ProgressbarValue_Overall_Text '50%'
 
-Write-host 'Creating Wireless Prefs file'
+Write-StartTaskMessage -Message 'Creating Wireless Prefs file' -SectionNumber '13' -TotalSections $TotalSections
 
 if (-not (Test-Path ($AmigaDrivetoCopy+$VolumeName_System+'\Prefs\Env-Archive\Sys\'))){
     $null = New-Item -path ($AmigaDrivetoCopy+$VolumeName_System+'\Prefs\Env-Archive\Sys') -ItemType Directory -Force 
@@ -1375,11 +1335,13 @@ $WirelessPrefs = "network={",
                  
 Export-TextFileforAmiga -ExportFile ($AmigaDrivetoCopy+$VolumeName_System+'\Prefs\Env-Archive\Sys\wireless.prefs') -DatatoExport $WirelessPrefs -AddLineFeeds 'TRUE'                
 
+Write-TaskCompleteMessage -Message 'Creating Wireless Prefs File - Complete!' -SectionNumber '13' -TotalSections $TotalSections
+
 ### End Wireless Prefs
 
 ### Fix WBStartup
 
-#Update-OutputWindow -OutputConsole_Title_Text 'Fix WBStartup' -ProgressbarValue_Overall 51 -ProgressbarValue_Overall_Text '51%'
+Write-StartTaskMessage -Message 'Fix WBStartup' -SectionNumber '14' -TotalSections $TotalSections
 
 If ($KickstartVersiontouse -eq 3.2){
     Write-Host 'Fixing Menutools'
@@ -1394,19 +1356,23 @@ If ($KickstartVersiontouse -eq 3.2){
     Export-TextFileforAmiga -ExportFile ($AmigaDrivetoCopy+$VolumeName_System+'\WBStartup\Menutools') -DatatoExport $WBStartup -AddLineFeeds 'TRUE'
 }
 
+Write-TaskCompleteMessage -Message 'Fix WB Startup - Complete!' -SectionNumber '14' -TotalSections $TotalSections
+
 ## Clean up AmigaImageFiles
+
+Write-StartTaskMessage -Message 'Clean up AmigaImageFiles' -SectionNumber '15' -TotalSections $TotalSections
 
 if (Test-Path ($AmigaDrivetoCopy+$VolumeName_System+'\Disk.info')){
     Remove-Item ($AmigaDrivetoCopy+$VolumeName_System+'\Disk.info')
 }
 
+Write-TaskCompleteMessage -Message 'Clean up AmigaImageFiles - Complete!' -SectionNumber '15' -TotalSections $TotalSections
+
 #### Set up FAT32
 
-Write-Host 'Setting up FAT32 files'
+Write-StartTaskMessage -Message 'Setting up FAT32 files' -SectionNumber '16' -TotalSections $TotalSections
 
-#Update-OutputWindow -OutputConsole_Title_Text 'Setup FAT32 Files' -ProgressbarValue_Overall 52 -ProgressbarValue_Overall_Text '52%'
-
-Write-Host 'Copying Emu68Pistorm and Emu68Pistorm32lite files' 
+Write-InformationMessage -Message 'Copying Emu68Pistorm and Emu68Pistorm32lite files' 
 
 $null = copy-Item ($TempFolder+"Emu68Pistorm\*") -Destination ($FAT32Partition)
 $null = copy-Item ($TempFolder+"Emu68Pistorm32lite\*") -Destination ($FAT32Partition)
@@ -1421,17 +1387,14 @@ if (-not (Test-Path ($FAT32Partition+'Install\'))){
     $null = New-Item -path ($FAT32Partition+'Install\') -ItemType Directory -Force
 }
 
-#Update-OutputWindow -ProgressbarValue 15 -ProgressbarValue_Text '15%'
-
-Write-Host 'Copying Cmdline.txt' 
+Write-InformationMessage -Message 'Copying Cmdline.txt' 
 
 Copy-Item ($LocationofAmigaFiles+'FAT32\cmdline_'+$KickstartVersiontoUse+'.txt') -Destination ($FAT32Partition+'cmdline.txt') #Temporary workaround until Michal fixes buptest for 3.1
 
-#Update-OutputWindow -ProgressbarValue 30 -ProgressbarValue_Text '30%'
 
 $ConfigTxt = Get-Content -Path ($LocationofAmigaFiles+'FAT32\config.txt')
 
-Write-Host 'Preparing Config.txt'
+Write-InformationMessage -Message 'Preparing Config.txt'
 
 $RevisedConfigTxt=$null
 
@@ -1506,21 +1469,17 @@ foreach ($Line in $ConfigTxt) {
         $RevisedConfigTxt += ($Line+"`n")
     }    
 }
-
-#Update-OutputWindow -ProgressbarValue 66 -ProgressbarValue_Text '66%'
-
 Export-TextFileforAmiga -DatatoExport $RevisedConfigTxt -ExportFile ($FAT32Partition+'config.txt') -AddLineFeeds 'TRUE' 
 
-Write-host 'Copying Kickstart file to FAT32 partition'
+Write-InformationMessage -Message 'Copying Kickstart file to FAT32 partition'
 $null = copy-Item -LiteralPath $KickstartPath -Destination ($FAT32Partition+$KickstartNameFAT32)
 
+Write-TaskCompleteMessage -Message 'Setting up FAT32 Files - Complete!' -SectionNumber '16' -TotalSections $TotalSections
 
-#Update-OutputWindow -ProgressbarValue 100 -ProgressbarValue_Text '100%'
 
-#Update-OutputWindow -OutputConsole_Title_Text 'Transferring Files to Work Partition' -ProgressbarValue_Overall 53 -ProgressbarValue_Overall_Text '53%'
+Write-StartTaskMessage -Message 'Transferring Migrated Files to Work Partition' -SectionNumber '17' -TotalSections $TotalSections
 
 ### Transfer files to Work partition
-
 
 if ($TransferLocation) {
     # Determine Size of transfer
@@ -1543,7 +1502,9 @@ if ($TransferLocation) {
     }
 }
 
-#Update-OutputWindow -OutputConsole_Title_Text 'Transferring Amiga Files to Image' -ProgressbarValue_Overall 63 -ProgressbarValue_Overall_Text '63%'
+Write-TaskCompleteMessage -Message 'Transferring Migrated Files to Work Partition - Complete!' -SectionNumber '17' -TotalSections $TotalSections
+
+Write-StartTaskMessage -Message 'Transferring Amiga Files to Image' -SectionNumber '18' -TotalSections $TotalSections
 
 if (-not(Start-HSTImager -Command 'fs copy' -SourcePath ($AmigaDrivetoCopy+$VolumeName_System) -DestinationPath ($LocationofImage+$NameofImage+'\rdb\'+$DeviceName_System) -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
     throw
@@ -1552,6 +1513,10 @@ if (-not(Start-HSTImager -Command 'fs copy' -SourcePath ($AmigaDrivetoCopy+$Volu
     throw
 }  
 
+Write-TaskCompleteMessage -Message 'Transferring Amiga Files to Image - Complete!' -SectionNumber '18' -TotalSections $TotalSections
+
+Write-StartTaskMessage -Message 'Creating Image' -SectionNumber '19' -TotalSections $TotalSections
+
 Set-Location $LocationofImage
 
 #Update-OutputWindow -OutputConsole_Title_Text 'Creating Image' -ProgressbarValue_Overall 83 -ProgressbarValue_Overall_Text '83%'
@@ -1559,13 +1524,18 @@ Set-Location $LocationofImage
 & $HDF2emu68Path $LocationofImage$NameofImage $SizeofFAT32 ($FAT32Partition).Trim('\')
 
 $null= Rename-Item ($LocationofImager+'emu68_converted.img') -NewName ('Emu68Kickstart'+$KickstartVersiontoUse+'.img')
+
+Write-TaskCompleteMessage -Message 'Creating Image - Complete!' -SectionNumber '19' -TotalSections $TotalSections
+
+Write-StartTaskMessage -Message 'Writing Image to Disk' -SectionNumber '20' -TotalSections $TotalSections
+
 Set-location $WorkingFolder
 
 if (-not (Start-HSTImager -Command "Write" -SourcePath ($LocationofImage+'Emu68Kickstart'+$KickstartVersiontoUse+'.img') -DestinationPath $HSTDiskName -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
     throw
 } 
 
-#Update-OutputWindow -OutputConsole_Title_Text 'Completed' -ProgressbarValue_Overall 100 -ProgressbarValue_Overall_Text '100%'
+Write-TaskCompleteMessage -Message 'Writing Image to Disk - Complete!' -SectionNumber '20' -TotalSections $TotalSections
 
 $EndDateandTime = (Get-Date -Format HH:mm:ss)
 $ElapsedTime = (New-TimeSpan -Start $StartDateandTime -End $EndDateandTime).TotalSeconds

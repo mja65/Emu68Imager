@@ -1,3 +1,49 @@
+function Write-StartTaskMessage {
+    param (
+        $SectionNumber,
+        $TotalSections,
+        $Message
+    )
+    Write-Host ''
+    Write-Host "[Section: $SectionNumber of $TotalSections]: `t $Message" -ForegroundColor White
+    Write-Host ''
+}
+
+function Write-StartSubTaskMessage {
+    param (
+        $SubtaskNumber,
+        $TotalSubtasks,
+        $Message
+    )
+    Write-Host ''
+    Write-Host "[Subtask: $SubtaskNumber of $TotalSubtasks]: `t $Message" -ForegroundColor White
+    Write-Host ''
+}
+
+function Write-InformationMessage {
+    param (
+        $Message
+    )
+    Write-Host $Message -ForegroundColor Yellow
+}
+
+function Write-ErrorMessage {
+    param (
+        $Message
+    )
+    Write-Host "[ERROR] `t $Message" -ForegroundColor Red
+}
+
+function Write-TaskCompleteMessage {
+    param (
+        $SectionNumber,
+        $TotalSections,
+        $Message
+    )
+    Write-Host "[Section: $SectionNumber of $TotalSections]: `t $Message" -ForegroundColor Green
+}
+
+
 function Read-XAML {
     param (
         $xaml
@@ -388,16 +434,15 @@ function Compare-FileHash {
         $FiletoCheck,
         $HashtoCheck
     )
-    Write-Host 'Checking hash for file:'$FiletoCheck
+    Write-InformationMessage -Message ('Checking hash for file: '+$FiletoCheck)
     $HashChecked = Get-FileHash $FiletoCheck -Algorithm MD5
     $HashtoReport=$HashChecked.Hash
     if ($HashChecked.Hash -eq $HashtoCheck) {
-        Write-Host "Hash of file matches!"
+        Write-InformationMessage -Message "Hash of file matches!"
         return $true
     } 
     else{
-        Write-Host 'Hash mismatch!'
-        Write-Host 'Hash expected was: '$HashtoCheck' Hash found was: '$HashtoReport
+        Write-ErrorMessage -Message ('Hash mismatch! Hash expected was: '+$HashtoCheck+' Hash found was: '+$HashtoReport)
         return $false
     }
         
@@ -411,10 +456,10 @@ function Expand-Zipfiles {
         $SevenzipPathtouse,
         $TempFoldertouse
     )
-    Write-Host "Extracting from"$InputFile
+    Write-InformationMessage -Message "Extracting from"$InputFile
     & $SevenzipPathtouse x ('-o'+$OutputDirectory) $InputFile $FiletoExtract -y >($TempFoldertouse+'LogOutputTemp.txt')
     if ($LASTEXITCODE -ne 0) {
-        Write-Host ("Error extracting "+$InputFile+"! Cannot continue!") -ForegroundColor Red
+        Write-ErrorMessage -Message ('Error extracting '+$InputFile+'! Cannot continue!')
         return $false    
     }
     else {
@@ -430,7 +475,7 @@ function Expand-LZXArchive {
         $WorkingFoldertouse,
         $LZXPathtouse
     )
-    Write-host 'Extracting file'$LZXFile
+    Write-InformationMessage -Message ('Extracting file '+$LZXFile)
     if (-not(Test-Path $DestinationPath)){
        $null= New-Item $DestinationPath -ItemType Directory
     }
@@ -445,35 +490,35 @@ function Get-AmigaFileWeb {
         $NameofDL,
         $LocationforDL
     )
-    Write-Host "Downloading file"$NameofDL
+    Write-InformationMessage -Message ('Downloading file '+$NameofDL)
     if (([System.Uri]$URL).host -eq 'aminet.net'){
         $AminetMirrors =  Import-Csv ($InputFolder+'AminetMirrors.csv') -Delimiter ';'
         foreach ($Mirror in $AminetMirrors){
-            Write-Host ("Trying mirror: "+$Mirror.MirrorURL+" ("+$Mirror.Type+")")
+            Write-InformationMessage -Message ('Trying mirror: '+$Mirror.MirrorURL+' ('+$Mirror.Type+')')
             $URLBase=$Mirror.Type+'://'+$Mirror.MirrorURL
             $URLPathandQuery=([System.Uri]$URL).pathandquery 
             $DownloadURL=($URLBase+$URLPathandQuery)
-            Write-host "Trying to download from: $DownloadURL"
+            Write-InformationMessage -Message ('Trying to download from: '+$DownloadURL)
             try {
                 Invoke-WebRequest $DownloadURL -OutFile ($LocationforDL+$NameofDL) # Powershell 5 compatibility -AllowInsecureRedirect
-                Write-Host "Download completed"
+                Write-InformationMessage -Message "Download completed"
                 return $true   
             }
             catch {
-                Write-Host ("Error downloading "+$NameofDL+"! Trying different server")
+                Write-ErrorMessage -Message ('Error downloading '+$NameofDL+'! Trying different server')
             }
         }
-        Write-Host "All servers attempted. Download failed" -ForegroundColor Red
+        Write-ErrorMessage -Message 'All servers attempted. Download failed'
         return $false    
     }
     else{
         try {
             Invoke-WebRequest $URL -OutFile ($LocationforDL+$NameofDL) # Powershell 5 compatibility -AllowInsecureRedirect
-            Write-Host "Download completed"
+            Write-InformationMessage -Message 'Download completed'
             return $true       
         }
         catch {
-            Write-Host ("Error downloading "+$NameofDL+"!") -ForegroundColor Red
+            Write-ErrorMessage -Message ('Error downloading '+$NameofDL+'!')
             return $false
         }        
     }
@@ -497,35 +542,35 @@ function Start-HSTImager {
     )
     $Logoutput=($TempFoldertouse+'LogOutputTemp.txt')
     if ($Command -eq 'Blank'){
-        Write-Host "Creating image"
+        Write-InformationMessage -Message 'Creating image'
         & $HSTImagePathtouse blank $DestinationPath $ImageSize >$Logoutput            
     }
     elseif ($Command -eq 'rdb init'){
-        Write-Host "Initialising partition"
+        Write-InformationMessage -Message 'Initialising partition'
         & $HSTImagePathtouse rdb init $DestinationPath $Options >$Logoutput            
     }
     elseif ($Command -eq 'rdb filesystem add'){
-        Write-Host "Adding Filesystem $DosType to RDB"
+        Write-InformationMessage -Message ('Adding Filesystem '+$DosType+' to RDB')
         & $HSTImagePathtouse rdb filesystem add $DestinationPath $FileSystemPath $DosType $Options >$Logoutput            
     }
     elseif ($Command -eq 'rdb part add'){
-        Write-Host "Adding partition $DeviceName $DosType"
+        Write-InformationMessage -Message ('Adding partition '+$DeviceName+' '+$DosType)
         & $HSTImagePathtouse rdb part add $DestinationPath $DeviceName $DosType $SizeofPartition $Options --mask 0x7ffffffe --buffers 300 --max-transfer 0xffffff >$Logoutput
     }
     elseif ($Command -eq 'rdb part format'){
-        Write-Host "Formatting partition $VolumeName"
+        Write-InformationMessage -Message ('Formatting partition '+$VolumeName)
         & $HSTImagePathtouse rdb part format $DestinationPath $PartitionNumber $VolumeName $Options >$Logoutput            
     }   
     elseif ($Command -eq 'fs extract') {
-        Write-Host ('Extracting data from ADF. Source path is: '+$SourcePath+' Destination path is: '+$DestinationPath)
+        Write-InformationMessage -Message ('Extracting data from ADF. Source path is: '+$SourcePath+' Destination path is: '+$DestinationPath)
         & $HSTImagePathtouse fs extract $SourcePath $DestinationPath $Options >$Logoutput                                
     }
     elseif ($Command -eq 'fs copy') {
-        Write-Host "Writing file(s) to HDF image for: $SourcePath to $DestinationPath" 
+        Write-InformationMessage -Message ('Writing file(s) to HDF image for: '+$SourcePath+' to '+$DestinationPath) 
         & $HSTImagePathtouse fs copy $SourcePath $DestinationPath $Options >$Logoutput  
     } 
     elseif ($Command -eq 'write') {
-        Write-Host "Writing Image to Disk for: $SourcePath to $DestinationPath" 
+        Write-InformationMessage -Message ('Writing Image to Disk for: '+$SourcePath+' to '+$DestinationPath) 
         & $HSTImagePathtouse write $SourcePath $DestinationPath
     }    
     $CheckforError = Get-Content ($Logoutput)
@@ -533,7 +578,7 @@ function Start-HSTImager {
     foreach ($ErrorLine in $CheckforError){
         if ($ErrorLine -match " ERR]"){
             $ErrorCount += 1
-            Write-Host "Error in HST-Imager:"$ErrorLine -ForegroundColor RED           
+            Write-ErrorMessage -Message ('Error in HST-Imager: '+$ErrorLine)           
         }
     }
     if ($ErrorCount -ge 1){
@@ -554,14 +599,14 @@ function Read-AmigaTooltypes {
         
     )
     $Logoutput=($TempFoldertouse+'LogOutputTemp.txt')
-    Write-Host "Extracting Tooltypes for info file(s): $IconPath  to $ToolTypesPath" 
+    Write-InformationMessage -Message ('Extracting Tooltypes for info file(s): '+$IconPath+'  to '+$ToolTypesPath) 
     & $HSTAmigaPathtouse icon tooltypes export $IconPath $ToolTypesPath >$Logoutput
     $CheckforError = Get-Content ($Logoutput)
     $ErrorCount=0
     foreach ($ErrorLine in $CheckforError){
         if ($ErrorLine -match " ERR]"){
             $ErrorCount += 1
-            Write-Host "Error in HST-Amiga:"$ErrorLine -ForegroundColor Red           
+            Write-ErrorMessage -Message ('Error in HST-Amiga: '+$ErrorLine)           
         }
     }
     if ($ErrorCount -ge 1){
@@ -581,14 +626,14 @@ function Write-AmigaTooltypes {
         $ToolTypesPath
     )
     $Logoutput=($TempFoldertouse+'LogOutputTemp.txt')
-    Write-Host "Importing Tooltypes for info file(s): $IconPath from $ToolTypesPath" 
+    Write-InformationMessage -Message ('Importing Tooltypes for info file(s): '+$IconPath+' from '+$ToolTypesPath) 
     & $HSTAmigaPathtouse icon tooltypes import $IconPath $ToolTypesPath >$Logoutput
     $CheckforError = Get-Content ($Logoutput)
     $ErrorCount=0
     foreach ($ErrorLine in $CheckforError){
         if ($ErrorLine -match " ERR]"){
             $ErrorCount += 1
-            Write-Host "Error in HST-Amiga:"$ErrorLine -ForegroundColor Red           
+            Write-ErrorMessage -Message ('Error in HST-Amiga: '+$ErrorLine)           
         }
     }
     if ($ErrorCount -ge 1){
@@ -608,14 +653,14 @@ function Expand-AmigaZFiles {
         $WorkingFoldertouse
     )
     $ListofFilestoDecompress=Get-ChildItem -Path $LocationofZFiles -Recurse -Filter '*.Z'
-    Write-Host ("Decompressing .Z files in location: "+$LocationofZFiles)
+    Write-InformationMessage -Message ('Decompressing .Z files in location: '+$LocationofZFiles)
     foreach ($FiletoDecompress in $ListofFilestoDecompress){
         $InputFile=$FiletoDecompress.FullName
         set-location $FiletoDecompress.DirectoryName
         & $SevenzipPathtouse e $InputFile -bso0 -bsp0 -y
     }      
     Set-Location $WorkingFoldertouse
-    Write-Host ("Deleting .Z files in location: "+$LocationofZFiles)
+    Write-InformationMessage -Message ('Deleting .Z files in location: '+$LocationofZFiles)
     Get-ChildItem -Path $LocationofZFiles -Recurse -Filter '*.Z' | remove-Item -Recurse -Force
 }
 
@@ -631,20 +676,20 @@ function Add-AmigaFolder {
     $Length=$Endpoint-$Startpoint
     $FileName=($AmigaDrivetoCopytouse+$AmigaFolderPath).Substring($Startpoint,$Length) 
     if (-not (Test-Path ($AmigaDrivetoCopytouse+$AmigaFolderPath))){
-        Write-Host ('Creating Folder "'+$AmigaFolderPath+'"')
+        Write-InformationMessage -Message ('Creating Folder "'+$AmigaFolderPath+'"')
         $null = New-Item -path ($AmigaDrivetoCopytouse+$AmigaFolderPath) -ItemType Directory -Force 
     }
     else{
-        Write-Host ('Folder "'+$AmigaFolderPath+'" already exists')
+        Write-InformationMessage -Message ('Folder "'+$AmigaFolderPath+'" already exists')
     
     }
     if (-not(Test-Path ($ParentFolder+$FileName+'.info'))){
-        write-host ('Creating .info file '+$FileName+'.info')
+        Write-InformationMessage -Message ('Creating .info file '+$FileName+'.info')
         Copy-Item ($TempFoldertouse+'NewFolder.info') $ParentFolder
         Rename-Item ($ParentFolder+'NewFolder.info') ($ParentFolder+$FileName+'.info')
     }
     else {
-        write-host ($FileName+'.info already exists')
+        Write-InformationMessage -Message ($FileName+'.info already exists')
     }
 }
 
@@ -658,16 +703,16 @@ function Get-GithubRelease {
         $Sort_Flag
     )
     if(Test-Path $LocationforProgram){
-        Write-Host "File already exists!"
+        Write-InformationMessage -Message 'File already exists!'
         return $true   
     }
     else{
-        Write-Host "Retrieving Github information"
+        Write-InformationMessage -Message 'Retrieving Github information'
         try {
             $GithubDetails = (Invoke-WebRequest $GithubRelease | ConvertFrom-Json)            
         }
         catch {
-            Write-Host "Error downloading $NameofDL!"
+            Write-ErrorMessage -Message ('Error downloading '+$NameofDL+'!')
             return $false
         }
         if ($Sort_Flag -eq 'Sort'){
@@ -677,16 +722,16 @@ function Get-GithubRelease {
             $GithubDetails_2 = $GithubDetails | Where-Object { $_.tag_name -eq $Tag_Name } | Select-Object -ExpandProperty assets | Where-Object { $_.name -match $Name }
         }
         $GithubDownloadURL =$GithubDetails_2[0].browser_download_url 
-        Write-Host "Downloading Files for URL: $GithubDownloadURL"
+        Write-InformationMessage -Message ('Downloading Files for URL: '+$GithubDownloadURL)
         try {
             Invoke-WebRequest $GithubDownloadURL -OutFile $LocationforDownload # Powershell 5 compatibility -AllowInsecureRedirect
-            Write-Host "Download completed"            
+            Write-InformationMessage -Message 'Download completed'            
         }
         catch {
-            Write-Host "Error downloading $NameofDL!"
+            Write-ErrorMessage -Message ('Error downloading '+$NameofDL+'!')
             return $false
         }
-        Write-Host "Extracting Files"
+        Write-InformationMessage -Message 'Extracting Files'
         $null = Expand-Archive -LiteralPath $LocationforDownload -DestinationPath $LocationforProgram -force
         return $true   
     }
@@ -705,8 +750,8 @@ function Edit-AmigaScripts {
     )
     $ScripttoEdit_Revised = New-Object System.Collections.Generic.List[System.Object]
     if ($Action -eq 'remove'){
-        Write-Host 'Removing items from script'
-        Write-Host "Startpoint is: $Startpoint Endpoint is: $Endpoint"
+        Write-InformationMessage -Message 'Removing items from script'
+        Write-InformationMessage -Message ('Startpoint is: '+$Startpoint+' Endpoint is: '+$Endpoint)
         $RemoveLine=0 
         foreach ($Line in $ScripttoEdit) {
             if ($line -match $Startpoint){
@@ -722,8 +767,8 @@ function Edit-AmigaScripts {
         }
     }
     if ($Action -eq 'inject' -and $Injectionpoint-eq 'before'){
-        Write-Host 'Injecting new lines in script before Startpoint'
-        Write-Host "Startpoint is: $Startpoint"
+        Write-InformationMessage -Message 'Injecting new lines in script before Startpoint'
+        Write-InformationMessage -Message ('Startpoint is: '+$Startpoint)
         foreach ($Line in $ScripttoEdit) {
             if ($line -match $Startpoint){
                 $ScripttoEdit_Revised.Add('')
@@ -757,8 +802,8 @@ function Edit-AmigaScripts {
        }
    }
    if ($Action -eq 'inject' -and $Injectionpoint-eq 'after'){
-       Write-Host 'Injecting new lines in script after startpoint'
-       Write-Host "Startpoint is: $Startpoint"
+        Write-InformationMessage -Message 'Injecting new lines in script after startpoint'
+        Write-InformationMessage -Message ('Startpoint is: '+$Startpoint)
        foreach ($Line in $ScripttoEdit) {
            if ($line -match $Startpoint){
                $ScripttoEdit_Revised.Add($Startpoint)
@@ -807,9 +852,9 @@ function Export-TextFileforAmiga {
         $DatatoExport,
         $AddLineFeeds
     )
-    Write-Host ('Exporting file '+$ExportFile)
+    Write-InformationMessage -Message ('Exporting file '+$ExportFile)
     if ($AddLineFeeds -eq 'TRUE'){
-        Write-Host ('Adding line feeds to file '+$ExportFile)
+        Write-InformationMessage -Message ('Adding line feeds to file '+$ExportFile)
         foreach ($Line in $DatatoExport){
             $DatatoExportRevised+=$line+"`n"
         }
@@ -850,23 +895,23 @@ function Find-LatestAminetPackage {
     )
     $AminetURL='http://aminet.net'
     $URL=('https://aminet.net/search?name='+$PackagetoFind+'&o_date=newer&date='+$DateNewerthan+'&arch[]='+$Architecture)
-    Write-Host ('Searching for: '+$PackagetoFind)
+    Write-InformationMessage -Message('Searching for: '+$PackagetoFind)
     $ListofAminetFiles=Invoke-WebRequest $URL -UseBasicParsing # -AllowInsecureRedirect Powershell 5 compatibility
     foreach ($Line in $ListofAminetFiles.Links) {      
     if (!$Exclusion) {
         if (($line -match ('.lha'))){
-            Write-Host ('Found '+$line.href)
+            Write-InformationMessage -Message ('Found '+$line.href)
             return ($AminetURL+$line.href)
        }     
     }
     else {
     }
         if (($line -match ('.lha')) -and (-not ($line -match $Exclusion))){
-            Write-Host ('Found '+$line.href)
+            Write-InformationMessage -Message ('Found '+$line.href)
             return ($AminetURL+$line.href)
        }       
     }
-    Write-Host 'Could not find package! Unrrecoverable error!' -ForegroundColor Red
+    Write-ErrorMessage -Message 'Could not find package! Unrrecoverable error!'
     return                 
 }
 
@@ -878,7 +923,7 @@ function Find-WHDLoadWrapperURL{
         $SiteLink='https://ftp2.grandis.nu'
         $ListofURLs = New-Object System.Collections.Generic.List[System.Object]
         $SearchResults=Invoke-WebRequest "https://ftp2.grandis.nu/turransearch/search.php?_search_=1&search=$SearchCriteria&category_id=Misc&exclude=&limit=$ResultLimit&httplinks=on"
-        Write-Host "Retrieving link latest version of $SearchCriteria (assuming Tom hasn't screwed up the version numbering......)"
+        Write-InformationMessage -Message ('Retrieving link latest version of '+$SearchCriteria)
         foreach ($Item in $SearchResults.Links.OuterHTML){
             if ($item -match $SearchCriteria){
                 $Startpoint=$item.IndexOf('/turran')
@@ -909,7 +954,6 @@ function Get-ModifiedToolTypes {
         }
         else{
             $Tooltypes_Revised.Add($ModifiedTooltype.NewValue)            
-            #echo $ModifiedTooltype.NewValue
         }        
     }
     foreach ($OriginalToolType in $OriginalToolTypes){
@@ -968,7 +1012,7 @@ function Compare-KickstartHashes {
         return $KickstarttoUse 
     }
     else{
-        Write-host "No valid Kickstart file found!"
+        Write-ErrorMessage -Message 'No valid Kickstart file found!'
         return
     }
 }
@@ -982,9 +1026,9 @@ function Compare-ADFHashes {
     
     )
     
-    Write-Host "Calculating hashes of ADFs in location $PathtoADFFiles"
+    Write-InformationMessage -Message ('Calculating hashes of ADFs in location '+$PathtoADFFiles)
     $ListofADFFilestoCheck = Get-ChildItem $PathtoADFFiles -force -Recurse | Where-Object { $_.PSIsContainer -eq $false } | Get-FileHash  -Algorithm MD5
-    Write-Host "Hashes calculated!"
+    Write-InformationMessage -Message  ('Hashes calculated!')
     $ADFHashestoFind = Import-Csv $PathtoADFHashes -Delimiter ';' |  Where-Object {$_.Kickstart_Version -eq $KickstartVersion} | Sort-Object -Property 'Sequence'
     $RequiredADFs = Import-Csv $PathtoListofInstallFiles -Delimiter ';' |  Where-Object {$_.Kickstart_Version -eq $KickstartVersion} | Sort-Object -Property 'Sequence'
     $UniqueRequiredADFs = $RequiredADFs | Select-Object FriendlyName -Unique
@@ -1022,10 +1066,10 @@ function Compare-ADFHashes {
             }
         }
         if ($ADFFound -eq  $true){
-            Write-Host ('Found ADF file: '+$RequiredADF.FriendlyName)
+            Write-InformationMessage -Message ('Found ADF file: '+$RequiredADF.FriendlyName)
         }
         if ($ADFFound -eq  $false){
-            write-host ('ADF file: '+$RequiredADF.FriendlyName+' is missing from directory and/or hash is invalid Please check file!') -ForegroundColor Red
+            Write-ErrorMessage -Message ('ADF file: '+$RequiredADF.FriendlyName+' is missing from directory and/or hash is invalid Please check file!')
             $ErrorCount +=1
         }
     } 
@@ -1049,13 +1093,13 @@ function Get-StartupSequenceVersion {
     
     $Startpoint = $StartupSequence_FirstLine.IndexOf($String_Start)+$String_Start.Length
     if ($Startpoint -lt 0){
-        Write-host "Error! No version found!"
+        Write-ErrorMessage -Message  'Error! No version found!'
         return
     }
     else{
         $Endpoint = $StartupSequence_FirstLine.IndexOf($String_End)
         $Version=$StartupSequence_FirstLine.Substring($Startpoint,($Endpoint-$Startpoint))
-        Write-Host "Version of Startup-Sequence is $Version"
+        Write-InformationMessage -Message ('Version of Startup-Sequence is '+$Version)
         return $Version
     }
 }
@@ -1072,7 +1116,7 @@ function Get-StartupSequenceInjectionPointfromVersion {
         
         }
         else {
-            Write-host "Injection point identified (not version specific) is: $InjectionPointtoParse"
+            Write-InformationMessage -Message ('Injection point identified (not version specific) is: '+$InjectionPointtoParse)
             return $InjectionPointtoParse
         }    
         foreach ($Row in $InjectionPointSplit) {
@@ -1095,37 +1139,12 @@ function Get-StartupSequenceInjectionPointfromVersion {
         }
         foreach ($line in $InjectionPointTable){
             if ($line.Version -eq $SSversion){
-                Write-host ('Injection point identified for version '+$SSversion+' is: '+$line.Text)
+                Write-InformationMessage -Message ('Injection point identified for version '+$SSversion+' is: '+$line.Text)
                 return $line.Text
             }
         }    
         return           
 }
-
-#function Get-FolderPath {
-##    param (
- #       $NewFolderFlag,
- #       $Description,
- #       $ShowNewFolderButton,
- #       $RootFolder    
-#
-#    )
-#    Add-Type -AssemblyName System.Windows.Forms
-
-#    $BrowseFolder = New-Object System.Windows.Forms.FolderBrowserDialog -Property @{
-#        Description = $Description
-#        ShowNewFolderButton = $ShowNewFolderButton   
-#        RootFolder = 'MyComputer'
-#       InitialDirectory = 'MyDocuments'
-#    }
-#    $BrowseFolder.ShowDialog() | Out-Null
-#    if (!$BrowseFolder.SelectedPath){
-#        return
-#    }
-#    else {
-#        return ($BrowseFolder.SelectedPath + "\")
-##    }
-#}
 
 #[Enum]::GetNames([System.Environment+SpecialFolder])
 
@@ -1135,11 +1154,11 @@ function Test-ExistenceofFiles {
         $PathType
     )
     if (-not (Test-Path $PathtoTest)){
-        Write-Host ('Error! '+$PathtoTest+' is not available! Please check your download of the tool!') -ForegroundColor Red
+        Write-ErrorMessage -Message ('Error! '+$PathtoTest+' is not available! Please check your download of the tool!')
         return 1 
     }
     else{
-        Write-Host ($PathtoTest+' is available!')
+        Write-InformationMessage -Message ($PathtoTest+' is available!')
         return 0
     }
 }
