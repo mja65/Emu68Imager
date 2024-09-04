@@ -1,3 +1,18 @@
+function Get-RequiredSpace {
+    param (
+        $ImageSize
+    )
+    
+    $SpaceNeeded = `
+    (2*$ImageSize*1024) + ` #Image
+    10 + ` #FAT32 Files
+    23 + ` # AmigaImageFiles
+    40 + ` # AmigaDownloads
+    190 + ` # Programs Folder
+    80   # TempFolder
+    return $SpaceNeeded # In Megabytes
+}
+
 function Write-StartTaskMessage {
     param (
         $SectionNumber,

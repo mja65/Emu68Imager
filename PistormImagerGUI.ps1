@@ -70,38 +70,42 @@ $inputXML_UserInterface = @"
         Title="MainWindow" Height="450" Width="900" ResizeMode="NoResize" UseLayoutRounding="True">
     <Grid>
         <Grid Background="#FFE5E5E5" Margin="-1,0,1,0">
-            <Button x:Name="Start_Button" Content="Button" HorizontalAlignment="Left" Margin="749,365,0,0" VerticalAlignment="Top" Width="127"/>
+            <Button x:Name="Start_Button" Content="Run Tool" HorizontalAlignment="Left" Margin="749,365,0,0" VerticalAlignment="Top" Width="100" Height="20"/>
             <ComboBox x:Name="ScreenMode_Dropdown" HorizontalAlignment="Left" Margin="576,79,0,0" VerticalAlignment="Top" Width="300"/>
-            <ComboBox x:Name="KickstartVersion_DropDown" HorizontalAlignment="Left" Margin="16,259,0,0" VerticalAlignment="Top" Width="200"/>
-            <Button x:Name="Rompath_Button" Content="Button" HorizontalAlignment="Left" Margin="10,290,0,0" VerticalAlignment="Top" Width="160" Height="30"/>
-            <Button x:Name="ADFpath_Button" Content="Button" HorizontalAlignment="Left" Margin="10,325,0,0" VerticalAlignment="Top" Width="160" Height="30"/>
-            <Label x:Name="ScreenMode_Label" Content="Label" HorizontalAlignment="Left" Margin="554,38,0,0" VerticalAlignment="Top" Width="300" HorizontalContentAlignment="Center"/>
-            <Label x:Name="KickstartVersion_Label" Content="Label" HorizontalAlignment="Left" Margin="16,228,0,0" VerticalAlignment="Top" Width="200" HorizontalContentAlignment="Center"/>
-            <Button x:Name="MigratedFiles_Button" Content="Button" HorizontalAlignment="Left" Margin="10,360,0,0" VerticalAlignment="Top" Width="160" Height="30"/>
-            <Label x:Name="RomPath_Label" Content="PLACEHOLDER" HorizontalAlignment="Left" Margin="180,290,0,0" VerticalAlignment="Top" Width="188"/>
-            <Label x:Name="MigratedPath_Label" Content="PLACEHOLDER" HorizontalAlignment="Left" Margin="180,360,0,0" VerticalAlignment="Top" Width="188"/>
-            <Label x:Name="ADFPath_Label" Content="PLACEHOLDER" HorizontalAlignment="Left" Margin="180,325,0,0" VerticalAlignment="Top" Width="188"/>
-            <Label x:Name="SSID_Label" Content="Label" HorizontalAlignment="Left" Margin="554,155,0,0" VerticalAlignment="Top" Width="152" />
-            <Label x:Name="Password_Label" Content="Label" HorizontalAlignment="Left" Margin="554,189,0,0" VerticalAlignment="Top" Width="152"/>
-            <TextBox x:Name="SSID_Textbox" HorizontalAlignment="Left" Margin="721,155,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Width="120"/>
-            <TextBox x:Name="Password_Textbox" HorizontalAlignment="Left" Margin="721,189,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Width="120"/>
+            <ComboBox x:Name="KickstartVersion_DropDown" HorizontalAlignment="Left" Margin="10,259,0,0" VerticalAlignment="Top" Width="200"/>
+            <Button x:Name="Rompath_Button" Content="Click to set ROM path" HorizontalAlignment="Left" Margin="10,290,0,0" VerticalAlignment="Top" Width="200" Height="30"/>
+            <Button x:Name="ADFpath_Button" Content="Click to set ADF path" HorizontalAlignment="Left" Margin="10,325,0,0" VerticalAlignment="Top" Width="200" Height="30"/>
+            <Label x:Name="ScreenMode_Label" Content="Select ScreenMode" HorizontalAlignment="Left" Margin="554,38,0,0" VerticalAlignment="Top" Width="300" HorizontalContentAlignment="Center"/>
+            <Label x:Name="KickstartVersion_Label" Content="Select KickstartVersion" HorizontalAlignment="Left" Margin="16,228,0,0" VerticalAlignment="Top" Width="200" HorizontalContentAlignment="Center"/>
+            <Button x:Name="MigratedFiles_Button" Content="Click to set Transfer path" HorizontalAlignment="Left" Margin="10,360,0,0" VerticalAlignment="Top" Width="200" Height="30"/>
+            <Label x:Name="RomPath_Label" Content="No ROM path selected" HorizontalAlignment="Left" Margin="231,290,0,0" VerticalAlignment="Top" Width="188"/>
+            <Label x:Name="MigratedPath_Label" Content="No transfer path selected" HorizontalAlignment="Left" Margin="231,360,0,0" VerticalAlignment="Top" Width="188"/>
+            <Label x:Name="ADFPath_Label" Content="No ADF path selected" HorizontalAlignment="Left" Margin="231,325,0,0" VerticalAlignment="Top" Width="188"/>
+            <Label x:Name="SSID_Label" Content="Enter your SSID" HorizontalAlignment="Left" Margin="554,155,0,0" VerticalAlignment="Top" Width="152" />
+            <Label x:Name="Password_Label" Content="Enter your Wifi password" HorizontalAlignment="Left" Margin="554,189,0,0" VerticalAlignment="Top" Width="152"/>
+            <TextBox x:Name="SSID_Textbox" HorizontalAlignment="Left" Margin="721,155,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="120"/>
+            <TextBox x:Name="Password_Textbox" HorizontalAlignment="Left" Margin="721,189,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="120"/>
             <ComboBox x:Name="MediaSelect_DropDown" HorizontalAlignment="Left" Margin="10,40,0,0" VerticalAlignment="Top" Width="341"/>
-            <Label x:Name="MediaSelect_Label" Content="Label" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="315" HorizontalContentAlignment="Center"/>
-            <Button x:Name="MediaSelect_Refresh" Content="Button" HorizontalAlignment="Left" Margin="376,38,0,0" VerticalAlignment="Top"/>
+            <Label x:Name="MediaSelect_Label" Content="Select Media to Use" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="315" HorizontalContentAlignment="Center"/>
+            <Button x:Name="MediaSelect_Refresh" Content="Refresh Available Media" HorizontalAlignment="Left" Margin="376,38,0,0" VerticalAlignment="Top" Width="130" Height="20"/>
             <TextBox x:Name="ImageSize_Value" Text="" HorizontalAlignment="Left" Margin="140,79,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120"/>
-            <Label x:Name="ImageSize_Label" Content="Label" HorizontalAlignment="Left" Margin="265,75,0,0" VerticalAlignment="Top" Width="200"/>
-            <Label x:Name="WorkbenchSize_Label" Content="Label" HorizontalAlignment="Left" Margin="10,127,0,0" VerticalAlignment="Top" Width="121" Height="26" HorizontalContentAlignment="Center"/>
+            <Label x:Name="ImageSize_Label" Content="Total Image Size (GiB)" HorizontalAlignment="Left" Margin="265,75,0,0" VerticalAlignment="Top" Width="200"/>
+            <Label x:Name="WorkbenchSize_Label" Content="Size of Workbench" HorizontalAlignment="Left" Margin="10,127,0,0" VerticalAlignment="Top" Width="121" Height="26" HorizontalContentAlignment="Center"/>
             <TextBox x:Name="WorkbenchSize_Value" Text="" HorizontalAlignment="Left" Margin="9,174,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120"/>
             <TextBox x:Name="WorkSize_Value" Text="" HorizontalAlignment="Left" Margin="286,176,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="130"/>
-            <Label x:Name="WorkSize_Label" Content="Label" HorizontalAlignment="Left" Margin="282,127,0,0" VerticalAlignment="Top" Width="130" HorizontalContentAlignment="Center"/>
+            <Label x:Name="WorkSize_Label" Content="Size of Work" HorizontalAlignment="Left" Margin="282,127,0,0" VerticalAlignment="Top" Width="130" HorizontalContentAlignment="Center"/>
             <TextBox x:Name="FAT32Size_Value" Text="" HorizontalAlignment="Left" Margin="140,202,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120"/>
-            <Label x:Name="FAT32Size_Label" Content="Label" HorizontalAlignment="Left" Margin="266,197,0,0" VerticalAlignment="Top" Width="184"/>
+            <Label x:Name="FAT32Size_Label" Content="Size of FAT32 Partition (GiB)" HorizontalAlignment="Left" Margin="266,197,0,0" VerticalAlignment="Top" Width="184"/>
             <Slider x:Name="ImageSize_Slider" HorizontalAlignment="Left" Margin="16,73,0,0" VerticalAlignment="Top" Width="120" Maximum="100" TickPlacement="TopLeft" AutoToolTipPlacement="BottomRight" LargeChange="0.5" SmallChange="0.1" IsSnapToTickEnabled="True" TickFrequency="0.1" />
             <Slider x:Name="WorkbenchSize_Slider" HorizontalAlignment="Left" Margin="133,169,0,0" VerticalAlignment="Top" Width="120" Maximum="{Binding Value, ElementName=ImageSize_Slider, UpdateSourceTrigger=PropertyChanged}" TickPlacement="TopLeft" AutoToolTipPlacement="BottomRight" LargeChange="0.5" SmallChange="0.1" IsSnapToTickEnabled="True" TickFrequency="0.1"/>
             <Slider x:Name="WorkSize_Slider" HorizontalAlignment="Left" Margin="504,285,0,0" VerticalAlignment="Top" Width="120" Maximum="{Binding Value, ElementName=ImageSize_Slider, UpdateSourceTrigger=PropertyChanged}" TickPlacement="TopLeft" AutoToolTipPlacement="BottomRight" LargeChange="0.5" SmallChange="0.1" Visibility="Hidden" IsSnapToTickEnabled="True" TickFrequency="0.1"/>
             <Slider x:Name="FAT32Size_Slider" HorizontalAlignment="Left" Margin="16,202,0,0" VerticalAlignment="Top" Width="120" Maximum="{Binding Value, ElementName=ImageSize_Slider, UpdateSourceTrigger=PropertyChanged}" TickPlacement="TopLeft" AutoToolTipPlacement="BottomRight" LargeChange="0.5" SmallChange="0.1" IsSnapToTickEnabled="True" TickFrequency="0.1"/>
-            <Label x:Name="WorkbenchSize_Label2ndLine" Content="Label" HorizontalAlignment="Left" Margin="9,143,0,0" VerticalAlignment="Top" Width="121" Height="26" HorizontalContentAlignment="Center"/>
-            <Label x:Name="Worksize_Label2ndLine" Content="Label" HorizontalAlignment="Left" Margin="286,143,0,0" VerticalAlignment="Top" Width="121" Height="26" HorizontalContentAlignment="Center"/>
+            <Label x:Name="WorkbenchSize_Label2ndLine" Content="Partition (GiB)" HorizontalAlignment="Left" Margin="9,143,0,0" VerticalAlignment="Top" Width="121" Height="26" HorizontalContentAlignment="Center"/>
+            <Label x:Name="Worksize_Label2ndLine" Content="Partition (GiB)" HorizontalAlignment="Left" Margin="286,143,0,0" VerticalAlignment="Top" Width="121" Height="26" HorizontalContentAlignment="Center"/>
+    <TextBox x:Name="RequiredSpace_TextBox" HorizontalAlignment="Left" Margin="526,317,0,0" TextWrapping="Wrap" Text="Required space to run tool is:" VerticalAlignment="Top" Width="120" BorderBrush="Transparent" Background="Transparent"/>
+ <TextBox x:Name="AvailableSpace_TextBox" HorizontalAlignment="Left" Margin="524,358,0,0" TextWrapping="Wrap" Text="Available space is:" VerticalAlignment="Top" Width="120" BorderBrush="Transparent" Background="Transparent"/>
+ <TextBox x:Name="RequiredSpaceValue_TextBox" HorizontalAlignment="Left" Margin="635,329,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Transparent"/>
+ <TextBox x:Name="AvailableSpaceValue_TextBox" HorizontalAlignment="Left" Margin="635,360,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Green"/>
 
         </Grid>
 
@@ -113,6 +117,11 @@ $inputXML_UserInterface = @"
 
 $XAML_UserInterface = Format-XMLtoXAML -inputXML $inputXML_UserInterface 
 $Form_UserInterface = Read-XAML -xaml $XAML_UserInterface 
+######################################################## Set Variables for GUI ##########################################################
+
+$Fat32Maximum = 4 #4 GiB
+
+######################################################## End Variables for GUI ##########################################################
 
 #===========================================================================
 # Load XAML Objects In PowerShell
@@ -136,17 +145,22 @@ $XAML_UserInterface.SelectNodes("//*[@Name]") | ForEach-Object{
 # Use this space to add code to the various form elements in your GUI
 #===========================================================================
 
-$WPF_UI_SSID_Textbox.Text=''
-$WPF_UI_Password_Textbox.Text=''
-$WPF_UI_RomPath_Label.Content='No ROM path selected'
-$WPF_UI_ADFPath_Label.Content='No ADF path selected'
-$WPF_UI_MigratedPath_Label.Content='No transfer path selected'
+$AvailableSpace = (Confirm-DiskSpace -PathtoCheck $Scriptpath)/1Gb
+
+$WPF_UI_AvailableSpaceValue_TextBox.Text = [math]::Round($AvailableSpace,2).ToString()+' GiB'
+$WPF_UI_RequiredSpaceValue_TextBox.Text = '0 GiB'
+
+# $WPF_UI_SSID_Textbox.Text=''
+# $WPF_UI_Password_Textbox.Text=''
+# $WPF_UI_RomPath_Label.Content='No ROM path selected'
+# $WPF_UI_ADFPath_Label.Content='No ADF path selected'
+# $WPF_UI_MigratedPath_Label.Content='No transfer path selected'
 $WPF_UI_ImageSize_Slider.Maximum = 0
 $WPF_UI_FAT32Size_Slider.Maximum = 0
 $WPF_UI_WorkSize_Slider.Maximum = 0
 $WPF_UI_WorkbenchSize_Slider.Maximum = 0
 
-$WPF_UI_MediaSelect_Label.Content = 'Select Media to Use'
+#$WPF_UI_MediaSelect_Label.Content = 'Select Media to Use'
 
 $RemovableMedia = Get-RemovableMedia
 foreach ($Disk in $RemovableMedia){
@@ -175,7 +189,7 @@ $WPF_UI_MediaSelect_Dropdown.Add_SelectionChanged({
 })
 
 
-$WPF_UI_MediaSelect_Refresh.Content = 'Refresh Available Media'
+#$WPF_UI_MediaSelect_Refresh.Content = 'Refresh Available Media'
 $WPF_UI_MediaSelect_Refresh.Add_Click({
     $RemovableMedia = Get-RemovableMedia
     $WPF_UI_MediaSelect_Dropdown.Items.Clear()
@@ -200,10 +214,17 @@ $WPF_UI_ImageSize_Slider.Add_ValueChanged({
     $Global:SizeofImage = $WPF_UI_ImageSize_Slider.Value
     $Global:SizeofPartition_System = $WPF_UI_WorkBenchSize_Slider.Value
     $Global:SizeofPartition_Other = $WPF_UI_WorkSize_Slider.Value
+    $RequiredSpace = Get-RequiredSpace -ImageSize $WPF_UI_ImageSize_Slider.Value 
+    $AvailableSpace = [math]::Round(((($AvailableSpace*1024)-$RequiredSpace)/1024),2)
+    $WPF_UI_RequiredSpaceValue_TextBox.Text = ([math]::round(($RequiredSpace/1024),2)).ToString()+' GiB' 
+    $WPF_UI_AvailableSpaceValue_TextBox.Text = $AvailableSpace.ToString()+' GiB'
+    $WPF_UI_ImageSize_Value.Background = "White"
+ 
 })
 
 $WPF_UI_FAT32Size_Slider.Add_ValueChanged({
     $WPF_UI_FAT32Size_Value.Text = $WPF_UI_FAT32Size_Slider.Value
+    $WPF_UI_FAT32Size_Value.Background = "White"
     $WPF_UI_FAT32Size_Slider.Maximum = $WPF_UI_ImageSize_Slider.Value
     $WPF_UI_FAT32Size_Slider.Minimum = 0.035 # Limit of Tool
     $WPF_UI_WorkSize_Slider.Minimum = 0.1
@@ -221,6 +242,7 @@ $WPF_UI_FAT32Size_Slider.Add_ValueChanged({
 
 $WPF_UI_WorkbenchSize_Slider.Add_ValueChanged({
     $WPF_UI_WorkbenchSize_Value.Text = $WPF_UI_WorkbenchSize_Slider.Value
+    $WPF_UI_WorkbenchSize_Value.Background = "White"
     $WPF_UI_FAT32Size_Slider.Maximum = $WPF_UI_ImageSize_Slider.Value
     $WPF_UI_FAT32Size_Slider.Minimum = 0.035 # Limit of Tool
     $WPF_UI_WorkSize_Slider.Minimum = 0.1
@@ -238,6 +260,7 @@ $WPF_UI_WorkbenchSize_Slider.Add_ValueChanged({
 
 $WPF_UI_WorkSize_Slider.Add_ValueChanged({
     $WPF_UI_WorkSize_Value.Text = $WPF_UI_WorkSize_Slider.Value
+    $WPF_UI_WorkSize_Value.Background = "White"
     $WPF_UI_FAT32Size_Slider.Maximum = $WPF_UI_ImageSize_Slider.Value
     $WPF_UI_FAT32Size_Slider.Minimum = 0.035 # Limit of Tool
     $WPF_UI_WorkSize_Slider.Minimum = 0.1
@@ -261,16 +284,31 @@ $WPF_UI_WorkSize_Slider.Add_ValueChanged({
 #   }
 #})
 
-$WPF_UI_WorkSize_Value.Add_TextChanged({
-    Start-Sleep -Milliseconds 20
-    if ($WPF_UI_WorkSize_Value.Text -match "^[\d\.]+$"){
-        $WPF_UI_WorkSize_Slider.Value = $WPF_UI_WorkSize_Value.Text
+$WPF_UI_AvailableSpaceValue_TextBox.Add_TextChanged({
+    if ($AvailableSpace -le 20){
+        $WPF_UI_AvailableSpaceValue_TextBox.Background = "Yellow"
+    }
+    elseif ($AvailableSpace -le 0){
+        $WPF_UI_AvailableSpaceValue_TextBox.Background = "Red"
+    }
+    else{
+        $WPF_UI_AvailableSpaceValue_TextBox.Background = "Green"
     }
     
 })
 
-$WPF_UI_WorkbenchSize_Value.Add_TextChanged({
-    Start-Sleep -Milliseconds 20
+$WPF_UI_WorkSize_Value.add_LostFocus({
+    if ($WPF_UI_WorkSize_Value.Text -match "^[\d\.]+$"){
+        $WPF_UI_WorkSize_Slider.Value = $WPF_UI_WorkSize_Value.Text
+        $WPF_UI_WorkSize_Value.Background = 'White'
+    }
+    else
+    {
+        $WPF_UI_WorkSize_Value.Background = 'Red'
+    }
+})
+
+$WPF_UI_WorkbenchSize_Value.add_LostFocus({   
     if ($WPF_UI_WorkBenchSize_Value.Text -match "^[\d\.]+$"){
         $WPF_UI_WorkBenchSize_Value.Background = 'White'
         $WPF_UI_WorkBenchSize_Slider.Value = $WPF_UI_WorkBenchSize_Value.Text
@@ -280,19 +318,17 @@ $WPF_UI_WorkbenchSize_Value.Add_TextChanged({
     }
 })
 
-$WPF_UI_FAT32Size_Value.Add_TextChanged({
-    Start-Sleep -Milliseconds 20
+$WPF_UI_FAT32Size_Value.add_LostFocus({
     if ($WPF_UI_FAT32Size_Value.Text -match "^[\d\.]+$"){
-        $WPF_UI_FAT32Size_Value.Background = 'White'
         $WPF_UI_FAT32Size_Slider.Value = $WPF_UI_FAT32Size_Value.Text
+        $WPF_UI_FAT32Size_Value.Background = 'White'
     }
     else{
         $WPF_UI_FAT32Size_Value.Background = 'Red'
     }
 })
 
-$WPF_UI_ImageSize_Value.Add_TextChanged({
-    Start-Sleep -Milliseconds 20
+$WPF_UI_ImageSize_Value.add_LostFocus({
     if ($WPF_UI_ImageSize_Value.Text -match "^[\d\.]+$"){
         $WPF_UI_ImageSize_Value.Background = 'White'
         $WPF_UI_ImageSize_Slider.Value = $WPF_UI_ImageSize_Value.Text
@@ -305,18 +341,13 @@ $WPF_UI_ImageSize_Value.Add_TextChanged({
 $WPF_UI_Start_Button.Content = 'Run Tool'
 $WPF_UI_Start_Button.Background = 'Red'
 
-$WPF_UI_Start_Button.Width = '100'
-$WPF_UI_Start_Button.Height = '20'
+# $WPF_UI_Start_Button.Width = '100'
+# $WPF_UI_Start_Button.Height = '20'
 $WPF_UI_Start_Button.Add_Click({
     $Global:SSID = $WPF_UI_SSID_Textbox.Text
     $Global:WifiPassword = $WPF_UI_Password_Textbox.Text   
-    [System.Windows.MessageBox]::Show('Checking for space on drive!','Space Check',0,32)
-    $AvailableSpace = (Confirm-DiskSpace -PathtoCheck $Scriptpath)/1Mb
-    $RequiredSpace = (($Global:SizeofImage*1024)/1Mb) + `
-                25 + ` #Workbench
-                80      #Other Files
-
-    If ($AvailableSpace -le $RequiredSpace){
+#    [System.Windows.MessageBox]::Show('Checking for space on drive!','Space Check',0,32)
+    if ($AvailableSpace -le 0){
         $Msg = @'
 You do not have sufficient space on your drive to run the tool!
 
@@ -365,9 +396,9 @@ Either select a location with sufficient space or press cancel to quit the tool
     }
 })
 
-$WPF_UI_RomPath_Button.Content = 'Click to Set Rom Path'
-$WPF_UI_RomPath_Button.Height = 30
-$WPF_UI_RomPath_Button.Width = 160 
+# $WPF_UI_RomPath_Button.Content = 'Click to Set Rom Path'
+# $WPF_UI_RomPath_Button.Height = 30
+# $WPF_UI_RomPath_Button.Width = 160 
 $WPF_UI_RomPath_Button.Add_Click({
     $Global:ROMPath = Get-FolderPath -Message 'Select path to Roms' -RootFolder 'MyComputer'
     if ($Global:ROMPath){
@@ -381,13 +412,14 @@ $WPF_UI_RomPath_Button.Add_Click({
         $WPF_UI_RomPath_Button.Background = 'Green'
     }
     else{
+        $WPF_UI_RomPath_Label.Content='No ROM path selected'
         $WPF_UI_RomPath_Button.Background = '#FFDDDDDD'
     }
 })
 
-$WPF_UI_ADFPath_Button.Content = 'Click to Set ADF Path'
-$WPF_UI_ADFPath_Button.Height = 30
-$WPF_UI_ADFPath_Button.Width = 160 
+# $WPF_UI_ADFPath_Button.Content = 'Click to Set ADF Path'
+# $WPF_UI_ADFPath_Button.Height = 30
+# $WPF_UI_ADFPath_Button.Width = 160 
 $WPF_UI_ADFPath_Button.Add_Click({
     $Global:ADFPath = Get-FolderPath -Message 'Select path to ADFs' -RootFolder 'MyComputer'
     if ($Global:ADFPath){
@@ -401,25 +433,35 @@ $WPF_UI_ADFPath_Button.Add_Click({
         $WPF_UI_ADFPath_Button.Background = 'Green'
     } 
     else{
+        $WPF_UI_ADFPath_Label.Content='No ADF path selected'
         $WPF_UI_ADFPath_Button.Background = '#FFDDDDDD'
     }
 })
 
-$WPF_UI_MigratedFiles_Button.Content = 'Click to Set Transfer Folder'
-$WPF_UI_MigratedFiles_Button.Height = 30
-$WPF_UI_MigratedFiles_Button.Width = 160
+# $WPF_UI_MigratedFiles_Button.Content = 'Click to Set Transfer Folder'
+# $WPF_UI_MigratedFiles_Button.Height = 30
+# $WPF_UI_MigratedFiles_Button.Width = 160
 $WPF_UI_MigratedFiles_Button.Add_Click({
-    $Global:TransferLocation = Get-FolderPath -Message 'Select transfer folder' -RootFolder 'MyComputer'
-    if ($Global:TransferLocation){
-        $WPF_UI_MigratedPath_Label.Content = ($Global:TransferLocation)
-        $WPF_UI_MigratedFiles_Button.Background = 'Green'
+    If (-not ($Global:TransferLocation)) {
+        $Global:TransferLocation = Get-FolderPath -Message 'Select transfer folder' -RootFolder 'MyComputer'
+        if ($Global:TransferLocation){
+            $WPF_UI_MigratedPath_Label.Content = ($Global:TransferLocation)
+            $WPF_UI_MigratedFiles_Button.Content = 'Click to remove Transfer Folder'
+            $WPF_UI_MigratedFiles_Button.Background = 'Green'
+        }
+        else{
+            $WPF_UI_MigratedFiles_Button.Background = '#FFDDDDDD'
+        }
     }
     else{
+        $Global:TransferLocation = $null
+        $WPF_UI_MigratedFiles_Button.Content = 'Click to Set Transfer Folder'
         $WPF_UI_MigratedFiles_Button.Background = '#FFDDDDDD'
+        $WPF_UI_MigratedPath_Label.Content='No transfer path selected'
     }
 })
 
-$WPF_UI_KickstartVersion_Label.Content = 'Select KickstartVersion'
+#$WPF_UI_KickstartVersion_Label.Content = 'Select KickstartVersion'
 $AvailableKickstarts = Import-Csv ($InputFolder+'ListofInstallFiles.csv') -delimiter ';' | Where-Object 'Kickstart_Version' -ne ""| Select-Object 'Kickstart_Version' -unique
 
 foreach ($Kickstart in $AvailableKickstarts) {
@@ -436,7 +478,7 @@ $WPF_UI_KickstartVersion_Dropdown.Add_SelectionChanged({
     }
 })
 
-$WPF_UI_ScreenMode_Label.Content = 'Select ScreenMode'
+#$WPF_UI_ScreenMode_Label.Content = 'Select ScreenMode'
 $AvailableScreenModes = Import-Csv ($InputFolder+'ScreenModes.csv') -delimiter ';'
 
 foreach ($ScreenMode in $AvailableScreenModes) {
@@ -459,15 +501,15 @@ $WPF_UI_ScreenMode_Dropdown.Add_SelectionChanged({
 
 
 
-$WPF_UI_ImageSize_Label.Content = 'Total Image Size (GiB)'  
-$WPF_UI_WorkbenchSize_Label.Content = 'Size of Workbench'  
-$WPF_UI_WorkbenchSize_Label2ndline.Content = 'Partition (GiB)'  
-$WPF_UI_WorkSize_Label.Content = 'Size of Work'
-$WPF_UI_WorkSize_Label2ndline.Content = 'Partition (GiB)'
-$WPF_UI_FAT32Size_Label.Content = 'Size of FAT32 Partition (GiB)' 
+# $WPF_UI_ImageSize_Label.Content = 'Total Image Size (GiB)'  
+# $WPF_UI_WorkbenchSize_Label.Content = 'Size of Workbench'  
+# $WPF_UI_WorkbenchSize_Label2ndline.Content = 'Partition (GiB)'  
+# $WPF_UI_WorkSize_Label.Content = 'Size of Work'
+# $WPF_UI_WorkSize_Label2ndline.Content = 'Partition (GiB)'
+# $WPF_UI_FAT32Size_Label.Content = 'Size of FAT32 Partition (GiB)' 
 
-$WPF_UI_Password_Label.Content = 'Enter your Wifi password'
-$WPF_UI_SSID_Label.Content = 'Enter your SSID' 
+# $WPF_UI_Password_Label.Content = 'Enter your Wifi password'
+# $WPF_UI_SSID_Label.Content = 'Enter your SSID' 
 
 ####################################################################### End GUI XML for Main Environment ##################################################################################################
 
@@ -595,6 +637,7 @@ if (-not ($Global:IsDisclaimerAccepted -eq $true)){
 
 $Form_UserInterface.ShowDialog() | out-null
 
+<#
 if ($Global:RunMethod -eq 2){
     Write-ErrorMessage -Message 'Exiting - User has insufficient space'
     exit
@@ -610,6 +653,8 @@ If ($InteractiveMode -eq 0){
 
 
 #[System.Windows.Window].GetEvents() | select Name, *Method, EventHandlerType
+
+[System.Windows.Controls.TextBox].GetEvents() | select Name, *Method, EventHandlerType
 
 ##### Script
 
@@ -1577,3 +1622,4 @@ $EndDateandTime = (Get-Date -Format HH:mm:ss)
 $ElapsedTime = (New-TimeSpan -Start $StartDateandTime -End $EndDateandTime).TotalSeconds
 
 Write-Host "Started at: $StartDateandTime Finished at: $EndDateandTime. Total time to run (in seconds) was: $ElapsedTime" 
+#>
