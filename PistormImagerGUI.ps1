@@ -76,7 +76,7 @@ $inputXML_UserInterface = @"
             <Button x:Name="Rompath_Button" Content="Click to set ROM path" HorizontalAlignment="Left" Margin="10,290,0,0" VerticalAlignment="Top" Width="200" Height="30"/>
             <Button x:Name="ADFpath_Button" Content="Click to set ADF path" HorizontalAlignment="Left" Margin="10,325,0,0" VerticalAlignment="Top" Width="200" Height="30"/>
             <Label x:Name="ScreenMode_Label" Content="Select ScreenMode" HorizontalAlignment="Left" Margin="554,38,0,0" VerticalAlignment="Top" Width="300" HorizontalContentAlignment="Center"/>
-            <Label x:Name="KickstartVersion_Label" Content="Select KickstartVersion" HorizontalAlignment="Left" Margin="16,228,0,0" VerticalAlignment="Top" Width="200" HorizontalContentAlignment="Center"/>
+            <Label x:Name="KickstartVersion_Label" Content="Select OS Version" HorizontalAlignment="Left" Margin="16,228,0,0" VerticalAlignment="Top" Width="200" HorizontalContentAlignment="Center"/>
             <Button x:Name="MigratedFiles_Button" Content="Click to set Transfer path" HorizontalAlignment="Left" Margin="10,360,0,0" VerticalAlignment="Top" Width="200" Height="30"/>
             <Label x:Name="RomPath_Label" Content="No ROM path selected" HorizontalAlignment="Left" Margin="231,290,0,0" VerticalAlignment="Top" Width="188"/>
             <Label x:Name="MigratedPath_Label" Content="No transfer path selected" HorizontalAlignment="Left" Margin="231,360,0,0" VerticalAlignment="Top" Width="188"/>
@@ -96,10 +96,10 @@ $inputXML_UserInterface = @"
             <Label x:Name="WorkSize_Label" Content="Size of Work" HorizontalAlignment="Left" Margin="282,127,0,0" VerticalAlignment="Top" Width="130" HorizontalContentAlignment="Center"/>
             <TextBox x:Name="FAT32Size_Value" Text="" HorizontalAlignment="Left" Margin="140,202,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120"/>
             <Label x:Name="FAT32Size_Label" Content="Size of FAT32 Partition (GiB)" HorizontalAlignment="Left" Margin="266,197,0,0" VerticalAlignment="Top" Width="184"/>
-            <Slider x:Name="ImageSize_Slider" HorizontalAlignment="Left" Margin="16,73,0,0" VerticalAlignment="Top" Width="120" Maximum="100" TickPlacement="TopLeft" AutoToolTipPlacement="BottomRight" LargeChange="0.5" SmallChange="0.1" IsSnapToTickEnabled="True" TickFrequency="0.1" />
-            <Slider x:Name="WorkbenchSize_Slider" HorizontalAlignment="Left" Margin="133,169,0,0" VerticalAlignment="Top" Width="120" Maximum="{Binding Value, ElementName=ImageSize_Slider, UpdateSourceTrigger=PropertyChanged}" TickPlacement="TopLeft" AutoToolTipPlacement="BottomRight" LargeChange="0.5" SmallChange="0.1" IsSnapToTickEnabled="True" TickFrequency="0.1"/>
-            <Slider x:Name="WorkSize_Slider" HorizontalAlignment="Left" Margin="504,285,0,0" VerticalAlignment="Top" Width="120" Maximum="{Binding Value, ElementName=ImageSize_Slider, UpdateSourceTrigger=PropertyChanged}" TickPlacement="TopLeft" AutoToolTipPlacement="BottomRight" LargeChange="0.5" SmallChange="0.1" Visibility="Hidden" IsSnapToTickEnabled="True" TickFrequency="0.1"/>
-            <Slider x:Name="FAT32Size_Slider" HorizontalAlignment="Left" Margin="16,202,0,0" VerticalAlignment="Top" Width="120" Maximum="{Binding Value, ElementName=ImageSize_Slider, UpdateSourceTrigger=PropertyChanged}" TickPlacement="TopLeft" AutoToolTipPlacement="BottomRight" LargeChange="0.5" SmallChange="0.1" IsSnapToTickEnabled="True" TickFrequency="0.1"/>
+            <Slider x:Name="ImageSize_Slider" HorizontalAlignment="Left" Margin="16,73,0,0" VerticalAlignment="Top" Width="120" TickPlacement="TopLeft" AutoToolTipPlacement="BottomRight" LargeChange="0.5" SmallChange="0.1" IsSnapToTickEnabled="True" TickFrequency="0.1" />
+            <Slider x:Name="WorkbenchSize_Slider" HorizontalAlignment="Left" Margin="133,169,0,0" VerticalAlignment="Top" Width="120" TickPlacement="TopLeft" AutoToolTipPlacement="BottomRight" LargeChange="0.5" SmallChange="0.1" IsSnapToTickEnabled="True" TickFrequency="0.1"/>
+            <Slider x:Name="WorkSize_Slider" HorizontalAlignment="Left" Margin="504,285,0,0" VerticalAlignment="Top" Width="120" TickPlacement="TopLeft" AutoToolTipPlacement="BottomRight" LargeChange="0.5" SmallChange="0.1" Visibility="Hidden" IsSnapToTickEnabled="True" TickFrequency="0.1"/>
+            <Slider x:Name="FAT32Size_Slider" HorizontalAlignment="Left" Margin="16,202,0,0" VerticalAlignment="Top" Width="120" TickPlacement="TopLeft" AutoToolTipPlacement="BottomRight" LargeChange="0.5" SmallChange="0.1" IsSnapToTickEnabled="True" TickFrequency="0.1"/>
             <Label x:Name="WorkbenchSize_Label2ndLine" Content="Partition (GiB)" HorizontalAlignment="Left" Margin="9,143,0,0" VerticalAlignment="Top" Width="121" Height="26" HorizontalContentAlignment="Center"/>
             <Label x:Name="Worksize_Label2ndLine" Content="Partition (GiB)" HorizontalAlignment="Left" Margin="286,143,0,0" VerticalAlignment="Top" Width="121" Height="26" HorizontalContentAlignment="Center"/>
     <TextBox x:Name="RequiredSpace_TextBox" HorizontalAlignment="Left" Margin="526,317,0,0" TextWrapping="Wrap" Text="Required space to run tool is:" VerticalAlignment="Top" Width="120" BorderBrush="Transparent" Background="Transparent"/>
@@ -150,18 +150,6 @@ $AvailableSpace = (Confirm-DiskSpace -PathtoCheck $Scriptpath)/1Gb
 $WPF_UI_AvailableSpaceValue_TextBox.Text = [math]::Round($AvailableSpace,2).ToString()+' GiB'
 $WPF_UI_RequiredSpaceValue_TextBox.Text = '0 GiB'
 
-# $WPF_UI_SSID_Textbox.Text=''
-# $WPF_UI_Password_Textbox.Text=''
-# $WPF_UI_RomPath_Label.Content='No ROM path selected'
-# $WPF_UI_ADFPath_Label.Content='No ADF path selected'
-# $WPF_UI_MigratedPath_Label.Content='No transfer path selected'
-$WPF_UI_ImageSize_Slider.Maximum = 0
-$WPF_UI_FAT32Size_Slider.Maximum = 0
-$WPF_UI_WorkSize_Slider.Maximum = 0
-$WPF_UI_WorkbenchSize_Slider.Maximum = 0
-
-#$WPF_UI_MediaSelect_Label.Content = 'Select Media to Use'
-
 $RemovableMedia = Get-RemovableMedia
 foreach ($Disk in $RemovableMedia){
     $WPF_UI_MediaSelect_Dropdown.AddChild($Disk.FriendlyName)
@@ -173,23 +161,40 @@ $WPF_UI_MediaSelect_Dropdown.Add_SelectionChanged({
     }
     foreach ($Disk in $RemovableMedia){
         if ($Disk.FriendlyName -eq $WPF_UI_MediaSelect_DropDown.SelectedItem){
+            $WPF_UI_ImageSize_Slider.Maximum = [math]::truncate(($Disk.Size/1GB)*1000)/1000
+            $WPF_UI_ImageSize_Slider.Value = $WPF_UI_ImageSize_Slider.Maximum 
+            
+            if ((([math]::truncate(($Disk.Size/1GB)*1000)/1000)/15) -ge 1) {
+                $WPF_UI_FAT32Size_Slider.Value = 1 
+            }
+            else{
+                $WPF_UI_FAT32Size_Slider.Value = (([math]::truncate(($Disk.Size/1GB)*1000)/1000)/15)
+            }
+            $WPF_UI_FAT32Size_Slider.Maximum = 4
+            
+            if ((([math]::truncate(($Disk.Size/1GB)*1000)/1000)/15) -ge 1) {
+                $WPF_UI_WorkbenchSize_Slider.Value = 1
+            }
+            else {
+                $WPF_UI_WorkbenchSize_Slider.Value = (([math]::truncate(($Disk.Size/1GB)*1000)/1000)/15)
+            }
+
+            $WPF_UI_WorkSize_Slider.Value = $WPF_UI_ImageSize_Slider.Value - $WPF_UI_WorkbenchSize_Slider.Value - $WPF_UI_FAT32Size_Slider.Value
+            
+            $WPF_UI_WorkSize_Slider.Maximum = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-$WPF_UI_WorkbenchSize_Slider.Value
+            $WPF_UI_WorkbenchSize_Slider.Maximum = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-$WPF_UI_WorkSize_Slider.Value
+
+
             $WPF_UI_FAT32Size_Slider.Minimum = 0.035 # Limit of Tool
             $WPF_UI_WorkSize_Slider.Minimum = 0.1
             $WPF_UI_WorkbenchSize_Slider.Minimum = 0.1
             $WPF_UI_ImageSize_Slider.Minimum = ($WPF_UI_WorkbenchSize_Slider.Minimum)+($WPF_UI_WorkSize_Slider.Minimum)+($WPF_UI_FAT32Size_Slider.Minimum)
-            $WPF_UI_ImageSize_Slider.Maximum = [math]::truncate(($Disk.Size/1GB)*1000)/1000
-            $WPF_UI_FAT32Size_Slider.Maximum = $WPF_UI_ImageSize_Slider.Value
-            $WPF_UI_WorkSize_Slider.Maximum = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-$WPF_UI_WorkbenchSize_Slider.Value
-            $WPF_UI_WorkbenchSize_Slider.Maximum = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-$WPF_UI_WorkSize_Slider.Value
-            $WPF_UI_ImageSize_Slider.Value = $WPF_UI_ImageSize_Slider.Maximum 
-#            $WPF_UI_WorkbenchSize_Slider.Value = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-$WPF_UI_WorkSize_Slider.Value
+
             $Global:HSTDiskName = $Disk.HSTDiskName
         }
     }
 })
 
-
-#$WPF_UI_MediaSelect_Refresh.Content = 'Refresh Available Media'
 $WPF_UI_MediaSelect_Refresh.Add_Click({
     $RemovableMedia = Get-RemovableMedia
     $WPF_UI_MediaSelect_Dropdown.Items.Clear()
@@ -199,15 +204,8 @@ $WPF_UI_MediaSelect_Refresh.Add_Click({
 })
 
 $WPF_UI_ImageSize_Slider.Add_ValueChanged({
-#    $WPF_UI_ImageSize_Slider.Value = [math]::Round($WPF_UI_ImageSize_Slider.Value,2)
     $WPF_UI_ImageSize_Value.Text = $WPF_UI_ImageSize_Slider.Value   
-    $WPF_UI_FAT32Size_Slider.Maximum = $WPF_UI_ImageSize_Slider.Value
-    $WPF_UI_FAT32Size_Slider.Minimum = 0.035 # Limit of Tool
-    $WPF_UI_WorkSize_Slider.Minimum = 0.1
-    $WPF_UI_WorkbenchSize_Slider.Minimum = 0.1
     $WPF_UI_WorkSize_Slider.Maximum = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-$WPF_UI_WorkbenchSize_Slider.Value
-    $WPF_UI_WorkbenchSize_Slider.Maximum = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)
-#    $WPF_UI_WorkbenchSize_Slider.Value = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-$WPF_UI_WorkSize_Slider.Value
     $WPF_UI_WorkSize_Slider.Value = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-($WPF_UI_WorkbenchSize_Slider.Value)
     $WPF_UI_WorkSize_Value.Text = $WPF_UI_WorkSize_Slider.Value
     $Global:SizeofFAT32 = $WPF_UI_FAT32Size_Slider.Value
@@ -225,13 +223,8 @@ $WPF_UI_ImageSize_Slider.Add_ValueChanged({
 $WPF_UI_FAT32Size_Slider.Add_ValueChanged({
     $WPF_UI_FAT32Size_Value.Text = $WPF_UI_FAT32Size_Slider.Value
     $WPF_UI_FAT32Size_Value.Background = "White"
-    $WPF_UI_FAT32Size_Slider.Maximum = $WPF_UI_ImageSize_Slider.Value
     $WPF_UI_FAT32Size_Slider.Minimum = 0.035 # Limit of Tool
-    $WPF_UI_WorkSize_Slider.Minimum = 0.1
-    $WPF_UI_WorkbenchSize_Slider.Minimum = 0.1
     $WPF_UI_WorkSize_Slider.Maximum = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-$WPF_UI_WorkbenchSize_Slider.Value
-    $WPF_UI_WorkbenchSize_Slider.Maximum = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)
-#    $WPF_UI_WorkbenchSize_Slider.Value = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-$WPF_UI_WorkSize_Slider.Value
     $WPF_UI_WorkSize_Slider.Value = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-($WPF_UI_WorkbenchSize_Slider.Value)
     $WPF_UI_WorkSize_Value.Text = $WPF_UI_WorkSize_Slider.Value
     $Global:SizeofFAT32 = $WPF_UI_FAT32Size_Slider.Value*1024                              #Convert to Megabytes
@@ -243,13 +236,7 @@ $WPF_UI_FAT32Size_Slider.Add_ValueChanged({
 $WPF_UI_WorkbenchSize_Slider.Add_ValueChanged({
     $WPF_UI_WorkbenchSize_Value.Text = $WPF_UI_WorkbenchSize_Slider.Value
     $WPF_UI_WorkbenchSize_Value.Background = "White"
-    $WPF_UI_FAT32Size_Slider.Maximum = $WPF_UI_ImageSize_Slider.Value
-    $WPF_UI_FAT32Size_Slider.Minimum = 0.035 # Limit of Tool
-    $WPF_UI_WorkSize_Slider.Minimum = 0.1
-    $WPF_UI_WorkbenchSize_Slider.Minimum = 0.1
     $WPF_UI_WorkSize_Slider.Maximum = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-$WPF_UI_WorkbenchSize_Slider.Value
-    $WPF_UI_WorkbenchSize_Slider.Maximum = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)
-#    $WPF_UI_WorkbenchSize_Slider.Value = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-$WPF_UI_WorkSize_Slider.Value
     $WPF_UI_WorkSize_Slider.Value = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-($WPF_UI_WorkbenchSize_Slider.Value)
     $WPF_UI_WorkSize_Value.Text = $WPF_UI_WorkSize_Slider.Value
     $Global:SizeofFAT32 = $WPF_UI_FAT32Size_Slider.Value*1024                           #Convert to Megabytes
@@ -261,28 +248,16 @@ $WPF_UI_WorkbenchSize_Slider.Add_ValueChanged({
 $WPF_UI_WorkSize_Slider.Add_ValueChanged({
     $WPF_UI_WorkSize_Value.Text = $WPF_UI_WorkSize_Slider.Value
     $WPF_UI_WorkSize_Value.Background = "White"
-    $WPF_UI_FAT32Size_Slider.Maximum = $WPF_UI_ImageSize_Slider.Value
     $WPF_UI_FAT32Size_Slider.Minimum = 0.035 # Limit of Tool
     $WPF_UI_WorkSize_Slider.Minimum = 0.1
     $WPF_UI_WorkbenchSize_Slider.Minimum = 0.1
     $WPF_UI_WorkSize_Slider.Maximum = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-$WPF_UI_WorkbenchSize_Slider.Value
-    $WPF_UI_WorkbenchSize_Slider.Maximum = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)
-#    $WPF_UI_WorkbenchSize_Slider.Value = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-$WPF_UI_WorkSize_Slider.Value
     $WPF_UI_WorkSize_Slider.Value = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-($WPF_UI_WorkbenchSize_Slider.Value)
     $Global:SizeofFAT32 = $WPF_UI_FAT32Size_Slider.Value*1024                      #Convert to Megabytes
     $Global:SizeofImage = $WPF_UI_ImageSize_Slider.Value*1024*1024                 #Convert to Kilobytes
     $Global:SizeofPartition_System = $WPF_UI_WorkBenchSize_Slider.Value*1024*1024  #Convert to Kilobytes
     $Global:SizeofPartition_Other = $WPF_UI_WorkSize_Slider.Value*1024*1024        #Convert to Kilobytes
 })
-
-#$WPF_UI_WorkSize_Value.Add_PreviewTextInput({
-#    if ($WPF_UI_WorkSize_Value.Text -match "^[\d\.]+$"){
-#        return
-#    }
-#   else{
-#   $WPF_UI_WorkSize_Value = $WPF_UI_WorkSize_Value
-#   }
-#})
 
 $WPF_UI_AvailableSpaceValue_TextBox.Add_TextChanged({
     if ($AvailableSpace -le 20){
@@ -341,12 +316,9 @@ $WPF_UI_ImageSize_Value.add_LostFocus({
 $WPF_UI_Start_Button.Content = 'Run Tool'
 $WPF_UI_Start_Button.Background = 'Red'
 
-# $WPF_UI_Start_Button.Width = '100'
-# $WPF_UI_Start_Button.Height = '20'
 $WPF_UI_Start_Button.Add_Click({
     $Global:SSID = $WPF_UI_SSID_Textbox.Text
     $Global:WifiPassword = $WPF_UI_Password_Textbox.Text   
-#    [System.Windows.MessageBox]::Show('Checking for space on drive!','Space Check',0,32)
     if ($AvailableSpace -le 0){
         $Msg = @'
 You do not have sufficient space on your drive to run the tool!
@@ -396,9 +368,6 @@ Either select a location with sufficient space or press cancel to quit the tool
     }
 })
 
-# $WPF_UI_RomPath_Button.Content = 'Click to Set Rom Path'
-# $WPF_UI_RomPath_Button.Height = 30
-# $WPF_UI_RomPath_Button.Width = 160 
 $WPF_UI_RomPath_Button.Add_Click({
     $Global:ROMPath = Get-FolderPath -Message 'Select path to Roms' -RootFolder 'MyComputer'
     if ($Global:ROMPath){
@@ -417,9 +386,6 @@ $WPF_UI_RomPath_Button.Add_Click({
     }
 })
 
-# $WPF_UI_ADFPath_Button.Content = 'Click to Set ADF Path'
-# $WPF_UI_ADFPath_Button.Height = 30
-# $WPF_UI_ADFPath_Button.Width = 160 
 $WPF_UI_ADFPath_Button.Add_Click({
     $Global:ADFPath = Get-FolderPath -Message 'Select path to ADFs' -RootFolder 'MyComputer'
     if ($Global:ADFPath){
@@ -438,9 +404,6 @@ $WPF_UI_ADFPath_Button.Add_Click({
     }
 })
 
-# $WPF_UI_MigratedFiles_Button.Content = 'Click to Set Transfer Folder'
-# $WPF_UI_MigratedFiles_Button.Height = 30
-# $WPF_UI_MigratedFiles_Button.Width = 160
 $WPF_UI_MigratedFiles_Button.Add_Click({
     If (-not ($Global:TransferLocation)) {
         $Global:TransferLocation = Get-FolderPath -Message 'Select transfer folder' -RootFolder 'MyComputer'
@@ -461,7 +424,6 @@ $WPF_UI_MigratedFiles_Button.Add_Click({
     }
 })
 
-#$WPF_UI_KickstartVersion_Label.Content = 'Select KickstartVersion'
 $AvailableKickstarts = Import-Csv ($InputFolder+'ListofInstallFiles.csv') -delimiter ';' | Where-Object 'Kickstart_Version' -ne ""| Select-Object 'Kickstart_Version' -unique
 
 foreach ($Kickstart in $AvailableKickstarts) {
@@ -478,7 +440,6 @@ $WPF_UI_KickstartVersion_Dropdown.Add_SelectionChanged({
     }
 })
 
-#$WPF_UI_ScreenMode_Label.Content = 'Select ScreenMode'
 $AvailableScreenModes = Import-Csv ($InputFolder+'ScreenModes.csv') -delimiter ';'
 
 foreach ($ScreenMode in $AvailableScreenModes) {
@@ -499,20 +460,7 @@ $WPF_UI_ScreenMode_Dropdown.Add_SelectionChanged({
     }
 })
 
-
-
-# $WPF_UI_ImageSize_Label.Content = 'Total Image Size (GiB)'  
-# $WPF_UI_WorkbenchSize_Label.Content = 'Size of Workbench'  
-# $WPF_UI_WorkbenchSize_Label2ndline.Content = 'Partition (GiB)'  
-# $WPF_UI_WorkSize_Label.Content = 'Size of Work'
-# $WPF_UI_WorkSize_Label2ndline.Content = 'Partition (GiB)'
-# $WPF_UI_FAT32Size_Label.Content = 'Size of FAT32 Partition (GiB)' 
-
-# $WPF_UI_Password_Label.Content = 'Enter your Wifi password'
-# $WPF_UI_SSID_Label.Content = 'Enter your SSID' 
-
 ####################################################################### End GUI XML for Main Environment ##################################################################################################
-
 
 ####################################################################### GUI XML for Test Administrator ##################################################################################################
 $InputXML_AdministratorWindow = @"
@@ -634,10 +582,10 @@ if (-not ($Global:IsDisclaimerAccepted -eq $true)){
 
 ####################################################################### Show Main Gui     ##################################################################################################################
 
-
 $Form_UserInterface.ShowDialog() | out-null
 
-<#
+######################################################################## Command line portion of Script ################################################################################################
+
 if ($Global:RunMethod -eq 2){
     Write-ErrorMessage -Message 'Exiting - User has insufficient space'
     exit
@@ -650,7 +598,6 @@ elseif (-not ($Global:RunMethod -eq 1)){
 If ($InteractiveMode -eq 0){
     Get-UICapturedData
 }
-
 
 #[System.Windows.Window].GetEvents() | select Name, *Method, EventHandlerType
 
@@ -1622,4 +1569,3 @@ $EndDateandTime = (Get-Date -Format HH:mm:ss)
 $ElapsedTime = (New-TimeSpan -Start $StartDateandTime -End $EndDateandTime).TotalSeconds
 
 Write-Host "Started at: $StartDateandTime Finished at: $EndDateandTime. Total time to run (in seconds) was: $ElapsedTime" 
-#>
