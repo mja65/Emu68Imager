@@ -1,3 +1,80 @@
+function Set-RunTimeEnvironment {
+    param (
+        
+    )
+    if ($env:TERM_PROGRAM){
+        Write-Host "Run from Visual Studio Code!"
+        $RunMode=0
+     } 
+     elseif ($psISE){
+        Write-Host "Run from Powershell ISE!"
+        $RunMode=0
+     }
+     else{
+        $RunMode=1
+     } 
+    return $RunMode
+}
+
+function Get-AmigaPartitionList {
+    param (
+        $SizeofPartition_System_param,
+        $SizeofPartition_Other_param,
+        $VolumeName_System_param,
+        $DeviceName_System_param,
+        $PFSLimit,
+        $VolumeName_Other_param,
+        $DeviceName_Other_param,
+        $DeviceName_Prefix_param  
+    )
+    $AmigaPartitionsList = [System.Collections.Generic.List[PSCustomObject]]::New()
+
+    $SizeofPartition_Systemtouse = (([math]::truncate($SizeofPartition_System_param)).ToString()+'kb')
+    $SizeofPartition_Othertouse = ([math]::truncate($SizeofPartition_Other_param))
+
+    $PartitionNumbertoPopulate =1
+
+    $AmigaPartitionsList += [PSCustomObject]@{
+        PartitionNumber = $PartitionNumbertoPopulate 
+        SizeofPartition =  $SizeofPartition_Systemtouse
+        DosType = 'PFS3'
+        VolumeName = $VolumeName_System_param
+        DeviceName = $DeviceName_System_param  
+    }
+    
+    $PartitionNumbertoPopulate ++
+    $CapacitytoFill = $SizeofPartition_Othertouse
+
+    $TotalNumberWorkPartitions = [math]::ceiling($CapacitytoFill/$PFSLimit)
+
+    $WorkPartitionSize = $SizeofPartition_Othertouse/$TotalNumberWorkPartitions
+ 
+    do {
+        if ($PartitionNumbertoPopulate -eq 2){
+            $VolumeNametoPopulate = $VolumeName_Other_param  
+            $DeviceNametoPopulate = $DeviceName_Other_param  
+        }
+        else{
+            $VolumeNametoPopulate = ($VolumeName_Other_param+(($PartitionNumbertoPopulate-1).ToString()))
+            $DeviceNametoPopulate = ($DeviceName_Prefix_param+(($PartitionNumbertoPopulate-1).ToString()))
+           
+        }
+        $AmigaPartitionsList += [PSCustomObject]@{
+            PartitionNumber = $PartitionNumbertoPopulate 
+            SizeofPartition =  ((($WorkPartitionSize).ToString())+'kb')
+            DosType = 'PFS3'
+            VolumeName = $VolumeNametoPopulate
+            DeviceName = $DeviceNametoPopulate    
+        }
+        $PartitionNumbertoPopulate ++
+    } until (
+        $PartitionNumbertoPopulate -ge  $TotalNumberWorkPartitions
+    )
+
+    return $AmigaPartitionsList
+
+}
+
 function Get-RequiredSpace {
     param (
         $ImageSize

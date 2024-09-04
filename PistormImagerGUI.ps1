@@ -1,28 +1,28 @@
 ####################################################################### Check Runtime Environment ##################################################################################################
 
-if ($env:TERM_PROGRAM){
-    Write-Host "Run from Visual Studio Code!"
-    $InteractiveMode=0
- } 
- elseif ($psISE){
-    Write-Host "Run from Powershell ISE!"
-    $InteractiveMode=0
- }
- else{
-    $InteractiveMode=1
- } 
- 
- if  ($InteractiveMode -eq 1){
+Import-Module ($Scriptpath+'Functions-GUI.psm1')
+
+$RunMode = (Set-RunTimeEnvironment) 
+
+
+ if  ($RunMode -eq 1){
      $Scriptpath = (Split-Path -Parent $MyInvocation.MyCommand.Definition)+'\'
  } 
 
- if ($InteractiveMode -eq 0){
+ if ($RunMode -eq 0){
      $Scriptpath = 'C:\Users\Matt\OneDrive\Documents\Emu68Imager\'    
  }
  
- Import-Module ($Scriptpath+'Functions-GUI.psm1')
 
 ####################################################################### End Check Runtime Environment ###############################################################################################
+
+####################################################################### Set Script Path dependent  Variables ########################################################################################
+
+$SourceProgramPath=($Scriptpath+'Programs\')
+$InputFolder=($Scriptpath+'InputFiles\')
+$LocationofAmigaFiles=($Scriptpath+'AmigaFiles\')
+
+####################################################################### End Script Path dependent  Variables ########################################################################################
 
 ####################################################################### Null out Global Variables ###################################################################################################
 
@@ -42,13 +42,6 @@ if ($env:TERM_PROGRAM){
 
  ####################################################################### End Null out Global Variables ###############################################################################################
 
- ####################################################################### Set Script Path dependent  Variables ########################################################################################
-
- $SourceProgramPath=($Scriptpath+'Programs\')
- $InputFolder=($Scriptpath+'InputFiles\')
- $LocationofAmigaFiles=($Scriptpath+'AmigaFiles\')
-
- ####################################################################### End Script Path dependent  Variables ########################################################################################
 
 ####################################################################### Add GUI Types ################################################################################################################
 
@@ -117,11 +110,6 @@ $inputXML_UserInterface = @"
 
 $XAML_UserInterface = Format-XMLtoXAML -inputXML $inputXML_UserInterface 
 $Form_UserInterface = Read-XAML -xaml $XAML_UserInterface 
-######################################################## Set Variables for GUI ##########################################################
-
-$Fat32Maximum = 4 #4 GiB
-
-######################################################## End Variables for GUI ##########################################################
 
 #===========================================================================
 # Load XAML Objects In PowerShell
@@ -340,7 +328,7 @@ Either select a location with sufficient space or press cancel to quit the tool
                     $ValueofAction = [System.Windows.MessageBox]::Show($Msg, 'Error - Insufficient Space!',1,48)
                     if ($ValueofAction -eq 'Cancel'){
                         $Form_UserInterface.Close() | out-null
-                        $Global:RunMethod =2 
+                        $Global:ExitType =2 
                     }    
                 }
                 else{
@@ -352,7 +340,7 @@ Either select a location with sufficient space or press cancel to quit the tool
         }
         elseif ($ValueofAction -eq 'Cancel'){
             $Form_UserInterface.Close() | out-null
-            $Global:RunMethod =2
+            $Global:ExitType =2
         }      
     } 
     else {
@@ -364,7 +352,7 @@ Either select a location with sufficient space or press cancel to quit the tool
     }
     else {
         $Form_UserInterface.Close() | out-null
-        $Global:RunMethod = 1
+        $Global:ExitType = 1
     }
 })
 
@@ -586,22 +574,33 @@ $Form_UserInterface.ShowDialog() | out-null
 
 ######################################################################## Command line portion of Script ################################################################################################
 
-if ($Global:RunMethod -eq 2){
+if ($Global:ExitType -eq 2){
     Write-ErrorMessage -Message 'Exiting - User has insufficient space'
     exit
 }
-elseif (-not ($Global:RunMethod -eq 1)){
+elseif (-not ($Global:ExitType-eq 1)){
     Write-ErrorMessage -Message 'Exiting - UI Window was closed'
     exit
 }
 
-If ($InteractiveMode -eq 0){
+If ($RunMode-eq 0){
     Get-UICapturedData
+    # $Global:HSTDiskName =  
+    # $Global:ScreenModetoUse =
+    # $Global:KickstartVersiontoUse = 
+    # $Global:SSID = 
+    # $Global:WifiPassword = 
+    # $Global:SizeofFAT32 =
+    # $Global:SizeofImage =
+    # $Global:SizeofPartition_System =
+    # $Global:SizeofPartition_Other =
+    # $Global:WorkingPath =
+    # $Global:ROMPath =
 }
 
 #[System.Windows.Window].GetEvents() | select Name, *Method, EventHandlerType
 
-[System.Windows.Controls.TextBox].GetEvents() | select Name, *Method, EventHandlerType
+#[System.Windows.Controls.TextBox].GetEvents() | Select-Object Name, *Method, EventHandlerType
 
 ##### Script
 
@@ -719,7 +718,7 @@ $PFSLimit = 101*1024*1024 #Kilobytes
 #$InstallPathAmiSSL='SYS:Programs/AmiSSL'
 $GlowIcons='TRUE'
 
-$NameofImage=('Pistorm'+$KickstartVersiontoUse+'.HDF')
+$NameofImage=('Pistorm'+$Global:KickstartVersiontoUse+'.HDF')
 
 ### Clean up
 
@@ -758,7 +757,7 @@ Write-TaskCompleteMessage -Message 'Performing Cleanup - Complete!' -SectionNumb
 
 Write-StartTaskMessage -Message 'Determining Kickstarts to Use' -SectionNumber '4' -TotalSections $TotalSections
 
-$FoundKickstarttoUse = Compare-KickstartHashes -PathtoKickstartHashes ($InputFolder+'RomHashes.csv') -PathtoKickstartFiles $Global:ROMPath -KickstartVersion $KickstartVersiontoUse
+$FoundKickstarttoUse = Compare-KickstartHashes -PathtoKickstartHashes ($InputFolder+'RomHashes.csv') -PathtoKickstartFiles $Global:ROMPath -KickstartVersion $Global:KickstartVersiontoUse
 
 $KickstartPath = $FoundKickstarttoUse.KickstartPath
 
@@ -775,14 +774,14 @@ Write-TaskCompleteMessage -Message 'Determining Kickstarts to Use - Complete!' -
 
 Write-StartTaskMessage -Message 'Determining ADFs to Use' -SectionNumber '5' -TotalSections $TotalSections
 
-$AvailableADFs = Compare-ADFHashes -PathtoADFFiles $Global:ADFPath -PathtoADFHashes ($InputFolder+'ADFHashes.csv') -KickstartVersion $KickstartVersiontoUse -PathtoListofInstallFiles ($InputFolder+'ListofInstallFiles.csv') 
+$AvailableADFs = Compare-ADFHashes -PathtoADFFiles $Global:ADFPath -PathtoADFHashes ($InputFolder+'ADFHashes.csv') -KickstartVersion $Global:KickstartVersiontoUse -PathtoListofInstallFiles ($InputFolder+'ListofInstallFiles.csv') 
 
 if (-not ($AvailableADFs)){
     Write-ErrorMessage -Message "One or more ADF files is missing!"
     exit
 } 
 
-$ListofInstallFiles = Import-Csv ($InputFolder+'ListofInstallFiles.csv') -Delimiter ';' |  Where-Object {$_.Kickstart_Version -eq $KickstartVersiontoUse} | Sort-Object -Property 'InstallSequence'
+$ListofInstallFiles = Import-Csv ($InputFolder+'ListofInstallFiles.csv') -Delimiter ';' |  Where-Object {$_.Kickstart_Version -eq $Global:KickstartVersiontoUse} | Sort-Object -Property 'InstallSequence'
 
 $ListofInstallFiles | Add-Member -NotePropertyName Path -NotePropertyValue $null
 $ListofInstallFiles | Add-Member -NotePropertyName DrivetoInstall_VolumeName -NotePropertyValue $null
@@ -904,55 +903,9 @@ Write-TaskCompleteMessage -Message 'Downloading LZX - Complete!' -SectionNumber 
 
 ### End Download UnLzx
 
-## Setting up Amiga Partitions List
+Write-StartTaskMessage -Message 'Preparing Amiga Image' -SectionNumber '9' -TotalSections $TotalSections
 
 $SizeofImagetouse = (([math]::truncate($Global:SizeofImage)).ToString()+'kb')
-$SizeofPartition_Systemtouse = (([math]::truncate($Global:SizeofPartition_System)).ToString()+'kb')
-$SizeofPartition_Othertouse = ([math]::truncate($Global:SizeofPartition_Other))
-$SizeofFAT32touse = ([math]::truncate($Global:SizeofFAT32)).ToString()
-
-$AmigaPartitionsList = [System.Collections.Generic.List[PSCustomObject]]::New()
-
-$PartitionNumbertoPopulate =1
-
-$AmigaPartitionsList += [PSCustomObject]@{
-    PartitionNumber = $PartitionNumbertoPopulate 
-    SizeofPartition =  $SizeofPartition_Systemtouse
-    DosType = 'PFS3'
-    VolumeName = $VolumeName_System
-    DeviceName = $DeviceName_System  
-}
-
-$PartitionNumbertoPopulate ++
-$CapacitytoFill = $SizeofPartition_Othertouse
-
-$TotalNumberWorkPartitions = [math]::ceiling($CapacitytoFill/$PFSLimit)
-
-$WorkPartitionSize = $SizeofPartition_Othertouse/$TotalNumberWorkPartitions
-
-do {
-    if ($PartitionNumbertoPopulate -eq 2){
-        $VolumeNametoPopulate = $VolumeName_Other
-        $DeviceNametoPopulate = $DeviceName_Other
-    }
-    else{
-        $VolumeNametoPopulate = ($VolumeName_Other+(($PartitionNumbertoPopulate-1).ToString()))
-        $DeviceNametoPopulate = ($DeviceName_Prefix+(($PartitionNumbertoPopulate-1).ToString()))
-       
-    }
-    $AmigaPartitionsList += [PSCustomObject]@{
-        PartitionNumber = $PartitionNumbertoPopulate 
-        SizeofPartition =  ((($WorkPartitionSize).ToString())+'kb')
-        DosType = 'PFS3'
-        VolumeName = $VolumeNametoPopulate
-        DeviceName = $DeviceNametoPopulate    
-    }
-    $PartitionNumbertoPopulate ++
-} until (
-    $PartitionNumbertoPopulate -ge  $TotalNumberWorkPartitions
-)
-
-Write-StartTaskMessage -Message 'Preparing Amiga Image' -SectionNumber '9' -TotalSections $TotalSections
 
 if (-not (Start-HSTImager -Command "Blank" -DestinationPath ($LocationofImage+$NameofImage) -ImageSize $SizeofImagetouse -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
     exit
@@ -963,6 +916,22 @@ if (-not (Start-HSTImager -Command "rdb init" -DestinationPath ($LocationofImage
 if (-not (Start-HSTImager -Command "rdb filesystem add" -DestinationPath ($LocationofImage+$NameofImage) -FileSystemPath ($Global:WorkingPath+'Programs\HST-Imager\pfs3aio') -DosType 'PFS3' -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
     exit
 } 
+
+
+## Setting up Amiga Partitions List
+
+$AmigaPartitionsList = Get-AmigaPartitionList   -SizeofPartition_System_param $Global:SizeofPartition_System `
+                                                -SizeofPartition_Other_param $Global:SizeofPartition_Other `
+                                                -VolumeName_System_param $VolumeName_System `
+                                                -DeviceName_System_param $DeviceName_System `
+                                                -PFSLimit $PFSLimit `
+                                                -VolumeName_Other_param $VolumeName_Other `
+                                                -DeviceName_Other_param $DeviceName_Other `
+                                                -DeviceName_Prefix_param $DeviceName_Prefix
+                                                
+
+
+
 
 foreach ($AmigaPartition in $AmigaPartitionsList) {
     Write-InformationMessage -Message ('Preparing Partition Device: '+$AmigaPartition.DeviceName+' VolumeName '+$AmigaPartition.VolumeName)
@@ -982,7 +951,7 @@ foreach ($AmigaPartition in $AmigaPartitionsList) {
 }
 
 #### Begin - Create NewFolder.info file
-if (($KickstartVersiontoUse -eq 3.1) -or (($KickstartVersiontoUse -eq 3.2) -and ($GlowIcons -eq 'FALSE'))) {
+if (($Global:KickstartVersiontoUse -eq 3.1) -or (($Global:KickstartVersiontoUse -eq 3.2) -and ($GlowIcons -eq 'FALSE'))) {
     if (-not (Start-HSTImager -Command 'fs extract' -SourcePath ($StorageADF+'\Monitors.info') -DestinationPath ($TempFolder.TrimEnd('\'))  -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
         exit
     }
@@ -991,7 +960,7 @@ if (($KickstartVersiontoUse -eq 3.1) -or (($KickstartVersiontoUse -eq 3.2) -and 
     }
     $null = Rename-Item ($TempFolder+'Monitors.info') ($TempFolder+'def_drawer.info')
 }
-elseif(($KickstartVersiontoUse -eq 3.2) -and ($GlowIcons -eq 'TRUE')){
+elseif(($Global:KickstartVersiontoUse -eq 3.2) -and ($GlowIcons -eq 'TRUE')){
     if (-not (Start-HSTImager -Command 'fs extract' -SourcePath ($GlowIconsADF+'\Prefs\Env-Archive\Sys\def_drawer.info') -DestinationPath ($TempFolder.TrimEnd('\')) -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
         exit
     }
@@ -1008,7 +977,7 @@ $null = Rename-Item ($TempFolder+'def_drawer.info') ($TempFolder+'NewFolder.info
 Add-AmigaFolder -AmigaFolderPath ($VolumeName_System+'\Programs\') -TempFoldertouse $TempFolder -AmigaDrivetoCopytouse $AmigaDrivetoCopy
 Add-AmigaFolder -AmigaFolderPath ($VolumeName_System+'\Storage\DataTypes\') -TempFoldertouse $TempFolder -AmigaDrivetoCopytouse $AmigaDrivetoCopy
 
-if ($KickstartVersiontouse -eq 3.1){
+if ($Global:KickstartVersiontoUse -eq 3.1){
 
     if (-not (test-path ($AmigaDrivetoCopy+$VolumeName_System+'\WBStartup\'))){
         $null = new-item ($AmigaDrivetoCopy+$VolumeName_System+'\WBStartup\') -ItemType Directory
@@ -1029,11 +998,11 @@ if (-not (Test-Path ($AmigaDrivetoCopy+$VolumeName_Other))){
     
 }
 
-if ($KickstartVersiontoUse -eq 3.1){
+if ($Global:KickstartVersiontoUse -eq 3.1){
     $SourcePath = ($InstallADF+'\Update\disk.info') 
 }
 
-elseif ($KickstartVersiontoUse -eq 3.2){
+elseif ($Global:KickstartVersiontoUse -eq 3.2){
     $SourcePath = ($GlowIconsADF+'\Prefs\Env-Archive\Sys\def_harddisk.info') 
 }
 
@@ -1048,7 +1017,7 @@ foreach ($AmigaPartition in $AmigaPartitionsList | Where-Object {$_.VolumeName -
     if (-not (Start-HSTImager -Command 'fs extract' -SourcePath $SourcePath -DestinationPath $DestinationPathtoUse -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
                 exit
     }
-    if (($AmigaPartition.PartitionNumber -le 3) -and ($KickstartVersiontoUse -eq 3.2)) {
+    if (($AmigaPartition.PartitionNumber -le 3) -and ($Global:KickstartVersiontoUse -eq 3.2)) {
         Rename-Item ($AmigaDrivetoCopy+$VolumeName_Other+'\def_harddisk.info') ($AmigaDrivetoCopy+$VolumeName_Other+'\disk.info') 
     }
 }
@@ -1151,7 +1120,7 @@ Write-TaskCompleteMessage -Message 'Processing and Installing ADFs - Complete!' 
 
 #######################################################################################################################################################################################################################################
 
-$ListofPackagestoInstall = Import-Csv ($InputFolder+'ListofPackagestoInstall.csv') -Delimiter ';' |  Where-Object {$_.KickstartVersion -match $KickstartVersiontoUse} | Where-Object {$_.InstallFlag -eq 'TRUE'} #| Sort-Object -Property 'InstallSequence','PackageName'
+$ListofPackagestoInstall = Import-Csv ($InputFolder+'ListofPackagestoInstall.csv') -Delimiter ';' |  Where-Object {$_.KickstartVersion -match $Global:KickstartVersiontoUse} | Where-Object {$_.InstallFlag -eq 'TRUE'} #| Sort-Object -Property 'InstallSequence','PackageName'
 
 $ListofPackagestoInstall | Add-Member -NotePropertyName DrivetoInstall_VolumeName -NotePropertyValue $null
 
@@ -1359,8 +1328,8 @@ if (-not (Test-Path ($AmigaDrivetoCopy+$VolumeName_System+'\Prefs\Env-Archive\Sy
 }
 
 $WirelessPrefs = "network={",
-                 "   ssid=""$SSID""",
-                 "   psk=""$WifiPassword""",
+                 "   ssid=""$Global:SSID""",
+                 "   psk=""$Global:WifiPassword""",
                  "}"
                  
 Export-TextFileforAmiga -ExportFile ($AmigaDrivetoCopy+$VolumeName_System+'\Prefs\Env-Archive\Sys\wireless.prefs') -DatatoExport $WirelessPrefs -AddLineFeeds 'TRUE'                
@@ -1373,7 +1342,7 @@ Write-TaskCompleteMessage -Message 'Creating Wireless Prefs File - Complete!' -S
 
 Write-StartTaskMessage -Message 'Fix WBStartup' -SectionNumber '14' -TotalSections $TotalSections
 
-If ($KickstartVersiontouse -eq 3.2){
+If ($Global:KickstartVersiontoUse -eq 3.2){
     Write-Host 'Fixing Menutools'
     if (-not (Start-HSTImager -Command 'fs extract' -SourcePath ($StorageADF+'\WBStartup\MenuTools') -DestinationPath ($AmigaDrivetoCopy+$VolumeName_System+'\WBStartup') -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
         exit
@@ -1419,7 +1388,7 @@ if (-not (Test-Path ($FAT32Partition+'Install\'))){
 
 Write-InformationMessage -Message 'Copying Cmdline.txt' 
 
-Copy-Item ($LocationofAmigaFiles+'FAT32\cmdline_'+$KickstartVersiontoUse+'.txt') -Destination ($FAT32Partition+'cmdline.txt') #Temporary workaround until Michal fixes buptest for 3.1
+Copy-Item ($LocationofAmigaFiles+'FAT32\cmdline_'+$Global:KickstartVersiontoUse+'.txt') -Destination ($FAT32Partition+'cmdline.txt') #Temporary workaround until Michal fixes buptest for 3.1
 
 
 $ConfigTxt = Get-Content -Path ($LocationofAmigaFiles+'FAT32\config.txt')
@@ -1553,7 +1522,7 @@ Set-Location $LocationofImage
 
 & $HDF2emu68Path $LocationofImage$NameofImage $SizeofFAT32 ($FAT32Partition).Trim('\')
 
-$null= Rename-Item ($LocationofImager+'emu68_converted.img') -NewName ('Emu68Kickstart'+$KickstartVersiontoUse+'.img')
+$null= Rename-Item ($LocationofImager+'emu68_converted.img') -NewName ('Emu68Kickstart'+$Global:KickstartVersiontoUse+'.img')
 
 Write-TaskCompleteMessage -Message 'Creating Image - Complete!' -SectionNumber '19' -TotalSections $TotalSections
 
@@ -1561,7 +1530,7 @@ Write-StartTaskMessage -Message 'Writing Image to Disk' -SectionNumber '20' -Tot
 
 Set-location  $Global:WorkingPath
 
-Write-Image -HSTImagePathtouse $HSTImagePath -SourcePath ($LocationofImage+'Emu68Kickstart'+$KickstartVersiontoUse+'.img') -DestinationPath $HSTDiskName
+Write-Image -HSTImagePathtouse $HSTImagePath -SourcePath ($LocationofImage+'Emu68Kickstart'+$Global:KickstartVersiontoUse+'.img') -DestinationPath $Global:HSTDiskName
 
 Write-TaskCompleteMessage -Message 'Writing Image to Disk - Complete!' -SectionNumber '20' -TotalSections $TotalSections
 
