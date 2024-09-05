@@ -120,13 +120,13 @@ $inputXML_UserInterface = @"
             <Label x:Name="WorkbenchSize_Label2ndLine" Content="Partition (GiB)" HorizontalAlignment="Left" Margin="9,143,0,0" VerticalAlignment="Top" Width="121" Height="26" HorizontalContentAlignment="Center"/>
             <Label x:Name="Worksize_Label2ndLine" Content="Partition (GiB)" HorizontalAlignment="Left" Margin="286,143,0,0" VerticalAlignment="Top" Width="121" Height="26" HorizontalContentAlignment="Center"/>
             <TextBox x:Name="RequiredSpace_TextBox" HorizontalAlignment="Left" Margin="629,285,0,0" TextWrapping="Wrap" Text="Required space to run tool is:" VerticalAlignment="Top" Width="120" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-            <TextBox x:Name="AvailableSpace_TextBox" HorizontalAlignment="Left" Margin="629,326,0,0" TextWrapping="Wrap" Text="Available space is:" VerticalAlignment="Top" Width="120" BorderBrush="Transparent" Background="Transparent"/>
-            <TextBox x:Name="RequiredSpaceValue_TextBox" HorizontalAlignment="Left" Margin="749,297,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Transparent"/>
-            <TextBox x:Name="AvailableSpaceValue_TextBox" HorizontalAlignment="Left" Margin="749,328,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Green"/>
-            <TextBox x:Name="RequiredSpaceTransferredFiles_TextBox" HorizontalAlignment="Left" Margin="630,0,0,0" TextWrapping="Wrap" Text="Required space for transferred files:" VerticalAlignment="Center" Width="120" BorderBrush="Transparent" Background="Transparent"/>
-            <TextBox x:Name="RequiredSpaceValueTransferredFiles_TextBox" HorizontalAlignment="Left" Margin="749,0,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Center" Width="100" BorderBrush="Transparent" Background="Transparent"/>
-            <TextBox x:Name="AvailableSpaceTransferredFiles_TextBox" HorizontalAlignment="Left" Margin="629,241,0,0" TextWrapping="Wrap" Text="Available space is:" VerticalAlignment="Top" Width="120" BorderBrush="Transparent" Background="Transparent"/>
-            <TextBox x:Name="AvailableSpaceValueTransferredFiles_TextBox" HorizontalAlignment="Left" Margin="749,241,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Transparent"/>
+            <TextBox x:Name="AvailableSpace_TextBox" HorizontalAlignment="Left" Margin="629,326,0,0" TextWrapping="Wrap" Text="Available space is:" VerticalAlignment="Top" Width="120" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+            <TextBox x:Name="RequiredSpaceValue_TextBox" HorizontalAlignment="Left" Margin="749,297,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+            <TextBox x:Name="AvailableSpaceValue_TextBox" HorizontalAlignment="Left" Margin="749,328,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Green" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+            <TextBox x:Name="RequiredSpaceTransferredFiles_TextBox" HorizontalAlignment="Left" Margin="630,0,0,0" TextWrapping="Wrap" Text="Required space for transferred files:" VerticalAlignment="Center" Width="120" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+            <TextBox x:Name="RequiredSpaceValueTransferredFiles_TextBox" HorizontalAlignment="Left" Margin="749,0,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Center" Width="100" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+            <TextBox x:Name="AvailableSpaceTransferredFiles_TextBox" HorizontalAlignment="Left" Margin="629,241,0,0" TextWrapping="Wrap" Text="Available space is:" VerticalAlignment="Top" Width="120" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+            <TextBox x:Name="AvailableSpaceValueTransferredFiles_TextBox" HorizontalAlignment="Left" Margin="749,241,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
 
         </Grid>
 
@@ -189,6 +189,18 @@ foreach ($Disk in $RemovableMedia){
 }
 
 $WPF_UI_MediaSelect_Dropdown.Add_SelectionChanged({
+    $WPF_UI_FAT32Size_Slider.Maximum = 0
+    $WPF_UI_FAT32Size_Slider.Minimum = 0   
+    $WPF_UI_FAT32Size_Slider.Value = 0
+    $WPF_UI_WorkbenchSize_Slider.Maximum = 0
+    $WPF_UI_WorkbenchSize_Slider.Minimum = 0
+    $WPF_UI_WorkbenchSize_Slider.Value = 0
+    $WPF_UI_ImageSize_Slider.Maximum = 0
+    $WPF_UI_ImageSize_Slider.Minimum = 0
+    $WPF_UI_ImageSize_Slider.Value = 0
+    $WPF_UI_WorkSize_Slider.Maximum = 0
+    $WPF_UI_WorkSize_Slider.Minimum = 0
+    $WPF_UI_WorkSize_Slider.Value= 0
     If (-not($RemovableMedia)){
         $RemovableMedia = Get-RemovableMedia
     }
@@ -201,43 +213,70 @@ $WPF_UI_MediaSelect_Dropdown.Add_SelectionChanged({
         $WPF_UI_WorkSize_Value.IsEnabled = "True"
         $WPF_UI_ImageSize_Value.IsEnabled = "True"
         $WPF_UI_FAT32Size_Value.IsEnabled = "True"
-    }
-    foreach ($Disk in $RemovableMedia){
-        if ($Disk.FriendlyName -eq $WPF_UI_MediaSelect_DropDown.SelectedItem){
-
-            $WPF_UI_ImageSize_Slider.Maximum = Get-RoundedDiskSize -Size $Disk.Size -Scale 'GiB'
-            $WPF_UI_ImageSize_Slider.Value = $WPF_UI_ImageSize_Slider.Maximum 
-            $WPF_UI_FAT32Size_Slider.Maximum = $Fat32Maximum 
-
-            if (($Disk.Size/$DefaultDivisorFat32) -ge $Fat32DefaultMaximum){
-                $WPF_UI_FAT32Size_Slider.Value = $Fat32DefaultMaximum/1GB
-             }
-            else{
-                $WPF_UI_FAT32Size_Slider.Value = (Get-RoundedDiskSize -Size $Disk.Size -Scale 'GiB')/$DefaultDivisorFat32
+        foreach ($Disk in $RemovableMedia){        
+            if ($Disk.FriendlyName -eq $WPF_UI_MediaSelect_DropDown.SelectedItem){
+                $WPF_UI_ImageSize_Slider.Maximum = Get-RoundedDiskSize -Size ($Disk.SizeofDisk) -Scale 'GiB'
+                Write-Host ('Setting size as: '+$Disk.SizeofDisk)
+                $Global:HSTDiskName = $Disk.HSTDiskName
+                $WPF_UI_ImageSize_Slider.Value = $WPF_UI_ImageSize_Slider.Maximum 
+                break
             }
-           
-            if (($Disk.Size/$DefaultDivisorWorkbench) -ge $WorkbenchDefaultMaximum){
-                $WPF_UI_WorkbenchSize_Slider.Value = $WorkbenchDefaultMaximum/1GB
-             }
-            else{
-                $WPF_UI_WorkbenchSize_Slider.Value = (Get-RoundedDiskSize -Size $Disk.Size -Scale 'GiB')/$DefaultDivisorWorkbench
-            }
-
-            $WPF_UI_WorkSize_Slider.Value = $WPF_UI_ImageSize_Slider.Value - $WPF_UI_WorkbenchSize_Slider.Value - $WPF_UI_FAT32Size_Slider.Value
-            
-            $WPF_UI_WorkSize_Slider.Maximum = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-$WPF_UI_WorkbenchSize_Slider.Value
-            $WPF_UI_WorkbenchSize_Slider.Maximum = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-$WPF_UI_WorkSize_Slider.Value
-
-            $WPF_UI_FAT32Size_Slider.Minimum = 0.035 # Limit of Tool
-            $WPF_UI_WorkSize_Slider.Minimum = 0.1
-            $WPF_UI_WorkbenchSize_Slider.Minimum = 0.1
-            $WPF_UI_ImageSize_Slider.Minimum = ($WPF_UI_WorkbenchSize_Slider.Minimum)+($WPF_UI_WorkSize_Slider.Minimum)+($WPF_UI_FAT32Size_Slider.Minimum)
-
-            $Global:HSTDiskName = $Disk.HSTDiskName
         }
+        # Set Minimums
+        $WPF_UI_FAT32Size_Slider.Minimum = 0.035 # Limit of Tool
+        $WPF_UI_WorkSize_Slider.Minimum = 0.1
+        $WPF_UI_WorkbenchSize_Slider.Minimum = 0.1
+        
+        $WPF_UI_ImageSize_Slider.Minimum= $WPF_UI_FAT32Size_Slider.Minimum + $WPF_UI_WorkSize_Slider.Minimum + $WPF_UI_WorkbenchSize_Slider.Minimum
+
+        # At this point, the maximum image size is the size of the card and the image size is the maximum image size. Calculate the default partition sizes
+
+        if (($WPF_UI_ImageSize_Slider.Maximum /$DefaultDivisorFat32) -ge $Fat32DefaultMaximum){
+            $WPF_UI_FAT32Size_Slider.Value = $Fat32DefaultMaximum/1GB
+        }
+        else{
+            $WPF_UI_FAT32Size_Slider.Value = ([math]::truncate(($WPF_UI_ImageSize_Slider.Maximum/$DefaultDivisorFat32)*100)/100)
+        }
+        if (($WPF_UI_ImageSize_Slider.Maximum /$DefaultDivisorWorkbench) -ge $WorkbenchDefaultMaximum){
+            $WPF_UI_WorkbenchSize_Slider.Value = $WorkbenchDefaultMaximum/1GB
+        }
+        else{
+            $WPF_UI_WorkbenchSize_Slider.Value = ([math]::truncate(($WPF_UI_ImageSize_Slider.Maximum/$DefaultDivisorWorkbench)*100)/100)
+        }
+        
+        # Work partition is the left over from the other defaults.
+        $WPF_UI_WorkSize_Slider.Value = $WPF_UI_ImageSize_Slider.Value - $WPF_UI_WorkbenchSize_Slider.Value - $WPF_UI_FAT32Size_Slider.Value
+                
+        # Set the maximum size of FAT32 to either 4GB or the size of the image less the minimums.
+
+        if (($WPF_UI_ImageSize_Slider.Value-$WPF_UI_WorkSize_Slider.Minimum-$WPF_UI_WorkbenchSize_Slider.Minimum) -ge $Fat32Maximum){
+            $WPF_UI_FAT32Size_Slider.Maximum = $Fat32Maximum 
+        }
+        else{
+            $WPF_UI_FAT32Size_Slider.Maximum = $WPF_UI_ImageSize_Slider.Value-$WPF_UI_WorkSize_Slider.Minimum-$WPF_UI_WorkbenchSize_Slider.Minimum 
+        }
+        
+        #Set Workbench to a maximum of 1GB or the size of the image  less the minimums
+
+        if (($WPF_UI_ImageSize_Slider.Value-$WPF_UI_WorkSize_Slider.Minimum-$WPF_UI_FAT32Size_Slider.Minimum) -ge $Global:PFSLimit/1024/1024){
+            $WPF_UI_WorkbenchSize_Slider.Maximum = $Global:PFSLimit/1024/1024
+        }
+        else{
+            $WPF_UI_WorkbenchSize_Slider.Maximum = $WPF_UI_ImageSize_Slider.Value-$WPF_UI_WorkSize_Slider.Minimum-$WPF_UI_FAT32Size_Slider.Minimum 
+        }
+        
+        #Set Work to the maximum of the size of the image  less the minimums
+
+        $WPF_UI_WorkSize_Slider.Maximum = $WPF_UI_ImageSize_Slider.Value-$WPF_UI_WorkbenchSize_Slider.Minimum-$WPF_UI_FAT32Size_Slider.Minimum 
+        
+
+               
+        #            $WPF_UI_WorkSize_Slider.Maximum = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-$WPF_UI_WorkbenchSize_Slider.Value
+        #            $WPF_UI_WorkbenchSize_Slider.Maximum = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-$WPF_UI_WorkSize_Slider.Value
+
     }
 })
-
+   
 $WPF_UI_MediaSelect_Refresh.Add_Click({
     $Global:HSTDiskName =$null
     $WPF_UI_ImageSize_Slider.IsEnabled = ""
@@ -256,11 +295,45 @@ $WPF_UI_MediaSelect_Refresh.Add_Click({
 })
 
 $WPF_UI_ImageSize_Slider.Add_ValueChanged({
-    $WPF_UI_ImageSize_Value.Text = $WPF_UI_ImageSize_Slider.Value   
-    $WPF_UI_WorkSize_Slider.Maximum = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-$WPF_UI_WorkbenchSize_Slider.Value
-    $WPF_UI_WorkSize_Slider.Value = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-($WPF_UI_WorkbenchSize_Slider.Value)
+    $WPF_UI_ImageSize_Value.Text = $WPF_UI_ImageSize_Slider.Value 
+    $WPF_UI_ImageSize_Value.Background = "White"
+    $WPF_UI_ImageSize_Slider.Minimum = $WPF_UI_FAT32Size_Slider.Value+$WPF_UI_WorkSize_Slider.Minimum+$WPF_UI_WorkbenchSize_Slider.Value
     $WPF_UI_WorkSize_Value.Text = $WPF_UI_WorkSize_Slider.Value
+    $WPF_UI_WorkSize_Slider.Value = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-($WPF_UI_WorkbenchSize_Slider.Value)
+    # }
+    # elseif ($WPF_UI_FAT32Size_Slider.Value -ge $WPF_UI_FAT32Size_Slider.Minimum){
+    #     Write-host 'Adjusting FAT32size'
+    #     $WPF_UI_FAT32Size_Slider.Value = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_WorkbenchSize_Slider.Value)-($WPF_UI_WorkSize_Slider.Value)
+    #     $WPF_UI_FAT32Size_Value.Text = $WPF_UI_FAT32Size_Slider.Value
+    # }
+    # elseif ($WPF_UI_WorkbenchSize_Slider.Value -ge $WPF_UI_WorkbenchSize_Slider.Minimum){
+    #     Write-host 'Adjusting Workbenchsize'
+    #     $WPF_UI_WorkbenchSize_Slider.Value = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-($WPF_UI_WorkSize_Slider.Value)
+    #     $WPF_UI_WorkbenchSize_Value.Text = $WPF_UI_WorkbenchSize_Slider.Value
+    # }    
     
+    # Set the maximum size of FAT32 to either 4GB or the size of the image less the minimums.
+
+    if (($WPF_UI_ImageSize_Slider.Value-$WPF_UI_WorkSize_Slider.Minimum-$WPF_UI_WorkbenchSize_Slider.Minimum) -ge $Fat32Maximum){
+        $WPF_UI_FAT32Size_Slider.Maximum = $Fat32Maximum 
+    }
+    else{
+        $WPF_UI_FAT32Size_Slider.Maximum = $WPF_UI_ImageSize_Slider.Value-$WPF_UI_WorkSize_Slider.Minimum-$WPF_UI_WorkbenchSize_Slider.Minimum 
+    }
+    
+    #Set Workbench to a maximum of 1GB or the size of the image  less the minimums
+
+    if (($WPF_UI_ImageSize_Slider.Value-$WPF_UI_WorkSize_Slider.Minimum-$WPF_UI_FAT32Size_Slider.Minimum) -ge $Global:PFSLimit/1024/1024){
+        $WPF_UI_WorkbenchSize_Slider.Maximum = $Global:PFSLimit/1024/1024
+    }
+    else{
+        $WPF_UI_WorkbenchSize_Slider.Maximum = $WPF_UI_ImageSize_Slider.Value-$WPF_UI_WorkSize_Slider.Minimum-$WPF_UI_FAT32Size_Slider.Minimum 
+    }
+    
+    #Set Work to the maximum of the size of the image  less the minimums
+
+    $WPF_UI_WorkSize_Slider.Maximum = $WPF_UI_ImageSize_Slider.Value-$WPF_UI_WorkbenchSize_Slider.Minimum-$WPF_UI_FAT32Size_Slider.Minimum 
+           
     $Global:SizeofFAT32 = $WPF_UI_FAT32Size_Slider.Value*1024                              #Convert to Megabytes
     $Global:SizeofImage = $WPF_UI_ImageSize_Slider.Value*1024*1024                         #Convert to Kilobytes
     $Global:SizeofPartition_System = $WPF_UI_WorkBenchSize_Slider.Value*1024*1024          #Convert to Kilobytes
@@ -276,10 +349,9 @@ $WPF_UI_ImageSize_Slider.Add_ValueChanged({
 })
 
 $WPF_UI_FAT32Size_Slider.Add_ValueChanged({
+
     $WPF_UI_FAT32Size_Value.Text = $WPF_UI_FAT32Size_Slider.Value
     $WPF_UI_FAT32Size_Value.Background = "White"
-    $WPF_UI_FAT32Size_Slider.Minimum = 0.035 # Limit of Tool
-    $WPF_UI_WorkSize_Slider.Maximum = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-$WPF_UI_WorkbenchSize_Slider.Value
     $WPF_UI_WorkSize_Slider.Value = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-($WPF_UI_WorkbenchSize_Slider.Value)
     $WPF_UI_WorkSize_Value.Text = $WPF_UI_WorkSize_Slider.Value
     
@@ -292,7 +364,9 @@ $WPF_UI_FAT32Size_Slider.Add_ValueChanged({
 $WPF_UI_WorkbenchSize_Slider.Add_ValueChanged({
     $WPF_UI_WorkbenchSize_Value.Text = $WPF_UI_WorkbenchSize_Slider.Value
     $WPF_UI_WorkbenchSize_Value.Background = "White"
-    $WPF_UI_WorkSize_Slider.Maximum = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-$WPF_UI_WorkbenchSize_Slider.Value
+#    $WPF_UI_WorkSize_Slider.Maximum = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-$WPF_UI_WorkbenchSize_Slider.Value
+    
+    $WPF_UI_WorkbenchSize_Slider.Maximum = $WPF_UI_ImageSize_Slider.Value-$WPF_UI_FAT32Size_Slider.Value-$WPF_UI_WorkSize_Slider.Minimum
     $WPF_UI_WorkSize_Slider.Value = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-($WPF_UI_WorkbenchSize_Slider.Value)
     $WPF_UI_WorkSize_Value.Text = $WPF_UI_WorkSize_Slider.Value
     
@@ -305,10 +379,10 @@ $WPF_UI_WorkbenchSize_Slider.Add_ValueChanged({
 $WPF_UI_WorkSize_Slider.Add_ValueChanged({
     $WPF_UI_WorkSize_Value.Text = $WPF_UI_WorkSize_Slider.Value
     $WPF_UI_WorkSize_Value.Background = "White"
-    $WPF_UI_FAT32Size_Slider.Minimum = 0.035 # Limit of Tool
-    $WPF_UI_WorkSize_Slider.Minimum = 0.1
-    $WPF_UI_WorkbenchSize_Slider.Minimum = 0.1
-    $WPF_UI_WorkSize_Slider.Maximum = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-$WPF_UI_WorkbenchSize_Slider.Value
+#    $WPF_UI_FAT32Size_Slider.Minimum = 0.035 # Limit of Tool
+#    $WPF_UI_WorkSize_Slider.Minimum = 0.1
+#    $WPF_UI_WorkbenchSize_Slider.Minimum = 0.1
+#    $WPF_UI_WorkSize_Slider.Maximum = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-$WPF_UI_WorkbenchSize_Slider.Value
     $WPF_UI_WorkSize_Slider.Value = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-($WPF_UI_WorkbenchSize_Slider.Value)
     
     $Global:SizeofFAT32 = $WPF_UI_FAT32Size_Slider.Value*1024                      #Convert to Megabytes
@@ -678,7 +752,6 @@ $XAML_DisclaimerWindow.SelectNodes("//*[@Name]") | ForEach-Object{
 $WPF_Disclaimer_Button_Acknowledge.Add_Click({
     $Form_Disclaimer.Close() | out-null
     $Global:IsDisclaimerAccepted = $True
-    Write-Host 'Disclaimer'
 })
 
 
@@ -1027,7 +1100,7 @@ Write-TaskCompleteMessage -Message 'Downloading LZX - Complete!' -SectionNumber 
 
 Write-StartTaskMessage -Message 'Preparing Amiga Image' -SectionNumber '9' -TotalSections $TotalSections
 
-$SizeofImagetouse = (([math]::truncate($Global:SizeofImage)).ToString()+'kb')
+$SizeofImagetouse = (([math]::truncate(($Global:SizeofImage-$Global:SizeofFAT32))).ToString()+'kb')
 
 if (-not (Start-HSTImager -Command "Blank" -DestinationPath ($LocationofImage+$NameofImage) -ImageSize $SizeofImagetouse -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
     exit
@@ -1051,10 +1124,6 @@ $AmigaPartitionsList = Get-AmigaPartitionList   -SizeofPartition_System_param $G
                                                 -DeviceName_Other_param $DeviceName_Other `
                                                 -DeviceName_Prefix_param $DeviceName_Prefix
                                                 
-
-
-exit
-
 foreach ($AmigaPartition in $AmigaPartitionsList) {
     Write-InformationMessage -Message ('Preparing Partition Device: '+$AmigaPartition.DeviceName+' VolumeName '+$AmigaPartition.VolumeName)
     if ($AmigaPartition.VolumeName -eq $VolumeName_System){
@@ -1160,7 +1229,7 @@ Foreach($InstallFileLine in $ListofInstallFiles){
     Write-StartSubTaskMessage -SubtaskNumber $ItemCounter -TotalSubtasks $TotalItems -Message ('Processing ADF:'+$InstallFileLine.FriendlyName+' Files: '+$InstallFileLine.AmigaFiletoInstall)
     $SourcePathtoUse = ($InstallFileLine.Path+'\'+($InstallFileLine.AmigaFiletoInstall -replace '/','\'))
     if ($InstallFileLine.Uncompress -eq "TRUE"){
-        WWrite-InformationMessage -Message 'Extracting files from ADFs containing .Z files'
+        Write-InformationMessage -Message 'Extracting files from ADFs containing .Z files'
         if ($InstallFileLine.LocationtoInstall.Length -eq 0){        
             $DestinationPathtoUse = ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName)
         }

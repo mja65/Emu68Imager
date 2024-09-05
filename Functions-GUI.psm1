@@ -45,11 +45,12 @@ function Get-RoundedDiskSize {
         $Scale
     )
     if ($Scale -eq 'GiB'){
-        $RoundedSize = ([math]::truncate(($Disk.Size/1GB)*1000)/1000)
+        $RoundedSize = ([math]::truncate(($Size/1GB)*1000)/1000)
         
     }
     return $RoundedSize
 }
+
 
 function Get-FormattedSize {
     param (
@@ -319,7 +320,7 @@ Function Get-FormVariables{
             $RemovableMediaList += [PSCustomObject]@{
                 DeviceID = $_.DeviceID
                 Model = $_.Model
-                Size = $_.Size
+                SizeofDisk = $_.Size
                 EnglishSize = ([math]::Round($_.Size/1GB,3).ToString())
                 FriendlyName = 'Disk '+$DriveNumber+' '+$_.Model+' '+([math]::Round($_.Size/1GB,3).ToString()) 
                 HSTDiskName = ('\disk'+$DriveNumber)
