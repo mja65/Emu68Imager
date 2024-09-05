@@ -1,18 +1,26 @@
 ####################################################################### Check Runtime Environment ##################################################################################################
 
-Import-Module ($Scriptpath+'Functions-GUI.psm1')
-
-$RunMode = (Set-RunTimeEnvironment) 
-
-
- if  ($RunMode -eq 1){
-     $Scriptpath = (Split-Path -Parent $MyInvocation.MyCommand.Definition)+'\'
+if ($env:TERM_PROGRAM){
+    Write-Host "Run from Visual Studio Code!"
+    $RunMode=0
+ } 
+ elseif ($psISE){
+    Write-Host "Run from Powershell ISE!"
+    $RunMode=0
+ }
+ else{
+    $RunMode=1
  } 
 
- if ($RunMode -eq 0){
-     $Scriptpath = 'C:\Users\Matt\OneDrive\Documents\Emu68Imager\'    
- }
- 
+if  ($RunMode -eq 1){
+    $Scriptpath = (Split-Path -Parent $MyInvocation.MyCommand.Definition)+'\'
+} 
+
+if ($RunMode -eq 0){
+    $Scriptpath = 'C:\Users\Matt\OneDrive\Documents\Emu68Imager\'    
+}
+
+Import-Module ($Scriptpath+'Functions-GUI.psm1')
 
 ####################################################################### End Check Runtime Environment ###############################################################################################
 
@@ -26,22 +34,38 @@ $LocationofAmigaFiles=($Scriptpath+'AmigaFiles\')
 
 ####################################################################### Null out Global Variables ###################################################################################################
 
-
- $Global:HSTDiskName = $null
- $Global:ScreenModetoUse = $null 
- $Global:KickstartVersiontoUse = $null
- $Global:SSID = $null
- $Global:WifiPassword = $null
- $Global:SizeofFAT32 = $null 
- $Global:SizeofImage = $null 
- $Global:SizeofPartition_System = $null
- $Global:SizeofPartition_Other = $null
- $Global:WorkingPath = $null
- $Global:ROMPath = $null
- $Global:ADFPath = $null
+$Global:ExitType = $null
+$Global:HSTDiskName = $null
+$Global:ScreenModetoUse = $null 
+$Global:KickstartVersiontoUse = $null
+$Global:SSID = $null
+$Global:WifiPassword = $null
+$Global:SizeofFAT32 = $null 
+$Global:SizeofImage = $null 
+$Global:SizeofPartition_System = $null
+$Global:SizeofPartition_Other = $null
+$Global:WorkingPath = $null
+$Global:ROMPath = $null
+$Global:ADFPath = $null
+$Global:TransferLocation = $null
+$Global:Space_WorkingFolderDisk = $null
+$Global:AvailableSpace_WorkingFolderDisk = $null
+$Global:RequiredSpace_WorkingFolderDisk = $null
+$Global:AvailableSpaceFilestoTransfer = $null
+$Global:SizeofFilestoTransfer = $null
+$Global:SpaceThreshold_WorkingFolderDisk  = $null
+$Global:SpaceThreshold_FilestoTransfer = $null
+$Global:Space_FilestoTransfer = $null
+$Global:PFSLimit =$null
 
  ####################################################################### End Null out Global Variables ###############################################################################################
+ 
+ ####################################################################### Set Global Variables ###############################################################################################
+ 
+ $Global:PFSLimit = 101*1024*1024 #Kilobytes
 
+ ####################################################################### End Set Global Variables ###############################################################################################
+ 
 
 ####################################################################### Add GUI Types ################################################################################################################
 
@@ -60,51 +84,54 @@ $inputXML_UserInterface = @"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="900" ResizeMode="NoResize" UseLayoutRounding="True">
+        Title="Emu68 Imager" Height="450" Width="900" ResizeMode="NoResize" UseLayoutRounding="True">
     <Grid>
         <Grid Background="#FFE5E5E5" Margin="-1,0,1,0">
             <Button x:Name="Start_Button" Content="Run Tool" HorizontalAlignment="Left" Margin="749,365,0,0" VerticalAlignment="Top" Width="100" Height="20"/>
-            <ComboBox x:Name="ScreenMode_Dropdown" HorizontalAlignment="Left" Margin="576,79,0,0" VerticalAlignment="Top" Width="300"/>
+            <ComboBox x:Name="ScreenMode_Dropdown" HorizontalAlignment="Left" Margin="576,40,0,0" VerticalAlignment="Top" Width="300"/>
             <ComboBox x:Name="KickstartVersion_DropDown" HorizontalAlignment="Left" Margin="10,259,0,0" VerticalAlignment="Top" Width="200"/>
             <Button x:Name="Rompath_Button" Content="Click to set ROM path" HorizontalAlignment="Left" Margin="10,290,0,0" VerticalAlignment="Top" Width="200" Height="30"/>
             <Button x:Name="ADFpath_Button" Content="Click to set ADF path" HorizontalAlignment="Left" Margin="10,325,0,0" VerticalAlignment="Top" Width="200" Height="30"/>
-            <Label x:Name="ScreenMode_Label" Content="Select ScreenMode" HorizontalAlignment="Left" Margin="554,38,0,0" VerticalAlignment="Top" Width="300" HorizontalContentAlignment="Center"/>
+            <Label x:Name="ScreenMode_Label" Content="Select ScreenMode" HorizontalAlignment="Left" Margin="554,10,0,0" VerticalAlignment="Top" Width="300" HorizontalContentAlignment="Center"/>
             <Label x:Name="KickstartVersion_Label" Content="Select OS Version" HorizontalAlignment="Left" Margin="16,228,0,0" VerticalAlignment="Top" Width="200" HorizontalContentAlignment="Center"/>
             <Button x:Name="MigratedFiles_Button" Content="Click to set Transfer path" HorizontalAlignment="Left" Margin="10,360,0,0" VerticalAlignment="Top" Width="200" Height="30"/>
-            <Label x:Name="RomPath_Label" Content="No ROM path selected" HorizontalAlignment="Left" Margin="231,290,0,0" VerticalAlignment="Top" Width="188"/>
-            <Label x:Name="MigratedPath_Label" Content="No transfer path selected" HorizontalAlignment="Left" Margin="231,360,0,0" VerticalAlignment="Top" Width="188"/>
-            <Label x:Name="ADFPath_Label" Content="No ADF path selected" HorizontalAlignment="Left" Margin="231,325,0,0" VerticalAlignment="Top" Width="188"/>
-            <Label x:Name="SSID_Label" Content="Enter your SSID" HorizontalAlignment="Left" Margin="554,155,0,0" VerticalAlignment="Top" Width="152" />
-            <Label x:Name="Password_Label" Content="Enter your Wifi password" HorizontalAlignment="Left" Margin="554,189,0,0" VerticalAlignment="Top" Width="152"/>
-            <TextBox x:Name="SSID_Textbox" HorizontalAlignment="Left" Margin="721,155,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="120"/>
-            <TextBox x:Name="Password_Textbox" HorizontalAlignment="Left" Margin="721,189,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="120"/>
+            <Label x:Name="RomPath_Label" Content="No ROM path selected" HorizontalAlignment="Left" Margin="231,290,0,0" VerticalAlignment="Top" Width="200"/>
+            <Label x:Name="MigratedPath_Label" Content="No transfer path selected" HorizontalAlignment="Left" Margin="231,360,0,0" VerticalAlignment="Top" Width="200"/>
+            <Label x:Name="ADFPath_Label" Content="No ADF path selected" HorizontalAlignment="Left" Margin="231,325,0,0" VerticalAlignment="Top" Width="200"/>
+            <Label x:Name="SSID_Label" Content="Enter your SSID" HorizontalAlignment="Left" Margin="554,79,0,0" VerticalAlignment="Top" Width="152" />
+            <Label x:Name="Password_Label" Content="Enter your Wifi password" HorizontalAlignment="Left" Margin="554,115,0,0" VerticalAlignment="Top" Width="152"/>
+            <TextBox x:Name="SSID_Textbox" HorizontalAlignment="Left" Margin="721,85,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="120"/>
+            <TextBox x:Name="Password_Textbox" HorizontalAlignment="Left" Margin="721,121,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="120"/>
             <ComboBox x:Name="MediaSelect_DropDown" HorizontalAlignment="Left" Margin="10,40,0,0" VerticalAlignment="Top" Width="341"/>
             <Label x:Name="MediaSelect_Label" Content="Select Media to Use" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="315" HorizontalContentAlignment="Center"/>
             <Button x:Name="MediaSelect_Refresh" Content="Refresh Available Media" HorizontalAlignment="Left" Margin="376,38,0,0" VerticalAlignment="Top" Width="130" Height="20"/>
-            <TextBox x:Name="ImageSize_Value" Text="" HorizontalAlignment="Left" Margin="140,79,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120"/>
+            <TextBox x:Name="ImageSize_Value" Text="" HorizontalAlignment="Left" Margin="140,79,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120" IsEnabled="False"/>
             <Label x:Name="ImageSize_Label" Content="Total Image Size (GiB)" HorizontalAlignment="Left" Margin="265,75,0,0" VerticalAlignment="Top" Width="200"/>
             <Label x:Name="WorkbenchSize_Label" Content="Size of Workbench" HorizontalAlignment="Left" Margin="10,127,0,0" VerticalAlignment="Top" Width="121" Height="26" HorizontalContentAlignment="Center"/>
-            <TextBox x:Name="WorkbenchSize_Value" Text="" HorizontalAlignment="Left" Margin="9,174,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120"/>
-            <TextBox x:Name="WorkSize_Value" Text="" HorizontalAlignment="Left" Margin="286,176,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="130"/>
+            <TextBox x:Name="WorkbenchSize_Value" Text="" HorizontalAlignment="Left" Margin="9,174,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120" IsEnabled="False"/>
+            <TextBox x:Name="WorkSize_Value" Text="" HorizontalAlignment="Left" Margin="286,176,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="130" IsEnabled="False"/>
             <Label x:Name="WorkSize_Label" Content="Size of Work" HorizontalAlignment="Left" Margin="282,127,0,0" VerticalAlignment="Top" Width="130" HorizontalContentAlignment="Center"/>
-            <TextBox x:Name="FAT32Size_Value" Text="" HorizontalAlignment="Left" Margin="140,202,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120"/>
+            <TextBox x:Name="FAT32Size_Value" Text="" HorizontalAlignment="Left" Margin="140,202,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120" IsEnabled="False"/>
             <Label x:Name="FAT32Size_Label" Content="Size of FAT32 Partition (GiB)" HorizontalAlignment="Left" Margin="266,197,0,0" VerticalAlignment="Top" Width="184"/>
-            <Slider x:Name="ImageSize_Slider" HorizontalAlignment="Left" Margin="16,73,0,0" VerticalAlignment="Top" Width="120" TickPlacement="TopLeft" AutoToolTipPlacement="BottomRight" LargeChange="0.5" SmallChange="0.1" IsSnapToTickEnabled="True" TickFrequency="0.1" />
-            <Slider x:Name="WorkbenchSize_Slider" HorizontalAlignment="Left" Margin="133,169,0,0" VerticalAlignment="Top" Width="120" TickPlacement="TopLeft" AutoToolTipPlacement="BottomRight" LargeChange="0.5" SmallChange="0.1" IsSnapToTickEnabled="True" TickFrequency="0.1"/>
-            <Slider x:Name="WorkSize_Slider" HorizontalAlignment="Left" Margin="504,285,0,0" VerticalAlignment="Top" Width="120" TickPlacement="TopLeft" AutoToolTipPlacement="BottomRight" LargeChange="0.5" SmallChange="0.1" Visibility="Hidden" IsSnapToTickEnabled="True" TickFrequency="0.1"/>
-            <Slider x:Name="FAT32Size_Slider" HorizontalAlignment="Left" Margin="16,202,0,0" VerticalAlignment="Top" Width="120" TickPlacement="TopLeft" AutoToolTipPlacement="BottomRight" LargeChange="0.5" SmallChange="0.1" IsSnapToTickEnabled="True" TickFrequency="0.1"/>
+            <Slider x:Name="ImageSize_Slider" HorizontalAlignment="Left" Margin="16,73,0,0" VerticalAlignment="Top" Width="120" TickPlacement="TopLeft" AutoToolTipPlacement="None" LargeChange="0.5" SmallChange="0.1" IsSnapToTickEnabled="True" TickFrequency="0.1" IsEnabled="False"/>
+            <Slider x:Name="WorkbenchSize_Slider" HorizontalAlignment="Left" Margin="133,169,0,0" VerticalAlignment="Top" Width="120" TickPlacement="TopLeft" AutoToolTipPlacement="None" LargeChange="0.5" SmallChange="0.1" IsSnapToTickEnabled="True" TickFrequency="0.1" IsEnabled="False"/>
+            <Slider x:Name="WorkSize_Slider" HorizontalAlignment="Left" Margin="504,285,0,0" VerticalAlignment="Top" Width="120" TickPlacement="TopLeft" AutoToolTipPlacement="None" LargeChange="0.5" SmallChange="0.1" Visibility="Hidden" IsSnapToTickEnabled="True" TickFrequency="0.1" IsEnabled="False"/>
+            <Slider x:Name="FAT32Size_Slider" HorizontalAlignment="Left" Margin="16,202,0,0" VerticalAlignment="Top" Width="120" TickPlacement="TopLeft" AutoToolTipPlacement="None" LargeChange="0.5" SmallChange="0.1" IsSnapToTickEnabled="True" TickFrequency="0.1" IsEnabled="False"/>
             <Label x:Name="WorkbenchSize_Label2ndLine" Content="Partition (GiB)" HorizontalAlignment="Left" Margin="9,143,0,0" VerticalAlignment="Top" Width="121" Height="26" HorizontalContentAlignment="Center"/>
             <Label x:Name="Worksize_Label2ndLine" Content="Partition (GiB)" HorizontalAlignment="Left" Margin="286,143,0,0" VerticalAlignment="Top" Width="121" Height="26" HorizontalContentAlignment="Center"/>
-    <TextBox x:Name="RequiredSpace_TextBox" HorizontalAlignment="Left" Margin="526,317,0,0" TextWrapping="Wrap" Text="Required space to run tool is:" VerticalAlignment="Top" Width="120" BorderBrush="Transparent" Background="Transparent"/>
- <TextBox x:Name="AvailableSpace_TextBox" HorizontalAlignment="Left" Margin="524,358,0,0" TextWrapping="Wrap" Text="Available space is:" VerticalAlignment="Top" Width="120" BorderBrush="Transparent" Background="Transparent"/>
- <TextBox x:Name="RequiredSpaceValue_TextBox" HorizontalAlignment="Left" Margin="635,329,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Transparent"/>
- <TextBox x:Name="AvailableSpaceValue_TextBox" HorizontalAlignment="Left" Margin="635,360,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Green"/>
+            <TextBox x:Name="RequiredSpace_TextBox" HorizontalAlignment="Left" Margin="629,285,0,0" TextWrapping="Wrap" Text="Required space to run tool is:" VerticalAlignment="Top" Width="120" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+            <TextBox x:Name="AvailableSpace_TextBox" HorizontalAlignment="Left" Margin="629,326,0,0" TextWrapping="Wrap" Text="Available space is:" VerticalAlignment="Top" Width="120" BorderBrush="Transparent" Background="Transparent"/>
+            <TextBox x:Name="RequiredSpaceValue_TextBox" HorizontalAlignment="Left" Margin="749,297,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Transparent"/>
+            <TextBox x:Name="AvailableSpaceValue_TextBox" HorizontalAlignment="Left" Margin="749,328,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Green"/>
+            <TextBox x:Name="RequiredSpaceTransferredFiles_TextBox" HorizontalAlignment="Left" Margin="630,0,0,0" TextWrapping="Wrap" Text="Required space for transferred files:" VerticalAlignment="Center" Width="120" BorderBrush="Transparent" Background="Transparent"/>
+            <TextBox x:Name="RequiredSpaceValueTransferredFiles_TextBox" HorizontalAlignment="Left" Margin="749,0,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Center" Width="100" BorderBrush="Transparent" Background="Transparent"/>
+            <TextBox x:Name="AvailableSpaceTransferredFiles_TextBox" HorizontalAlignment="Left" Margin="629,241,0,0" TextWrapping="Wrap" Text="Available space is:" VerticalAlignment="Top" Width="120" BorderBrush="Transparent" Background="Transparent"/>
+            <TextBox x:Name="AvailableSpaceValueTransferredFiles_TextBox" HorizontalAlignment="Left" Margin="749,241,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Transparent"/>
 
         </Grid>
 
     </Grid>
 </Window>
-
 
 "@
 
@@ -133,10 +160,28 @@ $XAML_UserInterface.SelectNodes("//*[@Name]") | ForEach-Object{
 # Use this space to add code to the various form elements in your GUI
 #===========================================================================
 
-$AvailableSpace = (Confirm-DiskSpace -PathtoCheck $Scriptpath)/1Gb
+$DefaultDivisorFat32 = 15
+$DefaultDivisorWorkbench = 15
+$Fat32DefaultMaximum = 1024*1024*1024 #1gb in Kilobytes
+$WorkbenchDefaultMaximum = 1024*1024*1024 #1gb in Kilobytes
+$Fat32Maximum = 4 #in Gigabytes
 
-$WPF_UI_AvailableSpaceValue_TextBox.Text = [math]::Round($AvailableSpace,2).ToString()+' GiB'
-$WPF_UI_RequiredSpaceValue_TextBox.Text = '0 GiB'
+$Global:Space_WorkingFolderDisk = (Confirm-DiskSpace -PathtoCheck $Scriptpath)/1Kb # Available Space on Drive where script is running (Kilobytes)
+$Global:AvailableSpace_WorkingFolderDisk = $Global:Space_WorkingFolderDisk
+$Global:RequiredSpace_WorkingFolderDisk = 0 #In Kilobytes
+
+$Global:Space_FilestoTransfer = 0 #In Kilobytes
+$Global:AvailableSpaceFilestoTransfer = 0 #In Kilobytes
+$Global:SizeofFilestoTransfer = 0 #In Kilobytes
+
+$Global:SpaceThreshold_WorkingFolderDisk = 500*1024 #In Kilobytes
+$Global:SpaceThreshold_FilestoTransfer = 10*1024 #In Kilobytes
+
+$WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Global:AvailableSpace_WorkingFolderDisk 
+$WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Global:RequiredSpace_WorkingFolderDisk
+
+$WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = '' 
+$WPF_UI_RequiredSpaceValueTransferredFiles_TextBox.Text = ''
 
 $RemovableMedia = Get-RemovableMedia
 foreach ($Disk in $RemovableMedia){
@@ -147,31 +192,41 @@ $WPF_UI_MediaSelect_Dropdown.Add_SelectionChanged({
     If (-not($RemovableMedia)){
         $RemovableMedia = Get-RemovableMedia
     }
+    if ($WPF_UI_MediaSelect_DropDown.SelectedItem) {
+        $WPF_UI_ImageSize_Slider.IsEnabled = "True"
+        $WPF_UI_WorkbenchSize_Slider.IsEnabled = "True"
+        $WPF_UI_WorkSize_Slider.IsEnabled = "True"
+        $WPF_UI_FAT32Size_Slider.IsEnabled = "True"
+        $WPF_UI_WorkbenchSize_Value.IsEnabled = "True"
+        $WPF_UI_WorkSize_Value.IsEnabled = "True"
+        $WPF_UI_ImageSize_Value.IsEnabled = "True"
+        $WPF_UI_FAT32Size_Value.IsEnabled = "True"
+    }
     foreach ($Disk in $RemovableMedia){
         if ($Disk.FriendlyName -eq $WPF_UI_MediaSelect_DropDown.SelectedItem){
-            $WPF_UI_ImageSize_Slider.Maximum = [math]::truncate(($Disk.Size/1GB)*1000)/1000
+
+            $WPF_UI_ImageSize_Slider.Maximum = Get-RoundedDiskSize -Size $Disk.Size -Scale 'GiB'
             $WPF_UI_ImageSize_Slider.Value = $WPF_UI_ImageSize_Slider.Maximum 
-            
-            if ((([math]::truncate(($Disk.Size/1GB)*1000)/1000)/15) -ge 1) {
-                $WPF_UI_FAT32Size_Slider.Value = 1 
-            }
+            $WPF_UI_FAT32Size_Slider.Maximum = $Fat32Maximum 
+
+            if (($Disk.Size/$DefaultDivisorFat32) -ge $Fat32DefaultMaximum){
+                $WPF_UI_FAT32Size_Slider.Value = $Fat32DefaultMaximum/1GB
+             }
             else{
-                $WPF_UI_FAT32Size_Slider.Value = (([math]::truncate(($Disk.Size/1GB)*1000)/1000)/15)
+                $WPF_UI_FAT32Size_Slider.Value = (Get-RoundedDiskSize -Size $Disk.Size -Scale 'GiB')/$DefaultDivisorFat32
             }
-            $WPF_UI_FAT32Size_Slider.Maximum = 4
-            
-            if ((([math]::truncate(($Disk.Size/1GB)*1000)/1000)/15) -ge 1) {
-                $WPF_UI_WorkbenchSize_Slider.Value = 1
-            }
-            else {
-                $WPF_UI_WorkbenchSize_Slider.Value = (([math]::truncate(($Disk.Size/1GB)*1000)/1000)/15)
+           
+            if (($Disk.Size/$DefaultDivisorWorkbench) -ge $WorkbenchDefaultMaximum){
+                $WPF_UI_WorkbenchSize_Slider.Value = $WorkbenchDefaultMaximum/1GB
+             }
+            else{
+                $WPF_UI_WorkbenchSize_Slider.Value = (Get-RoundedDiskSize -Size $Disk.Size -Scale 'GiB')/$DefaultDivisorWorkbench
             }
 
             $WPF_UI_WorkSize_Slider.Value = $WPF_UI_ImageSize_Slider.Value - $WPF_UI_WorkbenchSize_Slider.Value - $WPF_UI_FAT32Size_Slider.Value
             
             $WPF_UI_WorkSize_Slider.Maximum = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-$WPF_UI_WorkbenchSize_Slider.Value
             $WPF_UI_WorkbenchSize_Slider.Maximum = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-$WPF_UI_WorkSize_Slider.Value
-
 
             $WPF_UI_FAT32Size_Slider.Minimum = 0.035 # Limit of Tool
             $WPF_UI_WorkSize_Slider.Minimum = 0.1
@@ -184,6 +239,15 @@ $WPF_UI_MediaSelect_Dropdown.Add_SelectionChanged({
 })
 
 $WPF_UI_MediaSelect_Refresh.Add_Click({
+    $Global:HSTDiskName =$null
+    $WPF_UI_ImageSize_Slider.IsEnabled = ""
+    $WPF_UI_WorkbenchSize_Slider.IsEnabled = ""
+    $WPF_UI_WorkSize_Slider.IsEnabled = ""
+    $WPF_UI_FAT32Size_Slider.IsEnabled = ""
+    $WPF_UI_WorkbenchSize_Value.IsEnabled = ""
+    $WPF_UI_WorkSize_Value.IsEnabled = ""
+    $WPF_UI_ImageSize_Value.IsEnabled = ""
+    $WPF_UI_FAT32Size_Value.IsEnabled = ""
     $RemovableMedia = Get-RemovableMedia
     $WPF_UI_MediaSelect_Dropdown.Items.Clear()
     foreach ($Disk in $RemovableMedia){
@@ -196,14 +260,17 @@ $WPF_UI_ImageSize_Slider.Add_ValueChanged({
     $WPF_UI_WorkSize_Slider.Maximum = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-$WPF_UI_WorkbenchSize_Slider.Value
     $WPF_UI_WorkSize_Slider.Value = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-($WPF_UI_WorkbenchSize_Slider.Value)
     $WPF_UI_WorkSize_Value.Text = $WPF_UI_WorkSize_Slider.Value
-    $Global:SizeofFAT32 = $WPF_UI_FAT32Size_Slider.Value
-    $Global:SizeofImage = $WPF_UI_ImageSize_Slider.Value
-    $Global:SizeofPartition_System = $WPF_UI_WorkBenchSize_Slider.Value
-    $Global:SizeofPartition_Other = $WPF_UI_WorkSize_Slider.Value
-    $RequiredSpace = Get-RequiredSpace -ImageSize $WPF_UI_ImageSize_Slider.Value 
-    $AvailableSpace = [math]::Round(((($AvailableSpace*1024)-$RequiredSpace)/1024),2)
-    $WPF_UI_RequiredSpaceValue_TextBox.Text = ([math]::round(($RequiredSpace/1024),2)).ToString()+' GiB' 
-    $WPF_UI_AvailableSpaceValue_TextBox.Text = $AvailableSpace.ToString()+' GiB'
+    
+    $Global:SizeofFAT32 = $WPF_UI_FAT32Size_Slider.Value*1024                              #Convert to Megabytes
+    $Global:SizeofImage = $WPF_UI_ImageSize_Slider.Value*1024*1024                         #Convert to Kilobytes
+    $Global:SizeofPartition_System = $WPF_UI_WorkBenchSize_Slider.Value*1024*1024          #Convert to Kilobytes
+    $Global:SizeofPartition_Other = $WPF_UI_WorkSize_Slider.Value*1024*1024                #Convert to Kilobytes
+    
+    $Global:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $WPF_UI_ImageSize_Slider.Value
+    $Global:AvailableSpace_WorkingFolderDisk = $Global:Space_WorkingFolderDisk - $Global:RequiredSpace_WorkingFolderDisk 
+
+    $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Global:RequiredSpace_WorkingFolderDisk
+    $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Global:AvailableSpace_WorkingFolderDisk
     $WPF_UI_ImageSize_Value.Background = "White"
  
 })
@@ -215,6 +282,7 @@ $WPF_UI_FAT32Size_Slider.Add_ValueChanged({
     $WPF_UI_WorkSize_Slider.Maximum = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-$WPF_UI_WorkbenchSize_Slider.Value
     $WPF_UI_WorkSize_Slider.Value = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-($WPF_UI_WorkbenchSize_Slider.Value)
     $WPF_UI_WorkSize_Value.Text = $WPF_UI_WorkSize_Slider.Value
+    
     $Global:SizeofFAT32 = $WPF_UI_FAT32Size_Slider.Value*1024                              #Convert to Megabytes
     $Global:SizeofImage = $WPF_UI_ImageSize_Slider.Value*1024*1024                         #Convert to Kilobytes
     $Global:SizeofPartition_System = $WPF_UI_WorkBenchSize_Slider.Value*1024*1024          #Convert to Kilobytes
@@ -227,6 +295,7 @@ $WPF_UI_WorkbenchSize_Slider.Add_ValueChanged({
     $WPF_UI_WorkSize_Slider.Maximum = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-$WPF_UI_WorkbenchSize_Slider.Value
     $WPF_UI_WorkSize_Slider.Value = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-($WPF_UI_WorkbenchSize_Slider.Value)
     $WPF_UI_WorkSize_Value.Text = $WPF_UI_WorkSize_Slider.Value
+    
     $Global:SizeofFAT32 = $WPF_UI_FAT32Size_Slider.Value*1024                           #Convert to Megabytes
     $Global:SizeofImage = $WPF_UI_ImageSize_Slider.Value*1024*1024                      #Convert to Kilobytes
     $Global:SizeofPartition_System = $WPF_UI_WorkBenchSize_Slider.Value*1024*1024       #Convert to Kilobytes  
@@ -241,17 +310,47 @@ $WPF_UI_WorkSize_Slider.Add_ValueChanged({
     $WPF_UI_WorkbenchSize_Slider.Minimum = 0.1
     $WPF_UI_WorkSize_Slider.Maximum = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-$WPF_UI_WorkbenchSize_Slider.Value
     $WPF_UI_WorkSize_Slider.Value = ($WPF_UI_ImageSize_Slider.Value)-($WPF_UI_FAT32Size_Slider.Value)-($WPF_UI_WorkbenchSize_Slider.Value)
+    
     $Global:SizeofFAT32 = $WPF_UI_FAT32Size_Slider.Value*1024                      #Convert to Megabytes
     $Global:SizeofImage = $WPF_UI_ImageSize_Slider.Value*1024*1024                 #Convert to Kilobytes
     $Global:SizeofPartition_System = $WPF_UI_WorkBenchSize_Slider.Value*1024*1024  #Convert to Kilobytes
     $Global:SizeofPartition_Other = $WPF_UI_WorkSize_Slider.Value*1024*1024        #Convert to Kilobytes
+
+    $Global:Space_FilestoTransfer = Get-TransferredFilesAvailableSpace -PFSLimit $Global:PFSLimit -WorkSize $WPF_UI_WorkSize_Slider.Value             
+    $Global:AvailableSpaceFilestoTransfer =  $Global:Space_FilestoTransfer - $Global:SizeofFilestoTransfer      
+    if ($Global:TransferLocation){
+        $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Global:AvailableSpaceFilestoTransfer 
+    }
 })
 
+
+$WPF_UI_RequiredSpaceValueTransferredFiles_TextBox.Add_TextChanged({
+    $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Global:AvailableSpaceFilestoTransfer
+})
+
+
+$WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Add_TextChanged({
+    if ($WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.text -eq ''){
+        $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Background = "Transparent"
+    }
+    elseif (($Global:AvailableSpaceFilestoTransfer - $Global:SizeofFilestoTransfer ) -lt $Global:SpaceThreshold_FilestoTransfer){
+        $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Background = "Red"
+    }
+    elseif (($Global:AvailableSpaceFilestoTransfer - $Global:SizeofFilestoTransfer ) -lt ($Global:SpaceThreshold_FilestoTransfer*2)){
+    $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Background = "Yellow"
+    }
+    else{
+        $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Background = "Green"
+    }
+    
+})
+
+
 $WPF_UI_AvailableSpaceValue_TextBox.Add_TextChanged({
-    if ($AvailableSpace -le 20){
+    if ($Global:AvailableSpace_WorkingFolderDisk -le ($Global:SpaceThreshold_WorkingFolderDisk*2)){
         $WPF_UI_AvailableSpaceValue_TextBox.Background = "Yellow"
     }
-    elseif ($AvailableSpace -le 0){
+    elseif ($Global:AvailableSpace_WorkingFolderDisk -le $Global:SpaceThreshold_WorkingFolderDisk){
         $WPF_UI_AvailableSpaceValue_TextBox.Background = "Red"
     }
     else{
@@ -306,8 +405,19 @@ $WPF_UI_Start_Button.Background = 'Red'
 
 $WPF_UI_Start_Button.Add_Click({
     $Global:SSID = $WPF_UI_SSID_Textbox.Text
-    $Global:WifiPassword = $WPF_UI_Password_Textbox.Text   
-    if ($AvailableSpace -le 0){
+    $Global:WifiPassword = $WPF_UI_Password_Textbox.Text
+    
+    if ($Global:AvailableSpaceFilestoTransfer -lt $Global:SpaceThreshold_FilestoTransfer){
+        $Msg = @'
+You do not have sufficient space on your Work partition to transfer the files!
+        
+Select a location with less space, increase the space on Work, or remove the transfer of files
+'@
+    [System.Windows.MessageBox]::Show($Msg, 'Error - Insufficient Space!',0,48)
+
+    }
+
+    if ($Global:AvailableSpace_WorkingFolderDisk -le $Global:SpaceThreshold_WorkingFolderDisk){
         $Msg = @'
 You do not have sufficient space on your drive to run the tool!
 
@@ -318,8 +428,9 @@ Either select a location with sufficient space or press cancel to quit the tool
             $SufficientSpace_Flag =$null
             do {
                 $Global:WorkingPath = Get-FolderPath -Message 'Select location for Working Path' -RootFolder 'MyComputer'-ShowNewFolderButton
-                $AvailableSpace_revised = (Confirm-DiskSpace -PathtoCheck $Global:WorkingPath)/1Mb
-                if ($AvailableSpace_revised -le $RequiredSpace){
+                $Global:Space_WorkingFolderDisk = (Confirm-DiskSpace -PathtoCheck $Global:WorkingPath)/1kb
+                $Global:AvailableSpace_WorkingFolderDisk = $Global:Space_WorkingFolderDisk - $Global:RequiredSpace_WorkingFolderDisk 
+                if ($Global:AvailableSpace_WorkingFolderDisk -le $Global:SpaceThreshold_WorkingFolderDisk){
                     $Msg = @'
 You still do not have sufficient space on your drive to run the tool!
                   
@@ -365,7 +476,7 @@ $WPF_UI_RomPath_Button.Add_Click({
         else{
             $WPF_UI_Start_Button.Background = 'Green'
         }
-        $WPF_UI_RomPath_Label.Content = ($Global:ROMPath)
+        $WPF_UI_RomPath_Label.Content = Get-FormattedPathforGUI -PathtoTruncate ($Global:ROMPath)
         $WPF_UI_RomPath_Button.Background = 'Green'
     }
     else{
@@ -383,7 +494,7 @@ $WPF_UI_ADFPath_Button.Add_Click({
         else{
             $WPF_UI_Start_Button.Background = 'Green'
         }
-        $WPF_UI_ADFPath_Label.Content=($Global:ADFPath)
+        $WPF_UI_ADFPath_Label.Content = Get-FormattedPathforGUI -PathtoTruncate ($Global:ADFPath)
         $WPF_UI_ADFPath_Button.Background = 'Green'
     } 
     else{
@@ -395,18 +506,31 @@ $WPF_UI_ADFPath_Button.Add_Click({
 $WPF_UI_MigratedFiles_Button.Add_Click({
     If (-not ($Global:TransferLocation)) {
         $Global:TransferLocation = Get-FolderPath -Message 'Select transfer folder' -RootFolder 'MyComputer'
-        if ($Global:TransferLocation){
-            $WPF_UI_MigratedPath_Label.Content = ($Global:TransferLocation)
+        if ($Global:TransferLocation){            
+           
+            $Global:SizeofFilestoTransfer = Get-TransferredFilesSpaceRequired -FoldertoCheck $Global:TransferLocation
+            $Global:AvailableSpaceFilestoTransfer =  $Global:Space_FilestoTransfer - $Global:SizeofFilestoTransfer      
+            
+            $WPF_UI_RequiredSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Global:SizeofFilestoTransfer
+            $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Global:AvailableSpaceFilestoTransfer 
+
+            $WPF_UI_MigratedPath_Label.Content = Get-FormattedPathforGUI -PathtoTruncate ($Global:TransferLocation)
             $WPF_UI_MigratedFiles_Button.Content = 'Click to remove Transfer Folder'
             $WPF_UI_MigratedFiles_Button.Background = 'Green'
         }
         else{
+            $Global:SizeofFilestoTransfer = 0
+            $WPF_UI_RequiredSpaceValueTransferredFiles_TextBox.Text = ''
+            $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = ''
             $WPF_UI_MigratedFiles_Button.Background = '#FFDDDDDD'
         }
     }
     else{
+        $Global:SizeofFilestoTransfer= 0
+        $WPF_UI_RequiredSpaceValueTransferredFiles_TextBox.Text = ''
+        $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = ''
         $Global:TransferLocation = $null
-        $WPF_UI_MigratedFiles_Button.Content = 'Click to Set Transfer Folder'
+        $WPF_UI_MigratedFiles_Button.Content = 'Click to set Transfer Folder'
         $WPF_UI_MigratedFiles_Button.Background = '#FFDDDDDD'
         $WPF_UI_MigratedPath_Label.Content='No transfer path selected'
     }
@@ -509,7 +633,6 @@ if (-not ($IsAdministrator)){
     exit
 
 }
-
 ####################################################################### End Test for Administrator ############################################################################################################
 
 
@@ -712,7 +835,6 @@ $VolumeName_System ='Workbench'
 $DeviceName_Other = ($DeviceName_Prefix+'1')
 $VolumeName_Other = 'Work'
 $MigratedFilesFolder='My Files'
-$PFSLimit = 101*1024*1024 #Kilobytes
 #$InstallPathMUI='SYS:Programs/MUI'
 #$InstallPathPicasso96='SYS:Programs/Picasso96'
 #$InstallPathAmiSSL='SYS:Programs/AmiSSL'
@@ -924,14 +1046,14 @@ $AmigaPartitionsList = Get-AmigaPartitionList   -SizeofPartition_System_param $G
                                                 -SizeofPartition_Other_param $Global:SizeofPartition_Other `
                                                 -VolumeName_System_param $VolumeName_System `
                                                 -DeviceName_System_param $DeviceName_System `
-                                                -PFSLimit $PFSLimit `
+                                                -PFSLimit $Global:PFSLimit  `
                                                 -VolumeName_Other_param $VolumeName_Other `
                                                 -DeviceName_Other_param $DeviceName_Other `
                                                 -DeviceName_Prefix_param $DeviceName_Prefix
                                                 
 
 
-
+exit
 
 foreach ($AmigaPartition in $AmigaPartitionsList) {
     Write-InformationMessage -Message ('Preparing Partition Device: '+$AmigaPartition.DeviceName+' VolumeName '+$AmigaPartition.VolumeName)
@@ -1480,29 +1602,19 @@ Write-StartTaskMessage -Message 'Transferring Migrated Files to Work Partition' 
 
 ### Transfer files to Work partition
 
-if ($TransferLocation) {
-    # Determine Size of transfer
-    $SizeofFilestoTransfer=(Get-ChildItem $TransferLocation -force -Recurse | Where-Object { $_.PSIsContainer -eq $false }  | Measure-Object -property Length -sum).sum /1Mb
-    Write-Host ('Transferring files from '+$TransferLocation+' to "'+$MigratedFilesFolder+'" directory on Work drive')
-    Write-Host ('Total size of files to be transferred is: '+(([Math]::Round($SizeofFilestoTransfer, 2)).tostring())+'mb')
-    Write-Host ('Available space on Work drive is: '+$SizeofPartition_Other)
-    if ($SizeofFilestoTransfer -lt (([double]($SizeofPartition_Other.trim('mb')))+10)){
-        $SourcePathtoUse = $TransferLocation+('*')
-        if (Test-Path ($AmigaDrivetoCopy+$VolumeName_Other+'\'+$MigratedFilesFolder+'.info')){
-            Remove-Item ($AmigaDrivetoCopy+$VolumeName_Other+'\'+$MigratedFilesFolder+'.info')
-        }
-        $null = Copy-Item ($TempFolder+'NewFolder.info') ($AmigaDrivetoCopy+$VolumeName_Other+'\'+$MigratedFilesFolder+'.info')
-        if (-not(Start-HSTImager -Command 'fs copy' -SourcePath $SourcePathtoUse -DestinationPath ($LocationofImage+$NameofImage+'\rdb\'+$DeviceName_Other+'\'+$MigratedFilesFolder) -HSTImagePathtouse $HSTImagePath -TempFoldertouse $TempFolder)){
-            exit
-        }
+if ($Global:TransferLocation) {
+    Write-InformationMessage -Message ('Transferring files from '+$TransferLocation+' to "'+$MigratedFilesFolder+'" directory on Work drive')
+    $SourcePathtoUse = $TransferLocation+('*')
+    if (Test-Path ($AmigaDrivetoCopy+$VolumeName_Other+'\'+$MigratedFilesFolder+'.info')){
+        Remove-Item ($AmigaDrivetoCopy+$VolumeName_Other+'\'+$MigratedFilesFolder+'.info')
     }
-    else{
-        Write-host "Size of files to be transferred is too large for the Work partition! Not transferring!"
+    $null = Copy-Item ($TempFolder+'NewFolder.info') ($AmigaDrivetoCopy+$VolumeName_Other+'\'+$MigratedFilesFolder+'.info')
+    if (-not(Start-HSTImager -Command 'fs copy' -SourcePath $SourcePathtoUse -DestinationPath ($LocationofImage+$NameofImage+'\rdb\'+$DeviceName_Other+'\'+$MigratedFilesFolder) -HSTImagePathtouse $HSTImagePath -TempFoldertouse $TempFolder)){
+        exit
     }
 }
 
 Write-TaskCompleteMessage -Message 'Transferring Migrated Files to Work Partition - Complete!' -SectionNumber '17' -TotalSections $TotalSections
-
 Write-StartTaskMessage -Message 'Transferring Amiga Files to Image' -SectionNumber '18' -TotalSections $TotalSections
 
 if (-not(Start-HSTImager -Command 'fs copy' -SourcePath ($AmigaDrivetoCopy+$VolumeName_System) -DestinationPath ($LocationofImage+$NameofImage+'\rdb\'+$DeviceName_System) -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){

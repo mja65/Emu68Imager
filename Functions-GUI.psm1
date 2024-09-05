@@ -1,21 +1,75 @@
-function Set-RunTimeEnvironment {
+function Get-FormattedPathforGUI {
     param (
-        
+        $PathtoTruncate
     )
-    if ($env:TERM_PROGRAM){
-        Write-Host "Run from Visual Studio Code!"
-        $RunMode=0
-     } 
-     elseif ($psISE){
-        Write-Host "Run from Powershell ISE!"
-        $RunMode=0
-     }
-     else{
-        $RunMode=1
-     } 
-    return $RunMode
+    $LengthofString = 26 #Maximum supported by label less three for the ...
+    if ($PathtoTruncate.Length -gt $LengthofString){
+        $Output = ('...'+($PathtoTruncate.Substring($PathtoTruncate.Length -$LengthofString,$LengthofString)))
+    }
+    else{
+        $Output = $PathtoTruncate
+    }
+    return $Output
 }
 
+
+function Get-TransferredFilesSpaceRequired {
+    param (
+        $FoldertoCheck
+    )
+    
+    $SizeofFiles = (Get-ChildItem $FoldertoCheck -force -Recurse | Where-Object { $_.PSIsContainer -eq $false }  | Measure-Object -property Length -sum).sum/1Kb
+    return $SizeofFiles #In Kilobytes
+}
+function Get-TransferredFilesAvailableSpace {
+    param (
+        $PFSLimit,
+        $WorkSize #In GB
+    )
+    
+    $WorkSizeKb = $WorkSize*1024*1024
+
+    if ($WorkSizeKb -ge $PFSLimit){
+        $AvailableSpacetoReport = $PFSLimit
+    }
+    else{
+        $AvailableSpacetoReport = $WorkSizeKb
+    }
+    return $AvailableSpacetoReport
+}
+
+
+function Get-RoundedDiskSize {
+    param (
+        $Size,
+        $Scale
+    )
+    if ($Scale -eq 'GiB'){
+        $RoundedSize = ([math]::truncate(($Disk.Size/1GB)*1000)/1000)
+        
+    }
+    return $RoundedSize
+}
+
+function Get-FormattedSize {
+    param (
+        $Size #In Kilobytes
+    )
+        
+    if ($Size -eq 0){
+        $ReportedSize = (0).ToString()+' KiB'
+    }
+    elseif ([Math]::Abs($Size) -le 1024){ #Kilobytes
+        $ReportedSize = [math]::Round($Size,2).ToString()+' KiB'
+    } 
+    elseif (([Math]::Abs($Size) -gt 1024) -and ([Math]::Abs($Size) -le 1024*1024)){
+        $ReportedSize = [math]::Round($Size/1024,2).ToString()+' MiB'
+    }
+    else{
+        $ReportedSize = [math]::Round($Size/1024/1024,2).ToString()+' GiB'
+    }
+    return $ReportedSize
+}
 function Get-AmigaPartitionList {
     param (
         $SizeofPartition_System_param,
@@ -87,7 +141,8 @@ function Get-RequiredSpace {
     40 + ` # AmigaDownloads
     190 + ` # Programs Folder
     80   # TempFolder
-    return $SpaceNeeded # In Megabytes
+    $SpaceNeeded = $SpaceNeeded*1024
+    return $SpaceNeeded # In Kilobytes
 }
 
 function Write-StartTaskMessage {
@@ -192,6 +247,9 @@ function Confirm-UIFields {
         
     )
     $ErrorMessage = $null
+    if (-not($Global:HSTDiskName)){
+        $ErrorMessage += 'You have not selected a disk'+"`n"
+    }
     if (-not($WPF_UI_KickstartVersion_Dropdown.SelectedItem)) {
         $ErrorMessage += 'You have not populated a Kickstart version'+"`n"
     }
