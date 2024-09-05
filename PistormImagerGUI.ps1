@@ -41,7 +41,8 @@ $Global:KickstartVersiontoUse = $null
 $Global:SSID = $null
 $Global:WifiPassword = $null
 $Global:SizeofFAT32 = $null 
-$Global:SizeofImage = $null 
+$Global:SizeofImage = $null
+$Global:SizeofImage_HST = $null
 $Global:SizeofPartition_System = $null
 $Global:SizeofPartition_Other = $null
 $Global:WorkingPath = $null
@@ -104,21 +105,21 @@ $inputXML_UserInterface = @"
             <TextBox x:Name="Password_Textbox" HorizontalAlignment="Left" Margin="721,121,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="120"/>
             <ComboBox x:Name="MediaSelect_DropDown" HorizontalAlignment="Left" Margin="10,40,0,0" VerticalAlignment="Top" Width="341"/>
             <Label x:Name="MediaSelect_Label" Content="Select Media to Use" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="315" HorizontalContentAlignment="Center"/>
-            <Button x:Name="MediaSelect_Refresh" Content="Refresh Available Media" HorizontalAlignment="Left" Margin="376,38,0,0" VerticalAlignment="Top" Width="130" Height="20"/>
+            <Button x:Name="MediaSelect_Refresh" Content="Refresh Available Media" HorizontalAlignment="Left" Margin="376,41,0,0" VerticalAlignment="Top" Width="130" Height="20"/>
             <TextBox x:Name="ImageSize_Value" Text="" HorizontalAlignment="Left" Margin="140,79,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120" IsEnabled="False"/>
             <Label x:Name="ImageSize_Label" Content="Total Image Size (GiB)" HorizontalAlignment="Left" Margin="265,75,0,0" VerticalAlignment="Top" Width="200"/>
             <Label x:Name="WorkbenchSize_Label" Content="Size of Workbench" HorizontalAlignment="Left" Margin="10,127,0,0" VerticalAlignment="Top" Width="121" Height="26" HorizontalContentAlignment="Center"/>
             <TextBox x:Name="WorkbenchSize_Value" Text="" HorizontalAlignment="Left" Margin="9,174,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120" IsEnabled="False"/>
-            <TextBox x:Name="WorkSize_Value" Text="" HorizontalAlignment="Left" Margin="286,176,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="130" IsEnabled="False"/>
-            <Label x:Name="WorkSize_Label" Content="Size of Work" HorizontalAlignment="Left" Margin="282,127,0,0" VerticalAlignment="Top" Width="130" HorizontalContentAlignment="Center"/>
-            <TextBox x:Name="FAT32Size_Value" Text="" HorizontalAlignment="Left" Margin="140,202,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120" IsEnabled="False"/>
-            <Label x:Name="FAT32Size_Label" Content="Size of FAT32 Partition (GiB)" HorizontalAlignment="Left" Margin="266,197,0,0" VerticalAlignment="Top" Width="184"/>
+            <TextBox x:Name="WorkSize_Value" Text="" HorizontalAlignment="Left" Margin="260,174,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="130" IsEnabled="False"/>
+            <Label x:Name="WorkSize_Label" Content="Size of Work" HorizontalAlignment="Left" Margin="262,127,0,0" VerticalAlignment="Top" Width="130" HorizontalContentAlignment="Center"/>
+            <TextBox x:Name="FAT32Size_Value" Text="" HorizontalAlignment="Left" Margin="135,202,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120" IsEnabled="False"/>
+            <Label x:Name="FAT32Size_Label" Content="Size of FAT32 Partition (GiB)" HorizontalAlignment="Left" Margin="260,198,0,0" VerticalAlignment="Top" Width="184"/>
             <Slider x:Name="ImageSize_Slider" HorizontalAlignment="Left" Margin="16,73,0,0" VerticalAlignment="Top" Width="120" TickPlacement="TopLeft" AutoToolTipPlacement="None" LargeChange="0.5" SmallChange="0.1" IsSnapToTickEnabled="True" TickFrequency="0.1" IsEnabled="False"/>
-            <Slider x:Name="WorkbenchSize_Slider" HorizontalAlignment="Left" Margin="133,169,0,0" VerticalAlignment="Top" Width="120" TickPlacement="TopLeft" AutoToolTipPlacement="None" LargeChange="0.5" SmallChange="0.1" IsSnapToTickEnabled="True" TickFrequency="0.1" IsEnabled="False"/>
+            <Slider x:Name="WorkbenchSize_Slider" HorizontalAlignment="Left" Margin="133,168,0,0" VerticalAlignment="Top" Width="120" TickPlacement="TopLeft" AutoToolTipPlacement="None" LargeChange="0.5" SmallChange="0.1" IsSnapToTickEnabled="True" TickFrequency="0.1" IsEnabled="False"/>
             <Slider x:Name="WorkSize_Slider" HorizontalAlignment="Left" Margin="504,285,0,0" VerticalAlignment="Top" Width="120" TickPlacement="TopLeft" AutoToolTipPlacement="None" LargeChange="0.5" SmallChange="0.1" Visibility="Hidden" IsSnapToTickEnabled="True" TickFrequency="0.1" IsEnabled="False"/>
-            <Slider x:Name="FAT32Size_Slider" HorizontalAlignment="Left" Margin="16,202,0,0" VerticalAlignment="Top" Width="120" TickPlacement="TopLeft" AutoToolTipPlacement="None" LargeChange="0.5" SmallChange="0.1" IsSnapToTickEnabled="True" TickFrequency="0.1" IsEnabled="False"/>
+            <Slider x:Name="FAT32Size_Slider" HorizontalAlignment="Left" Margin="12,196,0,0" VerticalAlignment="Top" Width="120" TickPlacement="TopLeft" AutoToolTipPlacement="None" LargeChange="0.5" SmallChange="0.1" IsSnapToTickEnabled="True" TickFrequency="0.1" IsEnabled="False"/>
             <Label x:Name="WorkbenchSize_Label2ndLine" Content="Partition (GiB)" HorizontalAlignment="Left" Margin="9,143,0,0" VerticalAlignment="Top" Width="121" Height="26" HorizontalContentAlignment="Center"/>
-            <Label x:Name="Worksize_Label2ndLine" Content="Partition (GiB)" HorizontalAlignment="Left" Margin="286,143,0,0" VerticalAlignment="Top" Width="121" Height="26" HorizontalContentAlignment="Center"/>
+            <Label x:Name="Worksize_Label2ndLine" Content="Partition (GiB)" HorizontalAlignment="Left" Margin="266,143,0,0" VerticalAlignment="Top" Width="121" Height="26" HorizontalContentAlignment="Center"/>
             <TextBox x:Name="RequiredSpace_TextBox" HorizontalAlignment="Left" Margin="629,285,0,0" TextWrapping="Wrap" Text="Required space to run tool is:" VerticalAlignment="Top" Width="120" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
             <TextBox x:Name="AvailableSpace_TextBox" HorizontalAlignment="Left" Margin="629,326,0,0" TextWrapping="Wrap" Text="Available space is:" VerticalAlignment="Top" Width="120" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
             <TextBox x:Name="RequiredSpaceValue_TextBox" HorizontalAlignment="Left" Margin="749,297,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
@@ -132,6 +133,7 @@ $inputXML_UserInterface = @"
 
     </Grid>
 </Window>
+
 
 "@
 
@@ -779,21 +781,6 @@ elseif (-not ($Global:ExitType-eq 1)){
     exit
 }
 
-If ($RunMode-eq 0){
-    Get-UICapturedData
-    # $Global:HSTDiskName =  
-    # $Global:ScreenModetoUse =
-    # $Global:KickstartVersiontoUse = 
-    # $Global:SSID = 
-    # $Global:WifiPassword = 
-    # $Global:SizeofFAT32 =
-    # $Global:SizeofImage =
-    # $Global:SizeofPartition_System =
-    # $Global:SizeofPartition_Other =
-    # $Global:WorkingPath =
-    # $Global:ROMPath =
-}
-
 #[System.Windows.Window].GetEvents() | select Name, *Method, EventHandlerType
 
 #[System.Windows.Controls.TextBox].GetEvents() | Select-Object Name, *Method, EventHandlerType
@@ -821,6 +808,24 @@ $TotalSections=20
 # Check Integrity of CSVs
 
 $StartDateandTime = (Get-Date -Format HH:mm:ss)
+
+$Global:SizeofImage_HST = $Global:SizeofImage-($Global:SizeofFAT32*1024)
+
+Write-InformationMessage -Message "Running Script to perform selected functions. Options selected are:"
+Write-InformationMessage -Message "DiskName to Write: $Global:HSTDiskName"  
+Write-InformationMessage -Message "ScreenMode to Use: $Global:ScreenModetoUse"
+Write-InformationMessage -Message "Kickstart to Use: $Global:KickstartVersiontoUse" 
+Write-InformationMessage -Message "SSID to configure: $Global:SSID" 
+Write-InformationMessage -Message "Password to set: $Global:WifiPassword" 
+Write-InformationMessage -Message "Fat32 Size (MiB): $Global:SizeofFAT32"
+Write-InformationMessage -Message "Image Size (KiB): $Global:SizeofImage"
+Write-InformationMessage -Message "Image Size HST (KiB): $Global:SizeofImage_HST"
+Write-InformationMessage -Message "Workbench Size: $Global:SizeofPartition_System"
+Write-InformationMessage -Message "Work Size: $Global:SizeofPartition_Other"
+Write-InformationMessage -Message "Working Path: $Global:WorkingPath"
+Write-InformationMessage -Message "Rom Path: $Global:ROMPath"
+Write-InformationMessage -Message "ADF Path: $Global:ADFPath" 
+Write-InformationMessage -Message "Transfer Location: $Global:TransferLocation"
 
 Write-InformationMessage -Message "Starting execution at $StartDateandTime"
 
@@ -1099,8 +1104,6 @@ Write-TaskCompleteMessage -Message 'Downloading LZX - Complete!' -SectionNumber 
 ### End Download UnLzx
 
 Write-StartTaskMessage -Message 'Preparing Amiga Image' -SectionNumber '9' -TotalSections $TotalSections
-
-$SizeofImagetouse = (([math]::truncate(($Global:SizeofImage-$Global:SizeofFAT32))).ToString()+'kb')
 
 if (-not (Start-HSTImager -Command "Blank" -DestinationPath ($LocationofImage+$NameofImage) -ImageSize $SizeofImagetouse -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
     exit
