@@ -133,27 +133,26 @@ function Get-AmigaPartitionList {
 function Get-RequiredSpace {
     param (
         $ImageSize
-    )
-    
-    $SpaceNeeded = `
-    (2*$ImageSize*1024) + ` #Image
-    10 + ` #FAT32 Files
-    23 + ` # AmigaImageFiles
-    40 + ` # AmigaDownloads
-    190 + ` # Programs Folder
-    80   # TempFolder
+    )    
+    $SpaceNeeded = (2*$ImageSize*1024) #Image
+    if ($Global:SetDiskupOnly -ne 'TRUE'){
+        $SpaceNeeded +=
+        10 + ` #FAT32 Files
+        23 + ` # AmigaImageFiles
+        40 + ` # AmigaDownloads
+        190 + ` # Programs Folder
+        80   # TempFolder
+    }
     $SpaceNeeded = $SpaceNeeded*1024
     return $SpaceNeeded # In Kilobytes
 }
 
 function Write-StartTaskMessage {
     param (
-        $SectionNumber,
-        $TotalSections,
         $Message
     )
     Write-Host ''
-    Write-Host "[Section: $SectionNumber of $TotalSections]: `t $Message" -ForegroundColor White
+    Write-Host "[Section: $Global:CurrentSection of $Global:TotalSections]: `t $Message" -ForegroundColor White
     Write-Host ''
 }
 
@@ -172,7 +171,7 @@ function Write-InformationMessage {
     param (
         $Message
     )
-    Write-Host $Message -ForegroundColor Yellow
+    Write-Host " `t`t $Message" -ForegroundColor Yellow
 }
 
 function Write-ErrorMessage {
@@ -184,11 +183,10 @@ function Write-ErrorMessage {
 
 function Write-TaskCompleteMessage {
     param (
-        $SectionNumber,
-        $TotalSections,
         $Message
     )
-    Write-Host "[Section: $SectionNumber of $TotalSections]: `t $Message" -ForegroundColor Green
+    Write-Host "[Section: $Global:CurrentSection of $Global:TotalSections]: `t $Message" -ForegroundColor Green
+    $Global:CurrentSection ++
 }
 
 
@@ -260,9 +258,11 @@ function Confirm-UIFields {
     if (-not($Global:ROMPath )) {
         $ErrorMessage += 'You have not populated a Rom Path'+"`n"
     }
-    if (-not($Global:ADFPath )) {
-        $ErrorMessage += 'You have not populated an ADF Path'+"`n"
-    }  
+    if ($Global:SetDiskupOnly -ne 'TRUE'){
+        if (-not($Global:ADFPath )) {
+            $ErrorMessage += 'You have not populated an ADF Path'+"`n"
+        }          
+    }
     return $ErrorMessage
 }
 

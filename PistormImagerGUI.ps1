@@ -58,8 +58,12 @@ $Global:SpaceThreshold_WorkingFolderDisk  = $null
 $Global:SpaceThreshold_FilestoTransfer = $null
 $Global:Space_FilestoTransfer = $null
 $Global:PFSLimit =$null
+$Global:WriteImage = $null
+$Global:TotalSections = $null
+$Global:CurrentSection = $null
+$Global:SetDiskupOnly = $null
 
- ####################################################################### End Null out Global Variables ###############################################################################################
+####################################################################### End Null out Global Variables ###############################################################################################
  
  ####################################################################### Set Global Variables ###############################################################################################
  
@@ -89,52 +93,65 @@ $inputXML_UserInterface = @"
     <Grid>
         <Grid Background="#FFE5E5E5" Margin="-1,0,1,0">
             <Button x:Name="Start_Button" Content="Run Tool" HorizontalAlignment="Left" Margin="749,365,0,0" VerticalAlignment="Top" Width="100" Height="20"/>
-            <ComboBox x:Name="ScreenMode_Dropdown" HorizontalAlignment="Left" Margin="576,40,0,0" VerticalAlignment="Top" Width="300"/>
+            <ComboBox x:Name="ScreenMode_Dropdown" HorizontalAlignment="Left" Margin="576,28,0,0" VerticalAlignment="Top" Width="300"/>
             <ComboBox x:Name="KickstartVersion_DropDown" HorizontalAlignment="Left" Margin="10,259,0,0" VerticalAlignment="Top" Width="200"/>
             <Button x:Name="Rompath_Button" Content="Click to set ROM path" HorizontalAlignment="Left" Margin="10,290,0,0" VerticalAlignment="Top" Width="200" Height="30"/>
             <Button x:Name="ADFpath_Button" Content="Click to set ADF path" HorizontalAlignment="Left" Margin="10,325,0,0" VerticalAlignment="Top" Width="200" Height="30"/>
-            <Label x:Name="ScreenMode_Label" Content="Select ScreenMode" HorizontalAlignment="Left" Margin="554,10,0,0" VerticalAlignment="Top" Width="300" HorizontalContentAlignment="Center"/>
-            <Label x:Name="KickstartVersion_Label" Content="Select OS Version" HorizontalAlignment="Left" Margin="16,228,0,0" VerticalAlignment="Top" Width="200" HorizontalContentAlignment="Center"/>
+            <Label x:Name="ScreenMode_Label" Content="Select ScreenMode" HorizontalAlignment="Left" Margin="554,-2,0,0" VerticalAlignment="Top" Width="300" HorizontalContentAlignment="Center"/>
+            <Label x:Name="KickstartVersion_Label" Content="Select OS Version" HorizontalAlignment="Left" Margin="10,236,0,0" VerticalAlignment="Top" Width="200" HorizontalContentAlignment="Center"/>
             <Button x:Name="MigratedFiles_Button" Content="Click to set Transfer path" HorizontalAlignment="Left" Margin="10,360,0,0" VerticalAlignment="Top" Width="200" Height="30"/>
             <Label x:Name="RomPath_Label" Content="No ROM path selected" HorizontalAlignment="Left" Margin="231,290,0,0" VerticalAlignment="Top" Width="200"/>
             <Label x:Name="MigratedPath_Label" Content="No transfer path selected" HorizontalAlignment="Left" Margin="231,360,0,0" VerticalAlignment="Top" Width="200"/>
             <Label x:Name="ADFPath_Label" Content="No ADF path selected" HorizontalAlignment="Left" Margin="231,325,0,0" VerticalAlignment="Top" Width="200"/>
-            <Label x:Name="SSID_Label" Content="Enter your SSID" HorizontalAlignment="Left" Margin="554,79,0,0" VerticalAlignment="Top" Width="152" />
-            <Label x:Name="Password_Label" Content="Enter your Wifi password" HorizontalAlignment="Left" Margin="554,115,0,0" VerticalAlignment="Top" Width="152"/>
-            <TextBox x:Name="SSID_Textbox" HorizontalAlignment="Left" Margin="721,85,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="120"/>
-            <TextBox x:Name="Password_Textbox" HorizontalAlignment="Left" Margin="721,121,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="120"/>
-            <ComboBox x:Name="MediaSelect_DropDown" HorizontalAlignment="Left" Margin="10,40,0,0" VerticalAlignment="Top" Width="341"/>
-            <Label x:Name="MediaSelect_Label" Content="Select Media to Use" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="315" HorizontalContentAlignment="Center"/>
-            <Button x:Name="MediaSelect_Refresh" Content="Refresh Available Media" HorizontalAlignment="Left" Margin="376,41,0,0" VerticalAlignment="Top" Width="130" Height="20"/>
-            <TextBox x:Name="ImageSize_Value" Text="" HorizontalAlignment="Left" Margin="140,79,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120" IsEnabled="False"/>
-            <Label x:Name="ImageSize_Label" Content="Total Image Size (GiB)" HorizontalAlignment="Left" Margin="265,75,0,0" VerticalAlignment="Top" Width="200"/>
-            <Label x:Name="WorkbenchSize_Label" Content="Size of Workbench" HorizontalAlignment="Left" Margin="10,127,0,0" VerticalAlignment="Top" Width="121" Height="26" HorizontalContentAlignment="Center"/>
-            <TextBox x:Name="WorkbenchSize_Value" Text="" HorizontalAlignment="Left" Margin="9,174,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120" IsEnabled="False"/>
-            <TextBox x:Name="WorkSize_Value" Text="" HorizontalAlignment="Left" Margin="260,174,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="130" IsEnabled="False"/>
-            <Label x:Name="WorkSize_Label" Content="Size of Work" HorizontalAlignment="Left" Margin="262,127,0,0" VerticalAlignment="Top" Width="130" HorizontalContentAlignment="Center"/>
-            <TextBox x:Name="FAT32Size_Value" Text="" HorizontalAlignment="Left" Margin="135,202,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120" IsEnabled="False"/>
-            <Label x:Name="FAT32Size_Label" Content="Size of FAT32 Partition (GiB)" HorizontalAlignment="Left" Margin="260,198,0,0" VerticalAlignment="Top" Width="184"/>
-            <Slider x:Name="ImageSize_Slider" HorizontalAlignment="Left" Margin="16,73,0,0" VerticalAlignment="Top" Width="120" TickPlacement="TopLeft" AutoToolTipPlacement="None" LargeChange="0.5" SmallChange="0.1" IsSnapToTickEnabled="True" TickFrequency="0.1" IsEnabled="False"/>
-            <Slider x:Name="WorkbenchSize_Slider" HorizontalAlignment="Left" Margin="133,168,0,0" VerticalAlignment="Top" Width="120" TickPlacement="TopLeft" AutoToolTipPlacement="None" LargeChange="0.5" SmallChange="0.1" IsSnapToTickEnabled="True" TickFrequency="0.1" IsEnabled="False"/>
-            <Slider x:Name="WorkSize_Slider" HorizontalAlignment="Left" Margin="504,285,0,0" VerticalAlignment="Top" Width="120" TickPlacement="TopLeft" AutoToolTipPlacement="None" LargeChange="0.5" SmallChange="0.1" Visibility="Hidden" IsSnapToTickEnabled="True" TickFrequency="0.1" IsEnabled="False"/>
-            <Slider x:Name="FAT32Size_Slider" HorizontalAlignment="Left" Margin="12,196,0,0" VerticalAlignment="Top" Width="120" TickPlacement="TopLeft" AutoToolTipPlacement="None" LargeChange="0.5" SmallChange="0.1" IsSnapToTickEnabled="True" TickFrequency="0.1" IsEnabled="False"/>
-            <Label x:Name="WorkbenchSize_Label2ndLine" Content="Partition (GiB)" HorizontalAlignment="Left" Margin="9,143,0,0" VerticalAlignment="Top" Width="121" Height="26" HorizontalContentAlignment="Center"/>
-            <Label x:Name="Worksize_Label2ndLine" Content="Partition (GiB)" HorizontalAlignment="Left" Margin="266,143,0,0" VerticalAlignment="Top" Width="121" Height="26" HorizontalContentAlignment="Center"/>
-            <TextBox x:Name="RequiredSpace_TextBox" HorizontalAlignment="Left" Margin="629,285,0,0" TextWrapping="Wrap" Text="Required space to run tool is:" VerticalAlignment="Top" Width="120" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-            <TextBox x:Name="AvailableSpace_TextBox" HorizontalAlignment="Left" Margin="629,326,0,0" TextWrapping="Wrap" Text="Available space is:" VerticalAlignment="Top" Width="120" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-            <TextBox x:Name="RequiredSpaceValue_TextBox" HorizontalAlignment="Left" Margin="749,297,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-            <TextBox x:Name="AvailableSpaceValue_TextBox" HorizontalAlignment="Left" Margin="749,328,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Green" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-            <TextBox x:Name="RequiredSpaceTransferredFiles_TextBox" HorizontalAlignment="Left" Margin="630,0,0,0" TextWrapping="Wrap" Text="Required space for transferred files:" VerticalAlignment="Center" Width="120" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-            <TextBox x:Name="RequiredSpaceValueTransferredFiles_TextBox" HorizontalAlignment="Left" Margin="749,0,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Center" Width="100" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-            <TextBox x:Name="AvailableSpaceTransferredFiles_TextBox" HorizontalAlignment="Left" Margin="629,241,0,0" TextWrapping="Wrap" Text="Available space is:" VerticalAlignment="Top" Width="120" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-            <TextBox x:Name="AvailableSpaceValueTransferredFiles_TextBox" HorizontalAlignment="Left" Margin="749,241,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+            <ComboBox x:Name="MediaSelect_DropDown" HorizontalAlignment="Left" Margin="10,27,0,0" VerticalAlignment="Top" Width="341"/>
+            <Label x:Name="MediaSelect_Label" Content="Select Media to Use" HorizontalAlignment="Left" Margin="10,0,0,0" VerticalAlignment="Top" Width="315" HorizontalContentAlignment="Center"/>
+            <Button x:Name="MediaSelect_Refresh" Content="Refresh Available Media" HorizontalAlignment="Left" Margin="376,29,0,0" VerticalAlignment="Top" Width="130" Height="20"/>
+            <GroupBox x:Name="Wifi_GroupBox" Header="Wifi Details" Margin="541,50,0,276" Background="Transparent" HorizontalAlignment="Left" Width="316" >
+                <Grid Background="Transparent" Height="59" >
+                    <Label x:Name="SSID_Label" Content="Enter your SSID" HorizontalAlignment="Left" Margin="2,-8,0,0" VerticalAlignment="Top" Width="152" />
+                    <Label x:Name="Password_Label" Content="Enter your Wifi password" HorizontalAlignment="Left" Margin="10,23,0,0" VerticalAlignment="Top" Width="152" />
+                    <TextBox x:Name="SSID_Textbox" HorizontalAlignment="Left" Margin="167,28,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="120"/>
+                    <TextBox x:Name="Password_Textbox" HorizontalAlignment="Left" Margin="167,-3,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="120"/>
+                </Grid>
+            </GroupBox>
+            <GroupBox x:Name="Disk_GroupBox" Height="165" Header="Disk Setup" Margin="10,63,0,180" Background="Transparent" HorizontalAlignment="Left" Width="429" >
+                <Grid Background="Transparent" >
+                    <TextBox x:Name="ImageSize_Value" Text="" HorizontalAlignment="Left" Margin="270,10,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="50" IsEnabled="False"/>
+                    <TextBox x:Name="WorkbenchSize_Value" Text="" HorizontalAlignment="Left" Margin="36,73,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="50" IsEnabled="False"/>
+                    <TextBox x:Name="WorkSize_Value" Text="" HorizontalAlignment="Left" Margin="334,73,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="50" IsEnabled="False"/>
+                    <TextBox x:Name="FAT32Size_Value" Text="" HorizontalAlignment="Left" Margin="270,108,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="50" IsEnabled="False"/>
+                    <Slider x:Name="ImageSize_Slider" HorizontalAlignment="Left" Margin="4,6,0,0" VerticalAlignment="Top" Width="260" TickPlacement="TopLeft" AutoToolTipPlacement="None" LargeChange="0.5" SmallChange="0.1" IsSnapToTickEnabled="True" TickFrequency="0.1" IsEnabled="False"/>
+                    <Slider x:Name="WorkbenchSize_Slider" HorizontalAlignment="Left" Margin="130,55,0,0" VerticalAlignment="Top" Width="167" TickPlacement="TopLeft" AutoToolTipPlacement="None" LargeChange="0.5" SmallChange="0.1" IsSnapToTickEnabled="True" TickFrequency="0.1" IsEnabled="False"/>
+                    <Slider x:Name="WorkSize_Slider" HorizontalAlignment="Left" Margin="492,285,0,0" VerticalAlignment="Top" Width="120" TickPlacement="TopLeft" AutoToolTipPlacement="None" LargeChange="0.5" SmallChange="0.1" Visibility="Hidden" IsSnapToTickEnabled="True" TickFrequency="0.1" IsEnabled="False"/>
+                    <Slider x:Name="FAT32Size_Slider" HorizontalAlignment="Left" Margin="10,100,0,0" VerticalAlignment="Top" Width="254" TickPlacement="TopLeft" AutoToolTipPlacement="None" LargeChange="0.5" SmallChange="0.1" IsSnapToTickEnabled="True" TickFrequency="0.1" IsEnabled="False"/>
+                    <TextBox x:Name="Fat32Size_Label" HorizontalAlignment="Left" Margin="325,100,0,0" TextWrapping="Wrap" Text="Size of FAT32 Partition (GiB)" VerticalAlignment="Top" Width="82" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+                    <TextBox x:Name="WorkSize_Label" HorizontalAlignment="Left" Margin="325,37,0,0" TextWrapping="Wrap" Text="Size of Work Partition (GiB)" VerticalAlignment="Top" Width="82" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+                    <TextBox x:Name="WorkbenchSize_Label" HorizontalAlignment="Left" Margin="15,32,0,0" TextWrapping="Wrap" Text="Size of Workbench Partition (GiB)" VerticalAlignment="Top" Width="113" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+                    <TextBox x:Name="ImageSize_Label" HorizontalAlignment="Left" Margin="325,1,0,0" TextWrapping="Wrap" Text="Total Image Size (GiB)" VerticalAlignment="Top" Width="82" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+                </Grid>
+            </GroupBox>
+            <GroupBox x:Name="Space_GroupBox" Header="Space Requirements" Margin="541,160,0,131" Background="Transparent" HorizontalAlignment="Left" Width="316" >
+                <Grid Background="Transparent" Height="122" >
+                    <TextBox x:Name="RequiredSpace_TextBox" HorizontalAlignment="Left" Margin="10,0,0,0" TextWrapping="Wrap" Text="Space to run tool is:" VerticalAlignment="Center" Width="120" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+                    <TextBox x:Name="AvailableSpace_TextBox" HorizontalAlignment="Left" Margin="10,75,0,0" TextWrapping="Wrap" Text="Available space is:" VerticalAlignment="Top" Width="120" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+                    <TextBox x:Name="RequiredSpaceValue_TextBox" HorizontalAlignment="Left" Margin="194,49,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+                    <TextBox x:Name="AvailableSpaceValue_TextBox" HorizontalAlignment="Left" Margin="194,75,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Green" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+                    <TextBox x:Name="RequiredSpaceTransferredFiles_TextBox" HorizontalAlignment="Left" Margin="10,0,0,0" TextWrapping="Wrap" Text="Space for transferred files:" VerticalAlignment="Top" Width="170" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+                    <TextBox x:Name="RequiredSpaceValueTransferredFiles_TextBox" HorizontalAlignment="Left" Margin="194,0,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+                    <TextBox x:Name="AvailableSpaceTransferredFiles_TextBox" HorizontalAlignment="Left" Margin="10,26,0,0" TextWrapping="Wrap" Text="Available space is:" VerticalAlignment="Top" Width="170" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+                    <TextBox x:Name="AvailableSpaceValueTransferredFiles_TextBox" HorizontalAlignment="Left" Margin="194,26,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+                </Grid>
+            </GroupBox>
+            <GroupBox x:Name="RunOptions_GroupBox" Header="Run Options" Margin="477,304,0,44" Background="Transparent" HorizontalAlignment="Left" Width="260" >
+                <Grid Background="Transparent" >
+                    <CheckBox x:Name="DiskWrite_CheckBox" Content="Do not write to disk. Produce .img file only" HorizontalAlignment="Left" Margin="2,20,0,0" VerticalAlignment="Top"/>
+                    <CheckBox x:Name="NoFileInstall_CheckBox" Content="Only set disk up. Do not install packages" HorizontalAlignment="Left" Margin="2,2,0,0" VerticalAlignment="Top"/>
+                </Grid>
+            </GroupBox>
 
         </Grid>
-
     </Grid>
 </Window>
-
-
 "@
 
 $XAML_UserInterface = Format-XMLtoXAML -inputXML $inputXML_UserInterface 
@@ -162,6 +179,7 @@ $XAML_UserInterface.SelectNodes("//*[@Name]") | ForEach-Object{
 # Use this space to add code to the various form elements in your GUI
 #===========================================================================
 
+$Global:SetDiskupOnly = 'FALSE'
 $DefaultDivisorFat32 = 15
 $DefaultDivisorWorkbench = 15
 $Fat32DefaultMaximum = 1024*1024*1024 #1gb in Kilobytes
@@ -476,12 +494,17 @@ $WPF_UI_ImageSize_Value.add_LostFocus({
     }
 })
 
-$WPF_UI_Start_Button.Content = 'Run Tool'
 $WPF_UI_Start_Button.Background = 'Red'
 
 $WPF_UI_Start_Button.Add_Click({
     $Global:SSID = $WPF_UI_SSID_Textbox.Text
     $Global:WifiPassword = $WPF_UI_Password_Textbox.Text
+    if ($WPF_UI_DiskWrite_CheckBox.IsChecked){
+        $Global:WriteImage ='FALSE'
+    }
+    else{
+        $Global:WriteImage ='TRUE'
+    }
     
     if ($Global:AvailableSpaceFilestoTransfer -lt $Global:SpaceThreshold_FilestoTransfer){
         $Msg = @'
@@ -648,6 +671,40 @@ $WPF_UI_ScreenMode_Dropdown.Add_SelectionChanged({
     }
 })
 
+$WPF_UI_NoFileInstall_CheckBox.Add_Checked({
+    $Global:SetDiskupOnly = 'TRUE'
+    if(Confirm-UIFields){
+        $WPF_UI_Start_Button.Background = 'Red'
+    }
+    else{
+        $WPF_UI_Start_Button.Background = 'Green'
+    }
+    If ($Global:HSTDiskName){
+        $Global:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $WPF_UI_ImageSize_Slider.Value
+        $Global:AvailableSpace_WorkingFolderDisk = $Global:Space_WorkingFolderDisk - $Global:RequiredSpace_WorkingFolderDisk 
+    
+        $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Global:RequiredSpace_WorkingFolderDisk
+        $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Global:AvailableSpace_WorkingFolderDisk
+    } 
+})
+
+$WPF_UI_NoFileInstall_CheckBox.Add_UnChecked({
+    $Global:SetDiskupOnly = 'FALSE'
+    if(Confirm-UIFields){
+        $WPF_UI_Start_Button.Background = 'Red'
+    }
+    else{
+        $WPF_UI_Start_Button.Background = 'Green'
+    }
+    If ($Global:HSTDiskName){
+        $Global:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $WPF_UI_ImageSize_Slider.Value
+        $Global:AvailableSpace_WorkingFolderDisk = $Global:Space_WorkingFolderDisk - $Global:RequiredSpace_WorkingFolderDisk 
+    
+        $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Global:RequiredSpace_WorkingFolderDisk
+        $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Global:AvailableSpace_WorkingFolderDisk
+    }
+})
+
 ####################################################################### End GUI XML for Main Environment ##################################################################################################
 
 ####################################################################### GUI XML for Test Administrator ##################################################################################################
@@ -783,7 +840,7 @@ elseif (-not ($Global:ExitType-eq 1)){
 
 #[System.Windows.Window].GetEvents() | select Name, *Method, EventHandlerType
 
-#[System.Windows.Controls.TextBox].GetEvents() | Select-Object Name, *Method, EventHandlerType
+#[System.Windows.Controls.Checkbox].GetEvents() | Select-Object Name, *Method, EventHandlerType
 
 ##### Script
 
@@ -803,7 +860,20 @@ Foreach ($CSVHash in $CSVHashes){
 
 #Generate CSV MD5 Hashes - End
 
-$TotalSections=20
+$Global:TotalSections = 20
+
+$Global:CurrentSection = 1
+
+if (-not ($Global:TransferLocation)){
+    $TotalSections --
+}
+if (-not ($Global:WriteImage)){
+    $TotalSections --
+}
+
+if ($Global:SetDiskupOnly = 'TRUE'){
+    $TotalSections = 6 ## Need to update
+}
 
 # Check Integrity of CSVs
 
@@ -826,10 +896,12 @@ Write-InformationMessage -Message "Working Path: $Global:WorkingPath"
 Write-InformationMessage -Message "Rom Path: $Global:ROMPath"
 Write-InformationMessage -Message "ADF Path: $Global:ADFPath" 
 Write-InformationMessage -Message "Transfer Location: $Global:TransferLocation"
+Write-InformationMessage -Message "Write Image to Disk: $Global:WriteImage"
+Write-InformationMessage -Message "Set disk up only: $Global:SetDiskupOnly"
 
 Write-InformationMessage -Message "Starting execution at $StartDateandTime"
 
-Write-StartTaskMessage -Message 'Performing integrity checks over input files' -SectionNumber '1' -TotalSections $TotalSections
+Write-StartTaskMessage -Message 'Performing integrity checks over input files'
 
 $CSVHashestoCheck = Import-Csv -Path ($InputFolder+'CSVHASH') -Delimiter ';'
 foreach ($CSVHashtoCheck in $CSVHashestoCheck){
@@ -848,9 +920,9 @@ foreach ($CSVHashtoCheck in $CSVHashestoCheck){
     }
 }
 
-Write-TaskCompleteMessage -Message 'Performing integrity checks over input files - Complete!' -SectionNumber '1' -TotalSections $TotalSections
+Write-TaskCompleteMessage -Message 'Performing integrity checks over input files - Complete!'
 
-Write-StartTaskMessage -Message 'Checking existance of folders, programs, and files' -SectionNumber '2' -TotalSections $TotalSections
+Write-StartTaskMessage -Message 'Checking existance of folders, programs, and files'
 
 if (((split-path  $Global:WorkingPath  -Parent)+'\') -eq $Scriptpath) {
     Write-InformationMessage -Message ('Creating Working Folder under '+$Scriptpath+' (if it does not exist)')
@@ -878,7 +950,7 @@ if ($ErrorCount -ge 1){
 }
 else {
     $null = $ErrorCount
-    Write-TaskCompleteMessage -Message 'Checking existance of folders, programs, and files - Complete!' -SectionNumber '2' -TotalSections $TotalSections
+    Write-TaskCompleteMessage -Message 'Checking existance of folders, programs, and files - Complete!'
 }
 
 $HDF2emu68Path=($SourceProgramPath+'hdf2emu68.exe')
@@ -922,7 +994,7 @@ $NameofImage=('Pistorm'+$Global:KickstartVersiontoUse+'.HDF')
 
 ### Clean up
 
-Write-StartTaskMessage -Message 'Performing Cleanup' -SectionNumber '3' -TotalSections $TotalSections
+Write-StartTaskMessage -Message 'Performing Cleanup'
 
 $NewFolders = ((split-path $TempFolder -leaf),(split-path $LocationofImage -leaf),((Split-Path $AmigaDrivetoCopy -Leaf)+'\'+$VolumeName_System),((Split-Path $AmigaDrivetoCopy -Leaf)+'\'+$VolumeName_Other),(split-path $FAT32Partition -leaf))
 
@@ -947,7 +1019,7 @@ if (-not(Test-Path ( $Global:WorkingPath+'Programs'))){
     $null = New-Item -path ( $Global:WorkingPath) -Name 'Programs' -ItemType Directory      
 }
 
-Write-TaskCompleteMessage -Message 'Performing Cleanup - Complete!' -SectionNumber '3' -TotalSections $TotalSections
+Write-TaskCompleteMessage -Message 'Performing Cleanup - Complete!'
 
 ### End Clean up
 
@@ -955,7 +1027,7 @@ Write-TaskCompleteMessage -Message 'Performing Cleanup - Complete!' -SectionNumb
 
 #Update-OutputWindow -OutputConsole_Title_Text 'Determining Kickstarts to Use' -ProgressbarValue_Overall 7 -ProgressbarValue_Overall_Text '7%'
 
-Write-StartTaskMessage -Message 'Determining Kickstarts to Use' -SectionNumber '4' -TotalSections $TotalSections
+Write-StartTaskMessage -Message 'Determining Kickstarts to Use'
 
 $FoundKickstarttoUse = Compare-KickstartHashes -PathtoKickstartHashes ($InputFolder+'RomHashes.csv') -PathtoKickstartFiles $Global:ROMPath -KickstartVersion $Global:KickstartVersiontoUse
 
@@ -970,72 +1042,80 @@ $KickstartNameFAT32=$FoundKickstarttoUse.Fat32Name
 
 Write-InformationMessage -Message ('Kickstart to be used is: '+$KickstartPath)
 
-Write-TaskCompleteMessage -Message 'Determining Kickstarts to Use - Complete!' -SectionNumber '4' -TotalSections $TotalSections
+Write-TaskCompleteMessage -Message 'Determining Kickstarts to Use - Complete!'
 
-Write-StartTaskMessage -Message 'Determining ADFs to Use' -SectionNumber '5' -TotalSections $TotalSections
+if ($Global:SetDiskupOnly -eq 'FALSE'){
 
-$AvailableADFs = Compare-ADFHashes -PathtoADFFiles $Global:ADFPath -PathtoADFHashes ($InputFolder+'ADFHashes.csv') -KickstartVersion $Global:KickstartVersiontoUse -PathtoListofInstallFiles ($InputFolder+'ListofInstallFiles.csv') 
-
-if (-not ($AvailableADFs)){
-    Write-ErrorMessage -Message "One or more ADF files is missing!"
-    exit
-} 
-
-$ListofInstallFiles = Import-Csv ($InputFolder+'ListofInstallFiles.csv') -Delimiter ';' |  Where-Object {$_.Kickstart_Version -eq $Global:KickstartVersiontoUse} | Sort-Object -Property 'InstallSequence'
-
-$ListofInstallFiles | Add-Member -NotePropertyName Path -NotePropertyValue $null
-$ListofInstallFiles | Add-Member -NotePropertyName DrivetoInstall_VolumeName -NotePropertyValue $null
-
-foreach ($InstallFileLine in $ListofInstallFiles) {
-    if ($InstallFileLine.DrivetoInstall -eq 'System'){
-        $InstallFileLine.DrivetoInstall_VolumeName = $VolumeName_System
+    Write-StartTaskMessage -Message 'Determining ADFs to Use'
+    
+    $AvailableADFs = Compare-ADFHashes -PathtoADFFiles $Global:ADFPath -PathtoADFHashes ($InputFolder+'ADFHashes.csv') -KickstartVersion $Global:KickstartVersiontoUse -PathtoListofInstallFiles ($InputFolder+'ListofInstallFiles.csv') 
+    
+    if (-not ($AvailableADFs)){
+        Write-ErrorMessage -Message "One or more ADF files is missing!"
+        exit
+    } 
+    
+    $ListofInstallFiles = Import-Csv ($InputFolder+'ListofInstallFiles.csv') -Delimiter ';' |  Where-Object {$_.Kickstart_Version -eq $Global:KickstartVersiontoUse} | Sort-Object -Property 'InstallSequence'
+    
+    $ListofInstallFiles | Add-Member -NotePropertyName Path -NotePropertyValue $null
+    $ListofInstallFiles | Add-Member -NotePropertyName DrivetoInstall_VolumeName -NotePropertyValue $null
+    
+    foreach ($InstallFileLine in $ListofInstallFiles) {
+        if ($InstallFileLine.DrivetoInstall -eq 'System'){
+            $InstallFileLine.DrivetoInstall_VolumeName = $VolumeName_System
+        }
+        foreach ($MatchedADF in $AvailableADFs ) {
+            if ($InstallFileLine.ADF_Name -eq $MatchedADF.ADF_Name){
+                $InstallFileLine.Path=$MatchedADF.PathtoADF
+            }
+            if ($MatchedADF.ADF_Name -match "GlowIcons"){
+                $GlowIconsADF=$MatchedADF.PathtoADF
+            }
+            if ($MatchedADF.ADF_Name -match "Storage"){
+                $StorageADF=$MatchedADF.PathtoADF
+            }
+            if ($MatchedADF.ADF_Name -match "Install"){
+                $InstallADF=$MatchedADF.PathtoADF
+            }
+        }    
     }
-    foreach ($MatchedADF in $AvailableADFs ) {
-        if ($InstallFileLine.ADF_Name -eq $MatchedADF.ADF_Name){
-            $InstallFileLine.Path=$MatchedADF.PathtoADF
-        }
-        if ($MatchedADF.ADF_Name -match "GlowIcons"){
-            $GlowIconsADF=$MatchedADF.PathtoADF
-        }
-        if ($MatchedADF.ADF_Name -match "Storage"){
-            $StorageADF=$MatchedADF.PathtoADF
-        }
-        if ($MatchedADF.ADF_Name -match "Install"){
-            $InstallADF=$MatchedADF.PathtoADF
-        }
-    }    
+    
+    Write-InformationMessage -Message 'ADF install images to be used are:'
+    $ListofInstallFiles |  Select-Object Path,FriendlyName -Unique | ForEach-Object {
+        Write-InformationMessage -Message ($_.FriendlyName+' ('+$_.Path+')')
+    } 
+    
+    Write-TaskCompleteMessage -Message 'Determining ADFs to Use - Complete!'
+
 }
 
-Write-InformationMessage -Message 'ADF install images to be used are:'
-$ListofInstallFiles |  Select-Object Path,FriendlyName -Unique | ForEach-Object {
-    Write-InformationMessage -Message ($_.FriendlyName+' ('+$_.Path+')')
-} 
-
-Write-TaskCompleteMessage -Message 'Determining ADFs to Use - Complete!' -SectionNumber '5' -TotalSections $TotalSections
 
 ### Download HST-Imager and HST-Amiga
 
-Write-StartTaskMessage -Message 'Downloading HST Packages' -SectionNumber '6' -TotalSections $TotalSections
+Write-StartTaskMessage -Message 'Downloading HST Packages'
 
-Write-StartSubTaskMessage -Message 'Downloading HST Imager' -SubtaskNumber '1' -TotalSubtasks '2'
+Write-StartSubTaskMessage -Message 'Downloading HST Imager'
 
 if (-not(Get-GithubRelease -GithubRelease $HSTImagerreleases -Tag_Name '1.1.350' -Name '_console_windows_x64.zip' -LocationforDownload ($TempFolder+'HSTImager.zip') -LocationforProgram ($ProgramsFolder+'HST-Imager\') -Sort_Flag '')){
     Write-ErrorMessage -Message 'Error downloading HST-Imager! Cannot continue!'
     exit
 }
 
-Write-StartSubTaskMessage -Message 'Downloading HST Amiga' -SubtaskNumber '2' -TotalSubtasks '2'
-
-if (-not(Get-GithubRelease -GithubRelease $HSTAmigareleases -Tag_Name '0.3.163' -Name '_console_windows_x64.zip' -LocationforDownload ($TempFolder+'HSTAmiga.zip') -LocationforProgram ($ProgramsFolder+'HST-Amiga\') -Sort_Flag '')){
-    Write-ErrorMessage -Message 'Error downloading HST-Amiga! Cannot continue!'
-    exit
+if ($Global:SetDiskupOnly -eq 'FALSE'){
+    Write-StartSubTaskMessage -Message 'Downloading HST Amiga'
+    
+    if (-not(Get-GithubRelease -GithubRelease $HSTAmigareleases -Tag_Name '0.3.163' -Name '_console_windows_x64.zip' -LocationforDownload ($TempFolder+'HSTAmiga.zip') -LocationforProgram ($ProgramsFolder+'HST-Amiga\') -Sort_Flag '')){
+        Write-ErrorMessage -Message 'Error downloading HST-Amiga! Cannot continue!'
+        exit
+    }
 }
 
-Write-TaskCompleteMessage -Message 'Downloading HST Packages - Complete!' -SectionNumber '6' -TotalSections $TotalSections
+
+Write-TaskCompleteMessage -Message 'Downloading HST Packages - Complete!'
 
 #### Download Emu68 Files
 
-Write-StartTaskMessage -Message 'Downloading Emu68 Packages' -SectionNumber '7' -TotalSections $TotalSections
+Write-StartTaskMessage -Message 'Downloading Emu68 Packages'
 
 $PathstoTest='Emu68Pistorm','Emu68Pistorm32Lite','Emu68Tools'
 
@@ -1075,35 +1155,39 @@ if (-not(Get-GithubRelease -GithubRelease $Emu68Toolsreleases -Tag_Name "nightly
     exit
 }
 
-Write-TaskCompleteMessage -Message 'Downloading Emu68 Packages - Complete' -SectionNumber '7' -TotalSections $TotalSections
+Write-TaskCompleteMessage -Message 'Downloading Emu68 Packages - Complete'
 
 ### End Download Emu68
 
 ### Begin Download UnLzx
 
-Write-StartTaskMessage -Message 'Downloading UnLZX' -SectionNumber '8' -TotalSections $TotalSections
-
-if (-not (Test-Path ($ProgramsFolder+'unlzx.exe'))){
-    If (-not (Get-AmigaFileWeb -URL $UnLZXURL -NameofDL 'W95unlzx.lha' -LocationforDL $TempFolder)){
-        Write-ErrorMessage -Message 'Error downloading UnLZX! Quitting'
-        exit
+if ($Global:SetDiskupOnly -eq 'FALSE'){
+    Write-StartTaskMessage -Message 'Downloading UnLZX'
+    
+    if (-not (Test-Path ($ProgramsFolder+'unlzx.exe'))){
+        If (-not (Get-AmigaFileWeb -URL $UnLZXURL -NameofDL 'W95unlzx.lha' -LocationforDL $TempFolder)){
+            Write-ErrorMessage -Message 'Error downloading UnLZX! Quitting'
+            exit
+        }
+        if (-not(Expand-Zipfiles -SevenzipPathtouse $7zipPath -TempFoldertouse $TempFolder -InputFile ($TempFolder+'W95unlzx.lha') -OutputDirectory $ProgramsFolder -FiletoExtract 'unlzx.exe')){
+            Write-InformationMessage -Message ('Deleting package '+($TempFolder+'W95unlzx.lha'))
+            $null=Remove-Item -Path ($TempFolder+'W95unlzx.lha') -Force
+            Write-ErrorMessage -Message 'Error extracting UnLZX! Quitting'
+            exit
+        }
     }
-    if (-not(Expand-Zipfiles -SevenzipPathtouse $7zipPath -TempFoldertouse $TempFolder -InputFile ($TempFolder+'W95unlzx.lha') -OutputDirectory $ProgramsFolder -FiletoExtract 'unlzx.exe')){
-        Write-InformationMessage -Message ('Deleting package '+($TempFolder+'W95unlzx.lha'))
-        $null=Remove-Item -Path ($TempFolder+'W95unlzx.lha') -Force
-        Write-ErrorMessage -Message 'Error extracting UnLZX! Quitting'
-        exit
+    else{
+        Write-InformationMessage -Message "Unlzx already exists."
     }
-}
-else{
-    Write-InformationMessage -Message "Unlzx already exists."
+    
+    Write-TaskCompleteMessage -Message 'Downloading LZX - Complete!'
+
 }
 
-Write-TaskCompleteMessage -Message 'Downloading LZX - Complete!' -SectionNumber '8' -TotalSections $TotalSections
 
 ### End Download UnLzx
 
-Write-StartTaskMessage -Message 'Preparing Amiga Image' -SectionNumber '9' -TotalSections $TotalSections
+Write-StartTaskMessage -Message 'Preparing Amiga Image'
 
 if (-not (Start-HSTImager -Command "Blank" -DestinationPath ($LocationofImage+$NameofImage) -ImageSize $SizeofImagetouse -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
     exit
@@ -1144,426 +1228,434 @@ foreach ($AmigaPartition in $AmigaPartitionsList) {
     } 
 }
 
-#### Begin - Create NewFolder.info file
-if (($Global:KickstartVersiontoUse -eq 3.1) -or (($Global:KickstartVersiontoUse -eq 3.2) -and ($GlowIcons -eq 'FALSE'))) {
-    if (-not (Start-HSTImager -Command 'fs extract' -SourcePath ($StorageADF+'\Monitors.info') -DestinationPath ($TempFolder.TrimEnd('\'))  -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
-        exit
+if ($Global:SetDiskupOnly -eq 'FALSE'){
+    #### Begin - Create NewFolder.info file
+    if (($Global:KickstartVersiontoUse -eq 3.1) -or (($Global:KickstartVersiontoUse -eq 3.2) -and ($GlowIcons -eq 'FALSE'))) {
+        if (-not (Start-HSTImager -Command 'fs extract' -SourcePath ($StorageADF+'\Monitors.info') -DestinationPath ($TempFolder.TrimEnd('\'))  -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+            exit
+        }
+        if (Test-Path ($TempFolder+'def_drawer.info')){
+            $null = Remove-Item ($TempFolder+'def_drawer.info')
+        }
+        $null = Rename-Item ($TempFolder+'Monitors.info') ($TempFolder+'def_drawer.info')
     }
-    if (Test-Path ($TempFolder+'def_drawer.info')){
-        $null = Remove-Item ($TempFolder+'def_drawer.info')
+    elseif(($Global:KickstartVersiontoUse -eq 3.2) -and ($GlowIcons -eq 'TRUE')){
+        if (-not (Start-HSTImager -Command 'fs extract' -SourcePath ($GlowIconsADF+'\Prefs\Env-Archive\Sys\def_drawer.info') -DestinationPath ($TempFolder.TrimEnd('\')) -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+            exit
+        }
     }
-    $null = Rename-Item ($TempFolder+'Monitors.info') ($TempFolder+'def_drawer.info')
-}
-elseif(($Global:KickstartVersiontoUse -eq 3.2) -and ($GlowIcons -eq 'TRUE')){
-    if (-not (Start-HSTImager -Command 'fs extract' -SourcePath ($GlowIconsADF+'\Prefs\Env-Archive\Sys\def_drawer.info') -DestinationPath ($TempFolder.TrimEnd('\')) -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
-        exit
-    }
-}
-
-if (Test-Path ($TempFolder+'NewFolder.info')){
-    $null = Remove-Item ($TempFolder+'NewFolder.info')
-} 
-$null = Rename-Item ($TempFolder+'def_drawer.info') ($TempFolder+'NewFolder.info') -Force
-
-#### End - Create NewFolder.info file
-
-### Begin Basic Drive Setup
-Add-AmigaFolder -AmigaFolderPath ($VolumeName_System+'\Programs\') -TempFoldertouse $TempFolder -AmigaDrivetoCopytouse $AmigaDrivetoCopy
-Add-AmigaFolder -AmigaFolderPath ($VolumeName_System+'\Storage\DataTypes\') -TempFoldertouse $TempFolder -AmigaDrivetoCopytouse $AmigaDrivetoCopy
-
-if ($Global:KickstartVersiontoUse -eq 3.1){
-
-    if (-not (test-path ($AmigaDrivetoCopy+$VolumeName_System+'\WBStartup\'))){
-        $null = new-item ($AmigaDrivetoCopy+$VolumeName_System+'\WBStartup\') -ItemType Directory
-    } 
-
-    if (-not (test-path ($AmigaDrivetoCopy+$VolumeName_System+'\Devs\Keymaps\'))){
-        $null = new-item ($AmigaDrivetoCopy+$VolumeName_System+'\Devs\Keymaps\') -ItemType Directory -Force
-    }  
-
-}
-
- if (-not (test-path ($AmigaDrivetoCopy + $VolumeName_System + '\Expansion\'))) {
-    $null = new-item ($AmigaDrivetoCopy + $VolumeName_System + '\Expansion\') -ItemType Directory -Force
-}  
-
-if (-not (Test-Path ($AmigaDrivetoCopy+$VolumeName_Other))){
-    $null = New-Item -path ($AmigaDrivetoCopy+$VolumeName_Other) -ItemType Directory -Force 
     
-}
+    if (Test-Path ($TempFolder+'NewFolder.info')){
+        $null = Remove-Item ($TempFolder+'NewFolder.info')
+    } 
+    $null = Rename-Item ($TempFolder+'def_drawer.info') ($TempFolder+'NewFolder.info') -Force
+    
+    #### End - Create NewFolder.info file
 
-if ($Global:KickstartVersiontoUse -eq 3.1){
-    $SourcePath = ($InstallADF+'\Update\disk.info') 
-}
 
-elseif ($Global:KickstartVersiontoUse -eq 3.2){
-    $SourcePath = ($GlowIconsADF+'\Prefs\Env-Archive\Sys\def_harddisk.info') 
-}
-
-foreach ($AmigaPartition in $AmigaPartitionsList | Where-Object {$_.VolumeName -ne $VolumeName_System} ){
-    If ($AmigaPartition.PartitionNumber -ge 3){
-        $DestinationPathtoUse = ($LocationofImage+$NameofImage+'\rdb\'+$AmigaPartition.DeviceName+'\')
+    ### Begin Basic Drive Setup
+    Add-AmigaFolder -AmigaFolderPath ($VolumeName_System+'\Programs\') -TempFoldertouse $TempFolder -AmigaDrivetoCopytouse $AmigaDrivetoCopy
+    Add-AmigaFolder -AmigaFolderPath ($VolumeName_System+'\Storage\DataTypes\') -TempFoldertouse $TempFolder -AmigaDrivetoCopytouse $AmigaDrivetoCopy
+    
+    if ($Global:KickstartVersiontoUse -eq 3.1){
+    
+        if (-not (test-path ($AmigaDrivetoCopy+$VolumeName_System+'\WBStartup\'))){
+            $null = new-item ($AmigaDrivetoCopy+$VolumeName_System+'\WBStartup\') -ItemType Directory
+        } 
+    
+        if (-not (test-path ($AmigaDrivetoCopy+$VolumeName_System+'\Devs\Keymaps\'))){
+            $null = new-item ($AmigaDrivetoCopy+$VolumeName_System+'\Devs\Keymaps\') -ItemType Directory -Force
+        }  
+    
     }
-    else{
-        $DestinationPathtoUse = ($AmigaDrivetoCopy+$VolumeName_Other) 
+    
+     if (-not (test-path ($AmigaDrivetoCopy + $VolumeName_System + '\Expansion\'))) {
+        $null = new-item ($AmigaDrivetoCopy + $VolumeName_System + '\Expansion\') -ItemType Directory -Force
+    }  
+    
+    if (-not (Test-Path ($AmigaDrivetoCopy+$VolumeName_Other))){
+        $null = New-Item -path ($AmigaDrivetoCopy+$VolumeName_Other) -ItemType Directory -Force 
+        
     }
-    Write-InformationMessage -Message ('Copying Icons to Work Partition. Source is: '+$SourcePath+' Destination is: '+$DestinationPathtoUse)
-    if (-not (Start-HSTImager -Command 'fs extract' -SourcePath $SourcePath -DestinationPath $DestinationPathtoUse -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
-                exit
+    
+    if ($Global:KickstartVersiontoUse -eq 3.1){
+        $SourcePath = ($InstallADF+'\Update\disk.info') 
     }
-    if (($AmigaPartition.PartitionNumber -le 3) -and ($Global:KickstartVersiontoUse -eq 3.2)) {
-        Rename-Item ($AmigaDrivetoCopy+$VolumeName_Other+'\def_harddisk.info') ($AmigaDrivetoCopy+$VolumeName_Other+'\disk.info') 
+    
+    elseif ($Global:KickstartVersiontoUse -eq 3.2){
+        $SourcePath = ($GlowIconsADF+'\Prefs\Env-Archive\Sys\def_harddisk.info') 
     }
-}
-
-Write-TaskCompleteMessage -Message 'Preparing Amiga Image - Complete!' -SectionNumber '9' -TotalSections $TotalSections
-
-### End Basic Drive Setup
-
-### Begin Copy Install files from ADF
-
-Write-StartTaskMessage -Message 'Processing and Installing ADFs' -SectionNumber '10' -TotalSections $TotalSections
-
-$TotalItems=$ListofInstallFiles.Count
-
-$ItemCounter=1
-
-Foreach($InstallFileLine in $ListofInstallFiles){
-    Write-StartSubTaskMessage -SubtaskNumber $ItemCounter -TotalSubtasks $TotalItems -Message ('Processing ADF:'+$InstallFileLine.FriendlyName+' Files: '+$InstallFileLine.AmigaFiletoInstall)
-    $SourcePathtoUse = ($InstallFileLine.Path+'\'+($InstallFileLine.AmigaFiletoInstall -replace '/','\'))
-    if ($InstallFileLine.Uncompress -eq "TRUE"){
-        Write-InformationMessage -Message 'Extracting files from ADFs containing .Z files'
-        if ($InstallFileLine.LocationtoInstall.Length -eq 0){        
-            $DestinationPathtoUse = ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName)
-        }
-        else{  
-            $DestinationPathtoUse = ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+($InstallFileLine.LocationtoInstall -replace '/','\')) 
-        }
-        if (-not (Start-HSTImager -Command 'fs extract' -SourcePath $SourcePathtoUse -DestinationPath $DestinationPathtoUse -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
-            exit
-        }
-        Expand-AmigaZFiles  -SevenzipPathtouse $7zipPath -WorkingFoldertouse $TempFolder -LocationofZFiles $DestinationPathtoUse
-    }    
-    elseif (($InstallFileLine.NewFileName -ne "")  -or ($InstallFileLine.ModifyScript -ne 'FALSE') -or ($InstallFileLine.ModifyInfoFileTooltype -ne 'FALSE')){
-        if ($InstallFileLine.LocationtoInstall -ne '`*'){
-            $LocationtoInstall=(($InstallFileLine.LocationtoInstall -replace '/','\')+'\')
+    
+    foreach ($AmigaPartition in $AmigaPartitionsList | Where-Object {$_.VolumeName -ne $VolumeName_System} ){
+        If ($AmigaPartition.PartitionNumber -ge 3){
+            $DestinationPathtoUse = ($LocationofImage+$NameofImage+'\rdb\'+$AmigaPartition.DeviceName+'\')
         }
         else{
-            $LocationtoInstall=$null
+            $DestinationPathtoUse = ($AmigaDrivetoCopy+$VolumeName_Other) 
         }
-        if ($InstallFileLine.NewFileName -ne ""){
-            $FullPath = $AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$InstallFileLine.NewFileName
+        Write-InformationMessage -Message ('Copying Icons to Work Partition. Source is: '+$SourcePath+' Destination is: '+$DestinationPathtoUse)
+        if (-not (Start-HSTImager -Command 'fs extract' -SourcePath $SourcePath -DestinationPath $DestinationPathtoUse -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+                    exit
         }
-        else{
-            $FullPath = $AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+(Split-Path ($InstallFileLine.AmigaFiletoInstall -replace '/','\') -Leaf) 
+        if (($AmigaPartition.PartitionNumber -le 3) -and ($Global:KickstartVersiontoUse -eq 3.2)) {
+            Rename-Item ($AmigaDrivetoCopy+$VolumeName_Other+'\def_harddisk.info') ($AmigaDrivetoCopy+$VolumeName_Other+'\disk.info') 
         }
-        $filename = Split-Path $FullPath -leaf
-        Write-InformationMessage -Message 'Extracting files from ADFs where changes needed'
-        if ($InstallFileLine.LocationtoInstall.Length -eq 0){
-            $DestinationPathtoUse = ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName)
-        }
-        else{        
-            $DestinationPathtoUse = ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+($InstallFileLine.LocationtoInstall -replace '/','\'))
-        }
-        if (-not (Start-HSTImager -Command 'fs extract' -SourcePath $SourcePathtoUse -DestinationPath $DestinationPathtoUse -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
-            exit
-        }
-        if ($InstallFileLine.NewFileName -ne ""){
-            $NameofFiletoChange=$InstallFileLine.AmigaFiletoInstall.split("/")[-1]  
-            if (Test-Path ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$InstallFileLine.NewFileName)){
-                Remove-Item ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$InstallFileLine.NewFileName)
+    }
+
+}
+
+Write-TaskCompleteMessage -Message 'Preparing Amiga Image - Complete!'
+
+if ($Global:SetDiskupOnly -eq 'FALSE'){
+    ### End Basic Drive Setup
+    
+    ### Begin Copy Install files from ADF
+    
+    Write-StartTaskMessage -Message 'Processing and Installing ADFs'
+    
+    $TotalItems=$ListofInstallFiles.Count
+    
+    $ItemCounter=1
+    
+    Foreach($InstallFileLine in $ListofInstallFiles){
+        Write-StartSubTaskMessage -SubtaskNumber $ItemCounter -TotalSubtasks $TotalItems -Message ('Processing ADF:'+$InstallFileLine.FriendlyName+' Files: '+$InstallFileLine.AmigaFiletoInstall)
+        $SourcePathtoUse = ($InstallFileLine.Path+'\'+($InstallFileLine.AmigaFiletoInstall -replace '/','\'))
+        if ($InstallFileLine.Uncompress -eq "TRUE"){
+            Write-InformationMessage -Message 'Extracting files from ADFs containing .Z files'
+            if ($InstallFileLine.LocationtoInstall.Length -eq 0){        
+                $DestinationPathtoUse = ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName)
             }
-            $null = rename-Item -Path ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$NameofFiletoChange) -NewName $InstallFileLine.NewFileName            
-        }
-        if ($InstallFileLine.ModifyInfoFileTooltype -eq 'Modify'){
-            if (-not (Read-AmigaTooltypes -IconPath ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$filename) -TooltypesPath ($TempFolder+$filename+'.txt') -HSTAmigaPathtouse $HSTAmigaPath -TempFoldertouse $TempFolder)){
+            else{  
+                $DestinationPathtoUse = ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+($InstallFileLine.LocationtoInstall -replace '/','\')) 
+            }
+            if (-not (Start-HSTImager -Command 'fs extract' -SourcePath $SourcePathtoUse -DestinationPath $DestinationPathtoUse -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
                 exit
-            }                 
-            $OldToolTypes = Get-Content($TempFolder+$filename+'.txt')
-            $TooltypestoModify = Import-Csv ($LocationofAmigaFiles+$LocationtoInstall+'\'+$filename+'.txt') -Delimiter ';'
-            Get-ModifiedToolTypes -OriginalToolTypes $OldToolTypes -ModifiedToolTypes $TooltypestoModify | Out-File ($TempFolder+$filename+'amendedtoimport.txt')
-            if (-not (Write-AmigaTooltypes -IconPath ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$filename) -ToolTypesPath ($TempFolder+$fileName+'amendedtoimport.txt') -TempFoldertouse $TempFolder -HSTAmigaPathtouse $HSTAmigaPath)){
+            }
+            Expand-AmigaZFiles  -SevenzipPathtouse $7zipPath -WorkingFoldertouse $TempFolder -LocationofZFiles $DestinationPathtoUse
+        }    
+        elseif (($InstallFileLine.NewFileName -ne "")  -or ($InstallFileLine.ModifyScript -ne 'FALSE') -or ($InstallFileLine.ModifyInfoFileTooltype -ne 'FALSE')){
+            if ($InstallFileLine.LocationtoInstall -ne '`*'){
+                $LocationtoInstall=(($InstallFileLine.LocationtoInstall -replace '/','\')+'\')
+            }
+            else{
+                $LocationtoInstall=$null
+            }
+            if ($InstallFileLine.NewFileName -ne ""){
+                $FullPath = $AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$InstallFileLine.NewFileName
+            }
+            else{
+                $FullPath = $AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+(Split-Path ($InstallFileLine.AmigaFiletoInstall -replace '/','\') -Leaf) 
+            }
+            $filename = Split-Path $FullPath -leaf
+            Write-InformationMessage -Message 'Extracting files from ADFs where changes needed'
+            if ($InstallFileLine.LocationtoInstall.Length -eq 0){
+                $DestinationPathtoUse = ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName)
+            }
+            else{        
+                $DestinationPathtoUse = ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+($InstallFileLine.LocationtoInstall -replace '/','\'))
+            }
+            if (-not (Start-HSTImager -Command 'fs extract' -SourcePath $SourcePathtoUse -DestinationPath $DestinationPathtoUse -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
                 exit
-            }                 
-        }        
-        if ($InstallFileLine.ModifyScript -eq'Remove'){
-            Write-InformationMessage -Message  ('Modifying '+$FileName+' for: '+$InstallFileLine.ScriptNameofChange)
-            $ScripttoEdit = Import-TextFileforAmiga -SystemType 'Amiga' -ImportFile ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$FileName)
-            $ScripttoEdit = Edit-AmigaScripts -ScripttoEdit $ScripttoEdit -Action 'remove' -name $InstallFileLine.ScriptNameofChange -Startpoint $InstallFileLine.ScriptInjectionStartPoint -Endpoint $InstallFileLine.ScriptInjectionEndPoint                    
-            Export-TextFileforAmiga -ExportFile ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$FileName) -DatatoExport $ScripttoEdit -AddLineFeeds 'TRUE'
-        }   
-    }
-    else {
-        Write-InformationMessage -Message 'Extracting files from ADFs to .hdf file'
-        if ($InstallFileLine.LocationtoInstall.Length -eq 0){
-           $DestinationPathtoUse = ($LocationofImage+$NameofImage+'\rdb\'+$DeviceName_System)
-        }
-        else{
-           $DestinationPathtoUse = ($LocationofImage+$NameofImage+'\rdb\'+$DeviceName_System+'\'+($InstallFileLine.LocationtoInstall -replace '/','\'))
-        }
-        if (-not (Start-HSTImager -Command 'fs extract' -SourcePath $SourcePathtoUse -DestinationPath $DestinationPathtoUse -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
-            exit
-        }
-    }         
-    $ItemCounter+=1    
-}
-
-Write-TaskCompleteMessage -Message 'Processing and Installing ADFs - Complete!' -SectionNumber '10' -TotalSections $TotalSections
-
-### End Copy Install files from ADF
-
-#######################################################################################################################################################################################################################################
-
-$ListofPackagestoInstall = Import-Csv ($InputFolder+'ListofPackagestoInstall.csv') -Delimiter ';' |  Where-Object {$_.KickstartVersion -match $Global:KickstartVersiontoUse} | Where-Object {$_.InstallFlag -eq 'TRUE'} #| Sort-Object -Property 'InstallSequence','PackageName'
-
-$ListofPackagestoInstall | Add-Member -NotePropertyName DrivetoInstall_VolumeName -NotePropertyValue $null
-
-foreach ($line in $ListofPackagestoInstall){
-    if ($line.DrivetoInstall -eq 'System'){
-        $line.DrivetoInstall_VolumeName = $VolumeName_System
-    }
-}
-
-$PackageCheck=$null
-
-# Download and expand packages
-
-Write-StartTaskMessage -Message 'Downloading Packages' -SectionNumber '11' -TotalSections $TotalSections
-
-
-$TotalItems=(
-    $ListofPackagestoInstall | Where-Object InstallType -ne 'CopyOnly' |  Where-Object InstallType -ne 'StartupSequenceOnly' | Select-Object -Unique -Property PackageName
-    ).count 
-
-$ItemCounter=1
-
-foreach($PackagetoFind in $ListofPackagestoInstall) {
-    if (($PackagetoFind.InstallType -ne 'CopyOnly') -and ($PackagetoFind.InstallType -ne 'StartupSequenceOnly')){
-        if ($PackageCheck -ne $PackagetoFind.PackageName){
-            Write-StartSubTaskMessage -SubtaskNumber $ItemCounter -TotalSubtasks $TotalItems -Message ('Downloading (or Copying) package '+$PackagetoFind.PackageName)
-            if ($PackagetoFind.Source -eq "ADF") {
-                if ($PackagetoFind.SourceLocation -eq 'StorageADF'){
-                    $ADFtoUse = $StorageADF
-                    $SourcePathtoUse = ($ADFtoUse+'\'+$PackagetoFind.FilestoInstall)
-                    $DestinationPathtoUse = ($TempFolder+$PackagetoFind.FileDownloadName).Trim('\')       
-                    if (-not (Start-HSTImager -Command 'fs extract' -SourcePath $SourcePathtoUse -DestinationPath $DestinationPathtoUse -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
-                        exit
-                    }
-                }
             }
-            Elseif ($PackagetoFind.Source -eq "Web"){
-                if(($PackagetoFind.SearchforUpdatedPackage -eq 'TRUE') -and ($PackagetoFind.PackageName -ne 'WHDLoadWrapper')){
-                    $PackagetoFind.SourceLocation=Find-LatestAminetPackage -PackagetoFind $PackagetoFind.PackageName -Exclusion $PackagetoFind.UpdatePackageSearchExclusionTerm -DateNewerthan $PackagetoFind.UpdatePackageSearchMinimumDate -Architecture 'm68k-amigaos'   
+            if ($InstallFileLine.NewFileName -ne ""){
+                $NameofFiletoChange=$InstallFileLine.AmigaFiletoInstall.split("/")[-1]  
+                if (Test-Path ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$InstallFileLine.NewFileName)){
+                    Remove-Item ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$InstallFileLine.NewFileName)
                 }
-                if(($PackagetoFind.SearchforUpdatedPackage -eq 'TRUE') -and ($PackagetoFind.PackageName -eq 'WHDLoadWrapper')){
-                    $PackagetoFind.SourceLocation=(Find-WHDLoadWrapperURL -SearchCriteria 'WHDLoadWrapper' -ResultLimit '10') 
-                }
-                if (Test-Path ($AmigaDownloads+$PackagetoFind.FileDownloadName)){
-                    Write-InformationMessage -Message "Download already completed"
-                } 
-                else{
-                    if (-not (Get-AmigaFileWeb -URL $PackagetoFind.SourceLocation -NameofDL $PackagetoFind.FileDownloadName -LocationforDL $AmigaDownloads)){
-                        Write-ErrorMessage -Message 'Unrecoverable error with download(s)!'
-                        exit
-                    }                    
-                }
-                if ($PackagetoFind.PerformHashCheck -eq 'TRUE'){
-                    if (-not (Compare-FileHash -FiletoCheck ($AmigaDownloads+$PackagetoFind.FileDownloadName) -HashtoCheck $PackagetoFind.Hash)){
-                        Write-ErrorMessage -Message 'Error in downloaded packages! Unable to continue!'
-                        Write-InformationMessage -Message ('Deleting package '+($AmigaDownloads+$PackagetoFind.FileDownloadName))
-                        $null=Remove-Item -Path ($AmigaDownloads+$PackagetoFind.FileDownloadName) -Force 
-                        exit
-                    }
-                }
+                $null = rename-Item -Path ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$NameofFiletoChange) -NewName $InstallFileLine.NewFileName            
             }
-            Elseif (($PackagetoFind.Source -eq "Local") -and ($PackagetoFind.InstallType -eq "Full")){
-                Write-InformationMessage -Message ('Copying local file '+$PackagetoFind.SourceLocation)
-                if (Test-Path ($AmigaDownloads+$PackagetoFind.FileDownloadName)){
-                    Write-InformationMessage -Message 'File already copied'
-                }
-                else {
-                    Copy-Item ($LocationofAmigaFiles+$PackagetoFind.SourceLocation) ($AmigaDownloads+$PackagetoFind.FileDownloadName)
-                }
+            if ($InstallFileLine.ModifyInfoFileTooltype -eq 'Modify'){
+                if (-not (Read-AmigaTooltypes -IconPath ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$filename) -TooltypesPath ($TempFolder+$filename+'.txt') -HSTAmigaPathtouse $HSTAmigaPath -TempFoldertouse $TempFolder)){
+                    exit
+                }                 
+                $OldToolTypes = Get-Content($TempFolder+$filename+'.txt')
+                $TooltypestoModify = Import-Csv ($LocationofAmigaFiles+$LocationtoInstall+'\'+$filename+'.txt') -Delimiter ';'
+                Get-ModifiedToolTypes -OriginalToolTypes $OldToolTypes -ModifiedToolTypes $TooltypestoModify | Out-File ($TempFolder+$filename+'amendedtoimport.txt')
+                if (-not (Write-AmigaTooltypes -IconPath ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$filename) -ToolTypesPath ($TempFolder+$fileName+'amendedtoimport.txt') -TempFoldertouse $TempFolder -HSTAmigaPathtouse $HSTAmigaPath)){
+                    exit
+                }                 
+            }        
+            if ($InstallFileLine.ModifyScript -eq'Remove'){
+                Write-InformationMessage -Message  ('Modifying '+$FileName+' for: '+$InstallFileLine.ScriptNameofChange)
+                $ScripttoEdit = Import-TextFileforAmiga -SystemType 'Amiga' -ImportFile ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$FileName)
+                $ScripttoEdit = Edit-AmigaScripts -ScripttoEdit $ScripttoEdit -Action 'remove' -name $InstallFileLine.ScriptNameofChange -Startpoint $InstallFileLine.ScriptInjectionStartPoint -Endpoint $InstallFileLine.ScriptInjectionEndPoint                    
+                Export-TextFileforAmiga -ExportFile ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$FileName) -DatatoExport $ScripttoEdit -AddLineFeeds 'TRUE'
+            }   
+        }
+        else {
+            Write-InformationMessage -Message 'Extracting files from ADFs to .hdf file'
+            if ($InstallFileLine.LocationtoInstall.Length -eq 0){
+               $DestinationPathtoUse = ($LocationofImage+$NameofImage+'\rdb\'+$DeviceName_System)
             }
-            if ($PackagetoFind.InstallType -eq "Full"){
-                Write-InformationMessage -Message ('Expanding archive file for package '+$PackagetoFind.PackageName)
-                if ([System.IO.Path]::GetExtension($PackagetoFind.FileDownloadName) -eq '.lzx'){
-                    Expand-LZXArchive -LZXPathtouse $LZXPath -WorkingFoldertouse  $Global:WorkingPath -LZXFile ($AmigaDownloads+$PackagetoFind.FileDownloadName) -TempFoldertouse $TempFolder -DestinationPath ($TempFolder+$PackagetoFind.FileDownloadName) 
-                } 
-                if ([System.IO.Path]::GetExtension($PackagetoFind.FileDownloadName) -eq '.lha'){
-                    if (-not(Expand-Zipfiles -SevenzipPathtouse $7zipPath -TempFoldertouse $TempFolder -InputFile ($AmigaDownloads+$PackagetoFind.FileDownloadName) -OutputDirectory ($TempFolder+$PackagetoFind.FileDownloadName))){
-                        Write-ErrorMessage -Message 'Error in extracting!' 
-                        Write-InformationMessage -Message ('Deleting package '+($AmigaDownloads+$PackagetoFind.FileDownloadName))
-                        $null=Remove-Item -Path ($AmigaDownloads+$PackagetoFind.FileDownloadName) -Force
-                        exit
-                    }
-                               
-                } 
+            else{
+               $DestinationPathtoUse = ($LocationofImage+$NameofImage+'\rdb\'+$DeviceName_System+'\'+($InstallFileLine.LocationtoInstall -replace '/','\'))
             }
-
-            $ItemCounter+=1    
-        }
-        $PackageCheck=$PackagetoFind.PackageName
-            
-    }
-}
-
-Write-TaskCompleteMessage -Message 'Downloading Packages - Complete!' -SectionNumber '11' -TotalSections $TotalSections
-
-$PackageCheck=$null
-$UserStartup=$null
-$StartupSequence = Import-TextFileforAmiga -SystemType 'Amiga' -ImportFile ($AmigaDrivetoCopy+$VolumeName_System+'\S\Startup-Sequence') 
-$StartupSequenceversion = Get-StartupSequenceVersion -StartupSequencetoCheck $StartupSequence
-
-Write-StartTaskMessage -Message 'Installing Packages' -SectionNumber '12' -TotalSections $TotalSections
-
-$TotalItems=(
-    $ListofPackagestoInstall | Select-Object -Unique -Property PackageName
-    ).count 
-
-$ItemCounter=1
-
-foreach($PackagetoFind in $ListofPackagestoInstall) {
-    if ($PackageCheck -ne $PackagetoFind.PackageName){
-        Write-StartSubTaskMessage -SubtaskNumber $ItemCounter -TotalSubtasks $TotalItems -Message ('Installing package '+$PackagetoFind.PackageName)       
-        if ($PackagetoFind.ModifyUserStartup -eq'TRUE'){
-            Write-InformationMessage -Message ('Modifying S/User-Startup file for: '+$PackagetoFind.PackageName)
-            $UserStartup += Edit-AmigaScripts -name $PackagetoFind.PackageName -Action 'Append' -LinestoAdd (Import-TextFileforAmiga -SystemType 'PC' -ImportFile ($LocationofAmigaFiles+'S\User-Startup_'+$PackagetoFind.PackageName))
-            
-        }
-        if ($PackagetoFind.ModifyStartupSequence -eq'Add'){
-            Write-InformationMessage -Message ('Modifying S/Startup-Sequence file for: '+$PackagetoFind.PackageName) 
-            $InjectionPoint=Get-StartupSequenceInjectionPointfromVersion -SSversion $StartupSequenceversion -InjectionPointtoParse $PackagetoFind.StartupSequenceInjectionStartPoint
-            $StartupSequence = Edit-AmigaScripts -ScripttoEdit $StartupSequence -Action 'inject' -injectionpoint 'before' -name $PackagetoFind.PackageName -Startpoint $InjectionPoint -LinestoAdd (Import-TextFileforAmiga -SystemType 'PC' -ImportFile ($LocationofAmigaFiles+'S\Startup-Sequence_'+$PackagetoFind.PackageName))            
-        }
+            if (-not (Start-HSTImager -Command 'fs extract' -SourcePath $SourcePathtoUse -DestinationPath $DestinationPathtoUse -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+                exit
+            }
+        }         
         $ItemCounter+=1    
-    }   
-    if (($PackagetoFind.InstallType -eq 'CopyOnly') -or
-       ($PackagetoFind.InstallType -eq 'Full') -or
-       ($PackagetoFind.InstallType -eq 'Extract')){
-           ### Determining Source Paths
-           $DestinationPathtoUse =($AmigaDrivetoCopy+$PackagetoFind.DrivetoInstall_VolumeName+'\'+$PackagetoFind.LocationtoInstall) 
-           if ($PackagetoFind.Source -eq 'Web'){
-               $SourcePathtoUse=($TempFolder+$PackagetoFind.FileDownloadName+'\'+$PackagetoFind.FilestoInstall)  
-           }
-           if ($PackagetoFind.Source -eq 'Emu68' ){
-               $SourcePathtoUse=($TempFolder+$PackagetoFind.SourceLocation)       
-           }
-           elseif ($PackagetoFind.Source -eq 'ADF' ) {
-               $SourcePathtoUse=($TempFolder+$PackagetoFind.FilestoInstall)     
-           }
-           elseif (($PackagetoFind.Source -eq 'Local') -and ($PackagetoFind.InstallType -eq 'CopyOnly')){
-               $SourcePathtoUse=($LocationofAmigaFiles+$PackagetoFind.SourceLocation)
-           }
-           elseif (($PackagetoFind.Source -eq 'Local') -and ($PackagetoFind.InstallType -eq 'Full')){
-               $SourcePathtoUse=($TempFolder+$PackagetoFind.FileDownloadName+'\'+$PackagetoFind.FilestoInstall)     
-           }
-           #### End Determining SourcePaths
-           Write-InformationMessage -Message ('Creating directories where required - Folder '+$PackagetoFind.LocationtoInstall)
-           if (-not (Test-Path ($AmigaDrivetoCopy+$PackagetoFind.DrivetoInstall_VolumeName+'\'+$PackagetoFind.LocationtoInstall))){
-               $null = New-Item ($AmigaDrivetoCopy+$PackagetoFind.DrivetoInstall_VolumeName+'\'+$PackagetoFind.LocationtoInstall) -ItemType Directory
-           }
-           if ($PackagetoFind.CreateFolderInfoFile -eq 'TRUE'){
-               Add-AmigaFolder -AmigaFolderPath ($PackagetoFind.DrivetoInstall_VolumeName+'\'+$PackagetoFind.LocationtoInstall) -TempFoldertouse $TempFolder -AmigaDrivetoCopytouse $AmigaDrivetoCopy
-           }
-           #### Copy Files
-           if ($PackagetoFind.NewFileName.Length -ne 0){
-               $DestinationPathtoUse=$DestinationPathtoUse+$PackagetoFind.NewFileName
-               Write-InformationMessage -Message ('Copying files to drive. Source path is: '+$SourcePathtoUse+' Destination path is: '+$DestinationPathtoUse+' (New Name is '+$PackagetoFind.NewFileName+')')
-           }
-           else{
-            Write-InformationMessage -Message ('Copying files to drive. Source path is: '+$SourcePathtoUse+' Destination path is: '+$DestinationPathtoUse)        
-           }
-           Copy-Item -Path $SourcePathtoUse  -Destination $DestinationPathtoUse -Recurse -force  
-           #### End Copy Files
-           if (($PackagetoFind.ModifyInfoFileTooltype -eq 'Replace') -or ($PackagetoFind.ModifyInfoFileTooltype -eq 'Modify')) {
-            Write-InformationMessage -Message  ('Tooltypes for relevant .info files for: '+$PackagetoFind.PackageName)
-               if ($PackagetoFind.NewFileName){
-                   $filename=$PackagetoFind.NewFileName
+    }
+    
+    Write-TaskCompleteMessage -Message 'Processing and Installing ADFs - Complete!'
+    
+    ### End Copy Install files from ADF
+    
+    #######################################################################################################################################################################################################################################
+    
+    $ListofPackagestoInstall = Import-Csv ($InputFolder+'ListofPackagestoInstall.csv') -Delimiter ';' |  Where-Object {$_.KickstartVersion -match $Global:KickstartVersiontoUse} | Where-Object {$_.InstallFlag -eq 'TRUE'} #| Sort-Object -Property 'InstallSequence','PackageName'
+    
+    $ListofPackagestoInstall | Add-Member -NotePropertyName DrivetoInstall_VolumeName -NotePropertyValue $null
+    
+    foreach ($line in $ListofPackagestoInstall){
+        if ($line.DrivetoInstall -eq 'System'){
+            $line.DrivetoInstall_VolumeName = $VolumeName_System
+        }
+    }
+    
+    $PackageCheck=$null
+    
+    # Download and expand packages
+    
+    Write-StartTaskMessage -Message 'Downloading Packages'
+    
+    
+    $TotalItems=(
+        $ListofPackagestoInstall | Where-Object InstallType -ne 'CopyOnly' |  Where-Object InstallType -ne 'StartupSequenceOnly' | Select-Object -Unique -Property PackageName
+        ).count 
+    
+    $ItemCounter=1
+    
+    foreach($PackagetoFind in $ListofPackagestoInstall) {
+        if (($PackagetoFind.InstallType -ne 'CopyOnly') -and ($PackagetoFind.InstallType -ne 'StartupSequenceOnly')){
+            if ($PackageCheck -ne $PackagetoFind.PackageName){
+                Write-StartSubTaskMessage -SubtaskNumber $ItemCounter -TotalSubtasks $TotalItems -Message ('Downloading (or Copying) package '+$PackagetoFind.PackageName)
+                if ($PackagetoFind.Source -eq "ADF") {
+                    if ($PackagetoFind.SourceLocation -eq 'StorageADF'){
+                        $ADFtoUse = $StorageADF
+                        $SourcePathtoUse = ($ADFtoUse+'\'+$PackagetoFind.FilestoInstall)
+                        $DestinationPathtoUse = ($TempFolder+$PackagetoFind.FileDownloadName).Trim('\')       
+                        if (-not (Start-HSTImager -Command 'fs extract' -SourcePath $SourcePathtoUse -DestinationPath $DestinationPathtoUse -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+                            exit
+                        }
+                    }
+                }
+                Elseif ($PackagetoFind.Source -eq "Web"){
+                    if(($PackagetoFind.SearchforUpdatedPackage -eq 'TRUE') -and ($PackagetoFind.PackageName -ne 'WHDLoadWrapper')){
+                        $PackagetoFind.SourceLocation=Find-LatestAminetPackage -PackagetoFind $PackagetoFind.PackageName -Exclusion $PackagetoFind.UpdatePackageSearchExclusionTerm -DateNewerthan $PackagetoFind.UpdatePackageSearchMinimumDate -Architecture 'm68k-amigaos'   
+                    }
+                    if(($PackagetoFind.SearchforUpdatedPackage -eq 'TRUE') -and ($PackagetoFind.PackageName -eq 'WHDLoadWrapper')){
+                        $PackagetoFind.SourceLocation=(Find-WHDLoadWrapperURL -SearchCriteria 'WHDLoadWrapper' -ResultLimit '10') 
+                    }
+                    if (Test-Path ($AmigaDownloads+$PackagetoFind.FileDownloadName)){
+                        Write-InformationMessage -Message "Download already completed"
+                    } 
+                    else{
+                        if (-not (Get-AmigaFileWeb -URL $PackagetoFind.SourceLocation -NameofDL $PackagetoFind.FileDownloadName -LocationforDL $AmigaDownloads)){
+                            Write-ErrorMessage -Message 'Unrecoverable error with download(s)!'
+                            exit
+                        }                    
+                    }
+                    if ($PackagetoFind.PerformHashCheck -eq 'TRUE'){
+                        if (-not (Compare-FileHash -FiletoCheck ($AmigaDownloads+$PackagetoFind.FileDownloadName) -HashtoCheck $PackagetoFind.Hash)){
+                            Write-ErrorMessage -Message 'Error in downloaded packages! Unable to continue!'
+                            Write-InformationMessage -Message ('Deleting package '+($AmigaDownloads+$PackagetoFind.FileDownloadName))
+                            $null=Remove-Item -Path ($AmigaDownloads+$PackagetoFind.FileDownloadName) -Force 
+                            exit
+                        }
+                    }
+                }
+                Elseif (($PackagetoFind.Source -eq "Local") -and ($PackagetoFind.InstallType -eq "Full")){
+                    Write-InformationMessage -Message ('Copying local file '+$PackagetoFind.SourceLocation)
+                    if (Test-Path ($AmigaDownloads+$PackagetoFind.FileDownloadName)){
+                        Write-InformationMessage -Message 'File already copied'
+                    }
+                    else {
+                        Copy-Item ($LocationofAmigaFiles+$PackagetoFind.SourceLocation) ($AmigaDownloads+$PackagetoFind.FileDownloadName)
+                    }
+                }
+                if ($PackagetoFind.InstallType -eq "Full"){
+                    Write-InformationMessage -Message ('Expanding archive file for package '+$PackagetoFind.PackageName)
+                    if ([System.IO.Path]::GetExtension($PackagetoFind.FileDownloadName) -eq '.lzx'){
+                        Expand-LZXArchive -LZXPathtouse $LZXPath -WorkingFoldertouse  $Global:WorkingPath -LZXFile ($AmigaDownloads+$PackagetoFind.FileDownloadName) -TempFoldertouse $TempFolder -DestinationPath ($TempFolder+$PackagetoFind.FileDownloadName) 
+                    } 
+                    if ([System.IO.Path]::GetExtension($PackagetoFind.FileDownloadName) -eq '.lha'){
+                        if (-not(Expand-Zipfiles -SevenzipPathtouse $7zipPath -TempFoldertouse $TempFolder -InputFile ($AmigaDownloads+$PackagetoFind.FileDownloadName) -OutputDirectory ($TempFolder+$PackagetoFind.FileDownloadName))){
+                            Write-ErrorMessage -Message 'Error in extracting!' 
+                            Write-InformationMessage -Message ('Deleting package '+($AmigaDownloads+$PackagetoFind.FileDownloadName))
+                            $null=Remove-Item -Path ($AmigaDownloads+$PackagetoFind.FileDownloadName) -Force
+                            exit
+                        }
+                                   
+                    } 
+                }
+    
+                $ItemCounter+=1    
+            }
+            $PackageCheck=$PackagetoFind.PackageName
+                
+        }
+    }
+    
+    Write-TaskCompleteMessage -Message 'Downloading Packages - Complete!'
+    
+    $PackageCheck=$null
+    $UserStartup=$null
+    $StartupSequence = Import-TextFileforAmiga -SystemType 'Amiga' -ImportFile ($AmigaDrivetoCopy+$VolumeName_System+'\S\Startup-Sequence') 
+    $StartupSequenceversion = Get-StartupSequenceVersion -StartupSequencetoCheck $StartupSequence
+    
+    Write-StartTaskMessage -Message 'Installing Packages'
+    
+    $TotalItems=(
+        $ListofPackagestoInstall | Select-Object -Unique -Property PackageName
+        ).count 
+    
+    $ItemCounter=1
+    
+    foreach($PackagetoFind in $ListofPackagestoInstall) {
+        if ($PackageCheck -ne $PackagetoFind.PackageName){
+            Write-StartSubTaskMessage -SubtaskNumber $ItemCounter -TotalSubtasks $TotalItems -Message ('Installing package '+$PackagetoFind.PackageName)       
+            if ($PackagetoFind.ModifyUserStartup -eq'TRUE'){
+                Write-InformationMessage -Message ('Modifying S/User-Startup file for: '+$PackagetoFind.PackageName)
+                $UserStartup += Edit-AmigaScripts -name $PackagetoFind.PackageName -Action 'Append' -LinestoAdd (Import-TextFileforAmiga -SystemType 'PC' -ImportFile ($LocationofAmigaFiles+'S\User-Startup_'+$PackagetoFind.PackageName))
+                
+            }
+            if ($PackagetoFind.ModifyStartupSequence -eq'Add'){
+                Write-InformationMessage -Message ('Modifying S/Startup-Sequence file for: '+$PackagetoFind.PackageName) 
+                $InjectionPoint=Get-StartupSequenceInjectionPointfromVersion -SSversion $StartupSequenceversion -InjectionPointtoParse $PackagetoFind.StartupSequenceInjectionStartPoint
+                $StartupSequence = Edit-AmigaScripts -ScripttoEdit $StartupSequence -Action 'inject' -injectionpoint 'before' -name $PackagetoFind.PackageName -Startpoint $InjectionPoint -LinestoAdd (Import-TextFileforAmiga -SystemType 'PC' -ImportFile ($LocationofAmigaFiles+'S\Startup-Sequence_'+$PackagetoFind.PackageName))            
+            }
+            $ItemCounter+=1    
+        }   
+        if (($PackagetoFind.InstallType -eq 'CopyOnly') -or
+           ($PackagetoFind.InstallType -eq 'Full') -or
+           ($PackagetoFind.InstallType -eq 'Extract')){
+               ### Determining Source Paths
+               $DestinationPathtoUse =($AmigaDrivetoCopy+$PackagetoFind.DrivetoInstall_VolumeName+'\'+$PackagetoFind.LocationtoInstall) 
+               if ($PackagetoFind.Source -eq 'Web'){
+                   $SourcePathtoUse=($TempFolder+$PackagetoFind.FileDownloadName+'\'+$PackagetoFind.FilestoInstall)  
+               }
+               if ($PackagetoFind.Source -eq 'Emu68' ){
+                   $SourcePathtoUse=($TempFolder+$PackagetoFind.SourceLocation)       
+               }
+               elseif ($PackagetoFind.Source -eq 'ADF' ) {
+                   $SourcePathtoUse=($TempFolder+$PackagetoFind.FilestoInstall)     
+               }
+               elseif (($PackagetoFind.Source -eq 'Local') -and ($PackagetoFind.InstallType -eq 'CopyOnly')){
+                   $SourcePathtoUse=($LocationofAmigaFiles+$PackagetoFind.SourceLocation)
+               }
+               elseif (($PackagetoFind.Source -eq 'Local') -and ($PackagetoFind.InstallType -eq 'Full')){
+                   $SourcePathtoUse=($TempFolder+$PackagetoFind.FileDownloadName+'\'+$PackagetoFind.FilestoInstall)     
+               }
+               #### End Determining SourcePaths
+               Write-InformationMessage -Message ('Creating directories where required - Folder '+$PackagetoFind.LocationtoInstall)
+               if (-not (Test-Path ($AmigaDrivetoCopy+$PackagetoFind.DrivetoInstall_VolumeName+'\'+$PackagetoFind.LocationtoInstall))){
+                   $null = New-Item ($AmigaDrivetoCopy+$PackagetoFind.DrivetoInstall_VolumeName+'\'+$PackagetoFind.LocationtoInstall) -ItemType Directory
+               }
+               if ($PackagetoFind.CreateFolderInfoFile -eq 'TRUE'){
+                   Add-AmigaFolder -AmigaFolderPath ($PackagetoFind.DrivetoInstall_VolumeName+'\'+$PackagetoFind.LocationtoInstall) -TempFoldertouse $TempFolder -AmigaDrivetoCopytouse $AmigaDrivetoCopy
+               }
+               #### Copy Files
+               if ($PackagetoFind.NewFileName.Length -ne 0){
+                   $DestinationPathtoUse=$DestinationPathtoUse+$PackagetoFind.NewFileName
+                   Write-InformationMessage -Message ('Copying files to drive. Source path is: '+$SourcePathtoUse+' Destination path is: '+$DestinationPathtoUse+' (New Name is '+$PackagetoFind.NewFileName+')')
                }
                else{
-                   $filename=(Split-Path $PackagetoFind.FilestoInstall -Leaf)
-               }        
-               $Tooltypes=Import-Csv ($LocationofAmigaFiles+$PackagetoFind.LocationtoInstall+$filename+'.txt') -Delimiter ';'
-               if ($PackagetoFind.ModifyInfoFileTooltype -eq 'Replace'){
-                   $Tooltypes.NewValue | Out-File ($TempFolder+$filename+'amendedtoimport.txt')
+                Write-InformationMessage -Message ('Copying files to drive. Source path is: '+$SourcePathtoUse+' Destination path is: '+$DestinationPathtoUse)        
                }
-               if ($PackagetoFind.ModifyInfoFileTooltype -eq 'Modify'){
-                   If (-not(Read-AmigaTooltypes -IconPath ($AmigaDrivetoCopy+$PackagetoFind.DrivetoInstall_VolumeName+'\'+$PackagetoFind.LocationtoInstall+$filename) -TooltypesPath ($TempFolder+$filename+'.txt') -HSTAmigaPathtouse $HSTAmigaPath -TempFoldertouse $TempFolder)){
-                       exit 
-                } 
-                   $OldToolTypes= Get-Content($TempFolder+$filename+'.txt')
-                   Get-ModifiedToolTypes -OriginalToolTypes $OldToolTypes -ModifiedToolTypes $Tooltypes  | Out-File ($TempFolder+$filename+'amendedtoimport.txt')
+               Copy-Item -Path $SourcePathtoUse  -Destination $DestinationPathtoUse -Recurse -force  
+               #### End Copy Files
+               if (($PackagetoFind.ModifyInfoFileTooltype -eq 'Replace') -or ($PackagetoFind.ModifyInfoFileTooltype -eq 'Modify')) {
+                Write-InformationMessage -Message  ('Tooltypes for relevant .info files for: '+$PackagetoFind.PackageName)
+                   if ($PackagetoFind.NewFileName){
+                       $filename=$PackagetoFind.NewFileName
+                   }
+                   else{
+                       $filename=(Split-Path $PackagetoFind.FilestoInstall -Leaf)
+                   }        
+                   $Tooltypes=Import-Csv ($LocationofAmigaFiles+$PackagetoFind.LocationtoInstall+$filename+'.txt') -Delimiter ';'
+                   if ($PackagetoFind.ModifyInfoFileTooltype -eq 'Replace'){
+                       $Tooltypes.NewValue | Out-File ($TempFolder+$filename+'amendedtoimport.txt')
+                   }
+                   if ($PackagetoFind.ModifyInfoFileTooltype -eq 'Modify'){
+                       If (-not(Read-AmigaTooltypes -IconPath ($AmigaDrivetoCopy+$PackagetoFind.DrivetoInstall_VolumeName+'\'+$PackagetoFind.LocationtoInstall+$filename) -TooltypesPath ($TempFolder+$filename+'.txt') -HSTAmigaPathtouse $HSTAmigaPath -TempFoldertouse $TempFolder)){
+                           exit 
+                    } 
+                       $OldToolTypes= Get-Content($TempFolder+$filename+'.txt')
+                       Get-ModifiedToolTypes -OriginalToolTypes $OldToolTypes -ModifiedToolTypes $Tooltypes  | Out-File ($TempFolder+$filename+'amendedtoimport.txt')
+                   }
+                   if (-not (Write-AmigaTooltypes -IconPath ($AmigaDrivetoCopy+$PackagetoFind.DrivetoInstall_VolumeName+'\'+$PackagetoFind.LocationtoInstall+$filename) -ToolTypesPath ($TempFolder+$filename+'amendedtoimport.txt') -TempFoldertouse $TempFolder -HSTAmigaPathtouse $HSTAmigaPath)){
+                       exit
+                }                             
                }
-               if (-not (Write-AmigaTooltypes -IconPath ($AmigaDrivetoCopy+$PackagetoFind.DrivetoInstall_VolumeName+'\'+$PackagetoFind.LocationtoInstall+$filename) -ToolTypesPath ($TempFolder+$filename+'amendedtoimport.txt') -TempFoldertouse $TempFolder -HSTAmigaPathtouse $HSTAmigaPath)){
-                   exit
-            }                             
+               else {
+               }    
            }
-           else {
-           }    
-       }
-    $PackageCheck=$PackagetoFind.PackageName  
-}
-
-Write-TaskCompleteMessage -Message 'Installing Packages -Complete!' -SectionNumber '12' -TotalSections $TotalSections
-
-Export-TextFileforAmiga -ExportFile ($AmigaDrivetoCopy+$VolumeName_System+'\S\Startup-Sequence') -DatatoExport $StartupSequence -AddLineFeeds 'TRUE'
-Export-TextFileforAmiga -ExportFile ($AmigaDrivetoCopy+$VolumeName_System+'\S\User-Startup') -DatatoExport $UserStartup -AddLineFeeds 'TRUE'
-
-### Wireless Prefs
-
-#Update-OutputWindow -OutputConsole_Title_Text 'Creating Wireless Prefs file' -ProgressbarValue_Overall 50 -ProgressbarValue_Overall_Text '50%'
-
-Write-StartTaskMessage -Message 'Creating Wireless Prefs file' -SectionNumber '13' -TotalSections $TotalSections
-
-if (-not (Test-Path ($AmigaDrivetoCopy+$VolumeName_System+'\Prefs\Env-Archive\Sys\'))){
-    $null = New-Item -path ($AmigaDrivetoCopy+$VolumeName_System+'\Prefs\Env-Archive\Sys') -ItemType Directory -Force 
-
-}
-
-$WirelessPrefs = "network={",
-                 "   ssid=""$Global:SSID""",
-                 "   psk=""$Global:WifiPassword""",
-                 "}"
-                 
-Export-TextFileforAmiga -ExportFile ($AmigaDrivetoCopy+$VolumeName_System+'\Prefs\Env-Archive\Sys\wireless.prefs') -DatatoExport $WirelessPrefs -AddLineFeeds 'TRUE'                
-
-Write-TaskCompleteMessage -Message 'Creating Wireless Prefs File - Complete!' -SectionNumber '13' -TotalSections $TotalSections
-
-### End Wireless Prefs
-
-### Fix WBStartup
-
-Write-StartTaskMessage -Message 'Fix WBStartup' -SectionNumber '14' -TotalSections $TotalSections
-
-If ($Global:KickstartVersiontoUse -eq 3.2){
-    Write-Host 'Fixing Menutools'
-    if (-not (Start-HSTImager -Command 'fs extract' -SourcePath ($StorageADF+'\WBStartup\MenuTools') -DestinationPath ($AmigaDrivetoCopy+$VolumeName_System+'\WBStartup') -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
-        exit
+        $PackageCheck=$PackagetoFind.PackageName  
     }
     
-    $WBStartup = Import-TextFileforAmiga -SystemType 'Amiga' -ImportFile ($AmigaDrivetoCopy+$VolumeName_System+'\WBStartup\Menutools') 
-    $WBStartup = Edit-AmigaScripts -ScripttoEdit $WBStartup -Action 'inject' -Name 'Add Wait' -Injectionpoint 'after' -Startpoint 'ADDRESS WORKBENCH' -LinestoAdd (Import-TextFileforAmiga -SystemType 'PC' -ImportFile ($LocationofAmigaFiles+'WBStartup\Menutools_1')) -ArexxFlag 'AREXX'
-    $WBStartup = Edit-AmigaScripts -ScripttoEdit $WBStartup -Action 'inject' -Name 'Add Offline and Online Menus' -Injectionpoint 'before' -Startpoint 'EXIT' -LinestoAdd (Import-TextFileforAmiga -SystemType 'PC' -ImportFile ($LocationofAmigaFiles+'WBStartup\Menutools_2')) -ArexxFlag 'AREXX'
+    Write-TaskCompleteMessage -Message 'Installing Packages -Complete!'
     
-    Export-TextFileforAmiga -ExportFile ($AmigaDrivetoCopy+$VolumeName_System+'\WBStartup\Menutools') -DatatoExport $WBStartup -AddLineFeeds 'TRUE'
+    Export-TextFileforAmiga -ExportFile ($AmigaDrivetoCopy+$VolumeName_System+'\S\Startup-Sequence') -DatatoExport $StartupSequence -AddLineFeeds 'TRUE'
+    Export-TextFileforAmiga -ExportFile ($AmigaDrivetoCopy+$VolumeName_System+'\S\User-Startup') -DatatoExport $UserStartup -AddLineFeeds 'TRUE'
+    
+    ### Wireless Prefs
+    
+    #Update-OutputWindow -OutputConsole_Title_Text 'Creating Wireless Prefs file' -ProgressbarValue_Overall 50 -ProgressbarValue_Overall_Text '50%'
+    
+    Write-StartTaskMessage -Message 'Creating Wireless Prefs file'
+    
+    if (-not (Test-Path ($AmigaDrivetoCopy+$VolumeName_System+'\Prefs\Env-Archive\Sys\'))){
+        $null = New-Item -path ($AmigaDrivetoCopy+$VolumeName_System+'\Prefs\Env-Archive\Sys') -ItemType Directory -Force 
+    
+    }
+    
+    $WirelessPrefs = "network={",
+                     "   ssid=""$Global:SSID""",
+                     "   psk=""$Global:WifiPassword""",
+                     "}"
+                     
+    Export-TextFileforAmiga -ExportFile ($AmigaDrivetoCopy+$VolumeName_System+'\Prefs\Env-Archive\Sys\wireless.prefs') -DatatoExport $WirelessPrefs -AddLineFeeds 'TRUE'                
+    
+    Write-TaskCompleteMessage -Message 'Creating Wireless Prefs File - Complete!'
+    
+    ### End Wireless Prefs
+    
+    ### Fix WBStartup
+    
+    Write-StartTaskMessage -Message 'Fix WBStartup'
+    
+    If ($Global:KickstartVersiontoUse -eq 3.2){
+        Write-Host 'Fixing Menutools'
+        if (-not (Start-HSTImager -Command 'fs extract' -SourcePath ($StorageADF+'\WBStartup\MenuTools') -DestinationPath ($AmigaDrivetoCopy+$VolumeName_System+'\WBStartup') -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+            exit
+        }
+        
+        $WBStartup = Import-TextFileforAmiga -SystemType 'Amiga' -ImportFile ($AmigaDrivetoCopy+$VolumeName_System+'\WBStartup\Menutools') 
+        $WBStartup = Edit-AmigaScripts -ScripttoEdit $WBStartup -Action 'inject' -Name 'Add Wait' -Injectionpoint 'after' -Startpoint 'ADDRESS WORKBENCH' -LinestoAdd (Import-TextFileforAmiga -SystemType 'PC' -ImportFile ($LocationofAmigaFiles+'WBStartup\Menutools_1')) -ArexxFlag 'AREXX'
+        $WBStartup = Edit-AmigaScripts -ScripttoEdit $WBStartup -Action 'inject' -Name 'Add Offline and Online Menus' -Injectionpoint 'before' -Startpoint 'EXIT' -LinestoAdd (Import-TextFileforAmiga -SystemType 'PC' -ImportFile ($LocationofAmigaFiles+'WBStartup\Menutools_2')) -ArexxFlag 'AREXX'
+        
+        Export-TextFileforAmiga -ExportFile ($AmigaDrivetoCopy+$VolumeName_System+'\WBStartup\Menutools') -DatatoExport $WBStartup -AddLineFeeds 'TRUE'
+    }
+    
+    Write-TaskCompleteMessage -Message 'Fix WB Startup - Complete!'
+    
+    ## Clean up AmigaImageFiles
+    
+    Write-StartTaskMessage -Message 'Clean up AmigaImageFiles'
+    
+    if (Test-Path ($AmigaDrivetoCopy+$VolumeName_System+'\Disk.info')){
+        Remove-Item ($AmigaDrivetoCopy+$VolumeName_System+'\Disk.info')
+    }
+    
+    Write-TaskCompleteMessage -Message 'Clean up AmigaImageFiles - Complete!'
 }
 
-Write-TaskCompleteMessage -Message 'Fix WB Startup - Complete!' -SectionNumber '14' -TotalSections $TotalSections
 
-## Clean up AmigaImageFiles
-
-Write-StartTaskMessage -Message 'Clean up AmigaImageFiles' -SectionNumber '15' -TotalSections $TotalSections
-
-if (Test-Path ($AmigaDrivetoCopy+$VolumeName_System+'\Disk.info')){
-    Remove-Item ($AmigaDrivetoCopy+$VolumeName_System+'\Disk.info')
-}
-
-Write-TaskCompleteMessage -Message 'Clean up AmigaImageFiles - Complete!' -SectionNumber '15' -TotalSections $TotalSections
 
 #### Set up FAT32
 
-Write-StartTaskMessage -Message 'Setting up FAT32 files' -SectionNumber '16' -TotalSections $TotalSections
+Write-StartTaskMessage -Message 'Setting up FAT32 files'
 
 Write-InformationMessage -Message 'Copying Emu68Pistorm and Emu68Pistorm32lite files' 
 
@@ -1667,14 +1759,12 @@ Export-TextFileforAmiga -DatatoExport $RevisedConfigTxt -ExportFile ($FAT32Parti
 Write-InformationMessage -Message 'Copying Kickstart file to FAT32 partition'
 $null = copy-Item -LiteralPath $KickstartPath -Destination ($FAT32Partition+$KickstartNameFAT32)
 
-Write-TaskCompleteMessage -Message 'Setting up FAT32 Files - Complete!' -SectionNumber '16' -TotalSections $TotalSections
-
-
-Write-StartTaskMessage -Message 'Transferring Migrated Files to Work Partition' -SectionNumber '17' -TotalSections $TotalSections
+Write-TaskCompleteMessage -Message 'Setting up FAT32 Files - Complete!'
 
 ### Transfer files to Work partition
 
 if ($Global:TransferLocation) {
+    Write-StartTaskMessage -Message 'Transferring Migrated Files to Work Partition'
     Write-InformationMessage -Message ('Transferring files from '+$TransferLocation+' to "'+$MigratedFilesFolder+'" directory on Work drive')
     $SourcePathtoUse = $TransferLocation+('*')
     if (Test-Path ($AmigaDrivetoCopy+$VolumeName_Other+'\'+$MigratedFilesFolder+'.info')){
@@ -1684,21 +1774,26 @@ if ($Global:TransferLocation) {
     if (-not(Start-HSTImager -Command 'fs copy' -SourcePath $SourcePathtoUse -DestinationPath ($LocationofImage+$NameofImage+'\rdb\'+$DeviceName_Other+'\'+$MigratedFilesFolder) -HSTImagePathtouse $HSTImagePath -TempFoldertouse $TempFolder)){
         exit
     }
+    Write-TaskCompleteMessage -Message 'Transferring Migrated Files to Work Partition - Complete!'
 }
 
-Write-TaskCompleteMessage -Message 'Transferring Migrated Files to Work Partition - Complete!' -SectionNumber '17' -TotalSections $TotalSections
-Write-StartTaskMessage -Message 'Transferring Amiga Files to Image' -SectionNumber '18' -TotalSections $TotalSections
+if ($Global:SetDiskupOnly -eq 'FALSE'){
 
-if (-not(Start-HSTImager -Command 'fs copy' -SourcePath ($AmigaDrivetoCopy+$VolumeName_System) -DestinationPath ($LocationofImage+$NameofImage+'\rdb\'+$DeviceName_System) -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
-    exit
-} 
-if (-not(Start-HSTImager -Command 'fs copy' -SourcePath ($AmigaDrivetoCopy+$VolumeName_Other) -DestinationPath ($LocationofImage+$NameofImage+'\rdb\'+$DeviceName_Other) -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
-    exit
-}  
+    Write-StartTaskMessage -Message 'Transferring Amiga Files to Image'
+    
+    if (-not(Start-HSTImager -Command 'fs copy' -SourcePath ($AmigaDrivetoCopy+$VolumeName_System) -DestinationPath ($LocationofImage+$NameofImage+'\rdb\'+$DeviceName_System) -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+        exit
+    } 
+    if (-not(Start-HSTImager -Command 'fs copy' -SourcePath ($AmigaDrivetoCopy+$VolumeName_Other) -DestinationPath ($LocationofImage+$NameofImage+'\rdb\'+$DeviceName_Other) -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+        exit
+    }  
+    
+    Write-TaskCompleteMessage -Message 'Transferring Amiga Files to Image - Complete!'
 
-Write-TaskCompleteMessage -Message 'Transferring Amiga Files to Image - Complete!' -SectionNumber '18' -TotalSections $TotalSections
+}
 
-Write-StartTaskMessage -Message 'Creating Image' -SectionNumber '19' -TotalSections $TotalSections
+
+Write-StartTaskMessage -Message 'Creating Image'
 
 Set-Location $LocationofImage
 
@@ -1708,15 +1803,15 @@ Set-Location $LocationofImage
 
 $null= Rename-Item ($LocationofImager+'emu68_converted.img') -NewName ('Emu68Kickstart'+$Global:KickstartVersiontoUse+'.img')
 
-Write-TaskCompleteMessage -Message 'Creating Image - Complete!' -SectionNumber '19' -TotalSections $TotalSections
+Write-TaskCompleteMessage -Message 'Creating Image - Complete!'
 
-Write-StartTaskMessage -Message 'Writing Image to Disk' -SectionNumber '20' -TotalSections $TotalSections
+Write-StartTaskMessage -Message 'Writing Image to Disk'
 
 Set-location  $Global:WorkingPath
 
 Write-Image -HSTImagePathtouse $HSTImagePath -SourcePath ($LocationofImage+'Emu68Kickstart'+$Global:KickstartVersiontoUse+'.img') -DestinationPath $Global:HSTDiskName
 
-Write-TaskCompleteMessage -Message 'Writing Image to Disk - Complete!' -SectionNumber '20' -TotalSections $TotalSections
+Write-TaskCompleteMessage -Message 'Writing Image to Disk - Complete!'
 
 $EndDateandTime = (Get-Date -Format HH:mm:ss)
 $ElapsedTime = (New-TimeSpan -Start $StartDateandTime -End $EndDateandTime).TotalSeconds
