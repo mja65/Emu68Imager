@@ -1,3 +1,75 @@
+function Expand-FreeSpace {
+    param (
+    )      
+    $Global:SizeofFreeSpace = $Global:SizeofImage - $Global:SizeofFAT32 -  $Global:SizeofPartition_System - $Global:SizeofPartition_Other
+    $Global:SizeofFreeSpace_Pixels = ($Global:SizeofImage * $Global:PartitionBarPixelperKB)- $Global:SizeofFAT32_Pixels - $Global:SizeofPartition_System_Pixels - $Global:SizeofPartition_Other_Pixels 
+    return $Global:SizeofFreeSpace_Pixels
+}
+
+
+function Expand-UnallocatedSpace {
+    param (
+    )      
+    $Global:SizeofUnallocated = $Global:SizeofDisk - $Global:SizeofImage
+    $Global:SizeofUnallocated_Pixels = $Global:PartitionBarWidth - $Global:SizeofFAT32_Pixels - $Global:SizeofPartition_System_Pixels - $Global:SizeofPartition_Other_Pixels - $Global:SizeofFreeSpace_Pixels
+    return $Global:SizeofUnallocated_Pixels
+}
+
+
+function Set-PartitionMaximums {
+    param (     
+        $Type
+    )
+    
+    $Global:SizeofImage_Maximum = $Global:SizeofDisk
+     
+    if (($Global:SizeofImage-$Global:SizeofPartition_System-$Global:SizeofPartition_Other) -le $Global:Fat32Maximum) {
+        $Global:SizeofFat32_Maximum = ($Global:SizeofImage-$Global:SizeofPartition_System-$Global:SizeofPartition_Other) 
+    }
+    else{
+        $Global:SizeofFat32_Maximum = $Global:Fat32Maximum
+    }
+    $Global:SizeofFat32_Pixels_Maximum = $Global:PartitionBarPixelperKB * $Global:SizeofFat32_Maximum
+    
+    if (($Global:SizeofImage-$Global:SizeofFAT32-$Global:SizeofPartition_Other) -le $WorkbenchMaximum) {
+        $Global:SizeofPartition_System_Maximum = ($Global:SizeofImage-$Global:SizeofFAT32-$Global:SizeofPartition_Other)
+    }
+    else {
+        $Global:SizeofPartition_System_Maximum = $Global:WorkbenchMaximum
+    }
+    $Global:SizeofPartition_System_Pixels_Maximum = $Global:PartitionBarPixelperKB * $Global:SizeofPartition_System_Maximum
+    
+    $Global:SizeofPartition_Other_Maximum = $Global:SizeofImage-$Global:SizeofFAT32-$Global:SizeofPartition_System
+    $Global:SizeofPartition_Other_Pixels_Maximum = $Global:PartitionBarPixelperKB * $Global:SizeofPartition_Other_Maximum
+
+    $Global:SizeofFreeSpace_Maximum = $Global:SizeofImage-$Global:SizeofFAT32-$Global:SizeofPartition_System-$Global:SizeofPartition_Other
+    $Global:SizeofFreeSpace_Pixels_Maximum = ($Global:SizeofImage * $Global:PartitionBarPixelperKB) - (($Global:SizeofFAT32 + $Global:SizeofPartition_System + $Global:SizeofPartition_Other)* $Global:PartitionBarPixelperKB) 
+ 
+    $Global:SizeofUnallocated_Pixels_Maximum = $Global:PartitionBarWidth - (($Global:SizeofFreeSpace + $Global:SizeofPartition_Other_Pixels + $Global:SizeofPartition_System_Pixels + $Global:SizeofFat32_Pixels) * $Global:PartitionBarPixelperKB)
+    $Global:SizeofUnallocated_Maximum =  $Global:SizeofImage - $Global:SizeofFreeSpace - $Global:SizeofPartition_Other - $Global:SizeofPartition_System - $Global:SizeofFAT32
+
+    if ($Type -eq 'FAT32'){
+        Write-Host ('Fat32 Maximum (KiB) is: '+$Global:SizeofFat32_Maximum)
+        Write-host ('Fat32 Maximum (Pixels) is: '+$Global:SizeofFat32_Pixels_Maximum)
+    }
+    if ($Type -eq 'Workbench'){
+        Write-Host ('Workbench Maximum (KiB) is: '+$Global:SizeofPartition_System_Maximum)
+        Write-host ('Workbench Maximum (Pixels) is: '+$Global:SizeofPartition_System_Pixels_Maximum)
+    }
+    if ($Type -eq 'Work'){
+        Write-Host ('Work Maximum (KiB) is: '+$Global:SizeofPartition_Other_Maximum)
+        Write-host ('Work Maximum (Pixels) is: '+$Global:SizeofPartition_Other_Pixels_Maximum)
+    }
+    if ($Type -eq 'Free'){
+        Write-Host ('FreeSpace Maximum (KiB) is: '+$Global:SizeofFreeSpace_Maximum)
+        Write-host ('FreeSpace Maximum (Pixels) is: '+$Global:SizeofFreeSpace_Pixels_Maximum)
+    }
+    if ($Type -eq 'Unallocated'){
+        Write-Host ('Unallocated Maximum (KiB) is: '+$Global:SizeofUnallocated_Maximum)
+        Write-host ('Unallocated Maximum (Pixels) is: '+$Global:SizeofUnallocated_Pixels_Maximum)
+    }
+}
+
 function Get-FormattedPathforGUI {
     param (
         $PathtoTruncate
@@ -45,7 +117,7 @@ function Get-RoundedDiskSize {
         $Scale
     )
     if ($Scale -eq 'GiB'){
-        $RoundedSize = ([math]::truncate(($Size/1GB)*1000)/1000)
+        $RoundedSize = ([math]::truncate(($Size/1024/1024)*100)/100)
         
     }
     return $RoundedSize
@@ -320,9 +392,9 @@ Function Get-FormVariables{
             $RemovableMediaList += [PSCustomObject]@{
                 DeviceID = $_.DeviceID
                 Model = $_.Model
-                SizeofDisk = $_.Size
+                SizeofDisk = $_.Size/1024 # KiB
                 EnglishSize = ([math]::Round($_.Size/1GB,3).ToString())
-                FriendlyName = 'Disk '+$DriveNumber+' '+$_.Model+' '+([math]::Round($_.Size/1GB,3).ToString()) 
+                FriendlyName = 'Disk '+$DriveNumber+' '+$_.Model+' '+([math]::Round($_.Size/1GB,3).ToString()+' GiB') 
                 HSTDiskName = ('\disk'+$DriveNumber)
             }
         
