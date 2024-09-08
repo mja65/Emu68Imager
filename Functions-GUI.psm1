@@ -1,17 +1,3 @@
-function Expand-FreeSpace {
-    param (
-    )      
-    $Global:SizeofFreeSpace = $Global:SizeofDisk - $Global:SizeofFAT32 -  $Global:SizeofPartition_System - $Global:SizeofPartition_Other - $Global:SizeofUnallocated 
-    if ($Global:SizeofFreeSpace -eq 0){
-        $Global:SizeofFreeSpace_Pixels = 0
-    }
-    else{
-        $Global:SizeofFreeSpace_Pixels = ($Global:SizeofDisk * $Global:PartitionBarPixelperKB)- $Global:SizeofFAT32_Pixels - $Global:SizeofPartition_System_Pixels - $Global:SizeofPartition_Other_Pixels -$Global:SizeofUnallocated_Pixels
-    }
-    return $Global:SizeofFreeSpace_Pixels
-}
-
-
 function Expand-UnallocatedSpace {
     param (
     )      
@@ -26,7 +12,7 @@ function Set-PartitionMaximums {
         $Type
     )
     
-    $Global:SizeofImage_Maximum = $Global:SizeofDisk
+#    $Global:SizeofImage_Maximum = $Global:SizeofDisk
      
     if (($Global:SizeofDisk-$Global:SizeofPartition_System-$Global:SizeofPartition_Other) -le $Global:Fat32Maximum) {
         $Global:SizeofFat32_Maximum = ($Global:SizeofDisk-$Global:SizeofPartition_System-$Global:SizeofPartition_Other) 
