@@ -232,7 +232,7 @@ $inputXML_UserInterface = @"
               <CheckBox x:Name="NoFileInstall_CheckBox" Content="Only set disk up. Do not install packages" HorizontalAlignment="Left" Margin="2,6,0,0" VerticalAlignment="Top"/>
           </Grid>
       </GroupBox>
-      <Button x:Name="Start_Button" Content="Run Tool" HorizontalAlignment="Center" Margin="0,489,0,0" VerticalAlignment="Top" Width="880" Height="38"/>
+      <Button x:Name="Start_Button" Content="Run Tool" HorizontalAlignment="Center" Margin="0,489,0,0" VerticalAlignment="Top" Width="880" Height="38" Background = "Red"/>
       <GroupBox x:Name="Space_GroupBox" Header="Space Requirements" Height="150" Background="Transparent" Margin="0,311,10,0" Width="400" VerticalAlignment="Top" HorizontalAlignment="Right">
           <Grid>
                 <TextBox x:Name="RequiredSpace_TextBox" HorizontalAlignment="Left" Margin="40,9,0,0" TextWrapping="Wrap" Text="Space to run tool is:" VerticalAlignment="Top" Width="112" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
@@ -396,11 +396,16 @@ $WPF_UI_MediaSelect_Dropdown.Add_SelectionChanged({
         $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = $Global:SizeofUnallocated_Pixels
         
         $WPF_UI_WorkbenchSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofPartition_System -Scale 'GiB'
+        $WPF_UI_WorkbenchSize_Value.Background = 'White'
         $WPF_UI_WorkSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofPartition_Other -Scale 'GiB'
+        $WPF_UI_WorkSize_Value.Background = 'White'
         $WPF_UI_ImageSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofImage -Scale 'GiB'
+        $WPF_UI_ImageSize_Value.Background = 'White'
         $WPF_UI_FAT32Size_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofFAT32 -Scale 'GiB'
+        $WPF_UI_Fat32Size_Value.Background = 'White'
         $WPF_UI_FreeSpace_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofFreeSpace -Scale 'GiB'
-        $WPF_UI_Unallocated_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofUnallocated -Scale 'GiB'
+        $WPF_UI_FreeSpace_Value.Background = 'White'
+        $WPF_UI_Unallocated_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofUnallocated -Scale 'GiB'        
         }
 })
    
@@ -425,16 +430,23 @@ $WPF_UI_Fat32Size_Listview.add_SizeChanged({
         $Global:SizeofFreeSpace  = $Global:SizeofFreeSpace_Pixels * $Global:PartitionBarKBperPixel
         $Global:SizeofUnallocated = $Global:SizeofUnallocated_Pixels * $Global:PartitionBarKBperPixel
         
+        $Global:SizeofImage = $Global:SizeofFAT32 + $Global:SizeofPartition_System + $Global:SizeofPartition_Other + $Global:SizeofFreeSpace
+
         $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = Expand-FreeSpace 
-        Write-host ('FAT32 Size (Pixels) changed to: '+$Global:SizeofFAT32_Pixels)
+#        Write-host ('FAT32 Size (Pixels) changed to: '+$Global:SizeofFAT32_Pixels)
         $Global:SizeofFAT32 = $Global:SizeofFAT32_Pixels * $Global:PartitionBarKBperPixel
-        Write-host ('FAT32 Size (KiB) changed to: '+$Global:SizeofFAT32)
+#        Write-host ('FAT32 Size (KiB) changed to: '+$Global:SizeofFAT32)
         $WPF_UI_WorkbenchSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofPartition_System -Scale 'GiB'
+        $WPF_UI_WorkbenchSize_Value.Background = 'White'
         $WPF_UI_WorkSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofPartition_Other -Scale 'GiB'
+        $WPF_UI_WorkSize_Value.Background = 'White'
         $WPF_UI_ImageSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofImage -Scale 'GiB'
+        $WPF_UI_ImageSize_Value.Background = 'White'
         $WPF_UI_FAT32Size_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofFAT32 -Scale 'GiB'
+        $WPF_UI_Fat32Size_Value.Background = 'White'
         $WPF_UI_FreeSpace_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofFreeSpace -Scale 'GiB'
-        $WPF_UI_Unallocated_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofUnallocated -Scale 'GiB'
+        $WPF_UI_FreeSpace_Value.Background = 'White'
+        $WPF_UI_Unallocated_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofUnallocated -Scale 'GiB'        
     }
 })   
 
@@ -459,16 +471,23 @@ $WPF_UI_WorkbenchSize_Listview.add_SizeChanged({
         $Global:SizeofFreeSpace  = $Global:SizeofFreeSpace_Pixels * $Global:PartitionBarKBperPixel
         $Global:SizeofUnallocated = $Global:SizeofUnallocated_Pixels * $Global:PartitionBarKBperPixel
 
+        $Global:SizeofImage = $Global:SizeofFAT32 + $Global:SizeofPartition_System + $Global:SizeofPartition_Other + $Global:SizeofFreeSpace
+
         $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = Expand-FreeSpace
-        Write-host ('Workbench Size (Pixels) changed to: '+$Global:SizeofPartition_System_Pixels)
+#        Write-host ('Workbench Size (Pixels) changed to: '+$Global:SizeofPartition_System_Pixels)
         $Global:SizeofPartition_System  = $Global:SizeofPartition_System_Pixels * $Global:PartitionBarKBperPixel
-        Write-host ('Workbench Size (KiB) changed to: '+$Global:SizeofPartition_System)
+ #       Write-host ('Workbench Size (KiB) changed to: '+$Global:SizeofPartition_System)
         $WPF_UI_WorkbenchSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofPartition_System -Scale 'GiB'
+        $WPF_UI_WorkbenchSize_Value.Background = 'White'
         $WPF_UI_WorkSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofPartition_Other -Scale 'GiB'
+        $WPF_UI_WorkSize_Value.Background = 'White'
         $WPF_UI_ImageSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofImage -Scale 'GiB'
+        $WPF_UI_ImageSize_Value.Background = 'White'
         $WPF_UI_FAT32Size_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofFAT32 -Scale 'GiB'
+        $WPF_UI_Fat32Size_Value.Background = 'White'
         $WPF_UI_FreeSpace_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofFreeSpace -Scale 'GiB'
-        $WPF_UI_Unallocated_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofUnallocated -Scale 'GiB'
+        $WPF_UI_FreeSpace_Value.Background = 'White'
+        $WPF_UI_Unallocated_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofUnallocated -Scale 'GiB'        
     }   
 })
 
@@ -494,16 +513,23 @@ $WPF_UI_WorkSize_Listview.add_SizeChanged({
         $Global:SizeofFreeSpace  = $Global:SizeofFreeSpace_Pixels * $Global:PartitionBarKBperPixel
         $Global:SizeofUnallocated = $Global:SizeofUnallocated_Pixels * $Global:PartitionBarKBperPixel
 
+        $Global:SizeofImage = $Global:SizeofFAT32 + $Global:SizeofPartition_System + $Global:SizeofPartition_Other + $Global:SizeofFreeSpace
+
         $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = Expand-FreeSpace
-        Write-host ('Work Size (Pixels) changed to: '+$Global:SizeofPartition_Other_Pixels)
+ #       Write-host ('Work Size (Pixels) changed to: '+$Global:SizeofPartition_Other_Pixels)
         $Global:SizeofPartition_Other  = $Global:SizeofPartition_Other_Pixels * $Global:PartitionBarKBperPixel
-        Write-host ('Work Size (KiB) changed to: '+$Global:SizeofPartition_Other)
+  #      Write-host ('Work Size (KiB) changed to: '+$Global:SizeofPartition_Other)
         $WPF_UI_WorkbenchSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofPartition_System -Scale 'GiB'
+        $WPF_UI_WorkbenchSize_Value.Background = 'White'
         $WPF_UI_WorkSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofPartition_Other -Scale 'GiB'
+        $WPF_UI_WorkSize_Value.Background = 'White'
         $WPF_UI_ImageSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofImage -Scale 'GiB'
+        $WPF_UI_ImageSize_Value.Background = 'White'
         $WPF_UI_FAT32Size_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofFAT32 -Scale 'GiB'
+        $WPF_UI_Fat32Size_Value.Background = 'White'
         $WPF_UI_FreeSpace_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofFreeSpace -Scale 'GiB'
-        $WPF_UI_Unallocated_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofUnallocated -Scale 'GiB'
+        $WPF_UI_FreeSpace_Value.Background = 'White'
+        $WPF_UI_Unallocated_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofUnallocated -Scale 'GiB'        
     }   
 })
 
@@ -528,17 +554,24 @@ $WPF_UI_FreeSpace_Listview.add_SizeChanged({
         $Global:SizeofFreeSpace  = $Global:SizeofFreeSpace_Pixels * $Global:PartitionBarKBperPixel
         $Global:SizeofUnallocated = $Global:SizeofUnallocated_Pixels * $Global:PartitionBarKBperPixel
 
+        $Global:SizeofImage = $Global:SizeofFAT32 + $Global:SizeofPartition_System + $Global:SizeofPartition_Other + $Global:SizeofFreeSpace
+
         $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = Expand-UnallocatedSpace
-        Write-host ('Free Space (Pixels) changed to: '+$Global:SizeofFreeSpace_Pixels)
+   #     Write-host ('Free Space (Pixels) changed to: '+$Global:SizeofFreeSpace_Pixels)
         $Global:SizeofFreeSpace  = $Global:SizeofFreeSpace_Pixels * $Global:PartitionBarKBperPixel
-        Write-host ('Free Space Size (KiB) changed to: '+$Global:SizeofFreeSpace)
+   #     Write-host ('Free Space Size (KiB) changed to: '+$Global:SizeofFreeSpace)
 
         $WPF_UI_WorkbenchSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofPartition_System -Scale 'GiB'
+        $WPF_UI_WorkbenchSize_Value.Background = 'White'
         $WPF_UI_WorkSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofPartition_Other -Scale 'GiB'
+        $WPF_UI_WorkSize_Value.Background = 'White'
         $WPF_UI_ImageSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofImage -Scale 'GiB'
+        $WPF_UI_ImageSize_Value.Background = 'White'
         $WPF_UI_FAT32Size_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofFAT32 -Scale 'GiB'
+        $WPF_UI_Fat32Size_Value.Background = 'White'
         $WPF_UI_FreeSpace_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofFreeSpace -Scale 'GiB'
-        $WPF_UI_Unallocated_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofUnallocated -Scale 'GiB'
+        $WPF_UI_FreeSpace_Value.Background = 'White'
+        $WPF_UI_Unallocated_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofUnallocated -Scale 'GiB'        
 
     }    
 })
@@ -565,15 +598,23 @@ $WPF_UI_Unallocated_Listview.add_SizeChanged({
         $Global:SizeofFreeSpace  = $Global:SizeofFreeSpace_Pixels * $Global:PartitionBarKBperPixel
         $Global:SizeofUnallocated = $Global:SizeofUnallocated_Pixels * $Global:PartitionBarKBperPixel
 
-        Write-host ('Unallocated Space (Pixels) changed to: '+$Global:SizeofUnallocated_Pixels)
+        $Global:SizeofImage = $Global:SizeofFAT32 + $Global:SizeofPartition_System + $Global:SizeofPartition_Other + $Global:SizeofFreeSpace
+
+     #   Write-host ('Unallocated Space (Pixels) changed to: '+$Global:SizeofUnallocated_Pixels)
         $Global:SizeofUnallocated = $Global:SizeofUnallocated_Pixels * $Global:PartitionBarKBperPixel
-        Write-host ('Unallocated (KiB) changed to: '+$Global:SizeofUnallocated)
+       # Write-host ('Unallocated (KiB) changed to: '+$Global:SizeofUnallocated)
+
         $WPF_UI_WorkbenchSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofPartition_System -Scale 'GiB'
+        $WPF_UI_WorkbenchSize_Value.Background = 'White'
         $WPF_UI_WorkSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofPartition_Other -Scale 'GiB'
+        $WPF_UI_WorkSize_Value.Background = 'White'
         $WPF_UI_ImageSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofImage -Scale 'GiB'
+        $WPF_UI_ImageSize_Value.Background = 'White'
         $WPF_UI_FAT32Size_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofFAT32 -Scale 'GiB'
+        $WPF_UI_Fat32Size_Value.Background = 'White'
         $WPF_UI_FreeSpace_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofFreeSpace -Scale 'GiB'
-        $WPF_UI_Unallocated_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofUnallocated -Scale 'GiB'
+        $WPF_UI_FreeSpace_Value.Background = 'White'
+        $WPF_UI_Unallocated_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofUnallocated -Scale 'GiB'        
     }
 })
 
@@ -630,48 +671,135 @@ $WPF_UI_AvailableSpaceValue_TextBox.Add_TextChanged({
     
 })
 
-$WPF_UI_WorkSize_Value.add_LostFocus({
-    if ($WPF_UI_WorkSize_Value.Text -match "^[\d\.]+$"){
-        $WPF_UI_WorkSize_Slider.Value = $WPF_UI_WorkSize_Value.Text
-        $WPF_UI_WorkSize_Value.Background = 'White'
-    }
-    else
-    {
-        $WPF_UI_WorkSize_Value.Background = 'Red'
-    }
-})
-
-$WPF_UI_WorkbenchSize_Value.add_LostFocus({   
-    if ($WPF_UI_WorkBenchSize_Value.Text -match "^[\d\.]+$"){
-        $WPF_UI_WorkBenchSize_Value.Background = 'White'
-        $WPF_UI_WorkBenchSize_Slider.Value = $WPF_UI_WorkBenchSize_Value.Text
-    }
-    else{
-        $WPF_UI_WorkBenchSize_Value.Background = 'Red'
-    }
-})
-
 $WPF_UI_FAT32Size_Value.add_LostFocus({
     if ($WPF_UI_FAT32Size_Value.Text -match "^[\d\.]+$"){
-        $WPF_UI_FAT32Size_Slider.Value = $WPF_UI_FAT32Size_Value.Text
-        $WPF_UI_FAT32Size_Value.Background = 'White'
+            $ValueDifference = ([double]$WPF_UI_FAT32Size_Value.Text*1024*1024-$Global:SizeofFAT32) 
+            $FreeSpaceDifference = $Global:SizeofFreeSpace-$ValueDifference
+   #         Write-Host "Difference in value is: $ValueDifference"
+            if ($FreeSpaceDifference -ge 0){
+                $Global:SizeofFreeSpace -= $ValueDifference 
+                $Global:SizeofFreeSpace_Pixels = $Global:SizeofFreeSpace * $Global:PartitionBarPixelperKB
+                $Global:SizeofFAT32 = [double]$WPF_UI_FAT32Size_Value.Text*1024*1024
+                $Global:SizeofFAT32_Pixels = $Global:SizeofFAT32 * $Global:PartitionBarPixelperKB
+                $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Global:SizeofFreeSpace_Pixels 
+                $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width = $Global:SizeofFAT32_Pixels
+                $WPF_UI_FAT32Size_Value.Background = 'White'                
+            }
+            else{
+   #             Write-host 'Not enough free space for change!'
+                $WPF_UI_FAT32Size_Value.Background = 'Red'
+            }
     }
     else{
         $WPF_UI_FAT32Size_Value.Background = 'Red'
     }
 })
 
+$WPF_UI_WorkbenchSize_Value.add_LostFocus({
+    if ($WPF_UI_WorkbenchSize_Value.Text -match "^[\d\.]+$"){
+            $ValueDifference = ([double]$WPF_UI_WorkbenchSize_Value.Text*1024*1024-$global:SizeofPartition_System) 
+            $FreeSpaceDifference = $Global:SizeofFreeSpace-$ValueDifference
+    #        Write-Host "Difference in value is: $ValueDifference"
+            if ($FreeSpaceDifference -ge 0){
+                $Global:SizeofFreeSpace -= $ValueDifference 
+                $Global:SizeofFreeSpace_Pixels = $Global:SizeofFreeSpace * $Global:PartitionBarPixelperKB
+                $global:SizeofPartition_System= [double]$WPF_UI_WorkbenchSize_Value.Text*1024*1024
+                $global:SizeofPartition_System_Pixels = $global:SizeofPartition_System* $Global:PartitionBarPixelperKB
+                $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Global:SizeofFreeSpace_Pixels 
+                $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width = $global:SizeofPartition_System_Pixels
+                $WPF_UI_WorkbenchSize_Value.Background = 'White'                
+            }
+            else{
+     #           Write-host 'Not enough free space for change!'
+                $WPF_UI_WorkbenchSize_Value.Background = 'Red'
+            }
+    }
+    else{
+        $WPF_UI_WorkbenchSize_Value.Background = 'Red'
+    }
+})
+       
+$WPF_UI_WorkSize_Value.add_LostFocus({
+    if ($WPF_UI_WorkSize_Value.Text -match "^[\d\.]+$"){
+            $ValueDifference = ([double]$WPF_UI_WorkSize_Value.Text*1024*1024-$global:SizeofPartition_Other) 
+            $FreeSpaceDifference = $Global:SizeofFreeSpace-$ValueDifference
+     #       Write-Host "Difference in value is: $ValueDifference"
+            if ($FreeSpaceDifference -ge 0){
+                $Global:SizeofFreeSpace -= $ValueDifference 
+                $Global:SizeofFreeSpace_Pixels = $Global:SizeofFreeSpace * $Global:PartitionBarPixelperKB
+                $global:SizeofPartition_Other= [double]$WPF_UI_WorkSize_Value.Text*1024*1024
+                $global:SizeofPartition_Other_Pixels = $global:SizeofPartition_Other* $Global:PartitionBarPixelperKB
+                $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Global:SizeofFreeSpace_Pixels 
+                $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width = $global:SizeofPartition_Other_Pixels
+                $WPF_UI_WorkSize_Value.Background = 'White'                
+            }
+            else{
+      #          Write-host 'Not enough free space for change!'
+                $WPF_UI_WorkSize_Value.Background = 'Red'
+            }
+    }
+    else{
+        $WPF_UI_WorkSize_Value.Background = 'Red'
+    }
+})        
+
+$WPF_UI_FreeSpace_Value.add_LostFocus({
+    if ($WPF_UI_FreeSpace_Value.Text -match "^[\d\.]+$"){
+        $ValueDifference = ([double]$WPF_UI_FreeSpace_Value.Text*1024*1024-$Global:SizeofFreeSpace)
+   #     Write-Host "Difference in value for FreeSpace is: $ValueDifference"
+        if ($ValueDifference -lt 0){ 
+            $Global:SizeofFreeSpace += $ValueDifference
+            $Global:SizeofUnallocated -= $ValueDifference
+            $Global:SizeofUnallocated_Pixels = $Global:SizeofUnallocated * $Global:PartitionBarPixelperKB
+            $Global:SizeofFreeSpace_Pixels = $Global:SizeofFreeSpace * $Global:PartitionBarPixelperKB
+            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = $Global:SizeofUnallocated_Pixels
+            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Global:SizeofFreeSpace_Pixels  
+        }
+        elseif($ValueDifference -gt 0 -and ($Global:SizeofUnallocated - $ValueDifference) -gt 0){
+            $Global:SizeofFreeSpace += $ValueDifference
+            $Global:SizeofUnallocated -= $ValueDifference
+            $Global:SizeofUnallocated_Pixels = $Global:SizeofUnallocated * $Global:PartitionBarPixelperKB
+            $Global:SizeofFreeSpace_Pixels = $Global:SizeofFreeSpace * $Global:PartitionBarPixelperKB
+            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = $Global:SizeofUnallocated_Pixels  
+            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Global:SizeofFreeSpace_Pixels  
+        }
+        else{
+     #       Write-host 'Not enough free space for change!'
+            $WPF_UI_FreeSpace_Value.Background = 'Red'
+        }
+    }
+    else {
+        $WPF_UI_FreeSpace_Value.Background = 'Red'
+    }
+})    
+
 $WPF_UI_ImageSize_Value.add_LostFocus({
     if ($WPF_UI_ImageSize_Value.Text -match "^[\d\.]+$"){
-        $WPF_UI_ImageSize_Value.Background = 'White'
-        $WPF_UI_ImageSize_Slider.Value = $WPF_UI_ImageSize_Value.Text
+        $ValueDifference = ([double]$WPF_UI_ImageSize_Value.Text*1024*1024-$Global:SizeofImage)
+        if (($ValueDifference -lt 0) -and ($ValueDifference+$Global:SizeofFreeSpace -gt 0)) {  # We are reducing image and need free space
+            $Global:SizeofFreeSpace += $ValueDifference
+            $Global:SizeofUnallocated -= $ValueDifference
+            $Global:SizeofFreeSpace_Pixels = $Global:SizeofFreeSpace * $Global:PartitionBarPixelperKB
+            $Global:SizeofFreeSpace_Pixels = $Global:SizeofFreeSpace * $Global:PartitionBarPixelperKB
+            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = $Global:SizeofUnallocated_Pixels  
+            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Global:SizeofFreeSpace_Pixels              
+        }
+        elseif (($ValueDifference -gt 0) -and ($Global:SizeofUnallocated -$ValueDifference -gt 0)) {  # We are reducing image and need free space    
+            $Global:SizeofFreeSpace += $ValueDifference
+            $Global:SizeofUnallocated -= $ValueDifference
+            $Global:SizeofUnallocated_Pixels = $Global:SizeofUnallocated * $Global:PartitionBarPixelperKB
+            $Global:SizeofFreeSpace_Pixels = $Global:SizeofFreeSpace * $Global:PartitionBarPixelperKB
+            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = $Global:SizeofUnallocated_Pixels  
+            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Global:SizeofFreeSpace_Pixels                
+        }
+        else{
+            $WPF_UI_ImageSize_Value.Background = 'Red'
+        }
     }
     else{
         $WPF_UI_ImageSize_Value.Background = 'Red'
     }
 })
-
-$WPF_UI_Start_Button.Background = 'Red'
 
 $WPF_UI_Start_Button.Add_Click({
     $Global:SSID = $WPF_UI_SSID_Textbox.Text

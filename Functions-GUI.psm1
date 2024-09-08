@@ -2,7 +2,12 @@ function Expand-FreeSpace {
     param (
     )      
     $Global:SizeofFreeSpace = $Global:SizeofDisk - $Global:SizeofFAT32 -  $Global:SizeofPartition_System - $Global:SizeofPartition_Other - $Global:SizeofUnallocated 
-    $Global:SizeofFreeSpace_Pixels = ($Global:SizeofDisk * $Global:PartitionBarPixelperKB)- $Global:SizeofFAT32_Pixels - $Global:SizeofPartition_System_Pixels - $Global:SizeofPartition_Other_Pixels -$Global:SizeofUnallocated_Pixels
+    if ($Global:SizeofFreeSpace -eq 0){
+        $Global:SizeofFreeSpace_Pixels = 0
+    }
+    else{
+        $Global:SizeofFreeSpace_Pixels = ($Global:SizeofDisk * $Global:PartitionBarPixelperKB)- $Global:SizeofFAT32_Pixels - $Global:SizeofPartition_System_Pixels - $Global:SizeofPartition_Other_Pixels -$Global:SizeofUnallocated_Pixels
+    }
     return $Global:SizeofFreeSpace_Pixels
 }
 
@@ -23,30 +28,30 @@ function Set-PartitionMaximums {
     
     $Global:SizeofImage_Maximum = $Global:SizeofDisk
      
-    if (($Global:SizeofImage-$Global:SizeofPartition_System-$Global:SizeofPartition_Other) -le $Global:Fat32Maximum) {
-        $Global:SizeofFat32_Maximum = ($Global:SizeofImage-$Global:SizeofPartition_System-$Global:SizeofPartition_Other) 
+    if (($Global:SizeofDisk-$Global:SizeofPartition_System-$Global:SizeofPartition_Other) -le $Global:Fat32Maximum) {
+        $Global:SizeofFat32_Maximum = ($Global:SizeofDisk-$Global:SizeofPartition_System-$Global:SizeofPartition_Other) 
     }
     else{
         $Global:SizeofFat32_Maximum = $Global:Fat32Maximum
     }
     $Global:SizeofFat32_Pixels_Maximum = $Global:PartitionBarPixelperKB * $Global:SizeofFat32_Maximum
     
-    if (($Global:SizeofImage-$Global:SizeofFAT32-$Global:SizeofPartition_Other) -le $WorkbenchMaximum) {
-        $Global:SizeofPartition_System_Maximum = ($Global:SizeofImage-$Global:SizeofFAT32-$Global:SizeofPartition_Other)
+    if (($Global:SizeofDisk-$Global:SizeofFAT32-$Global:SizeofPartition_Other) -le $WorkbenchMaximum) {
+        $Global:SizeofPartition_System_Maximum = ($Global:SizeofDisk-$Global:SizeofFAT32-$Global:SizeofPartition_Other)
     }
     else {
         $Global:SizeofPartition_System_Maximum = $Global:WorkbenchMaximum
     }
     $Global:SizeofPartition_System_Pixels_Maximum = $Global:PartitionBarPixelperKB * $Global:SizeofPartition_System_Maximum
     
-    $Global:SizeofPartition_Other_Maximum = $Global:SizeofImage-$Global:SizeofFAT32-$Global:SizeofPartition_System
+    $Global:SizeofPartition_Other_Maximum = $Global:SizeofDisk-$Global:SizeofFAT32-$Global:SizeofPartition_System
     $Global:SizeofPartition_Other_Pixels_Maximum = $Global:PartitionBarPixelperKB * $Global:SizeofPartition_Other_Maximum
 
-    $Global:SizeofFreeSpace_Maximum = $Global:SizeofImage-$Global:SizeofFAT32-$Global:SizeofPartition_System-$Global:SizeofPartition_Other
-    $Global:SizeofFreeSpace_Pixels_Maximum = ($Global:SizeofImage * $Global:PartitionBarPixelperKB) - (($Global:SizeofFAT32 + $Global:SizeofPartition_System + $Global:SizeofPartition_Other)* $Global:PartitionBarPixelperKB) 
+    $Global:SizeofFreeSpace_Maximum = $Global:SizeofDisk-$Global:SizeofFAT32-$Global:SizeofPartition_System-$Global:SizeofPartition_Other
+    $Global:SizeofFreeSpace_Pixels_Maximum = ($Global:SizeofDisk * $Global:PartitionBarPixelperKB) - (($Global:SizeofFAT32 + $Global:SizeofPartition_System + $Global:SizeofPartition_Other)* $Global:PartitionBarPixelperKB) 
  
     $Global:SizeofUnallocated_Pixels_Maximum = $Global:PartitionBarWidth - (($Global:SizeofFreeSpace + $Global:SizeofPartition_Other_Pixels + $Global:SizeofPartition_System_Pixels + $Global:SizeofFat32_Pixels) * $Global:PartitionBarPixelperKB)
-    $Global:SizeofUnallocated_Maximum =  $Global:SizeofImage - $Global:SizeofFreeSpace - $Global:SizeofPartition_Other - $Global:SizeofPartition_System - $Global:SizeofFAT32
+    $Global:SizeofUnallocated_Maximum =  $Global:SizeofDisk - $Global:SizeofFreeSpace - $Global:SizeofPartition_Other - $Global:SizeofPartition_System - $Global:SizeofFAT32
 
     if ($Type -eq 'FAT32'){
         Write-Host ('Fat32 Maximum (KiB) is: '+$Global:SizeofFat32_Maximum)
