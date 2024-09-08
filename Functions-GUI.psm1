@@ -1,8 +1,8 @@
 function Expand-FreeSpace {
     param (
     )      
-    $Global:SizeofFreeSpace = $Global:SizeofImage - $Global:SizeofFAT32 -  $Global:SizeofPartition_System - $Global:SizeofPartition_Other
-    $Global:SizeofFreeSpace_Pixels = ($Global:SizeofImage * $Global:PartitionBarPixelperKB)- $Global:SizeofFAT32_Pixels - $Global:SizeofPartition_System_Pixels - $Global:SizeofPartition_Other_Pixels 
+    $Global:SizeofFreeSpace = $Global:SizeofDisk - $Global:SizeofFAT32 -  $Global:SizeofPartition_System - $Global:SizeofPartition_Other - $Global:SizeofUnallocated 
+    $Global:SizeofFreeSpace_Pixels = ($Global:SizeofDisk * $Global:PartitionBarPixelperKB)- $Global:SizeofFAT32_Pixels - $Global:SizeofPartition_System_Pixels - $Global:SizeofPartition_Other_Pixels -$Global:SizeofUnallocated_Pixels
     return $Global:SizeofFreeSpace_Pixels
 }
 
@@ -10,7 +10,7 @@ function Expand-FreeSpace {
 function Expand-UnallocatedSpace {
     param (
     )      
-    $Global:SizeofUnallocated = $Global:SizeofDisk - $Global:SizeofImage
+ #   $Global:SizeofUnallocated = $Global:SizeofDisk - $Global:SizeofImage
     $Global:SizeofUnallocated_Pixels = $Global:PartitionBarWidth - $Global:SizeofFAT32_Pixels - $Global:SizeofPartition_System_Pixels - $Global:SizeofPartition_Other_Pixels - $Global:SizeofFreeSpace_Pixels
     return $Global:SizeofUnallocated_Pixels
 }

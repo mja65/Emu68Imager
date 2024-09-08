@@ -94,7 +94,7 @@ $inputXML_UserInterface = @"
    <Grid Background="#FFE5E5E5" >
       <GroupBox x:Name="DiskSetup_GroupBox" Header="Disk Setup" VerticalAlignment="Top" Height="153" Background="Transparent" HorizontalAlignment="Center">
           <Grid Background="Transparent">
-              <Grid x:Name="DiskPartition_Grid" Background="Transparent" Height="30" Width="903" VerticalAlignment="Center">
+              <Grid x:Name="DiskPartition_Grid" Background="Transparent" Height="30" Width="903" MaxWidth="903" VerticalAlignment="Center">
                   <Grid.RowDefinitions>
                       <RowDefinition Height="30"/>
                   </Grid.RowDefinitions>
@@ -166,33 +166,36 @@ $inputXML_UserInterface = @"
                HorizontalAlignment="Center" 
                IsEnabled="False" 
               />
-                  <ListView x:Name="Unallocated_Listview" Grid.Row="0" Grid.Column="8" Background="#FFAFAFAF" 
-                  HorizontalAlignment="Stretch" 
-                  VerticalAlignment="Stretch" 
-                  ScrollViewer.VerticalScrollBarVisibility="Disabled"  
-                  ScrollViewer.HorizontalScrollBarVisibility="Disabled" IsTabStop="True"
-              />
+                    <ListView x:Name="Unallocated_Listview" Grid.Row="0" Grid.Column="8" Background="#FFAFAFAF" 
+                    HorizontalAlignment="Stretch" 
+                    VerticalAlignment="Stretch" 
+                    ScrollViewer.VerticalScrollBarVisibility="Disabled"  
+                    ScrollViewer.HorizontalScrollBarVisibility="Disabled" IsTabStop="True"
+                >
+                        <ListViewItem x:Name="Unallocated_ListViewItem" Content="Unallocated Space" Height="30" HorizontalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </ListView>
               </Grid>
-              <TextBox x:Name="Fat32Size_Label" HorizontalAlignment="Left" Margin="36,84,0,0" TextWrapping="Wrap" Text="FAT32 (GiB)" VerticalAlignment="Top" Width="82" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-              <TextBox x:Name="WorkbenchSize_Label" HorizontalAlignment="Left" Margin="167,84,0,0" TextWrapping="Wrap" Text="Workbench (GiB)" VerticalAlignment="Top" Width="113" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-              <TextBox x:Name="WorkSize_Label" HorizontalAlignment="Left" Margin="309,84,0,0" TextWrapping="Wrap" Text="Work (GiB)" VerticalAlignment="Top" Width="63" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-              <TextBox x:Name="Unallocated_Label" HorizontalAlignment="Left" Margin="596,84,0,0" TextWrapping="Wrap" Text="Unallocated (GiB)" VerticalAlignment="Top" Width="105" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-              <TextBox x:Name="ImageSize_Label" HorizontalAlignment="Left" Margin="749,84,0,0" TextWrapping="Wrap" Text="Total Image Size (GiB)" VerticalAlignment="Top" Width="144" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-              <TextBox x:Name="FreeSpace_Label" HorizontalAlignment="Left" Margin="427,84,0,0" TextWrapping="Wrap" Text="Free Space (GiB)" VerticalAlignment="Top" Width="108" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
 
-              <TextBox x:Name="FAT32Size_Value" Text="" HorizontalAlignment="Left" Margin="20,106,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" IsEnabled="False"/>
-              <TextBox x:Name="WorkbenchSize_Value" Text="" HorizontalAlignment="Left" Margin="162,106,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" IsEnabled="False"/>
-              <TextBox x:Name="WorkSize_Value" Text="" HorizontalAlignment="Left" Margin="278,106,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" IsEnabled="False"/>
-              <TextBox x:Name="Unallocated_Value" Text="" HorizontalAlignment="Left" Margin="596,106,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" IsEnabled="False"/>
-              <TextBox x:Name="ImageSize_Value" Text="" HorizontalAlignment="Left" Margin="758,106,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" IsEnabled="False"/>
-              <TextBox x:Name="FreeSpace_Value" Text="" HorizontalAlignment="Left" Margin="419,106,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" IsEnabled="False"/>
+               <TextBox x:Name="Fat32Size_Label" HorizontalAlignment="Left" Margin="36,84,0,0" TextWrapping="Wrap" Text="FAT32 (GiB)" VerticalAlignment="Top" Width="82" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+               <TextBox x:Name="WorkbenchSize_Label" HorizontalAlignment="Left" Margin="167,84,0,0" TextWrapping="Wrap" Text="Workbench (GiB)" VerticalAlignment="Top" Width="113" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+               <TextBox x:Name="WorkSize_Label" HorizontalAlignment="Left" Margin="309,84,0,0" TextWrapping="Wrap" Text="Work (GiB)" VerticalAlignment="Top" Width="63" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+               <TextBox x:Name="Unallocated_Label" HorizontalAlignment="Left" Margin="771,84,0,0" TextWrapping="Wrap" Text="Unallocated (GiB)" VerticalAlignment="Top" Width="105" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+               <TextBox x:Name="ImageSize_Label" HorizontalAlignment="Left" Margin="571,84,0,0" TextWrapping="Wrap" Text="Total Image Size (GiB)" VerticalAlignment="Top" Width="144" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+               <TextBox x:Name="FreeSpace_Label" HorizontalAlignment="Left" Margin="427,84,0,0" TextWrapping="Wrap" Text="Free Space (GiB)" VerticalAlignment="Top" Width="108" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
 
-              <Rectangle x:Name="Fat32_Key" HorizontalAlignment="Left" Height="10" Margin="22,90,0,0" VerticalAlignment="Top" Width="10" Fill="#FF3B67A2" />
-              <Rectangle x:Name="Workbench_Key" HorizontalAlignment="Left" Height="10" Margin="154,90,0,0" VerticalAlignment="Top" Width="10" Fill="#FFFFA997"  />
-              <Rectangle x:Name="Work_Key" HorizontalAlignment="Left" Height="10" Margin="295,90,0,0" VerticalAlignment="Top" Width="10" Fill="#FFAA907C"  />
-              <Rectangle x:Name="FreeSpace_Key" HorizontalAlignment="Left" Height="10" Margin="414,90,0,0" VerticalAlignment="Top" Width="10" Fill="#FF7B7B7B" />
-              <Rectangle x:Name="Unallocated_Key" HorizontalAlignment="Left" Height="10" Margin="584,90,0,0" VerticalAlignment="Top" Width="10" Fill="#FFAFAFAF"  />
+               <TextBox x:Name="FAT32Size_Value" Text="" HorizontalAlignment="Left" Margin="20,106,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" IsEnabled="False"/>
+               <TextBox x:Name="WorkbenchSize_Value" Text="" HorizontalAlignment="Left" Margin="162,106,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" IsEnabled="False"/>
+               <TextBox x:Name="WorkSize_Value" Text="" HorizontalAlignment="Left" Margin="278,106,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" IsEnabled="False"/>
+               <TextBox x:Name="Unallocated_Value" Text="0" HorizontalAlignment="Left" Margin="780,106,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" BorderBrush="Transparent"/>
+               <TextBox x:Name="ImageSize_Value" Text="" HorizontalAlignment="Left" Margin="582,106,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" IsEnabled="False"/>
+               <TextBox x:Name="FreeSpace_Value" Text="" HorizontalAlignment="Left" Margin="419,106,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" IsEnabled="False"/>
 
+               <Rectangle x:Name="Fat32_Key" HorizontalAlignment="Left" Height="10" Margin="22,90,0,0" VerticalAlignment="Top" Width="10" Fill="#FF3B67A2" />
+               <Rectangle x:Name="Workbench_Key" HorizontalAlignment="Left" Height="10" Margin="154,90,0,0" VerticalAlignment="Top" Width="10" Fill="#FFFFA997"  />
+               <Rectangle x:Name="Work_Key" HorizontalAlignment="Left" Height="10" Margin="295,90,0,0" VerticalAlignment="Top" Width="10" Fill="#FFAA907C"  />
+               <Rectangle x:Name="FreeSpace_Key" HorizontalAlignment="Left" Height="10" Margin="414,90,0,0" VerticalAlignment="Top" Width="10" Fill="#FF7B7B7B" />
+               <Rectangle x:Name="Unallocated_Key" HorizontalAlignment="Left" Height="10" Margin="756,88,0,0" VerticalAlignment="Top" Width="10" Fill="#FFAFAFAF"  />              
+ 
               <TextBox x:Name="MediaSelect_Label" HorizontalAlignment="Left" Margin="10,10,0,0" TextWrapping="Wrap" Text="Select Media to Use" VerticalAlignment="Top" Width="120" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
               <ComboBox x:Name="MediaSelect_DropDown"  HorizontalAlignment="Left" Margin="130,8,0,0" VerticalAlignment="Top" Width="340"/>
               <Button x:Name="MediaSelect_Refresh" Content="Refresh Available Media" HorizontalAlignment="Left" Margin="482,9,0,0" VerticalAlignment="Top" Width="130" Height="20"/>
@@ -217,8 +220,8 @@ $inputXML_UserInterface = @"
               <TextBox x:Name="ScreenMode_Label" HorizontalAlignment="Left" Margin="10,3,0,0" TextWrapping="Wrap" Text="Select ScreenMode" VerticalAlignment="Top" Width="300" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Center"/>
               <TextBox x:Name="SSID_Label" HorizontalAlignment="Left" Margin="12,71,0,0" TextWrapping="Wrap" Text="Enter your SSID" VerticalAlignment="Top" Width="150" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
               <TextBox x:Name="Password_Label" HorizontalAlignment="Left" Margin="6,94,0,0" TextWrapping="Wrap" Text="Enter your Wifi password"  VerticalAlignment="Top" Width="150" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Center"/>
-              <TextBox x:Name="SSID_Textbox" HorizontalAlignment="Left" Margin="187,71,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Width="120"/>
-              <TextBox x:Name="Password_Textbox" HorizontalAlignment="Left" Margin="187,94,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Width="120"/>
+              <TextBox x:Name="SSID_Textbox" HorizontalAlignment="Left" Margin="187,71,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="120"/>
+              <TextBox x:Name="Password_Textbox" HorizontalAlignment="Left" Margin="187,94,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="120"/>
 
           </Grid>
 
@@ -276,7 +279,7 @@ $XAML_UserInterface.SelectNodes("//*[@Name]") | ForEach-Object{
 
 #Width of bar
 
-$Global:PartitionBarWidth =  (172 * 5)
+$Global:PartitionBarWidth =  857
 
 # $Global:PartitionBarWidth = $WPF_UI_FAT32Size_ListViewItem.ActualWidth + `
 #                      $WPF_UI_WorkbenchSize_ListViewItem.ActualWidth + ` 
@@ -329,13 +332,12 @@ $WPF_UI_MediaSelect_Dropdown.Add_SelectionChanged({
         $WPF_UI_ImageSize_Value.IsEnabled = "True"
         $WPF_UI_FAT32Size_Value.IsEnabled = "True"
         $WPF_UI_FreeSpace_Value.IsEnabled = "True"
-        $WPF_UI_Unallocated_Value.IsEnabled = "True"
 
         foreach ($Disk in $RemovableMedia){        
             if ($Disk.FriendlyName -eq $WPF_UI_MediaSelect_DropDown.SelectedItem){
                 $Global:HSTDiskName = $Disk.HSTDiskName
-                $Global:PartitionBarPixelperKB = ($PartitionBarWidth-12)/$Disk.SizeofDisk
-                $Global:PartitionBarKBperPixel = $Disk.SizeofDisk/($PartitionBarWidth-12)
+                $Global:PartitionBarPixelperKB = ($PartitionBarWidth)/$Disk.SizeofDisk
+                $Global:PartitionBarKBperPixel = $Disk.SizeofDisk/($PartitionBarWidth)
                 break
             }
 
@@ -412,7 +414,18 @@ $WPF_UI_Fat32Size_Listview.add_SizeChanged({
             $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width = $Global:SizeofFat32_Pixels_Minimum
         }
         $Global:SizeofFAT32_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value
-        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = Expand-FreeSpace
+        $Global:SizeofPartition_System_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value
+        $Global:SizeofPartition_Other_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value
+        $Global:SizeofFreeSpace_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value
+        $Global:SizeofUnallocated_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width.Value
+
+        $Global:SizeofFAT32 = $Global:SizeofFAT32_Pixels * $Global:PartitionBarKBperPixel
+        $Global:SizeofPartition_System  = $Global:SizeofPartition_System_Pixels * $Global:PartitionBarKBperPixel  
+        $Global:SizeofPartition_Other  = $Global:SizeofPartition_Other_Pixels * $Global:PartitionBarKBperPixel
+        $Global:SizeofFreeSpace  = $Global:SizeofFreeSpace_Pixels * $Global:PartitionBarKBperPixel
+        $Global:SizeofUnallocated = $Global:SizeofUnallocated_Pixels * $Global:PartitionBarKBperPixel
+        
+        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = Expand-FreeSpace 
         Write-host ('FAT32 Size (Pixels) changed to: '+$Global:SizeofFAT32_Pixels)
         $Global:SizeofFAT32 = $Global:SizeofFAT32_Pixels * $Global:PartitionBarKBperPixel
         Write-host ('FAT32 Size (KiB) changed to: '+$Global:SizeofFAT32)
@@ -434,7 +447,18 @@ $WPF_UI_WorkbenchSize_Listview.add_SizeChanged({
         if ($WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value -le $Global:SizeofPartition_System_Pixels_Minimum){
             $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width = $Global:SizeofPartition_System_Pixels_Minimum
         }
+        $Global:SizeofFAT32_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value
         $Global:SizeofPartition_System_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value
+        $Global:SizeofPartition_Other_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value
+        $Global:SizeofFreeSpace_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value
+        $Global:SizeofUnallocated_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width.Value
+
+        $Global:SizeofFAT32 = $Global:SizeofFAT32_Pixels * $Global:PartitionBarKBperPixel
+        $Global:SizeofPartition_System  = $Global:SizeofPartition_System_Pixels * $Global:PartitionBarKBperPixel  
+        $Global:SizeofPartition_Other  = $Global:SizeofPartition_Other_Pixels * $Global:PartitionBarKBperPixel
+        $Global:SizeofFreeSpace  = $Global:SizeofFreeSpace_Pixels * $Global:PartitionBarKBperPixel
+        $Global:SizeofUnallocated = $Global:SizeofUnallocated_Pixels * $Global:PartitionBarKBperPixel
+
         $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = Expand-FreeSpace
         Write-host ('Workbench Size (Pixels) changed to: '+$Global:SizeofPartition_System_Pixels)
         $Global:SizeofPartition_System  = $Global:SizeofPartition_System_Pixels * $Global:PartitionBarKBperPixel
@@ -458,7 +482,18 @@ $WPF_UI_WorkSize_Listview.add_SizeChanged({
         if ($WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value -le $Global:SizeofPartition_Other_Pixels_Minimum){
             $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width = $Global:SizeofPartition_Other_Pixels_Minimum
         }
+        $Global:SizeofFAT32_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value
+        $Global:SizeofPartition_System_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value
         $Global:SizeofPartition_Other_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value
+        $Global:SizeofFreeSpace_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value
+        $Global:SizeofUnallocated_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width.Value
+
+        $Global:SizeofFAT32 = $Global:SizeofFAT32_Pixels * $Global:PartitionBarKBperPixel
+        $Global:SizeofPartition_System  = $Global:SizeofPartition_System_Pixels * $Global:PartitionBarKBperPixel  
+        $Global:SizeofPartition_Other  = $Global:SizeofPartition_Other_Pixels * $Global:PartitionBarKBperPixel
+        $Global:SizeofFreeSpace  = $Global:SizeofFreeSpace_Pixels * $Global:PartitionBarKBperPixel
+        $Global:SizeofUnallocated = $Global:SizeofUnallocated_Pixels * $Global:PartitionBarKBperPixel
+
         $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = Expand-FreeSpace
         Write-host ('Work Size (Pixels) changed to: '+$Global:SizeofPartition_Other_Pixels)
         $Global:SizeofPartition_Other  = $Global:SizeofPartition_Other_Pixels * $Global:PartitionBarKBperPixel
@@ -481,7 +516,18 @@ $WPF_UI_FreeSpace_Listview.add_SizeChanged({
         if ($WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value -le $Global:SizeofFreeSpace_Pixels_Minimum){
             $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Global:SizeofFreeSpace_Pixels_Minimum
         }
+        $Global:SizeofFAT32_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value
+        $Global:SizeofPartition_System_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value
+        $Global:SizeofPartition_Other_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value
         $Global:SizeofFreeSpace_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value
+        $Global:SizeofUnallocated_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width.Value
+
+        $Global:SizeofFAT32 = $Global:SizeofFAT32_Pixels * $Global:PartitionBarKBperPixel
+        $Global:SizeofPartition_System  = $Global:SizeofPartition_System_Pixels * $Global:PartitionBarKBperPixel  
+        $Global:SizeofPartition_Other  = $Global:SizeofPartition_Other_Pixels * $Global:PartitionBarKBperPixel
+        $Global:SizeofFreeSpace  = $Global:SizeofFreeSpace_Pixels * $Global:PartitionBarKBperPixel
+        $Global:SizeofUnallocated = $Global:SizeofUnallocated_Pixels * $Global:PartitionBarKBperPixel
+
         $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = Expand-UnallocatedSpace
         Write-host ('Free Space (Pixels) changed to: '+$Global:SizeofFreeSpace_Pixels)
         $Global:SizeofFreeSpace  = $Global:SizeofFreeSpace_Pixels * $Global:PartitionBarKBperPixel
@@ -506,14 +552,28 @@ $WPF_UI_Unallocated_Listview.add_SizeChanged({
         if ($WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width.Value -le $Global:SizeofUnallocated_Pixels_Minimum){
             $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = $Global:SizeofUnallocated_Pixels_Minimum
         }
+
+        $Global:SizeofFAT32_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value
+        $Global:SizeofPartition_System_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value
+        $Global:SizeofPartition_Other_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value
+        $Global:SizeofFreeSpace_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value
         $Global:SizeofUnallocated_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width.Value
+
+        $Global:SizeofFAT32 = $Global:SizeofFAT32_Pixels * $Global:PartitionBarKBperPixel
+        $Global:SizeofPartition_System  = $Global:SizeofPartition_System_Pixels * $Global:PartitionBarKBperPixel  
+        $Global:SizeofPartition_Other  = $Global:SizeofPartition_Other_Pixels * $Global:PartitionBarKBperPixel
+        $Global:SizeofFreeSpace  = $Global:SizeofFreeSpace_Pixels * $Global:PartitionBarKBperPixel
+        $Global:SizeofUnallocated = $Global:SizeofUnallocated_Pixels * $Global:PartitionBarKBperPixel
+
         Write-host ('Unallocated Space (Pixels) changed to: '+$Global:SizeofUnallocated_Pixels)
         $Global:SizeofUnallocated = $Global:SizeofUnallocated_Pixels * $Global:PartitionBarKBperPixel
-        Write-host ('Free Space Size (KiB) changed to: '+$Global:SizeofUnallocated)
+        Write-host ('Unallocated (KiB) changed to: '+$Global:SizeofUnallocated)
         $WPF_UI_WorkbenchSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofPartition_System -Scale 'GiB'
         $WPF_UI_WorkSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofPartition_Other -Scale 'GiB'
         $WPF_UI_ImageSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofImage -Scale 'GiB'
         $WPF_UI_FAT32Size_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofFAT32 -Scale 'GiB'
+        $WPF_UI_FreeSpace_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofFreeSpace -Scale 'GiB'
+        $WPF_UI_Unallocated_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofUnallocated -Scale 'GiB'
     }
 })
 
