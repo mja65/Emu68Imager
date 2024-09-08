@@ -39,26 +39,26 @@ function Set-PartitionMaximums {
     $Global:SizeofUnallocated_Pixels_Maximum = $Global:PartitionBarWidth - (($Global:SizeofFreeSpace + $Global:SizeofPartition_Other_Pixels + $Global:SizeofPartition_System_Pixels + $Global:SizeofFat32_Pixels) * $Global:PartitionBarPixelperKB)
     $Global:SizeofUnallocated_Maximum =  $Global:SizeofDisk - $Global:SizeofFreeSpace - $Global:SizeofPartition_Other - $Global:SizeofPartition_System - $Global:SizeofFAT32
 
-    if ($Type -eq 'FAT32'){
-        Write-Host ('Fat32 Maximum (KiB) is: '+$Global:SizeofFat32_Maximum)
-        Write-host ('Fat32 Maximum (Pixels) is: '+$Global:SizeofFat32_Pixels_Maximum)
-    }
-    if ($Type -eq 'Workbench'){
-        Write-Host ('Workbench Maximum (KiB) is: '+$Global:SizeofPartition_System_Maximum)
-        Write-host ('Workbench Maximum (Pixels) is: '+$Global:SizeofPartition_System_Pixels_Maximum)
-    }
-    if ($Type -eq 'Work'){
-        Write-Host ('Work Maximum (KiB) is: '+$Global:SizeofPartition_Other_Maximum)
-        Write-host ('Work Maximum (Pixels) is: '+$Global:SizeofPartition_Other_Pixels_Maximum)
-    }
-    if ($Type -eq 'Free'){
-        Write-Host ('FreeSpace Maximum (KiB) is: '+$Global:SizeofFreeSpace_Maximum)
-        Write-host ('FreeSpace Maximum (Pixels) is: '+$Global:SizeofFreeSpace_Pixels_Maximum)
-    }
-    if ($Type -eq 'Unallocated'){
-        Write-Host ('Unallocated Maximum (KiB) is: '+$Global:SizeofUnallocated_Maximum)
-        Write-host ('Unallocated Maximum (Pixels) is: '+$Global:SizeofUnallocated_Pixels_Maximum)
-    }
+    # if ($Type -eq 'FAT32'){
+    #     Write-Host ('Fat32 Maximum (KiB) is: '+$Global:SizeofFat32_Maximum)
+    #     Write-host ('Fat32 Maximum (Pixels) is: '+$Global:SizeofFat32_Pixels_Maximum)
+    # }
+    # if ($Type -eq 'Workbench'){
+    #     Write-Host ('Workbench Maximum (KiB) is: '+$Global:SizeofPartition_System_Maximum)
+    #     Write-host ('Workbench Maximum (Pixels) is: '+$Global:SizeofPartition_System_Pixels_Maximum)
+    # }
+    # if ($Type -eq 'Work'){
+    #     Write-Host ('Work Maximum (KiB) is: '+$Global:SizeofPartition_Other_Maximum)
+    #     Write-host ('Work Maximum (Pixels) is: '+$Global:SizeofPartition_Other_Pixels_Maximum)
+    # }
+    # if ($Type -eq 'Free'){
+    #     Write-Host ('FreeSpace Maximum (KiB) is: '+$Global:SizeofFreeSpace_Maximum)
+    #     Write-host ('FreeSpace Maximum (Pixels) is: '+$Global:SizeofFreeSpace_Pixels_Maximum)
+    # }
+    # if ($Type -eq 'Unallocated'){
+    #     Write-Host ('Unallocated Maximum (KiB) is: '+$Global:SizeofUnallocated_Maximum)
+    #     Write-host ('Unallocated Maximum (Pixels) is: '+$Global:SizeofUnallocated_Pixels_Maximum)
+    # }
 }
 
 function Get-FormattedPathforGUI {

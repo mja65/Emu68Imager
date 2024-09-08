@@ -280,12 +280,6 @@ $XAML_UserInterface.SelectNodes("//*[@Name]") | ForEach-Object{
 #Width of bar
 
 $Global:PartitionBarWidth =  857
-
-# $Global:PartitionBarWidth = $WPF_UI_FAT32Size_ListViewItem.ActualWidth + `
-#                      $WPF_UI_WorkbenchSize_ListViewItem.ActualWidth + ` 
-#                      $WPF_UI_WorkSize_ListViewItem.ActualWidth + `
-#                      $WPF_UI_ImageSize_ListViewItem.ActualWidth + `
-#                      $WPF_UI_Disk_Listview.ActualWidth
 $Global:SetDiskupOnly = 'FALSE'
 $DefaultDivisorFat32 = 15
 $DefaultDivisorWorkbench = 15
@@ -418,6 +412,25 @@ $WPF_UI_Fat32Size_Listview.add_SizeChanged({
         if ($WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value -le $Global:SizeofFat32_Pixels_Minimum){
             $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width = $Global:SizeofFat32_Pixels_Minimum
         }
+
+        if ([math]::round($Global:PartitionBarWidth-  $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value- `
+                                                      $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value- `
+                                                      $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value- `
+                                                      $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width.Value,4) -lt 0){
+
+            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = 0                                               
+        }
+         
+        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = [math]::round($Global:PartitionBarWidth-  $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value- `
+                                                                                            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value- `
+                                                                                            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value- `
+                                                                                            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width.Value,4)
+
+        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = [math]::round($Global:PartitionBarWidth-  $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value- `
+                                                                                            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value- `
+                                                                                            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value- `
+                                                                                            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value,4)
+
         $Global:SizeofFAT32_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value
         $Global:SizeofPartition_System_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value
         $Global:SizeofPartition_Other_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value
@@ -430,10 +443,8 @@ $WPF_UI_Fat32Size_Listview.add_SizeChanged({
         $Global:SizeofFreeSpace  = $Global:SizeofFreeSpace_Pixels * $Global:PartitionBarKBperPixel
         $Global:SizeofUnallocated = $Global:SizeofUnallocated_Pixels * $Global:PartitionBarKBperPixel
         
-        $Global:SizeofImage = $Global:SizeofFAT32 + $Global:SizeofPartition_System + $Global:SizeofPartition_Other + $Global:SizeofFreeSpace
-
-        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = Expand-FreeSpace 
-#        Write-host ('FAT32 Size (Pixels) changed to: '+$Global:SizeofFAT32_Pixels)
+        $Global:SizeofImage = $Global:SizeofFAT32 + $Global:SizeofPartition_System + $Global:SizeofPartition_Other + $Global:SizeofFreeSpace      
+#       Write-host ('FAT32 Size (Pixels) changed to: '+$Global:SizeofFAT32_Pixels)
         $Global:SizeofFAT32 = $Global:SizeofFAT32_Pixels * $Global:PartitionBarKBperPixel
 #        Write-host ('FAT32 Size (KiB) changed to: '+$Global:SizeofFAT32)
         $WPF_UI_WorkbenchSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofPartition_System -Scale 'GiB'
@@ -459,6 +470,25 @@ $WPF_UI_WorkbenchSize_Listview.add_SizeChanged({
         if ($WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value -le $Global:SizeofPartition_System_Pixels_Minimum){
             $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width = $Global:SizeofPartition_System_Pixels_Minimum
         }
+
+        if ([math]::round($Global:PartitionBarWidth-  $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value- `
+                                                      $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value- `
+                                                      $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value- `
+                                                      $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width.Value,4) -lt 0){
+
+            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = 0                                               
+        }
+
+        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = [math]::round($Global:PartitionBarWidth-  $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value- `
+                                                                                            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value- `
+                                                                                            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value- `
+                                                                                            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width.Value,4)
+
+        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = [math]::round($Global:PartitionBarWidth-  $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value- `
+                                                                                            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value- `
+                                                                                            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value- `
+                                                                                            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value,4)
+
         $Global:SizeofFAT32_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value
         $Global:SizeofPartition_System_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value
         $Global:SizeofPartition_Other_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value
@@ -473,7 +503,7 @@ $WPF_UI_WorkbenchSize_Listview.add_SizeChanged({
 
         $Global:SizeofImage = $Global:SizeofFAT32 + $Global:SizeofPartition_System + $Global:SizeofPartition_Other + $Global:SizeofFreeSpace
 
-        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = Expand-FreeSpace
+#        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = Expand-FreeSpace
 #        Write-host ('Workbench Size (Pixels) changed to: '+$Global:SizeofPartition_System_Pixels)
         $Global:SizeofPartition_System  = $Global:SizeofPartition_System_Pixels * $Global:PartitionBarKBperPixel
  #       Write-host ('Workbench Size (KiB) changed to: '+$Global:SizeofPartition_System)
@@ -501,6 +531,26 @@ $WPF_UI_WorkSize_Listview.add_SizeChanged({
         if ($WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value -le $Global:SizeofPartition_Other_Pixels_Minimum){
             $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width = $Global:SizeofPartition_Other_Pixels_Minimum
         }
+
+        if ([math]::round($Global:PartitionBarWidth-  $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value- `
+                                                      $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value- `
+                                                      $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value- `
+                                                      $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width.Value,4) -lt 0){
+
+            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = 0                                               
+        }
+
+        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = [math]::round($Global:PartitionBarWidth-  $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value- `
+                                                                                            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value- `
+                                                                                            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value- `
+                                                                                            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width.Value,4)
+
+        
+        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = [math]::round($Global:PartitionBarWidth-  $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value- `
+                                                                                            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value- `
+                                                                                            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value- `
+                                                                                            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value,4)   
+
         $Global:SizeofFAT32_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value
         $Global:SizeofPartition_System_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value
         $Global:SizeofPartition_Other_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value
@@ -515,7 +565,7 @@ $WPF_UI_WorkSize_Listview.add_SizeChanged({
 
         $Global:SizeofImage = $Global:SizeofFAT32 + $Global:SizeofPartition_System + $Global:SizeofPartition_Other + $Global:SizeofFreeSpace
 
-        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = Expand-FreeSpace
+#        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = Expand-FreeSpace
  #       Write-host ('Work Size (Pixels) changed to: '+$Global:SizeofPartition_Other_Pixels)
         $Global:SizeofPartition_Other  = $Global:SizeofPartition_Other_Pixels * $Global:PartitionBarKBperPixel
   #      Write-host ('Work Size (KiB) changed to: '+$Global:SizeofPartition_Other)
@@ -542,6 +592,12 @@ $WPF_UI_FreeSpace_Listview.add_SizeChanged({
         if ($WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value -le $Global:SizeofFreeSpace_Pixels_Minimum){
             $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Global:SizeofFreeSpace_Pixels_Minimum
         }
+        
+        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = [math]::round($Global:PartitionBarWidth-  $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value- `
+        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value- `
+        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value- `
+        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value,4)
+
         $Global:SizeofFAT32_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value
         $Global:SizeofPartition_System_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value
         $Global:SizeofPartition_Other_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value
@@ -1441,7 +1497,6 @@ foreach($Path in $PathstoTest){
 
 Write-StartSubTaskMessage -Message 'Downloading Emu68Pistorm' -SubtaskNumber '1' -TotalSubtasks '3'
 
-Write-Host "Downloading Emu68Pistorm"
 if (-not(Get-GithubRelease -GithubRelease $Emu68releases -Tag_Name "nightly" -Name 'Emu68-pistorm-' -LocationforDownload ($AmigaDownloads+'Emu68Pistorm.zip') -LocationforProgram ($tempfolder+'Emu68Pistorm\') -Sort_Flag 'SORT')){
     Write-ErrorMessage -Message'Error downloading Emu68Pistorm! Cannot continue!'
     exit
