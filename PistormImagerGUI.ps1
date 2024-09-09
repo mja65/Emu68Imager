@@ -1413,7 +1413,7 @@ $inputXML_UserInterface = @"
               <TextBox x:Name="ROMPath_Label" HorizontalAlignment="Left" Margin="223,65,0,0" TextWrapping="Wrap" Text="No Kickstart path selected" VerticalAlignment="Top" Width="200" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
               <Button x:Name="Rompath_Button" Content="Click to set Kickstart path" HorizontalAlignment="Left" Margin="10,59,0,0" VerticalAlignment="Top"  Width="200" Height="30"/>
               <Button x:Name="MigratedFiles_Button" Content="Click to set Transfer path" HorizontalAlignment="Left" Margin="10,129,0,0" VerticalAlignment="Top"  Width="200" Height="30"/>
-              <TextBox x:Name="MigratedPath_Label" HorizontalAlignment="Left" Margin="215,139,0,0" TextWrapping="Wrap" Text="No transfer path selected" VerticalAlignment="Top" Width="200" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+              <TextBox x:Name="MigratedPath_Label" HorizontalAlignment="Left" Margin="223,139,0,0" TextWrapping="Wrap" Text="No transfer path selected" VerticalAlignment="Top" Width="200" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
               <TextBox x:Name="KickstartVersion_Label" HorizontalAlignment="Left" Margin="10,10,0,0" TextWrapping="Wrap" Text="Select OS Version" VerticalAlignment="Top" Width="200" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Center"/>
 
           </Grid>
@@ -1443,7 +1443,7 @@ $inputXML_UserInterface = @"
     
                 <TextBox x:Name="RequiredSpace_TextBox" HorizontalAlignment="Left" Margin="20,82,0,0" TextWrapping="Wrap" Text="Space to run tool is:" VerticalAlignment="Top" Width="230" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
                 <TextBox x:Name="RequiredSpaceValue_TextBox" HorizontalAlignment="Left" Margin="288,82,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Right"/>
-                <TextBox x:Name="AvailableSpace_TextBox" HorizontalAlignment="Left" Margin="20,102,0,0" TextWrapping="Wrap" Text="Free space after space for tool to run is:" VerticalAlignment="Top" Width="230" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" FontWeight="Bold"/>
+                <TextBox x:Name="AvailableSpace_TextBox" HorizontalAlignment="Left" Margin="20,102,0,0" TextWrapping="Wrap" Text="Free space after tool is run:" VerticalAlignment="Top" Width="230" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" FontWeight="Bold"/>
                 <TextBox x:Name="AvailableSpaceValue_TextBox" HorizontalAlignment="Right" Margin="0,102,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Green" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Right"/>
                 <TextBox x:Name="RequiredSpaceTransferredFiles_TextBox" HorizontalAlignment="Left" Margin="20,28,0,0" TextWrapping="Wrap" Text="Space for transferred files:" VerticalAlignment="Top" Width="230" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
                 <TextBox x:Name="RequiredSpaceValueTransferredFiles_TextBox" HorizontalAlignment="Left" Margin="288,28,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Right"/>
@@ -1614,7 +1614,7 @@ $WPF_UI_MediaSelect_Dropdown.Add_SelectionChanged({
 })
    
 $WPF_UI_DefaultAllocation_Refresh.add_Click({
-        if ($Script:HSTDiskName -eq ('\'+(($WPF_UI_MediaSelect_DropDown.SelectedItem).Split(' ',3)[0])+(($WPF_UI_MediaSelect_DropDown.SelectedItem).Split(' ',3)[1]))){
+        if (($null -ne $Script:HSTDiskName)  -and ($Script:HSTDiskName -eq ('\'+(($WPF_UI_MediaSelect_DropDown.SelectedItem).Split(' ',3)[0])+(($WPF_UI_MediaSelect_DropDown.SelectedItem).Split(' ',3)[1])))){
         $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width = '1'
         $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width = '1'
         $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width = '1'
@@ -2083,6 +2083,12 @@ $WPF_UI_MediaSelect_Refresh.Add_Click({
     $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width = '*'
     $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = '*'
     $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = '*'
+    $Script:RequiredSpace_WorkingFolderDisk = 0 #In Kilobytes
+    $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:RequiredSpace_WorkingFolderDisk
+    $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk
+    $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpace_WorkingFolderDisk 
+    $WPF_UI_WorkSizeNote_Label.Text=''
+    $WPF_UI_WorkSizeNoteFooter_Label.Text='' 
     $WPF_UI_WorkbenchSize_Value.Text = ''
     $WPF_UI_WorkbenchSize_Value.Background = 'White'
     $WPF_UI_WorkSize_Value.Text = ''
