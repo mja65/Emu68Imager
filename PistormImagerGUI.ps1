@@ -99,6 +99,7 @@ $Global:SizeofUnallocated_Pixels = $null
 $Global:SizeofUnallocated_Pixels_Minimum = $null
 $Global:SizeofFreeSpace_Minimum = $null
 $Global:RemovableMedia = $null
+$Global:WorkOverhead = $null
 
 ####################################################################### End Null out Global Variables ###############################################################################################
  
@@ -208,30 +209,31 @@ $inputXML_UserInterface = @"
                     ScrollViewer.VerticalScrollBarVisibility="Disabled"  
                     ScrollViewer.HorizontalScrollBarVisibility="Disabled" IsTabStop="True"
                 >
-                        <ListViewItem x:Name="Unallocated_ListViewItem" Content="Unallocated Space" Height="30" HorizontalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <ListViewItem x:Name="Unallocated_ListViewItem" Content="Not Used" Height="30" HorizontalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </ListView>
               </Grid>
 
-               <TextBox x:Name="Fat32Size_Label" HorizontalAlignment="Left" Margin="36,84,0,0" TextWrapping="Wrap" Text="FAT32 (GiB)" VerticalAlignment="Top" Width="82" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-               <TextBox x:Name="WorkbenchSize_Label" HorizontalAlignment="Left" Margin="167,84,0,0" TextWrapping="Wrap" Text="Workbench (GiB)" VerticalAlignment="Top" Width="113" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-               <TextBox x:Name="WorkSize_Label" HorizontalAlignment="Left" Margin="309,84,0,0" TextWrapping="Wrap" Text="Work (GiB)" VerticalAlignment="Top" Width="63" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-               <TextBox x:Name="Unallocated_Label" HorizontalAlignment="Left" Margin="771,84,0,0" TextWrapping="Wrap" Text="Unallocated (GiB)" VerticalAlignment="Top" Width="105" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-               <TextBox x:Name="ImageSize_Label" HorizontalAlignment="Left" Margin="571,84,0,0" TextWrapping="Wrap" Text="Total Image Size (GiB)" VerticalAlignment="Top" Width="144" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-               <TextBox x:Name="FreeSpace_Label" HorizontalAlignment="Left" Margin="427,84,0,0" TextWrapping="Wrap" Text="Free Space (GiB)" VerticalAlignment="Top" Width="108" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+                <TextBox x:Name="Fat32Size_Label" HorizontalAlignment="Left" Margin="36,84,0,0" TextWrapping="Wrap" Text="FAT32 (GiB)" VerticalAlignment="Top" Width="82" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+                <TextBox x:Name="WorkbenchSize_Label" HorizontalAlignment="Left" Margin="167,84,0,0" TextWrapping="Wrap" Text="Workbench (GiB)" VerticalAlignment="Top" Width="113" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+                <TextBox x:Name="WorkSize_Label" HorizontalAlignment="Left" Margin="309,84,0,0" TextWrapping="Wrap" Text="Work (GiB)" VerticalAlignment="Top" Width="63" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+                <TextBox x:Name="WorkSizeNote_Label" HorizontalAlignment="Left" Margin="279,85,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="16" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" FontSize="17" />
+                <TextBox x:Name="Unallocated_Label" HorizontalAlignment="Left" Margin="771,84,0,0" TextWrapping="Wrap" Text="Not Used (GiB)" VerticalAlignment="Top" Width="105" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+                <TextBox x:Name="ImageSize_Label" HorizontalAlignment="Left" Margin="540,84,0,0" TextWrapping="Wrap" Text="Total Image Size (GiB)" VerticalAlignment="Top" Width="144" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+                <TextBox x:Name="FreeSpace_Label" HorizontalAlignment="Left" Margin="424,84,0,0" TextWrapping="Wrap" Text="Free Space (GiB)" VerticalAlignment="Top" Width="108" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
 
-               <TextBox x:Name="FAT32Size_Value" Text="" HorizontalAlignment="Left" Margin="20,106,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" IsEnabled="False"/>
-               <TextBox x:Name="WorkbenchSize_Value" Text="" HorizontalAlignment="Left" Margin="162,106,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" IsEnabled="False"/>
-               <TextBox x:Name="WorkSize_Value" Text="" HorizontalAlignment="Left" Margin="278,106,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" IsEnabled="False"/>
-               <TextBox x:Name="Unallocated_Value" Text="0" HorizontalAlignment="Left" Margin="780,106,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" BorderBrush="Transparent"/>
-               <TextBox x:Name="ImageSize_Value" Text="" HorizontalAlignment="Left" Margin="582,106,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" IsEnabled="False"/>
-               <TextBox x:Name="FreeSpace_Value" Text="" HorizontalAlignment="Left" Margin="419,106,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" IsEnabled="False"/>
+                <TextBox x:Name="FAT32Size_Value" Text="" HorizontalAlignment="Left" Margin="20,106,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" IsEnabled="False"/>
+                <TextBox x:Name="WorkbenchSize_Value" Text="" HorizontalAlignment="Left" Margin="162,106,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" IsEnabled="False"/>
+                <TextBox x:Name="WorkSize_Value" Text="" HorizontalAlignment="Left" Margin="278,106,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" IsEnabled="False"/>
+                <TextBox x:Name="Unallocated_Value" Text="0" HorizontalAlignment="Left" Margin="780,106,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" BorderBrush="Transparent"/>
+                <TextBox x:Name="ImageSize_Value" Text="" HorizontalAlignment="Left" Margin="551,106,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" IsEnabled="False"/>
+                <TextBox x:Name="FreeSpace_Value" Text="" HorizontalAlignment="Left" Margin="416,106,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" IsEnabled="False"/>
 
-               <Rectangle x:Name="Fat32_Key" HorizontalAlignment="Left" Height="10" Margin="22,90,0,0" VerticalAlignment="Top" Width="10" Fill="#FF3B67A2" />
-               <Rectangle x:Name="Workbench_Key" HorizontalAlignment="Left" Height="10" Margin="154,90,0,0" VerticalAlignment="Top" Width="10" Fill="#FFFFA997"  />
-               <Rectangle x:Name="Work_Key" HorizontalAlignment="Left" Height="10" Margin="295,90,0,0" VerticalAlignment="Top" Width="10" Fill="#FFAA907C"  />
-               <Rectangle x:Name="FreeSpace_Key" HorizontalAlignment="Left" Height="10" Margin="414,90,0,0" VerticalAlignment="Top" Width="10" Fill="#FF7B7B7B" />
-               <Rectangle x:Name="Unallocated_Key" HorizontalAlignment="Left" Height="10" Margin="756,88,0,0" VerticalAlignment="Top" Width="10" Fill="#FFAFAFAF"  />              
- 
+                <Rectangle x:Name="Fat32_Key" HorizontalAlignment="Left" Height="10" Margin="22,90,0,0" VerticalAlignment="Top" Width="10" Fill="#FF3B67A2" />
+                <Rectangle x:Name="Workbench_Key" HorizontalAlignment="Left" Height="10" Margin="154,90,0,0" VerticalAlignment="Top" Width="10" Fill="#FFFFA997"  />
+                <Rectangle x:Name="Work_Key" HorizontalAlignment="Left" Height="10" Margin="295,90,0,0" VerticalAlignment="Top" Width="10" Fill="#FFAA907C"  />
+                <Rectangle x:Name="FreeSpace_Key" HorizontalAlignment="Left" Height="10" Margin="409,90,0,0" VerticalAlignment="Top" Width="10" Fill="#FF7B7B7B" />
+                <Rectangle x:Name="Unallocated_Key" HorizontalAlignment="Left" Height="10" Margin="756,90,0,0" VerticalAlignment="Top" Width="10" Fill="#FFAFAFAF"  />
+              
               <TextBox x:Name="MediaSelect_Label" HorizontalAlignment="Left" Margin="10,10,0,0" TextWrapping="Wrap" Text="Select Media to Use" VerticalAlignment="Top" Width="120" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
               <ComboBox x:Name="MediaSelect_DropDown"  HorizontalAlignment="Left" Margin="130,8,0,0" VerticalAlignment="Top" Width="340"/>
               <Button x:Name="MediaSelect_Refresh" Content="Refresh Available Media" HorizontalAlignment="Left" Margin="482,9,0,0" VerticalAlignment="Top" Width="130" Height="20"/>
@@ -272,18 +274,21 @@ $inputXML_UserInterface = @"
       <Button x:Name="Start_Button" Content="Run Tool" HorizontalAlignment="Center" Margin="0,489,0,0" VerticalAlignment="Top" Width="880" Height="38" Background = "Red" Foreground="Black" BorderBrush="Transparent"/>
       <GroupBox x:Name="Space_GroupBox" Header="Space Requirements" Height="150" Background="Transparent" Margin="0,311,10,0" Width="400" VerticalAlignment="Top" HorizontalAlignment="Right">
           <Grid>
-                <TextBox x:Name="RequiredSpace_TextBox" HorizontalAlignment="Left" Margin="40,9,0,0" TextWrapping="Wrap" Text="Space to run tool is:" VerticalAlignment="Top" Width="112" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-                <TextBox x:Name="AvailableSpace_TextBox" HorizontalAlignment="Left" Margin="40,67,0,0" TextWrapping="Wrap" Text="Available space is:" VerticalAlignment="Top" Width="101" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-                <TextBox x:Name="RequiredSpaceTransferredFiles_TextBox" HorizontalAlignment="Left" Margin="40,49,0,0" TextWrapping="Wrap" Text="Space for transferred files:" VerticalAlignment="Top" Width="147" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-                <TextBox x:Name="AvailableSpaceTransferredFiles_TextBox" HorizontalAlignment="Left" Margin="40,28,0,0" TextWrapping="Wrap" Text="Available space is:" VerticalAlignment="Top" Width="101" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-                <TextBox x:Name="RequiredSpaceValue_TextBox" HorizontalAlignment="Right" Margin="281,49,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-                <TextBox x:Name="AvailableSpaceValue_TextBox" HorizontalAlignment="Right" Margin="266,70,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Green" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-                <TextBox x:Name="RequiredSpaceValueTransferredFiles_TextBox" HorizontalAlignment="Right" Margin="280,7,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-                <TextBox x:Name="AvailableSpaceValueTransferredFiles_TextBox" HorizontalAlignment="Right" Margin="281,27,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+
+    
+                <TextBox x:Name="RequiredSpace_TextBox" HorizontalAlignment="Left" Margin="20,82,0,0" TextWrapping="Wrap" Text="Space to run tool is:" VerticalAlignment="Top" Width="230" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+                <TextBox x:Name="RequiredSpaceValue_TextBox" HorizontalAlignment="Left" Margin="288,82,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Right"/>
+                <TextBox x:Name="AvailableSpace_TextBox" HorizontalAlignment="Left" Margin="20,102,0,0" TextWrapping="Wrap" Text="Free space after space for tool to run is:" VerticalAlignment="Top" Width="230" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+                <TextBox x:Name="AvailableSpaceValue_TextBox" HorizontalAlignment="Right" Margin="0,102,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Green" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Right"/>
+                <TextBox x:Name="RequiredSpaceTransferredFiles_TextBox" HorizontalAlignment="Left" Margin="20,28,0,0" TextWrapping="Wrap" Text="Space for transferred files:" VerticalAlignment="Top" Width="230" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+                <TextBox x:Name="RequiredSpaceValueTransferredFiles_TextBox" HorizontalAlignment="Left" Margin="288,28,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Right"/>
+                <TextBox x:Name="AvailableSpaceTransferredFiles_TextBox" HorizontalAlignment="Left" Margin="20,49,0,0" TextWrapping="Wrap" Text="Free space is:" VerticalAlignment="Top" Width="230" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+                <TextBox x:Name="AvailableSpaceValueTransferredFiles_TextBox" HorizontalAlignment="Right" Margin="281,49,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Right"/>
 
           </Grid>
 
       </GroupBox>
+      <TextBox x:Name="WorkSizeNoteFooter_Label" HorizontalAlignment="Left" Margin="15,466,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="608" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
   </Grid>
 </Window>
 "@
@@ -334,6 +339,7 @@ $Global:AvailableSpace_WorkingFolderDisk = $Global:Space_WorkingFolderDisk
 $Global:RequiredSpace_WorkingFolderDisk = 0 #In Kilobytes
 
 $Global:Space_FilestoTransfer = 0 #In Kilobytes
+$Global:WorkOverhead = 1024 #In Kilobytes
 $Global:AvailableSpaceFilestoTransfer = 0 #In Kilobytes
 $Global:SizeofFilestoTransfer = 0 #In Kilobytes
 
@@ -424,6 +430,19 @@ $WPF_UI_MediaSelect_Dropdown.Add_SelectionChanged({
         $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Global:SizeofFreeSpace_Pixels
         $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = $Global:SizeofUnallocated_Pixels
         
+        $Global:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Global:SizeofImage
+        $Global:AvailableSpace_WorkingFolderDisk = $Global:Space_WorkingFolderDisk - $Global:RequiredSpace_WorkingFolderDisk 
+    
+        $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Global:RequiredSpace_WorkingFolderDisk
+        $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Global:AvailableSpace_WorkingFolderDisk
+
+        $Global:Space_FilestoTransfer = $Global:SizeofPartition_Other - $Global:WorkOverhead
+        $Global:AvailableSpaceFilestoTransfer =  $Global:Space_FilestoTransfer - $Global:SizeofFilestoTransfer    
+        
+        if ($Global:TransferLocation){
+            $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Global:AvailableSpaceFilestoTransfer 
+        }
+
         $WPF_UI_WorkbenchSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofPartition_System -Scale 'GiB'
         $WPF_UI_WorkbenchSize_Value.Background = 'White'
         $WPF_UI_WorkSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofPartition_Other -Scale 'GiB'
@@ -439,91 +458,94 @@ $WPF_UI_MediaSelect_Dropdown.Add_SelectionChanged({
 })
    
 $WPF_UI_DefaultAllocation_Refresh.add_Click({
+        if ($Global:HSTDiskName -eq ('\'+(($WPF_UI_MediaSelect_DropDown.SelectedItem).Split(' ',3)[0])+(($WPF_UI_MediaSelect_DropDown.SelectedItem).Split(' ',3)[1]))){
+        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width = '1'
+        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width = '1'
+        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width = '1'
+        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = '1'
+        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = '1'
+
+        $Global:SizeofFat32_Pixels_Minimum = $Global:PartitionBarPixelperKB * $Global:Fat32Minimum 
+        $Global:SizeofPartition_System_Pixels_Minimum = $Global:PartitionBarPixelperKB * $Global:WorkbenchMinimum
+        $Global:SizeofPartition_Other_Pixels_Minimum = $Global:PartitionBarPixelperKB * $Global:WorkMinimum
     
-    # $Global:SizeofDisk = $null
-    # $Global:SizeofImage = $null
-    # $Global:SizeofFat32_Pixels_Minimum = $null
-    # $Global:SizeofPartition_System_Pixels_Minimum = $null
-    # $Global:SizeofPartition_Other_Pixels_Minimum = $null
-    # $Global:SizeofFreeSpace_Pixels_Minimum = $null
-    # $Global:SizeofFreeSpace_Minimum = $null
-    # $Global:SizeofUnallocated_Pixels_Minimum = $null
-    # $Global:SizeofUnallocated_Minimum = $null
-    # $Global:SizeofFAT32 = $null
-    # $Global:SizeofFAT32_Pixels = $null
-    # $Global:SizeofPartition_System = $null
-    # $Global:SizeofPartition_System_Pixels = $null
-    # $Global:SizeofPartition_Other = $null
-    # $Global:SizeofPartition_Other_Pixels = $null
-    # $Global:SizeofUnallocated = $null
-    # $Global:SizeofUnallocated_Pixels = $null
-    # $Global:SizeofFreeSpace = $null
-    # $Global:SizeofFreeSpace_Pixels = $null
-    $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width = '1'
-    $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width = '1'
-    $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width = '1'
-    $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = '1'
-    $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = '1'
-
-    $Global:SizeofDisk = $Disk.SizeofDisk
-    $Global:SizeofImage = $Global:SizeofDisk
-
-    $Global:SizeofFat32_Pixels_Minimum = $Global:PartitionBarPixelperKB * $Global:Fat32Minimum 
-    $Global:SizeofPartition_System_Pixels_Minimum = $Global:PartitionBarPixelperKB * $Global:WorkbenchMinimum
-    $Global:SizeofPartition_Other_Pixels_Minimum = $Global:PartitionBarPixelperKB * $Global:WorkMinimum
-
-    $Global:SizeofFreeSpace_Pixels_Minimum = 0
-    $Global:SizeofFreeSpace_Minimum = 0
-
-    $Global:SizeofUnallocated_Pixels_Minimum = 0
-    $Global:SizeofUnallocated_Minimum = 0
-
-    if ($Global:SizeofImage /$DefaultDivisorFat32 -ge $Fat32DefaultMaximum){
-        $Global:SizeofFAT32 = $Fat32DefaultMaximum
-        $Global:SizeofFAT32_Pixels = $Global:PartitionBarPixelperKB * $Global:SizeofFAT32   
-    }
-    else{
-        $Global:SizeofFAT32 = $Global:SizeofImage/$DefaultDivisorFat32
-        $Global:SizeofFAT32_Pixels = $Global:PartitionBarPixelperKB * $Global:SizeofFAT32   
-    }
-
-    if ($Global:SizeofImage/$DefaultDivisorWorkbench -ge $Global:WorkbenchDefaultMaximum){
-        $Global:SizeofPartition_System = $Global:WorkbenchDefaultMaximum 
-        $Global:SizeofPartition_System_Pixels = $Global:SizeofPartition_System * $Global:PartitionBarPixelperKB 
-    }
-    else{
-        $Global:SizeofPartition_System = $Global:SizeofImage/$DefaultDivisorWorkbench
-        $Global:SizeofPartition_System_Pixels = $Global:SizeofPartition_System * $Global:PartitionBarPixelperKB 
-    }
-
-    $Global:SizeofPartition_Other = ($Global:SizeofImage-$Global:SizeofPartition_System-$Global:SizeofFAT32)
-    $Global:SizeofPartition_Other_Pixels = $Global:SizeofPartition_Other * $Global:PartitionBarPixelperKB
-
-    $Global:SizeofUnallocated = $Global:SizeofDisk-$Global:SizeofImage
-    $Global:SizeofUnallocated_Pixels = $Global:SizeofUnallocated * $Global:PartitionBarPixelperKB
-
-    $Global:SizeofFreeSpace = $Global:SizeofImage-$Global:SizeofPartition_System-$Global:SizeofFAT32-$Global:SizeofPartition_Other
-    $Global:SizeofFreeSpace_Pixels = $Global:SizeofFreeSpace * $Global:PartitionBarPixelperKB
+        $Global:SizeofFreeSpace_Pixels_Minimum = 0
+        $Global:SizeofFreeSpace_Minimum = 0
     
-    Set-PartitionMaximums
+        $Global:SizeofUnallocated_Pixels_Minimum = 0
+        $Global:SizeofUnallocated_Minimum = 0
+    
+        $Global:SizeofImage=$Global:SizeofDisk
+        if ($Global:SizeofImage /$DefaultDivisorFat32 -ge $Fat32DefaultMaximum){
+            $Global:SizeofFAT32 = $Fat32DefaultMaximum
+            $Global:SizeofFAT32_Pixels = $Global:PartitionBarPixelperKB * $Global:SizeofFAT32   
+        }
+        else{
+            $Global:SizeofFAT32 = $Global:SizeofImage/$DefaultDivisorFat32
+            $Global:SizeofFAT32_Pixels = $Global:PartitionBarPixelperKB * $Global:SizeofFAT32   
+        }
+    
+        if ($Global:SizeofImage/$DefaultDivisorWorkbench -ge $Global:WorkbenchDefaultMaximum){
+            $Global:SizeofPartition_System = $Global:WorkbenchDefaultMaximum 
+            $Global:SizeofPartition_System_Pixels = $Global:SizeofPartition_System * $Global:PartitionBarPixelperKB 
+        }
+        else{
+            $Global:SizeofPartition_System = $Global:SizeofImage/$DefaultDivisorWorkbench
+            $Global:SizeofPartition_System_Pixels = $Global:SizeofPartition_System * $Global:PartitionBarPixelperKB 
+        }
+    
+        $Global:SizeofPartition_Other = ($Global:SizeofImage-$Global:SizeofPartition_System-$Global:SizeofFAT32)
+        $Global:SizeofPartition_Other_Pixels = $Global:SizeofPartition_Other * $Global:PartitionBarPixelperKB
+    
+        $Global:SizeofUnallocated = $Global:SizeofDisk-$Global:SizeofImage
+        $Global:SizeofUnallocated_Pixels = $Global:SizeofUnallocated * $Global:PartitionBarPixelperKB
+    
+        $Global:SizeofFreeSpace = $Global:SizeofImage-$Global:SizeofPartition_System-$Global:SizeofFAT32-$Global:SizeofPartition_Other
+        $Global:SizeofFreeSpace_Pixels = $Global:SizeofFreeSpace * $Global:PartitionBarPixelperKB
         
-    $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = $Global:SizeofUnallocated_Pixels
-    $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Global:SizeofFreeSpace_Pixels
-    $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width = $Global:SizeofPartition_Other_Pixels
-    $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width = $Global:SizeofPartition_System_Pixels
-    $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width = $Global:SizeofFAT32_Pixels
+        Set-PartitionMaximums
+            
+        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = $Global:SizeofUnallocated_Pixels
+        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Global:SizeofFreeSpace_Pixels
+        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width = $Global:SizeofPartition_Other_Pixels
+        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width = $Global:SizeofPartition_System_Pixels
+        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width = $Global:SizeofFAT32_Pixels
+        
+        if ($Global:SizeofPartition_Other -ge $Global:PFSLimit){
+            $TotalNumberWorkPartitions = [math]::ceiling($Global:SizeofPartition_Other/$Global:PFSLimit)
+            $WPF_UI_WorkSizeNote_Label.Text='*'
+            $WPF_UI_WorkSizeNoteFooter_Label.Text=('Due to PFS limitations, Work will be split into '+$TotalNumberWorkPartitions+' partitions of equal size')
+        }
+        else{
+            $WPF_UI_WorkSizeNote_Label.Text=''
+            $WPF_UI_WorkSizeNoteFooter_Label.Text='' 
+        }
+
+        $WPF_UI_WorkbenchSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofPartition_System -Scale 'GiB'
+        $WPF_UI_WorkbenchSize_Value.Background = 'White'
+        $WPF_UI_WorkSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofPartition_Other -Scale 'GiB'
+        $WPF_UI_WorkSize_Value.Background = 'White'
+        $WPF_UI_ImageSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofImage -Scale 'GiB'
+        $WPF_UI_ImageSize_Value.Background = 'White'
+        $WPF_UI_FAT32Size_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofFAT32 -Scale 'GiB'
+        $WPF_UI_Fat32Size_Value.Background = 'White'
+        $WPF_UI_FreeSpace_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofFreeSpace -Scale 'GiB'
+        $WPF_UI_FreeSpace_Value.Background = 'White'
+        $WPF_UI_Unallocated_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofUnallocated -Scale 'GiB'      
+        
+        $Global:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Global:SizeofImage
+        $Global:AvailableSpace_WorkingFolderDisk = $Global:Space_WorkingFolderDisk - $Global:RequiredSpace_WorkingFolderDisk 
     
-    $WPF_UI_WorkbenchSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofPartition_System -Scale 'GiB'
-    $WPF_UI_WorkbenchSize_Value.Background = 'White'
-    $WPF_UI_WorkSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofPartition_Other -Scale 'GiB'
-    $WPF_UI_WorkSize_Value.Background = 'White'
-    $WPF_UI_ImageSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofImage -Scale 'GiB'
-    $WPF_UI_ImageSize_Value.Background = 'White'
-    $WPF_UI_FAT32Size_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofFAT32 -Scale 'GiB'
-    $WPF_UI_Fat32Size_Value.Background = 'White'
-    $WPF_UI_FreeSpace_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofFreeSpace -Scale 'GiB'
-    $WPF_UI_FreeSpace_Value.Background = 'White'
-    $WPF_UI_Unallocated_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofUnallocated -Scale 'GiB'        
+        $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Global:RequiredSpace_WorkingFolderDisk
+        $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Global:AvailableSpace_WorkingFolderDisk
+
+        $Global:Space_FilestoTransfer = $Global:SizeofPartition_Other - $Global:WorkOverhead
+        $Global:AvailableSpaceFilestoTransfer =  $Global:Space_FilestoTransfer - $Global:SizeofFilestoTransfer    
+        
+        if ($Global:TransferLocation){
+            $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Global:AvailableSpaceFilestoTransfer 
+        }            
+    }
 })
 
 
@@ -568,14 +590,25 @@ $WPF_UI_Fat32Size_Listview.add_SizeChanged({
 
         $Global:SizeofFAT32 = $Global:SizeofFAT32_Pixels * $Global:PartitionBarKBperPixel
         $Global:SizeofPartition_System  = $Global:SizeofPartition_System_Pixels * $Global:PartitionBarKBperPixel  
-        $Global:SizeofPartition_Other  = $Global:SizeofPartition_Other_Pixels * $Global:PartitionBarKBperPixel
+        $Global:SizeofPartition_Other = $Global:SizeofPartition_Other_Pixels * $Global:PartitionBarKBperPixel
         $Global:SizeofFreeSpace  = $Global:SizeofFreeSpace_Pixels * $Global:PartitionBarKBperPixel
         $Global:SizeofUnallocated = $Global:SizeofUnallocated_Pixels * $Global:PartitionBarKBperPixel
         
         $Global:SizeofImage = $Global:SizeofFAT32 + $Global:SizeofPartition_System + $Global:SizeofPartition_Other + $Global:SizeofFreeSpace      
 #       Write-host ('FAT32 Size (Pixels) changed to: '+$Global:SizeofFAT32_Pixels)
         $Global:SizeofFAT32 = $Global:SizeofFAT32_Pixels * $Global:PartitionBarKBperPixel
-#        Write-host ('FAT32 Size (KiB) changed to: '+$Global:SizeofFAT32)
+        #        Write-host ('FAT32 Size (KiB) changed to: '+$Global:SizeofFAT32)
+        
+        if ($Global:SizeofPartition_Other -ge $Global:PFSLimit){
+            $TotalNumberWorkPartitions = [math]::ceiling($Global:SizeofPartition_Other/$Global:PFSLimit)
+            $WPF_UI_WorkSizeNote_Label.Text='*'
+            $WPF_UI_WorkSizeNoteFooter_Label.Text=('Due to PFS limitations, Work will be split into '+$TotalNumberWorkPartitions+' partitions of equal size')
+        }
+        else{
+            $WPF_UI_WorkSizeNote_Label.Text=''
+            $WPF_UI_WorkSizeNoteFooter_Label.Text='' 
+        }
+
         $WPF_UI_WorkbenchSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofPartition_System -Scale 'GiB'
         $WPF_UI_WorkbenchSize_Value.Background = 'White'
         $WPF_UI_WorkSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofPartition_Other -Scale 'GiB'
@@ -586,7 +619,20 @@ $WPF_UI_Fat32Size_Listview.add_SizeChanged({
         $WPF_UI_Fat32Size_Value.Background = 'White'
         $WPF_UI_FreeSpace_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofFreeSpace -Scale 'GiB'
         $WPF_UI_FreeSpace_Value.Background = 'White'
-        $WPF_UI_Unallocated_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofUnallocated -Scale 'GiB'        
+        $WPF_UI_Unallocated_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofUnallocated -Scale 'GiB'
+        
+        $Global:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Global:SizeofImage
+        $Global:AvailableSpace_WorkingFolderDisk = $Global:Space_WorkingFolderDisk - $Global:RequiredSpace_WorkingFolderDisk 
+    
+        $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Global:RequiredSpace_WorkingFolderDisk
+        $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Global:AvailableSpace_WorkingFolderDisk
+
+        $Global:Space_FilestoTransfer = $Global:SizeofPartition_Other - $Global:WorkOverhead
+        $Global:AvailableSpaceFilestoTransfer =  $Global:Space_FilestoTransfer - $Global:SizeofFilestoTransfer    
+        
+        if ($Global:TransferLocation){
+            $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Global:AvailableSpaceFilestoTransfer 
+        }        
     }
 })   
 
@@ -630,7 +676,7 @@ $WPF_UI_WorkbenchSize_Listview.add_SizeChanged({
 
         $Global:SizeofFAT32 = $Global:SizeofFAT32_Pixels * $Global:PartitionBarKBperPixel
         $Global:SizeofPartition_System  = $Global:SizeofPartition_System_Pixels * $Global:PartitionBarKBperPixel  
-        $Global:SizeofPartition_Other  = $Global:SizeofPartition_Other_Pixels * $Global:PartitionBarKBperPixel
+        $Global:SizeofPartition_Other = $Global:SizeofPartition_Other_Pixels * $Global:PartitionBarKBperPixel
         $Global:SizeofFreeSpace  = $Global:SizeofFreeSpace_Pixels * $Global:PartitionBarKBperPixel
         $Global:SizeofUnallocated = $Global:SizeofUnallocated_Pixels * $Global:PartitionBarKBperPixel
 
@@ -640,6 +686,17 @@ $WPF_UI_WorkbenchSize_Listview.add_SizeChanged({
 #        Write-host ('Workbench Size (Pixels) changed to: '+$Global:SizeofPartition_System_Pixels)
         $Global:SizeofPartition_System  = $Global:SizeofPartition_System_Pixels * $Global:PartitionBarKBperPixel
  #       Write-host ('Workbench Size (KiB) changed to: '+$Global:SizeofPartition_System)
+        
+        if ($Global:SizeofPartition_Other -ge $Global:PFSLimit){
+            $TotalNumberWorkPartitions = [math]::ceiling($Global:SizeofPartition_Other/$Global:PFSLimit)
+            $WPF_UI_WorkSizeNote_Label.Text='*'
+            $WPF_UI_WorkSizeNoteFooter_Label.Text=('Due to PFS limitations, Work will be split into '+$TotalNumberWorkPartitions+' partitions of equal size')
+        }
+        else{
+            $WPF_UI_WorkSizeNote_Label.Text=''
+            $WPF_UI_WorkSizeNoteFooter_Label.Text='' 
+        }
+
         $WPF_UI_WorkbenchSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofPartition_System -Scale 'GiB'
         $WPF_UI_WorkbenchSize_Value.Background = 'White'
         $WPF_UI_WorkSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofPartition_Other -Scale 'GiB'
@@ -650,7 +707,20 @@ $WPF_UI_WorkbenchSize_Listview.add_SizeChanged({
         $WPF_UI_Fat32Size_Value.Background = 'White'
         $WPF_UI_FreeSpace_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofFreeSpace -Scale 'GiB'
         $WPF_UI_FreeSpace_Value.Background = 'White'
-        $WPF_UI_Unallocated_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofUnallocated -Scale 'GiB'        
+        $WPF_UI_Unallocated_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofUnallocated -Scale 'GiB'    
+        
+        $Global:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Global:SizeofImage
+        $Global:AvailableSpace_WorkingFolderDisk = $Global:Space_WorkingFolderDisk - $Global:RequiredSpace_WorkingFolderDisk 
+    
+        $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Global:RequiredSpace_WorkingFolderDisk
+        $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Global:AvailableSpace_WorkingFolderDisk
+
+        $Global:Space_FilestoTransfer = $Global:SizeofPartition_Other - $Global:WorkOverhead
+        $Global:AvailableSpaceFilestoTransfer =  $Global:Space_FilestoTransfer - $Global:SizeofFilestoTransfer    
+        
+        if ($Global:TransferLocation){
+            $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Global:AvailableSpaceFilestoTransfer 
+        }        
     }   
 })
 
@@ -695,7 +765,7 @@ $WPF_UI_WorkSize_Listview.add_SizeChanged({
 
         $Global:SizeofFAT32 = $Global:SizeofFAT32_Pixels * $Global:PartitionBarKBperPixel
         $Global:SizeofPartition_System  = $Global:SizeofPartition_System_Pixels * $Global:PartitionBarKBperPixel  
-        $Global:SizeofPartition_Other  = $Global:SizeofPartition_Other_Pixels * $Global:PartitionBarKBperPixel
+        $Global:SizeofPartition_Other = $Global:SizeofPartition_Other_Pixels * $Global:PartitionBarKBperPixel
         $Global:SizeofFreeSpace  = $Global:SizeofFreeSpace_Pixels * $Global:PartitionBarKBperPixel
         $Global:SizeofUnallocated = $Global:SizeofUnallocated_Pixels * $Global:PartitionBarKBperPixel
 
@@ -703,9 +773,20 @@ $WPF_UI_WorkSize_Listview.add_SizeChanged({
 
 #        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = Expand-FreeSpace
  #       Write-host ('Work Size (Pixels) changed to: '+$Global:SizeofPartition_Other_Pixels)
-        $Global:SizeofPartition_Other  = $Global:SizeofPartition_Other_Pixels * $Global:PartitionBarKBperPixel
+        $Global:SizeofPartition_Other = $Global:SizeofPartition_Other_Pixels * $Global:PartitionBarKBperPixel
   #      Write-host ('Work Size (KiB) changed to: '+$Global:SizeofPartition_Other)
-        $WPF_UI_WorkbenchSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofPartition_System -Scale 'GiB'
+  
+      if ($Global:SizeofPartition_Other -ge $Global:PFSLimit){
+        $TotalNumberWorkPartitions = [math]::ceiling($Global:SizeofPartition_Other/$Global:PFSLimit)
+        $WPF_UI_WorkSizeNote_Label.Text='*'
+        $WPF_UI_WorkSizeNoteFooter_Label.Text=('Due to PFS limitations, Work will be split into '+$TotalNumberWorkPartitions+' partitions of equal size')
+    }
+    else{
+        $WPF_UI_WorkSizeNote_Label.Text=''
+        $WPF_UI_WorkSizeNoteFooter_Label.Text='' 
+    }
+  
+  $WPF_UI_WorkbenchSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofPartition_System -Scale 'GiB'
         $WPF_UI_WorkbenchSize_Value.Background = 'White'
         $WPF_UI_WorkSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofPartition_Other -Scale 'GiB'
         $WPF_UI_WorkSize_Value.Background = 'White'
@@ -716,6 +797,19 @@ $WPF_UI_WorkSize_Listview.add_SizeChanged({
         $WPF_UI_FreeSpace_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofFreeSpace -Scale 'GiB'
         $WPF_UI_FreeSpace_Value.Background = 'White'
         $WPF_UI_Unallocated_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofUnallocated -Scale 'GiB'        
+
+        $Global:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Global:SizeofImage
+        $Global:AvailableSpace_WorkingFolderDisk = $Global:Space_WorkingFolderDisk - $Global:RequiredSpace_WorkingFolderDisk 
+    
+        $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Global:RequiredSpace_WorkingFolderDisk
+        $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Global:AvailableSpace_WorkingFolderDisk
+
+        $Global:Space_FilestoTransfer = $Global:SizeofPartition_Other - $Global:WorkOverhead
+        $Global:AvailableSpaceFilestoTransfer =  $Global:Space_FilestoTransfer - $Global:SizeofFilestoTransfer    
+        
+        if ($Global:TransferLocation){
+            $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Global:AvailableSpaceFilestoTransfer 
+        }        
     }   
 })
 
@@ -749,7 +843,7 @@ $WPF_UI_FreeSpace_Listview.add_SizeChanged({
 
         $Global:SizeofFAT32 = $Global:SizeofFAT32_Pixels * $Global:PartitionBarKBperPixel
         $Global:SizeofPartition_System  = $Global:SizeofPartition_System_Pixels * $Global:PartitionBarKBperPixel  
-        $Global:SizeofPartition_Other  = $Global:SizeofPartition_Other_Pixels * $Global:PartitionBarKBperPixel
+        $Global:SizeofPartition_Other = $Global:SizeofPartition_Other_Pixels * $Global:PartitionBarKBperPixel
         $Global:SizeofFreeSpace  = $Global:SizeofFreeSpace_Pixels * $Global:PartitionBarKBperPixel
         $Global:SizeofUnallocated = $Global:SizeofUnallocated_Pixels * $Global:PartitionBarKBperPixel
 
@@ -757,6 +851,16 @@ $WPF_UI_FreeSpace_Listview.add_SizeChanged({
 
    #     Write-host ('Free Space (Pixels) changed to: '+$Global:SizeofFreeSpace_Pixels)
    #     Write-host ('Free Space Size (KiB) changed to: '+$Global:SizeofFreeSpace)
+
+        if ($Global:SizeofPartition_Other -ge $Global:PFSLimit){
+            $TotalNumberWorkPartitions = [math]::ceiling($Global:SizeofPartition_Other/$Global:PFSLimit)
+            $WPF_UI_WorkSizeNote_Label.Text='*'
+            $WPF_UI_WorkSizeNoteFooter_Label.Text=('Due to PFS limitations, Work will be split into '+$TotalNumberWorkPartitions+' partitions of equal size')
+        }
+        else{
+            $WPF_UI_WorkSizeNote_Label.Text=''
+            $WPF_UI_WorkSizeNoteFooter_Label.Text='' 
+        }
 
         $WPF_UI_WorkbenchSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofPartition_System -Scale 'GiB'
         $WPF_UI_WorkbenchSize_Value.Background = 'White'
@@ -769,6 +873,19 @@ $WPF_UI_FreeSpace_Listview.add_SizeChanged({
         $WPF_UI_FreeSpace_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofFreeSpace -Scale 'GiB'
         $WPF_UI_FreeSpace_Value.Background = 'White'
         $WPF_UI_Unallocated_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofUnallocated -Scale 'GiB'        
+
+        $Global:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Global:SizeofImage
+        $Global:AvailableSpace_WorkingFolderDisk = $Global:Space_WorkingFolderDisk - $Global:RequiredSpace_WorkingFolderDisk 
+    
+        $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Global:RequiredSpace_WorkingFolderDisk
+        $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Global:AvailableSpace_WorkingFolderDisk
+
+        $Global:Space_FilestoTransfer = $Global:SizeofPartition_Other - $Global:WorkOverhead
+        $Global:AvailableSpaceFilestoTransfer =  $Global:Space_FilestoTransfer - $Global:SizeofFilestoTransfer    
+        
+        if ($Global:TransferLocation){
+            $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Global:AvailableSpaceFilestoTransfer 
+        }        
 
     }    
 })
@@ -791,7 +908,7 @@ $WPF_UI_Unallocated_Listview.add_SizeChanged({
 
         $Global:SizeofFAT32 = $Global:SizeofFAT32_Pixels * $Global:PartitionBarKBperPixel
         $Global:SizeofPartition_System  = $Global:SizeofPartition_System_Pixels * $Global:PartitionBarKBperPixel  
-        $Global:SizeofPartition_Other  = $Global:SizeofPartition_Other_Pixels * $Global:PartitionBarKBperPixel
+        $Global:SizeofPartition_Other = $Global:SizeofPartition_Other_Pixels * $Global:PartitionBarKBperPixel
         $Global:SizeofFreeSpace  = $Global:SizeofFreeSpace_Pixels * $Global:PartitionBarKBperPixel
         $Global:SizeofUnallocated = $Global:SizeofUnallocated_Pixels * $Global:PartitionBarKBperPixel
 
@@ -799,6 +916,16 @@ $WPF_UI_Unallocated_Listview.add_SizeChanged({
 
      #   Write-host ('Unallocated Space (Pixels) changed to: '+$Global:SizeofUnallocated_Pixels)
        # Write-host ('Unallocated (KiB) changed to: '+$Global:SizeofUnallocated)
+
+       if ($Global:SizeofPartition_Other -ge $Global:PFSLimit){
+        $TotalNumberWorkPartitions = [math]::ceiling($Global:SizeofPartition_Other/$Global:PFSLimit)
+        $WPF_UI_WorkSizeNote_Label.Text='*'
+        $WPF_UI_WorkSizeNoteFooter_Label.Text=('Due to PFS limitations, Work will be split into '+$TotalNumberWorkPartitions+' partitions of equal size')
+    }
+    else{
+        $WPF_UI_WorkSizeNote_Label.Text=''
+        $WPF_UI_WorkSizeNoteFooter_Label.Text='' 
+    }
 
         $WPF_UI_WorkbenchSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofPartition_System -Scale 'GiB'
         $WPF_UI_WorkbenchSize_Value.Background = 'White'
@@ -810,7 +937,20 @@ $WPF_UI_Unallocated_Listview.add_SizeChanged({
         $WPF_UI_Fat32Size_Value.Background = 'White'
         $WPF_UI_FreeSpace_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofFreeSpace -Scale 'GiB'
         $WPF_UI_FreeSpace_Value.Background = 'White'
-        $WPF_UI_Unallocated_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofUnallocated -Scale 'GiB'        
+        $WPF_UI_Unallocated_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofUnallocated -Scale 'GiB'       
+        
+        $Global:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Global:SizeofImage
+        $Global:AvailableSpace_WorkingFolderDisk = $Global:Space_WorkingFolderDisk - $Global:RequiredSpace_WorkingFolderDisk 
+    
+        $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Global:RequiredSpace_WorkingFolderDisk
+        $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Global:AvailableSpace_WorkingFolderDisk
+
+        $Global:Space_FilestoTransfer = $Global:SizeofPartition_Other - $Global:WorkOverhead
+        $Global:AvailableSpaceFilestoTransfer =  $Global:Space_FilestoTransfer - $Global:SizeofFilestoTransfer    
+        
+        if ($Global:TransferLocation){
+            $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Global:AvailableSpaceFilestoTransfer 
+        }        
     }
 })
 
@@ -980,7 +1120,8 @@ $WPF_UI_WorkSize_Value.add_LostFocus({
 })        
 
 $WPF_UI_FreeSpace_Value.add_LostFocus({
-    if ($WPF_UI_FreeSpace_Value.Text -match "^[\d\.]+$"){
+        Write-host "$Global:SizeofFreeSpace"
+        if ($WPF_UI_FreeSpace_Value.Text -match "^[\d\.]+$"){
         $ValueDifference = ([double]$WPF_UI_FreeSpace_Value.Text*1024*1024-$Global:SizeofFreeSpace)
    #     Write-Host "Difference in value for FreeSpace is: $ValueDifference"
         if ($ValueDifference -lt 0){ 
@@ -1000,7 +1141,8 @@ $WPF_UI_FreeSpace_Value.add_LostFocus({
             $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Global:SizeofFreeSpace_Pixels  
         }
         else{
-     #       Write-host 'Not enough free space for change!'
+            Write-host 'Not enough free space for change!'
+            write-host $ValueDifference
             $WPF_UI_FreeSpace_Value.Background = 'Red'
         }
     }
@@ -1010,8 +1152,9 @@ $WPF_UI_FreeSpace_Value.add_LostFocus({
 })    
 
 $WPF_UI_ImageSize_Value.add_LostFocus({
-    if ($WPF_UI_ImageSize_Value.Text -match "^[\d\.]+$"){
+        if ($WPF_UI_ImageSize_Value.Text -match "^[\d\.]+$"){
         $ValueDifference = ([double]$WPF_UI_ImageSize_Value.Text*1024*1024-$Global:SizeofImage)
+        Write-Host $ValueDifference 
         if (($ValueDifference -lt 0) -and ($ValueDifference+$Global:SizeofFreeSpace -gt 0)) {  # We are reducing image and need free space
             $Global:SizeofFreeSpace += $ValueDifference
             $Global:SizeofUnallocated -= $ValueDifference
@@ -1156,6 +1299,10 @@ $WPF_UI_MigratedFiles_Button.Add_Click({
         $Global:TransferLocation = Get-FolderPath -Message 'Select transfer folder' -RootFolder 'MyComputer'
         if ($Global:TransferLocation){            
            
+            $Msg = @'
+Calculating space requirements. This may take some time if you have selected a large folder for transfer!
+'@
+        [System.Windows.MessageBox]::Show($Msg, 'Calculating Space',0,0)            
             $Global:SizeofFilestoTransfer = Get-TransferredFilesSpaceRequired -FoldertoCheck $Global:TransferLocation
             $Global:AvailableSpaceFilestoTransfer =  $Global:Space_FilestoTransfer - $Global:SizeofFilestoTransfer      
             
@@ -1165,6 +1312,7 @@ $WPF_UI_MigratedFiles_Button.Add_Click({
             $WPF_UI_MigratedPath_Label.Text = Get-FormattedPathforGUI -PathtoTruncate ($Global:TransferLocation)
             $WPF_UI_MigratedFiles_Button.Content = 'Click to remove Transfer Folder'
             $WPF_UI_MigratedFiles_Button.Background = 'Green'
+            $WPF_UI_MigratedFiles_Button.Foreground = 'White' 
 
         }
         else{
@@ -1183,7 +1331,7 @@ $WPF_UI_MigratedFiles_Button.Add_Click({
         $WPF_UI_MigratedFiles_Button.Content = 'Click to set Transfer Folder'
         $WPF_UI_MigratedFiles_Button.Background = '#FFDDDDDD'
         $WPF_UI_MigratedFiles_Button.Foreground = 'Black'
-        $WPF_UI_MigratedPath_Label.Content='No transfer path selected'
+        $WPF_UI_MigratedPath_Label.Text='No transfer path selected'
     }
 })
 
@@ -1238,7 +1386,7 @@ $WPF_UI_NoFileInstall_CheckBox.Add_Checked({
         $WPF_UI_Start_Button.Foreground = 'White'
     }
     If ($Global:HSTDiskName){
-        $Global:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $WPF_UI_ImageSize_Slider.Value
+        $Global:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Global:SizeofImage
         $Global:AvailableSpace_WorkingFolderDisk = $Global:Space_WorkingFolderDisk - $Global:RequiredSpace_WorkingFolderDisk 
     
         $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Global:RequiredSpace_WorkingFolderDisk
@@ -1257,7 +1405,7 @@ $WPF_UI_NoFileInstall_CheckBox.Add_UnChecked({
         $WPF_UI_Start_Button.Foreground = 'White'
     }
     If ($Global:HSTDiskName){
-        $Global:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $WPF_UI_ImageSize_Slider.Value
+        $Global:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Global:SizeofImage
         $Global:AvailableSpace_WorkingFolderDisk = $Global:Space_WorkingFolderDisk - $Global:RequiredSpace_WorkingFolderDisk 
     
         $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Global:RequiredSpace_WorkingFolderDisk

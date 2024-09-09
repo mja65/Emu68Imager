@@ -188,16 +188,15 @@ function Get-RequiredSpace {
     param (
         $ImageSize
     )    
-    $SpaceNeeded = (2*$ImageSize*1024) #Image
+    $SpaceNeeded = (2*$ImageSize) #Image
     if ($Global:SetDiskupOnly -ne 'TRUE'){
         $SpaceNeeded +=
-        10 + ` #FAT32 Files
-        23 + ` # AmigaImageFiles
-        40 + ` # AmigaDownloads
-        190 + ` # Programs Folder
-        80   # TempFolder
+        (10*1024) + ` #FAT32 Files
+        (23*1024) + ` # AmigaImageFiles
+        (40*1024) + ` # AmigaDownloads
+        (190*1024) + ` # Programs Folder
+        (80*1024)   # TempFolder
     }
-    $SpaceNeeded = $SpaceNeeded*1024
     return $SpaceNeeded # In Kilobytes
 }
 
