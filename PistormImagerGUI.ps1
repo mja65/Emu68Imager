@@ -20,15 +20,1180 @@ if ($RunMode -eq 0){
     $Scriptpath = 'C:\Users\Matt\OneDrive\Documents\Emu68Imager\'    
 }
 
-Import-Module ($Scriptpath+'Functions-GUI.psm1')
+######################################################################## Functions #################################################################################################################
+function Set-GUIPartitionValues {
+    param (
+        
+    )
+    $Script:WPF_UI_WorkbenchSize_Value.Text = Get-RoundedDiskSize -Size $Script:SizeofPartition_System -Scale 'GiB'
+    if ($Script:WPF_UI_WorkbenchSize_Value.Text -eq 0){
+        $Script:UI_WorkbenchSize_Value = 0
+    }
+    else {
+        $Script:UI_WorkbenchSize_Value = $WPF_UI_WorkbenchSize_Value.Text
+    }
+    $Script:WPF_UI_WorkbenchSize_Value.Background = 'White'
+    
+    $Script:WPF_UI_WorkSize_Value.Text = Get-RoundedDiskSize -Size $Script:SizeofPartition_Other -Scale 'GiB'
+    if ($Script:WPF_UI_WorkSize_Value.Text -eq 0){
+        $Script:UI_WorkSize_Value = 0
+    }
+    else{
+        $Script:UI_WorkSize_Value = $WPF_UI_WorkSize_Value.Text
+    }
+    $Script:WPF_UI_WorkSize_Value.Background = 'White'
+    
+    $Script:WPF_UI_ImageSize_Value.Text = Get-RoundedDiskSize -Size $Script:SizeofImage -Scale 'GiB'
+    if ($Script:WPF_UI_ImageSize_Value.Text -eq 0){
+        $Script:UI_ImageSize_Value = 0
+    }
+    else{
+        $Script:UI_ImageSize_Value = $Script:WPF_UI_ImageSize_Value.Text
+    }
+    $Script:WPF_UI_ImageSize_Value.Background = 'White'
+    
+    $Script:WPF_UI_FAT32Size_Value.Text = Get-RoundedDiskSize -Size $Script:SizeofFAT32 -Scale 'GiB'
+    if ($Script:WPF_UI_FAT32Size_Value.Text -eq 0){
+        $Script:UI_FAT32Size_Value = 0    
+    }
+    else {
+        $Script:UI_FAT32Size_Value = $Script:WPF_UI_FAT32Size_Value.Text
+    }
+    $Script:WPF_UI_Fat32Size_Value.Background = 'White'
+    
+    $Script:WPF_UI_FreeSpace_Value.Text = Get-RoundedDiskSize -Size $Script:SizeofFreeSpace -Scale 'GiB'
+    if ($Script:WPF_UI_FreeSpace_Value.Text -eq 0){
+        $Script:UI_FreeSpace_Value = 0
+    }
+    else{
+        $Script:UI_FreeSpace_Value = $Script:WPF_UI_FreeSpaceSize_Value.Text
+    }        
+    $Script:WPF_UI_FreeSpace_Value.Background = 'White'
+    
+    $Script:WPF_UI_Unallocated_Value.Text = Get-RoundedDiskSize -Size $Script:SizeofUnallocated -Scale 'GiB'
+    
+    if ($Script:WPF_UI_Unallocated_Value.Text -eq 0){
+        $Script:UI_Unallocated_Value = 0
+    }
+    else{
+        $Script:UI_Unallocated_Value = $WPF_UI_Unallocated_Value.Text      
+    }    
+}
+function Set-PartitionMaximums {
+    param (     
+        $Type
+    )
+       
+    if (($Script:SizeofDisk-$Script:SizeofPartition_System-$Script:SizeofPartition_Other) -le $Script:Fat32Maximum) {
+        $Script:SizeofFat32_Maximum = ($Script:SizeofDisk-$Script:SizeofPartition_System-$Script:SizeofPartition_Other) 
+    }
+    else{
+        $Script:SizeofFat32_Maximum = $Script:Fat32Maximum
+    }
+    $Script:SizeofFat32_Pixels_Maximum = $Script:PartitionBarPixelperKB * $Script:SizeofFat32_Maximum
+    
+    if (($Script:SizeofDisk-$Script:SizeofFAT32-$Script:SizeofPartition_Other) -le $Script:WorkbenchMaximum) {
+        $Script:SizeofPartition_System_Maximum = ($Script:SizeofDisk-$Script:SizeofFAT32-$Script:SizeofPartition_Other)
+    }
+    else {
+        $Script:SizeofPartition_System_Maximum = $Script:WorkbenchMaximum
+    }
+    $Script:SizeofPartition_System_Pixels_Maximum = $Script:PartitionBarPixelperKB * $Script:SizeofPartition_System_Maximum
+    
+    $Script:SizeofPartition_Other_Maximum = $Script:SizeofDisk-$Script:SizeofFAT32-$Script:SizeofPartition_System
+    $Script:SizeofPartition_Other_Pixels_Maximum = $Script:PartitionBarPixelperKB * $Script:SizeofPartition_Other_Maximum
+
+    $Script:SizeofFreeSpace_Maximum = $Script:SizeofDisk-$Script:SizeofFAT32-$Script:SizeofPartition_System-$Script:SizeofPartition_Other
+    $Script:SizeofFreeSpace_Pixels_Maximum = ($Script:SizeofDisk * $Script:PartitionBarPixelperKB) - (($Script:SizeofFAT32 + $Script:SizeofPartition_System + $Script:SizeofPartition_Other)* $Script:PartitionBarPixelperKB) 
+ 
+    $Script:SizeofUnallocated_Pixels_Maximum = $Script:PartitionBarWidth - (($Script:SizeofFreeSpace + $Script:SizeofPartition_Other_Pixels + $Script:SizeofPartition_System_Pixels + $Script:SizeofFat32_Pixels) * $Script:PartitionBarPixelperKB)
+    $Script:SizeofUnallocated_Maximum =  $Script:SizeofDisk - $Script:SizeofFreeSpace - $Script:SizeofPartition_Other - $Script:SizeofPartition_System - $Script:SizeofFAT32
+}
+
+function Get-FormattedPathforGUI {
+    param (
+        $PathtoTruncate
+    )
+    $LengthofString = 26 #Maximum supported by label less three for the ...
+    if ($PathtoTruncate.Length -gt $LengthofString){
+        $Output = ('...'+($PathtoTruncate.Substring($PathtoTruncate.Length -$LengthofString,$LengthofString)))
+    }
+    else{
+        $Output = $PathtoTruncate
+    }
+    return $Output
+}
+
+
+function Get-TransferredFilesSpaceRequired {
+    param (
+        $FoldertoCheck
+    )
+    
+    $SizeofFiles = (Get-ChildItem $FoldertoCheck -force -Recurse | Where-Object { $_.PSIsContainer -eq $false }  | Measure-Object -property Length -sum).sum/1Kb
+    return $SizeofFiles #In Kilobytes
+}
+function Get-TransferredFilesAvailableSpace {
+    param (
+        $PFSLimit,
+        $WorkSize #In GB
+    )
+    
+    $WorkSizeKb = $WorkSize*1024*1024
+
+    if ($WorkSizeKb -ge $PFSLimit){
+        $AvailableSpacetoReport = $PFSLimit
+    }
+    else{
+        $AvailableSpacetoReport = $WorkSizeKb
+    }
+    return $AvailableSpacetoReport
+}
+
+
+function Get-RoundedDiskSize {
+    param (
+        $Size,
+        $Scale
+    )
+    if ($Scale -eq 'GiB'){
+        $RoundedSize = ([math]::truncate(($Size/1024/1024)*100)/100)
+        
+    }
+    return $RoundedSize
+}
+
+
+function Get-FormattedSize {
+    param (
+        $Size #In Kilobytes
+    )
+        
+    if ($Size -eq 0){
+        $ReportedSize = (0).ToString()+' KiB'
+    }
+    elseif ([Math]::Abs($Size) -le 1024){ #Kilobytes
+        $ReportedSize = [math]::Round($Size,2).ToString()+' KiB'
+    } 
+    elseif (([Math]::Abs($Size) -gt 1024) -and ([Math]::Abs($Size) -le 1024*1024)){
+        $ReportedSize = [math]::Round($Size/1024,2).ToString()+' MiB'
+    }
+    else{
+        $ReportedSize = [math]::Round($Size/1024/1024,2).ToString()+' GiB'
+    }
+    return $ReportedSize
+}
+function Get-AmigaPartitionList {
+    param (
+        $SizeofPartition_System_param,
+        $SizeofPartition_Other_param,
+        $VolumeName_System_param,
+        $DeviceName_System_param,
+        $PFSLimit,
+        $VolumeName_Other_param,
+        $DeviceName_Other_param,
+        $DeviceName_Prefix_param  
+    )
+    $AmigaPartitionsList = [System.Collections.Generic.List[PSCustomObject]]::New()
+
+    $SizeofPartition_Systemtouse = (([math]::truncate($SizeofPartition_System_param)).ToString()+'kb')
+    $SizeofPartition_Othertouse = ([math]::truncate($SizeofPartition_Other_param))
+
+    $PartitionNumbertoPopulate =1
+
+    $AmigaPartitionsList += [PSCustomObject]@{
+        PartitionNumber = $PartitionNumbertoPopulate 
+        SizeofPartition =  $SizeofPartition_Systemtouse
+        DosType = 'PFS3'
+        VolumeName = $VolumeName_System_param
+        DeviceName = $DeviceName_System_param  
+    }
+    
+    $PartitionNumbertoPopulate ++
+    $CapacitytoFill = $SizeofPartition_Othertouse
+
+    $TotalNumberWorkPartitions = [math]::ceiling($CapacitytoFill/$PFSLimit)
+
+    $WorkPartitionSize = $SizeofPartition_Othertouse/$TotalNumberWorkPartitions
+ 
+    do {
+        if ($PartitionNumbertoPopulate -eq 2){
+            $VolumeNametoPopulate = $VolumeName_Other_param  
+            $DeviceNametoPopulate = $DeviceName_Other_param  
+        }
+        else{
+            $VolumeNametoPopulate = ($VolumeName_Other_param+(($PartitionNumbertoPopulate-1).ToString()))
+            $DeviceNametoPopulate = ($DeviceName_Prefix_param+(($PartitionNumbertoPopulate-1).ToString()))
+           
+        }
+        $AmigaPartitionsList += [PSCustomObject]@{
+            PartitionNumber = $PartitionNumbertoPopulate 
+            SizeofPartition =  ((($WorkPartitionSize).ToString())+'kb')
+            DosType = 'PFS3'
+            VolumeName = $VolumeNametoPopulate
+            DeviceName = $DeviceNametoPopulate    
+        }
+        $PartitionNumbertoPopulate ++
+    } until (
+        $PartitionNumbertoPopulate -ge  $TotalNumberWorkPartitions
+    )
+
+    return $AmigaPartitionsList
+
+}
+function Get-RequiredSpace {
+    param (
+        $ImageSize
+    )    
+    $SpaceNeeded = (2*$ImageSize) #Image
+    if ($Script:SetDiskupOnly -ne 'TRUE'){
+        $SpaceNeeded +=
+        (10*1024) + ` #FAT32 Files
+        (23*1024) + ` # AmigaImageFiles
+        (40*1024) + ` # AmigaDownloads
+        (190*1024) + ` # Programs Folder
+        (80*1024)   # TempFolder
+    }
+    return $SpaceNeeded # In Kilobytes
+}
+
+function Write-StartTaskMessage {
+    param (
+        $Message
+    )
+    Write-Host ''
+    Write-Host "[Section: $Script:CurrentSection of $Script:TotalSections]: `t $Message" -ForegroundColor White
+    Write-Host ''
+}
+
+function Write-StartSubTaskMessage {
+    param (
+        $SubtaskNumber,
+        $TotalSubtasks,
+        $Message
+    )
+    Write-Host ''
+    Write-Host "[Subtask: $SubtaskNumber of $TotalSubtasks]: `t $Message" -ForegroundColor White
+    Write-Host ''
+}
+
+function Write-InformationMessage {
+    param (
+        $Message
+    )
+    Write-Host " `t`t $Message" -ForegroundColor Yellow
+}
+
+function Write-ErrorMessage {
+    param (
+        $Message
+    )
+    Write-Host "[ERROR] `t $Message" -ForegroundColor Red
+}
+
+function Write-TaskCompleteMessage {
+    param (
+        $Message
+    )
+    Write-Host "[Section: $Script:CurrentSection of $Script:TotalSections]: `t $Message" -ForegroundColor Green
+    $Script:CurrentSection ++
+}
+
+
+function Read-XAML {
+    param (
+        $xaml
+    )
+    $reader=(New-Object System.Xml.XmlNodeReader $xaml)
+    try{
+        $Form=[Windows.Markup.XamlReader]::Load( $reader )
+    }
+    catch{
+        Write-Warning "Unable to parse XML, with error: $($Error[0])`n Ensure that there are NO SelectionChanged or TextChanged properties in your textboxes (PowerShell cannot process them)"
+        throw
+    }
+    return $Form
+}
+function Format-XMLtoXAML{
+    param (
+        $inputXML 
+    )
+    $inputXML = $inputXML -replace 'mc:Ignorable="d"','' -replace "x:N",'N' -replace '^<Win.*', '<Window'
+    [xml]$XAML = $inputXML
+    return $XAML
+}
+
+Function Test-Administrator {  
+    $user = [Security.Principal.WindowsIdentity]::GetCurrent();
+    (New-Object Security.Principal.WindowsPrincipal $user).IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)  
+}
+function Confirm-DiskSpace {
+    param (
+        $PathtoCheck
+    )
+    (Get-Volume -DriveLetter (Split-Path -Qualifier $PathtoCheck).Replace(':','')).SizeRemaining
+}
+
+function Get-UICapturedData {
+    param (
+
+    )
+    Write-InformationMessage -message "HSTDiskName is: $Script:HSTDiskName" 
+    Write-InformationMessage -message "ScreenModetoUse is: $Script:ScreenModetoUse"
+    Write-InformationMessage -message "KickstartVersiontoUse is: $Script:KickstartVersiontoUse"
+    Write-InformationMessage -message "SSID is: $Script:SSID" 
+    Write-InformationMessage -message "WifiPassword is: $Script:WifiPassword" 
+    Write-InformationMessage -message "SizeofFAT32 is: $Script:SizeofFAT32" 
+    Write-InformationMessage -message "SizeofImage is: $Script:SizeofImage"
+    Write-InformationMessage -message "SizeofPartition_System is: $Script:SizeofPartition_System"
+    Write-InformationMessage -message "SizeofPartition_Other is: $Script:SizeofPartition_Other"
+    Write-InformationMessage -message "WorkingPathis: $Script:WorkingPath"
+    Write-InformationMessage -message "ROMPath is: $Script:ROMPath"
+}
+
+function Confirm-UIFields {
+    param (
+        
+    )
+    $ErrorMessage = $null
+    if (-not($Script:HSTDiskName)){
+        $ErrorMessage += 'You have not selected a disk'+"`n"
+    }
+    if (-not($WPF_UI_KickstartVersion_Dropdown.SelectedItem)) {
+        $ErrorMessage += 'You have not populated a Kickstart version'+"`n"
+    }
+    if (-not($WPF_UI_ScreenMode_Dropdown.SelectedItem)) {
+        $ErrorMessage += 'You have not populated a sceenmode'+"`n"
+    }
+    if (-not($Script:ROMPath )) {
+        $ErrorMessage += 'You have not populated a Rom Path'+"`n"
+    }
+    if ($Script:SetDiskupOnly -ne 'TRUE'){
+        if (-not($Script:ADFPath )) {
+            $ErrorMessage += 'You have not populated an ADF Path'+"`n"
+        }          
+    }
+    return $ErrorMessage
+}
+
+
+Function Get-FormVariables{
+    if ($Script:ReadmeDisplay -ne $true){Write-host "If you need to reference this display again, run Get-FormVariables" -ForegroundColor Yellow;$Script:ReadmeDisplay=$true}
+#    write-host "Found the following interactable elements from our form" -ForegroundColor Cyan
+    get-variable WPF*
+    }
+
+    function Get-FolderPath {
+        [CmdletBinding()]
+        param (
+            [Parameter(Mandatory=$false, ValueFromPipeline=$true, ValueFromPipelineByPropertyName=$true, Position=0)]
+            [string]$Message = "Please select a directory.",
+    
+            [Parameter(Mandatory=$false, Position=1)]
+            [string]$InitialDirectory,
+    
+            [Parameter(Mandatory=$false)]
+            [System.Environment+SpecialFolder]$RootFolder = [System.Environment+SpecialFolder]::Desktop,
+    
+            [switch]$ShowNewFolderButton
+        )
+        Add-Type -AssemblyName System.Windows.Forms
+        $dialog = New-Object System.Windows.Forms.FolderBrowserDialog
+        $dialog.Description  = $Message
+        $dialog.SelectedPath = $InitialDirectory
+        $dialog.RootFolder   = $RootFolder
+        $dialog.ShowNewFolderButton = if ($ShowNewFolderButton) { $true } else { $false }
+        $selected = $null
+    
+        # force the dialog TopMost
+        # Since the owning window will not be used after the dialog has been 
+        # closed we can just create a new form on the fly within the method call
+        $result = $dialog.ShowDialog((New-Object System.Windows.Forms.Form -Property @{TopMost = $true }))
+        if ($result -eq [Windows.Forms.DialogResult]::OK){
+            $selected = $dialog.SelectedPath
+        }
+        # clear the FolderBrowserDialog from memory
+        $dialog.Dispose()
+        # return the selected folder
+        $selected
+    } 
+   
+    function Get-RemovableMedia {
+        param (
+        )
+        $RemovableMediaList = [System.Collections.Generic.List[PSCustomObject]]::New()
+        Get-WmiObject Win32_DiskDrive | Where-Object {$_.MediaType -eq "Removable Media"} | ForEach-Object {
+            $DriveStartpoint = $_.DeviceID.IndexOf('DRIVE')+5 # 5 is length of 'Drive'
+            $DriveEndpoint = $_.DeviceID.Length
+            $DriveLength = $DriveEndpoint- $DriveStartpoint
+            $DriveNumber = $_.DeviceID.Substring($DriveStartpoint,$DriveLength)
+            $RemovableMediaList += [PSCustomObject]@{
+                DeviceID = $_.DeviceID
+                Model = $_.Model
+                SizeofDisk = $_.Size/1024 # KiB
+                EnglishSize = ([math]::Round($_.Size/1GB,3).ToString())
+                FriendlyName = 'Disk '+$DriveNumber+' '+$_.Model+' '+([math]::Round($_.Size/1GB,3).ToString()+' GiB') 
+                HSTDiskName = ('\disk'+$DriveNumber)
+            }
+        
+        }
+        return $RemovableMediaList
+    }
+  
+### Functions
+
+function Compare-FileHash {
+    param (
+        $FiletoCheck,
+        $HashtoCheck
+    )
+    Write-InformationMessage -Message ('Checking hash for file: '+$FiletoCheck)
+    $HashChecked = Get-FileHash $FiletoCheck -Algorithm MD5
+    $HashtoReport=$HashChecked.Hash
+    if ($HashChecked.Hash -eq $HashtoCheck) {
+        Write-InformationMessage -Message "Hash of file matches!"
+        return $true
+    } 
+    else{
+        Write-ErrorMessage -Message ('Hash mismatch! Hash expected was: '+$HashtoCheck+' Hash found was: '+$HashtoReport)
+        return $false
+    }
+        
+}
+
+function Expand-Zipfiles {
+    param (
+        $InputFile,
+        $OutputDirectory,
+        $FiletoExtract,
+        $SevenzipPathtouse,
+        $TempFoldertouse
+    )
+    Write-InformationMessage -Message ('Extracting from: '+$InputFile)
+    & $SevenzipPathtouse x ('-o'+$OutputDirectory) $InputFile $FiletoExtract -y >($TempFoldertouse+'LogOutputTemp.txt')
+    if ($LASTEXITCODE -ne 0) {
+        Write-ErrorMessage -Message ('Error extracting '+$InputFile+'! Cannot continue!')
+        return $false    
+    }
+    else {
+        return $true
+    }
+}
+
+function Expand-LZXArchive {
+    param (
+        $LZXFile,
+        $DestinationPath,
+        $TempFoldertouse,
+        $WorkingFoldertouse,
+        $LZXPathtouse
+    )
+    Write-InformationMessage -Message ('Extracting file '+$LZXFile)
+    if (-not(Test-Path $DestinationPath)){
+       $null= New-Item $DestinationPath -ItemType Directory
+    }
+    Set-Location $DestinationPath
+    & $LZXPathtouse $LZXFile >($TempFoldertouse+'LogOutputTemp.txt')
+    Set-Location $WorkingFoldertouse
+}
+
+function Get-AmigaFileWeb {
+    param (
+        $URL,
+        $NameofDL,
+        $LocationforDL
+    )
+    Write-InformationMessage -Message ('Downloading file '+$NameofDL)
+    if (([System.Uri]$URL).host -eq 'aminet.net'){
+        $AminetMirrors =  Import-Csv ($InputFolder+'AminetMirrors.csv') -Delimiter ';'
+        foreach ($Mirror in $AminetMirrors){
+            Write-InformationMessage -Message ('Trying mirror: '+$Mirror.MirrorURL+' ('+$Mirror.Type+')')
+            $URLBase=$Mirror.Type+'://'+$Mirror.MirrorURL
+            $URLPathandQuery=([System.Uri]$URL).pathandquery 
+            $DownloadURL=($URLBase+$URLPathandQuery)
+            Write-InformationMessage -Message ('Trying to download from: '+$DownloadURL)
+            try {
+                Invoke-WebRequest $DownloadURL -OutFile ($LocationforDL+$NameofDL) # Powershell 5 compatibility -AllowInsecureRedirect
+                Write-InformationMessage -Message "Download completed"
+                return $true   
+            }
+            catch {
+                Write-ErrorMessage -Message ('Error downloading '+$NameofDL+'! Trying different server')
+            }
+        }
+        Write-ErrorMessage -Message 'All servers attempted. Download failed'
+        return $false    
+    }
+    else{
+        try {
+            Invoke-WebRequest $URL -OutFile ($LocationforDL+$NameofDL) # Powershell 5 compatibility -AllowInsecureRedirect
+            Write-InformationMessage -Message 'Download completed'
+            return $true       
+        }
+        catch {
+            Write-ErrorMessage -Message ('Error downloading '+$NameofDL+'!')
+            return $false
+        }        
+    }
+}
+
+function Start-HSTImager {
+    param (
+        $Command,
+        $HSTImagePathtouse,
+        $SourcePath,
+        $DestinationPath,
+        $FileSystemPath,
+        $Options,
+        $DosType, 
+        $TempFoldertouse,
+        $ImageSize,
+        $DeviceName,
+        $SizeofPartition,
+        $PartitionNumber,
+        $VolumeName  
+    )
+    $Logoutput=($TempFoldertouse+'LogOutputTemp.txt')
+    if ($Command -eq 'Blank'){
+        Write-InformationMessage -Message 'Creating image'
+        & $HSTImagePathtouse blank $DestinationPath $ImageSize >$Logoutput            
+    }
+    elseif ($Command -eq 'rdb init'){
+        Write-InformationMessage -Message 'Initialising partition'
+        & $HSTImagePathtouse rdb init $DestinationPath $Options >$Logoutput            
+    }
+    elseif ($Command -eq 'rdb filesystem add'){
+        Write-InformationMessage -Message ('Adding Filesystem '+$DosType+' to RDB')
+        & $HSTImagePathtouse rdb filesystem add $DestinationPath $FileSystemPath $DosType $Options >$Logoutput            
+    }
+    elseif ($Command -eq 'rdb part add'){
+        Write-InformationMessage -Message ('Adding partition '+$DeviceName+' '+$DosType)
+        & $HSTImagePathtouse rdb part add $DestinationPath $DeviceName $DosType $SizeofPartition $Options --mask 0x7ffffffe --buffers 300 --max-transfer 0xffffff >$Logoutput
+    }
+    elseif ($Command -eq 'rdb part format'){
+        Write-InformationMessage -Message ('Formatting partition '+$VolumeName)
+        & $HSTImagePathtouse rdb part format $DestinationPath $PartitionNumber $VolumeName $Options >$Logoutput            
+    }   
+    elseif ($Command -eq 'fs extract') {
+        Write-InformationMessage -Message ('Extracting data from ADF. Source path is: '+$SourcePath+' Destination path is: '+$DestinationPath)
+        & $HSTImagePathtouse fs extract $SourcePath $DestinationPath $Options >$Logoutput                                
+    }
+    elseif ($Command -eq 'fs copy') {
+        Write-InformationMessage -Message ('Writing file(s) to HDF image for: '+$SourcePath+' to '+$DestinationPath) 
+        & $HSTImagePathtouse fs copy $SourcePath $DestinationPath $Options >$Logoutput  
+    } 
+    $CheckforError = Get-Content ($Logoutput)
+    $ErrorCount=0
+    foreach ($ErrorLine in $CheckforError){
+        if ($ErrorLine -match " ERR]"){
+            $ErrorCount += 1
+            Write-ErrorMessage -Message ('Error in HST-Imager: '+$ErrorLine)           
+        }
+    }
+    if ($ErrorCount -ge 1){
+        $null=Remove-Item ($Logoutput) -Force 
+        return $false
+    }    
+    else{
+        return $true
+    }
+}
+
+function Write-Image {
+    param (
+        $HSTImagePathtouse,
+        $SourcePath,
+        $DestinationPath
+    )
+    $arguments ='write "{0}" {1}' -f $SourcePath,$DestinationPath
+    Write-InformationMessage -Message 'Opening new window to write image. Please wait for this to finish!'
+    Start-Process -FilePath $HSTImagePathtouse -ArgumentList $arguments
+}
+
+function Read-AmigaTooltypes {
+    param (
+        $HSTAmigaPathtouse,
+        $TempFoldertouse,
+        $IconPath,
+        $ToolTypesPath
+        
+    )
+    $Logoutput=($TempFoldertouse+'LogOutputTemp.txt')
+    Write-InformationMessage -Message ('Extracting Tooltypes for info file(s): '+$IconPath+'  to '+$ToolTypesPath) 
+    & $HSTAmigaPathtouse icon tooltypes export $IconPath $ToolTypesPath >$Logoutput
+    $CheckforError = Get-Content ($Logoutput)
+    $ErrorCount=0
+    foreach ($ErrorLine in $CheckforError){
+        if ($ErrorLine -match " ERR]"){
+            $ErrorCount += 1
+            Write-ErrorMessage -Message ('Error in HST-Amiga: '+$ErrorLine)           
+        }
+    }
+    if ($ErrorCount -ge 1){
+        $null=Remove-Item ($Logoutput) -Force
+        return $false   
+    }
+    else{
+        return $true
+    }
+}
+
+function Write-AmigaTooltypes {
+    param (
+        $HSTAmigaPathtouse,
+        $TempFoldertouse,
+        $IconPath,
+        $ToolTypesPath
+    )
+    $Logoutput=($TempFoldertouse+'LogOutputTemp.txt')
+    Write-InformationMessage -Message ('Importing Tooltypes for info file(s): '+$IconPath+' from '+$ToolTypesPath) 
+    & $HSTAmigaPathtouse icon tooltypes import $IconPath $ToolTypesPath >$Logoutput
+    $CheckforError = Get-Content ($Logoutput)
+    $ErrorCount=0
+    foreach ($ErrorLine in $CheckforError){
+        if ($ErrorLine -match " ERR]"){
+            $ErrorCount += 1
+            Write-ErrorMessage -Message ('Error in HST-Amiga: '+$ErrorLine)           
+        }
+    }
+    if ($ErrorCount -ge 1){
+        $null=Remove-Item ($Logoutput) -Force
+        return $false    
+    }
+    else{
+        return $true
+    }        
+}
+
+
+function Expand-AmigaZFiles {
+    param (
+        $LocationofZFiles,
+        $SevenzipPathtouse,
+        $WorkingFoldertouse
+    )
+    $ListofFilestoDecompress=Get-ChildItem -Path $LocationofZFiles -Recurse -Filter '*.Z'
+    Write-InformationMessage -Message ('Decompressing .Z files in location: '+$LocationofZFiles)
+    foreach ($FiletoDecompress in $ListofFilestoDecompress){
+        $InputFile=$FiletoDecompress.FullName
+        set-location $FiletoDecompress.DirectoryName
+        & $SevenzipPathtouse e $InputFile -bso0 -bsp0 -y
+    }      
+    Set-Location $WorkingFoldertouse
+    Write-InformationMessage -Message ('Deleting .Z files in location: '+$LocationofZFiles)
+    Get-ChildItem -Path $LocationofZFiles -Recurse -Filter '*.Z' | remove-Item -Recurse -Force
+}
+
+function Add-AmigaFolder {
+    param (
+        $AmigaFolderPath,
+        $TempFoldertouse,
+        $AmigaDrivetoCopytouse
+    )
+    $ParentFolder=(Split-Path ($AmigaDrivetoCopytouse+$AmigaFolderPath) -Parent)+'\'
+    $Startpoint=(Split-Path -Path ($AmigaDrivetoCopytouse+$AmigaFolderPath)).length+1
+    $Endpoint=($AmigaDrivetoCopytouse+$AmigaFolderPath).length-1
+    $Length=$Endpoint-$Startpoint
+    $FileName=($AmigaDrivetoCopytouse+$AmigaFolderPath).Substring($Startpoint,$Length) 
+    if (-not (Test-Path ($AmigaDrivetoCopytouse+$AmigaFolderPath))){
+        Write-InformationMessage -Message ('Creating Folder "'+$AmigaFolderPath+'"')
+        $null = New-Item -path ($AmigaDrivetoCopytouse+$AmigaFolderPath) -ItemType Directory -Force 
+    }
+    else{
+        Write-InformationMessage -Message ('Folder "'+$AmigaFolderPath+'" already exists')
+    
+    }
+    if (-not(Test-Path ($ParentFolder+$FileName+'.info'))){
+        Write-InformationMessage -Message ('Creating .info file '+$FileName+'.info')
+        Copy-Item ($TempFoldertouse+'NewFolder.info') $ParentFolder
+        Rename-Item ($ParentFolder+'NewFolder.info') ($ParentFolder+$FileName+'.info')
+    }
+    else {
+        Write-InformationMessage -Message ($FileName+'.info already exists')
+    }
+}
+
+function Get-GithubRelease {
+    param (
+        $GithubRelease,
+        $Tag_Name,
+        $Name,
+        $LocationforDownload,
+        $LocationforProgram,
+        $Sort_Flag
+    )
+    if(Test-Path $LocationforProgram){
+        Write-InformationMessage -Message 'File already exists!'
+        return $true   
+    }
+    else{
+        Write-InformationMessage -Message 'Retrieving Github information'
+        try {
+            $GithubDetails = (Invoke-WebRequest $GithubRelease | ConvertFrom-Json)            
+        }
+        catch {
+            Write-ErrorMessage -Message ('Error downloading '+$NameofDL+'!')
+            return $false
+        }
+        if ($Sort_Flag -eq 'Sort'){
+            $GithubDetails_2 = $GithubDetails | Where-Object { $_.tag_name -eq $Tag_Name } | Select-Object -ExpandProperty assets | Where-Object { $_.name -match $Name } | Sort-Object -Property updated_at -Descending
+        }
+        else{
+            $GithubDetails_2 = $GithubDetails | Where-Object { $_.tag_name -eq $Tag_Name } | Select-Object -ExpandProperty assets | Where-Object { $_.name -match $Name }
+        }
+        $GithubDownloadURL =$GithubDetails_2[0].browser_download_url 
+        Write-InformationMessage -Message ('Downloading Files for URL: '+$GithubDownloadURL)
+        try {
+            Invoke-WebRequest $GithubDownloadURL -OutFile $LocationforDownload # Powershell 5 compatibility -AllowInsecureRedirect
+            Write-InformationMessage -Message 'Download completed'            
+        }
+        catch {
+            Write-ErrorMessage -Message ('Error downloading '+$NameofDL+'!')
+            return $false
+        }
+        Write-InformationMessage -Message 'Extracting Files'
+        $null = Expand-Archive -LiteralPath $LocationforDownload -DestinationPath $LocationforProgram -force
+        return $true   
+    }
+}
+
+function Edit-AmigaScripts {
+    param (
+        $ScripttoEdit,
+        $Action,
+        $Name,
+        $Injectionpoint, 
+        $Startpoint,
+        $Endpoint,
+        $LinestoAdd,
+        $ArexxFlag
+    )
+    $ScripttoEdit_Revised = New-Object System.Collections.Generic.List[System.Object]
+    if ($Action -eq 'remove'){
+        Write-InformationMessage -Message 'Removing items from script'
+        Write-InformationMessage -Message ('Startpoint is: '+$Startpoint+' Endpoint is: '+$Endpoint)
+        $RemoveLine=0 
+        foreach ($Line in $ScripttoEdit) {
+            if ($line -match $Startpoint){
+                $RemoveLine=1
+                $ScripttoEdit_Revised.Add('; '+$Name+' Removed by Powershell')
+            }
+            if ($RemoveLine -eq 0){
+                $ScripttoEdit_Revised.Add($Line)
+                }
+            if ($line -match $Endpoint){
+                $RemoveLine=0
+                }
+        }
+    }
+    if ($Action -eq 'inject' -and $Injectionpoint-eq 'before'){
+        Write-InformationMessage -Message 'Injecting new lines in script before Startpoint'
+        Write-InformationMessage -Message ('Startpoint is: '+$Startpoint)
+        foreach ($Line in $ScripttoEdit) {
+            if ($line -match $Startpoint){
+                $ScripttoEdit_Revised.Add('')
+                if ($ArexxFlag -eq 'AREXX'){
+                    $ScripttoEdit_Revised.Add('/*')
+                    $ScripttoEdit_Revised.Add($Name+' Added by Powershell -Begin')
+                    $ScripttoEdit_Revised.Add('*/')                 
+                    $ScripttoEdit_Revised.Add('')
+                }
+                else{
+                    $ScripttoEdit_Revised.Add('; '+$Name+' Added by Powershell -Begin')
+                }
+                foreach ($LinetoAdd in $LinestoAdd){
+                    $ScripttoEdit_Revised.Add($LinetoAdd)
+                }
+                if ($ArexxFlag -eq 'AREXX'){
+                    $ScripttoEdit_Revised.Add('/*')
+                    $ScripttoEdit_Revised.Add($Name+' Added by Powershell -End')
+                    $ScripttoEdit_Revised.Add('*/')                 
+                    $ScripttoEdit_Revised.Add('')
+                }
+                else{
+                    $ScripttoEdit_Revised.Add('; '+$Name+' Added by Powershell -End')
+                }
+                $ScripttoEdit_Revised.Add('')
+                $ScripttoEdit_Revised.Add($Startpoint)
+            }
+            else{
+                $ScripttoEdit_Revised.Add($Line)
+           }
+       }
+   }
+   if ($Action -eq 'inject' -and $Injectionpoint-eq 'after'){
+        Write-InformationMessage -Message 'Injecting new lines in script after startpoint'
+        Write-InformationMessage -Message ('Startpoint is: '+$Startpoint)
+       foreach ($Line in $ScripttoEdit) {
+           if ($line -match $Startpoint){
+               $ScripttoEdit_Revised.Add($Startpoint)
+               $ScripttoEdit_Revised.Add('')
+               if ($ArexxFlag -eq 'AREXX'){
+                   $ScripttoEdit_Revised.Add('/*')
+                   $ScripttoEdit_Revised.Add($Name+' Added by Powershell -Begin')
+                   $ScripttoEdit_Revised.Add('*/')                 
+                   $ScripttoEdit_Revised.Add('')
+               }
+               else {
+                   $ScripttoEdit_Revised.Add('; '+$Name+' Added by Powershell -Begin')            
+               }
+               foreach ($LinetoAdd in $LinestoAdd){
+                   $ScripttoEdit_Revised.Add($LinetoAdd)
+               }
+               $ScripttoEdit_Revised.Add('')
+               if ($ArexxFlag -eq 'AREXX'){
+                   $ScripttoEdit_Revised.Add('/*')
+                   $ScripttoEdit_Revised.Add($Name+' Added by Powershell -End')
+                   $ScripttoEdit_Revised.Add('*/')                 
+               }
+                else {
+                    $ScripttoEdit_Revised.Add('; '+$Name+' Added by Powershell -End')            
+                }
+            $ScripttoEdit_Revised.Add('')
+           }
+           else {
+            $ScripttoEdit_Revised.Add($Line)
+           }
+        }
+   }
+    if ($Action -eq 'Append'){
+        $ScripttoEdit_Revised.Add('; '+$Name+' Amended by Powershell')
+        foreach ($LinetoAdd in $LinestoAdd){
+            $ScripttoEdit_Revised.Add($LinetoAdd)
+        }
+    }
+    return $ScripttoEdit_Revised    
+}
+
+
+function Export-TextFileforAmiga {
+    param (
+        $ExportFile,
+        $DatatoExport,
+        $AddLineFeeds
+    )
+    Write-InformationMessage -Message ('Exporting file '+$ExportFile)
+    if ($AddLineFeeds -eq 'TRUE'){
+        Write-InformationMessage -Message ('Adding line feeds to file '+$ExportFile)
+        foreach ($Line in $DatatoExport){
+            $DatatoExportRevised+=$line+"`n"
+        }
+    }
+    else{
+        $DatatoExportRevised+=$DatatoExport
+    }
+    [System.IO.File]::WriteAllText($ExportFile,$DatatoExportRevised,[System.Text.Encoding]::GetEncoding('iso-8859-1'))
+}
+
+
+function Import-TextFileforAmiga {
+    param (
+        $ImportFile,
+        $SystemType
+    )
+    $DataRevised = New-Object System.Collections.Generic.List[System.Object]
+    if ($SystemType -eq 'PC'){
+        $Data=Get-Content -path $ImportFile -Encoding ascii ## Powershell 5 compatibility
+        $Data = $Data -split "`n"
+    }
+    if ($SystemType -eq 'Amiga'){
+        $Data=[System.IO.File]::ReadAllText($ImportFile,[System.Text.Encoding]::GetEncoding('iso-8859-1')) #-replace "`r`n", "`n"
+        $Data = $Data -split "`n" 
+    }
+    foreach ($Line in $Data){
+        $DataRevised.Add(($line -replace "`r`n", "`n"))
+    }
+    return $DataRevised
+}
+
+function Find-LatestAminetPackage {
+    param (
+        $PackagetoFind,
+        $Exclusion,
+        $DateNewerthan,
+        $Architecture
+    )
+    $AminetURL='http://aminet.net'
+    $URL=('https://aminet.net/search?name='+$PackagetoFind+'&o_date=newer&date='+$DateNewerthan+'&arch[]='+$Architecture)
+    Write-InformationMessage -Message('Searching for: '+$PackagetoFind)
+    $ListofAminetFiles=Invoke-WebRequest $URL -UseBasicParsing # -AllowInsecureRedirect Powershell 5 compatibility
+    foreach ($Line in $ListofAminetFiles.Links) {      
+    if (!$Exclusion) {
+        if (($line -match ('.lha'))){
+            Write-InformationMessage -Message ('Found '+$line.href)
+            return ($AminetURL+$line.href)
+       }     
+    }
+    else {
+    }
+        if (($line -match ('.lha')) -and (-not ($line -match $Exclusion))){
+            Write-InformationMessage -Message ('Found '+$line.href)
+            return ($AminetURL+$line.href)
+       }       
+    }
+    Write-ErrorMessage -Message 'Could not find package! Unrrecoverable error!'
+    return                 
+}
+
+function Find-WHDLoadWrapperURL{
+    param (
+        $SearchCriteria,
+        $ResultLimit
+        )        
+        $SiteLink='https://ftp2.grandis.nu'
+        $ListofURLs = New-Object System.Collections.Generic.List[System.Object]
+        $SearchResults=Invoke-WebRequest "https://ftp2.grandis.nu/turransearch/search.php?_search_=1&search=$SearchCriteria&category_id=Misc&exclude=&limit=$ResultLimit&httplinks=on"
+        Write-InformationMessage -Message ('Retrieving link latest version of '+$SearchCriteria)
+        foreach ($Item in $SearchResults.Links.OuterHTML){
+            if ($item -match $SearchCriteria){
+                $Startpoint=$item.IndexOf('/turran')
+                $Endpoint=$item.IndexOf('">/Misc/')
+                $InvidualURL=$item.Substring($Startpoint,($Endpoint-$Startpoint))
+                $ListofURLs.Add($InvidualURL)    
+            }
+        }
+        $DownloadLink = $SiteLink+($ListofURLs | Sort-Object -Descending | Select-Object -First 1)
+        if ($DownloadLink){
+            return $DownloadLink
+        }
+        else {
+            return
+        }
+    }
+    
+function Get-ModifiedToolTypes {
+    param (
+        $OriginalToolTypes,
+        $ModifiedToolTypes
+    )
+    $Tooltypes_Revised = New-Object System.Collections.Generic.List[System.Object]
+    $HashTableforOldandNewToolTypes = @{} # Clear Hash
+    foreach ($ModifiedToolType in $ModifiedTooltypes){
+        if ($ModifiedToolType.OldValue -ne ""){
+            $HashTableforOldandNewToolTypes.Add($ModifiedToolType.OldValue,$ModifiedToolType.NewValue) 
+        }
+        else{
+            $Tooltypes_Revised.Add($ModifiedTooltype.NewValue)            
+        }        
+    }
+    foreach ($OriginalToolType in $OriginalToolTypes){
+        if ($HashTableforOldandNewToolTypes[$OriginalToolType]){
+            $Tooltypes_Revised.Add($HashTableforOldandNewToolTypes[$OriginalToolType])
+        }
+        else{
+            $Tooltypes_Revised.Add($OriginalToolType)
+        }
+    }
+    return $Tooltypes_Revised    
+}    
+   
+function Compare-KickstartHashes {
+    param (
+        $PathtoKickstartHashes,
+        $PathtoKickstartFiles,
+        $KickstartVersion
+    )
+    $KickstartHashestoFind =Import-Csv $PathtoKickstartHashes -Delimiter ';' |  Where-Object {$_.Kickstart_Version -eq $KickstartVersion} | Sort-Object -Property 'Sequence'   
+    $ListofKickstartFilestoCheck = Get-ChildItem $PathtoKickstartFiles -force -Recurse | Where-Object { $_.PSIsContainer -eq $false } 
+    
+    $FoundKickstarts = [System.Collections.Generic.List[PSCustomObject]]::New()
+    $HashTableforKickstartFilestoCheck = @{} # Clear Hash
+   
+    foreach ($KickstartDetailLine in $ListofKickstartFilestoCheck){
+        $KickstartHash=Get-FileHash -LiteralPath $KickstartDetailLine.FullName -Algorithm MD5
+        if (-not ($HashTableforKickstartFilestoCheck[$KickstartHash.Hash])){
+            $HashTableforKickstartFilestoCheck.Add(($KickstartHash.Hash),$KickstartDetailLine.FullName)
+        }
+    }
+      
+    foreach ($KickstartRomandHash in $KickstartHashestoFind){
+        if ($HashTableforKickstartFilestoCheck[$KickstartRomandHash.Hash]){
+            $FoundKickstarts += [PSCustomObject]@{
+                Kickstart_Version = $KickstartRomandHash.Kickstart_Version
+                FriendlyName= $KickstartRomandHash.FriendlyName
+                Sequence = $KickstartRomandHash.Sequence 
+                Fat32Name = $KickstartRomandHash.Fat32Name
+                KickstartPath = ($HashTableforKickstartFilestoCheck[$KickstartRomandHash.Hash])
+            }        
+        }
+        else{
+            $FoundKickstarts += [PSCustomObject]@{
+                Kickstart_Version = $KickstartRomandHash.Kickstart_Version
+                FriendlyName= $KickstartRomandHash.FriendlyName
+                Sequence = $KickstartRomandHash.Sequence 
+                Fat32Name = $KickstartRomandHash.Fat32Name
+                KickstartPath = ""
+            }        
+        }
+    }
+    
+    if ($FoundKickstarts){
+        $KickstarttoUse = $FoundKickstarts | Sort-Object -Property 'Sequence' | Select-Object -first 1
+        return $KickstarttoUse 
+    }
+    else{
+        Write-ErrorMessage -Message 'No valid Kickstart file found!'
+        return
+    }
+}
+    
+function Compare-ADFHashes {
+    param (
+        $PathtoADFFiles,
+        $PathtoADFHashes,
+        $KickstartVersion,
+        $PathtoListofInstallFiles
+    
+    )
+    
+    Write-InformationMessage -Message ('Calculating hashes of ADFs in location '+$PathtoADFFiles)
+    $ListofADFFilestoCheck = Get-ChildItem $PathtoADFFiles -force -Recurse | Where-Object { $_.PSIsContainer -eq $false } | Get-FileHash  -Algorithm MD5
+    Write-InformationMessage -Message  ('Hashes calculated!')
+    $ADFHashestoFind = Import-Csv $PathtoADFHashes -Delimiter ';' |  Where-Object {$_.Kickstart_Version -eq $KickstartVersion} | Sort-Object -Property 'Sequence'
+    $RequiredADFs = Import-Csv $PathtoListofInstallFiles -Delimiter ';' |  Where-Object {$_.Kickstart_Version -eq $KickstartVersion} | Sort-Object -Property 'Sequence'
+    $UniqueRequiredADFs = $RequiredADFs | Select-Object FriendlyName -Unique
+    
+    $HashTableforADFFilestoCheck = @{} # Clear Hash
+    
+    $MatchedADFs = [System.Collections.Generic.List[PSCustomObject]]::New()
+    
+    foreach ($ADFDetailLine in $ADFHashestoFind){
+        $HashTableforADFFilestoCheck += @{
+            $ADFDetailLine.Hash=$ADFDetailLine.ADF_Name,$ADFDetailLine.FriendlyName    
+        }
+    }
+    
+    foreach ($ADFLine in $ListofADFFilestoCheck){
+        if ($HashTableforADFFilestoCheck[$ADFLine.Hash]){
+            $MatchedADFs += [PSCustomObject]@{
+                PathtoADF= $ADFLine.Path
+                Hash = $ADFLine.Hash
+                ADF_Name = $HashTableforADFFilestoCheck[$ADFLine.Hash][0]
+                FriendlyName = $HashTableforADFFilestoCheck[$ADFLine.Hash][1]
+            }
+        }
+    }
+    
+    $UniqueAvailableADFs = $MatchedADFs.FriendlyName | Get-Unique 
+    
+    $ErrorCount=0
+          
+    foreach ($RequiredADF in $UniqueRequiredADFs){
+        $ADFFound=$false
+        foreach ($AvailableADF in $UniqueAvailableADFs){
+            if ($RequiredADF.FriendlyName -eq $AvailableADF){
+                $ADFFound=$true
+            }
+        }
+        if ($ADFFound -eq  $true){
+            Write-InformationMessage -Message ('Found ADF file: '+$RequiredADF.FriendlyName)
+        }
+        if ($ADFFound -eq  $false){
+            Write-ErrorMessage -Message ('ADF file: '+$RequiredADF.FriendlyName+' is missing from directory and/or hash is invalid Please check file!')
+            $ErrorCount +=1
+        }
+    } 
+    
+    if ($ErrorCount -gt 0){
+        return
+     }
+    else{
+        return $MatchedADFs 
+    }
+}    
+
+function Get-StartupSequenceVersion {
+    param (
+        $StartupSequencetoCheck
+    )
+    $StartupSequence_FirstLine = $StartupSequencetoCheck | Select-Object -First 1
+    
+    $String_Start='; $VER: Startup-Sequence_HardDrive '    
+    $String_End=' ('
+    
+    $Startpoint = $StartupSequence_FirstLine.IndexOf($String_Start)+$String_Start.Length
+    if ($Startpoint -lt 0){
+        Write-ErrorMessage -Message  'Error! No version found!'
+        return
+    }
+    else{
+        $Endpoint = $StartupSequence_FirstLine.IndexOf($String_End)
+        $Version=$StartupSequence_FirstLine.Substring($Startpoint,($Endpoint-$Startpoint))
+        Write-InformationMessage -Message ('Version of Startup-Sequence is '+$Version)
+        return $Version
+    }
+}
+    
+function Get-StartupSequenceInjectionPointfromVersion {
+    param (
+        $SSversion,
+        $InjectionPointtoParse
+        )
+        $InjectionPointTable = [System.Collections.Generic.List[PSCustomObject]]::New()
+        
+        if ($InjectionPointtoParse -match "¬"){
+            $InjectionPointSplit=$InjectionPointtoParse -split "¬"
+        
+        }
+        else {
+            Write-InformationMessage -Message ('Injection point identified (not version specific) is: '+$InjectionPointtoParse)
+            return $InjectionPointtoParse
+        }    
+        foreach ($Row in $InjectionPointSplit) {
+            if ($Row.Substring(0,8) -eq 'VERSION-'){
+                $Startpoint='VERSION-'.Length
+                $length=($row.Length)-$Startpoint       
+                $VersiontoPopulate=$row.substring($Startpoint,$length)
+            }
+            else{
+                $StringtoPopulate=$Row
+            }
+            if ($null -ne $StringtoPopulate){
+                $InjectionPointTable += [PSCustomObject]@{
+                    Version = $VersiontoPopulate
+                    Text= $StringtoPopulate
+                }
+                $StringtoPopulate=$null
+            } 
+        
+        }
+        foreach ($line in $InjectionPointTable){
+            if ($line.Version -eq $SSversion){
+                Write-InformationMessage -Message ('Injection point identified for version '+$SSversion+' is: '+$line.Text)
+                return $line.Text
+            }
+        }    
+        return           
+}
+
+#[Enum]::GetNames([System.Environment+SpecialFolder])
+
+function Test-ExistenceofFiles {
+    param (
+        $PathtoTest,
+        $PathType
+    )
+    if (-not (Test-Path $PathtoTest)){
+        Write-ErrorMessage -Message ('Error! '+$PathtoTest+' is not available! Please check your download of the tool!')
+        return 1 
+    }
+    else{
+        Write-InformationMessage -Message ($PathtoTest+' is available!')
+        return 0
+    }
+}
+
+### End Functions
+
+######################################################################### End Functions #############################################################################################################
 
 ####################################################################### End Check Runtime Environment ###############################################################################################
 
 ####################################################################### Set Script Path dependent  Variables ########################################################################################
 
-$SourceProgramPath=($Scriptpath+'Programs\')
-$InputFolder=($Scriptpath+'InputFiles\')
-$LocationofAmigaFiles=($Scriptpath+'AmigaFiles\')
+$SourceProgramPath = ($Scriptpath+'Programs\')
+$InputFolder = ($Scriptpath+'InputFiles\')
+$LocationofAmigaFiles = ($Scriptpath+'AmigaFiles\')
 
 ####################################################################### End Script Path dependent  Variables ########################################################################################
 
@@ -36,76 +1201,76 @@ $LocationofAmigaFiles=($Scriptpath+'AmigaFiles\')
 
 #Get-Variable > variables.txt
 
-$Global:ExitType = $null
-$Global:HSTDiskName = $null
-$Global:ScreenModetoUse = $null
-$Global:KickstartVersiontoUse = $null
-$Global:SSID = $null
-$Global:WifiPassword = $null
-$Global:SizeofFAT32 = $null
-$Global:SizeofImage = $null
-$Global:SizeofImage_HST = $null
-$Global:SizeofPartition_System = $null
-$Global:SizeofPartition_Other = $null
-$Global:WorkingPath = $null
-$Global:ROMPath = $null
-$Global:ADFPath = $null
-$Global:TransferLocation = $null
-$Global:Space_WorkingFolderDisk = $null
-$Global:AvailableSpace_WorkingFolderDisk = $null
-$Global:RequiredSpace_WorkingFolderDisk = $null
-$Global:AvailableSpaceFilestoTransfer = $null
-$Global:SizeofFilestoTransfer = $null
-$Global:SpaceThreshold_WorkingFolderDisk = $null
-$Global:SpaceThreshold_FilestoTransfer = $null
-$Global:Space_FilestoTransfer = $null
-$Global:PFSLimit =$null
-$Global:WriteImage = $null
-$Global:TotalSections = $null
-$Global:CurrentSection = $null
-$Global:SetDiskupOnly = $null
-$Global:PartitionBarPixelperKB = $null
-$Global:SizeofDisk = $null
-$Global:Fat32Maximum = $null
-$Global:SizeofFat32_Maximum = $null
-$Global:SizeofFat32_Pixels_Maximum = $null
-$Global:SizeofPartition_System_Maximum = $null
-$Global:WorkbenchMaximum = $null
-$Global:SizeofPartition_System_Pixels_Maximum = $null
-$Global:SizeofPartition_Other_Maximum = $null
-$Global:SizeofPartition_Other_Pixels_Maximum = $null
-$Global:SizeofFreeSpace_Maximum = $null
-$Global:SizeofFreeSpace_Pixels_Maximum = $null
-$Global:SizeofFreeSpace_Pixels_Minimum = $null
-$Global:SizeofUnallocated_Pixels_Maximum = $null
-$Global:PartitionBarWidth = $null
-$Global:SizeofFreeSpace = $null
-$Global:SizeofPartition_Other_Pixels = $null
-$Global:SizeofPartition_System_Pixels = $null
-$Global:SizeofFat32_Pixels = $null
-$Global:SizeofUnallocated_Maximum = $null
-$Global:Fat32DefaultMaximum = $null
-$Global:Fat32Minimum = $null
-$Global:WorkbenchMinimum = $null
-$Global:WorkMinimum = $null
-$Global:PartitionBarKBperPixel = $null
-$Global:SizeofFat32_Pixels_Minimum = $null
-$Global:SizeofFreeSpace_Pixels = $null
-$Global:SizeofPartition_System_Pixels_Minimum = $null
-$Global:SizeofPartition_Other_Pixels_Minimum = $null
-$Global:SizeofUnallocated  = $null
-$Global:SizeofUnallocated_Minimum = $null
-$Global:SizeofUnallocated_Pixels = $null
-$Global:SizeofUnallocated_Pixels_Minimum = $null
-$Global:SizeofFreeSpace_Minimum = $null
-$Global:RemovableMedia = $null
-$Global:WorkOverhead = $null
+$Script:ExitType = $null
+$Script:HSTDiskName = $null
+$Script:ScreenModetoUse = $null
+$Script:KickstartVersiontoUse = $null
+$Script:SSID = $null
+$Script:WifiPassword = $null
+$Script:SizeofFAT32 = $null
+$Script:SizeofImage = $null
+$Script:SizeofImage_HST = $null
+$Script:SizeofPartition_System = $null
+$Script:SizeofPartition_Other = $null
+$Script:WorkingPath = $null
+$Script:ROMPath = $null
+$Script:ADFPath = $null
+$Script:TransferLocation = $null
+$Script:Space_WorkingFolderDisk = $null
+$Script:AvailableSpace_WorkingFolderDisk = $null
+$Script:RequiredSpace_WorkingFolderDisk = $null
+$Script:AvailableSpaceFilestoTransfer = $null
+$Script:SizeofFilestoTransfer = $null
+$Script:SpaceThreshold_WorkingFolderDisk = $null
+$Script:SpaceThreshold_FilestoTransfer = $null
+$Script:Space_FilestoTransfer = $null
+$Script:PFSLimit =$null
+$Script:WriteImage = $null
+$Script:TotalSections = $null
+$Script:CurrentSection = $null
+$Script:SetDiskupOnly = $null
+$Script:PartitionBarPixelperKB = $null
+$Script:SizeofDisk = $null
+$Script:Fat32Maximum = $null
+$Script:SizeofFat32_Maximum = $null
+$Script:SizeofFat32_Pixels_Maximum = $null
+$Script:SizeofPartition_System_Maximum = $null
+$Script:WorkbenchMaximum = $null
+$Script:SizeofPartition_System_Pixels_Maximum = $null
+$Script:SizeofPartition_Other_Maximum = $null
+$Script:SizeofPartition_Other_Pixels_Maximum = $null
+$Script:SizeofFreeSpace_Maximum = $null
+$Script:SizeofFreeSpace_Pixels_Maximum = $null
+$Script:SizeofFreeSpace_Pixels_Minimum = $null
+$Script:SizeofUnallocated_Pixels_Maximum = $null
+$Script:PartitionBarWidth = $null
+$Script:SizeofFreeSpace = $null
+$Script:SizeofPartition_Other_Pixels = $null
+$Script:SizeofPartition_System_Pixels = $null
+$Script:SizeofFat32_Pixels = $null
+$Script:SizeofUnallocated_Maximum = $null
+$Script:Fat32DefaultMaximum = $null
+$Script:Fat32Minimum = $null
+$Script:WorkbenchMinimum = $null
+$Script:WorkMinimum = $null
+$Script:PartitionBarKBperPixel = $null
+$Script:SizeofFat32_Pixels_Minimum = $null
+$Script:SizeofFreeSpace_Pixels = $null
+$Script:SizeofPartition_System_Pixels_Minimum = $null
+$Script:SizeofPartition_Other_Pixels_Minimum = $null
+$Script:SizeofUnallocated  = $null
+$Script:SizeofUnallocated_Minimum = $null
+$Script:SizeofUnallocated_Pixels = $null
+$Script:SizeofUnallocated_Pixels_Minimum = $null
+$Script:SizeofFreeSpace_Minimum = $null
+$Script:RemovableMedia = $null
+$Script:WorkOverhead = $null
 
 ####################################################################### End Null out Global Variables ###############################################################################################
  
  ####################################################################### Set Global Variables ###############################################################################################
  
- $Global:PFSLimit = 101*1024*1024 #Kilobytes
+ $Script:PFSLimit = 101*1024*1024 #Kilobytes
 
  ####################################################################### End Set Global Variables ###############################################################################################
  
@@ -321,45 +1486,45 @@ $XAML_UserInterface.SelectNodes("//*[@Name]") | ForEach-Object{
 
 #Width of bar
 
-$Global:PartitionBarWidth =  857
-$Global:SetDiskupOnly = 'FALSE'
+$Script:PartitionBarWidth =  857
+$Script:SetDiskupOnly = 'FALSE'
 $DefaultDivisorFat32 = 15
 $DefaultDivisorWorkbench = 15
-$Global:Fat32DefaultMaximum = 1024*1024 #1gb in Kilobytes
-#$Global:WorkbenchMaximum = 1024*1024 #1gb in Kilobytes
-$Global:WorkbenchDefaultMaximum = 1024*1024 #1gb in Kilobytes
-$Global:WorkbenchMaximum = $Global:PFSLimit
-$Global:Fat32Maximum = 4*1024*1024 # in Kilobytes
-$Global:Fat32Minimum = 35840 # In KiB
-$Global:WorkbenchMinimum = 100*1024 # In KiB
-$Global:WorkMinimum = 10*1024 # In KiB
+$Script:Fat32DefaultMaximum = 1024*1024 #1gb in Kilobytes
+#$Script:WorkbenchMaximum = 1024*1024 #1gb in Kilobytes
+$Script:WorkbenchDefaultMaximum = 1024*1024 #1gb in Kilobytes
+$Script:WorkbenchMaximum = $Script:PFSLimit
+$Script:Fat32Maximum = 4*1024*1024 # in Kilobytes
+$Script:Fat32Minimum = 35840 # In KiB
+$Script:WorkbenchMinimum = 100*1024 # In KiB
+$Script:WorkMinimum = 10*1024 # In KiB
 
-$Global:Space_WorkingFolderDisk = (Confirm-DiskSpace -PathtoCheck $Scriptpath)/1Kb # Available Space on Drive where script is running (Kilobytes)
-$Global:AvailableSpace_WorkingFolderDisk = $Global:Space_WorkingFolderDisk
-$Global:RequiredSpace_WorkingFolderDisk = 0 #In Kilobytes
+$Script:Space_WorkingFolderDisk = (Confirm-DiskSpace -PathtoCheck $Scriptpath)/1Kb # Available Space on Drive where script is running (Kilobytes)
+$Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk
+$Script:RequiredSpace_WorkingFolderDisk = 0 #In Kilobytes
 
-$Global:Space_FilestoTransfer = 0 #In Kilobytes
-$Global:WorkOverhead = 1024 #In Kilobytes
-$Global:AvailableSpaceFilestoTransfer = 0 #In Kilobytes
-$Global:SizeofFilestoTransfer = 0 #In Kilobytes
+$Script:Space_FilestoTransfer = 0 #In Kilobytes
+$Script:WorkOverhead = 1024 #In Kilobytes
+$Script:AvailableSpaceFilestoTransfer = 0 #In Kilobytes
+$Script:SizeofFilestoTransfer = 0 #In Kilobytes
 
-$Global:SpaceThreshold_WorkingFolderDisk = 500*1024 #In Kilobytes
-$Global:SpaceThreshold_FilestoTransfer = 10*1024 #In Kilobytes
+$Script:SpaceThreshold_WorkingFolderDisk = 500*1024 #In Kilobytes
+$Script:SpaceThreshold_FilestoTransfer = 10*1024 #In Kilobytes
 
-$WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Global:AvailableSpace_WorkingFolderDisk 
-$WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Global:RequiredSpace_WorkingFolderDisk
+$WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpace_WorkingFolderDisk 
+$WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:RequiredSpace_WorkingFolderDisk
 
 $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = '' 
 $WPF_UI_RequiredSpaceValueTransferredFiles_TextBox.Text = ''
 
-$Global:RemovableMedia = Get-RemovableMedia
-foreach ($Disk in $Global:RemovableMedia){
+$Script:RemovableMedia = Get-RemovableMedia
+foreach ($Disk in $Script:RemovableMedia){
     $WPF_UI_MediaSelect_Dropdown.AddChild($Disk.FriendlyName)
 }
 
 $WPF_UI_MediaSelect_Dropdown.Add_SelectionChanged({
-    If (-not($Global:RemovableMedia)){
-        $Global:RemovableMedia  = Get-RemovableMedia
+    If (-not($Script:RemovableMedia)){
+        $Script:RemovableMedia  = Get-RemovableMedia
     }
     if ($WPF_UI_MediaSelect_DropDown.SelectedItem) {
         $WPF_UI_FAT32_Splitter.IsEnabled = "True"
@@ -372,147 +1537,138 @@ $WPF_UI_MediaSelect_Dropdown.Add_SelectionChanged({
         $WPF_UI_FAT32Size_Value.IsEnabled = "True"
         $WPF_UI_FreeSpace_Value.IsEnabled = "True"
 
-        foreach ($Disk in $Global:RemovableMedia){        
+        foreach ($Disk in $Script:RemovableMedia){        
             if ($Disk.FriendlyName -eq $WPF_UI_MediaSelect_DropDown.SelectedItem){
-                $Global:HSTDiskName = $Disk.HSTDiskName
-                $Global:PartitionBarPixelperKB = ($PartitionBarWidth)/$Disk.SizeofDisk
-                $Global:PartitionBarKBperPixel = $Disk.SizeofDisk/($PartitionBarWidth)
+                $Script:HSTDiskName = $Disk.HSTDiskName
+                $Script:PartitionBarPixelperKB = ($PartitionBarWidth)/$Disk.SizeofDisk
+                $Script:PartitionBarKBperPixel = $Disk.SizeofDisk/($PartitionBarWidth)
                 break
             }
 
         }
     
-        $Global:SizeofDisk = $Disk.SizeofDisk
-        $Global:SizeofImage = $Global:SizeofDisk
+        $Script:SizeofDisk = $Disk.SizeofDisk
+        $Script:SizeofImage = $Script:SizeofDisk
 
-        $Global:SizeofFat32_Pixels_Minimum = $Global:PartitionBarPixelperKB * $Global:Fat32Minimum 
-        $Global:SizeofPartition_System_Pixels_Minimum = $Global:PartitionBarPixelperKB * $Global:WorkbenchMinimum
-        $Global:SizeofPartition_Other_Pixels_Minimum = $Global:PartitionBarPixelperKB * $Global:WorkMinimum
+        $Script:SizeofFat32_Pixels_Minimum = $Script:PartitionBarPixelperKB * $Script:Fat32Minimum 
+        $Script:SizeofPartition_System_Pixels_Minimum = $Script:PartitionBarPixelperKB * $Script:WorkbenchMinimum
+        $Script:SizeofPartition_Other_Pixels_Minimum = $Script:PartitionBarPixelperKB * $Script:WorkMinimum
 
-        $Global:SizeofFreeSpace_Pixels_Minimum = 0
-        $Global:SizeofFreeSpace_Minimum = 0
+        $Script:SizeofFreeSpace_Pixels_Minimum = 0
+        $Script:SizeofFreeSpace_Minimum = 0
 
-        $Global:SizeofUnallocated_Pixels_Minimum = 0
-        $Global:SizeofUnallocated_Minimum = 0
+        $Script:SizeofUnallocated_Pixels_Minimum = 0
+        $Script:SizeofUnallocated_Minimum = 0
 
-        if ($Global:SizeofImage /$DefaultDivisorFat32 -ge $Global:Fat32DefaultMaximum){
-            $Global:SizeofFAT32 = $Global:Fat32DefaultMaximum
-            $Global:SizeofFAT32_Pixels = $Global:PartitionBarPixelperKB * $Global:SizeofFAT32   
+        if ($Script:SizeofImage /$DefaultDivisorFat32 -ge $Script:Fat32DefaultMaximum){
+            $Script:SizeofFAT32 = $Script:Fat32DefaultMaximum
+            $Script:SizeofFAT32_Pixels = $Script:PartitionBarPixelperKB * $Script:SizeofFAT32   
         }
         else{
-            $Global:SizeofFAT32 = $Global:SizeofImage/$DefaultDivisorFat32
-            $Global:SizeofFAT32_Pixels = $Global:PartitionBarPixelperKB * $Global:SizeofFAT32   
+            $Script:SizeofFAT32 = $Script:SizeofImage/$DefaultDivisorFat32
+            $Script:SizeofFAT32_Pixels = $Script:PartitionBarPixelperKB * $Script:SizeofFAT32   
         }
 
-        if ($Global:SizeofImage/$DefaultDivisorWorkbench -ge $Global:WorkbenchDefaultMaximum){
-            $Global:SizeofPartition_System = $Global:WorkbenchDefaultMaximum 
-            $Global:SizeofPartition_System_Pixels = $Global:SizeofPartition_System * $Global:PartitionBarPixelperKB 
+        if ($Script:SizeofImage/$DefaultDivisorWorkbench -ge $Script:WorkbenchDefaultMaximum){
+            $Script:SizeofPartition_System = $Script:WorkbenchDefaultMaximum 
+            $Script:SizeofPartition_System_Pixels = $Script:SizeofPartition_System * $Script:PartitionBarPixelperKB 
         }
         else{
-            $Global:SizeofPartition_System = $Global:SizeofImage/$DefaultDivisorWorkbench
-            $Global:SizeofPartition_System_Pixels = $Global:SizeofPartition_System * $Global:PartitionBarPixelperKB 
+            $Script:SizeofPartition_System = $Script:SizeofImage/$DefaultDivisorWorkbench
+            $Script:SizeofPartition_System_Pixels = $Script:SizeofPartition_System * $Script:PartitionBarPixelperKB 
         }
 
-        $Global:SizeofPartition_Other = ($Global:SizeofImage-$Global:SizeofPartition_System-$Global:SizeofFAT32)
-        $Global:SizeofPartition_Other_Pixels = $Global:SizeofPartition_Other * $Global:PartitionBarPixelperKB
+        $Script:SizeofPartition_Other = ($Script:SizeofImage-$Script:SizeofPartition_System-$Script:SizeofFAT32)
+        $Script:SizeofPartition_Other_Pixels = $Script:SizeofPartition_Other * $Script:PartitionBarPixelperKB
 
-        $Global:SizeofUnallocated = $Global:SizeofDisk-$Global:SizeofImage
-        $Global:SizeofUnallocated_Pixels = $Global:SizeofUnallocated * $Global:PartitionBarPixelperKB
+        $Script:SizeofUnallocated = $Script:SizeofDisk-$Script:SizeofImage
+        $Script:SizeofUnallocated_Pixels = $Script:SizeofUnallocated * $Script:PartitionBarPixelperKB
 
-        $Global:SizeofFreeSpace = $Global:SizeofImage-$Global:SizeofPartition_System-$Global:SizeofFAT32-$Global:SizeofPartition_Other
-        $Global:SizeofFreeSpace_Pixels = $Global:SizeofFreeSpace * $Global:PartitionBarPixelperKB
+        $Script:SizeofFreeSpace = $Script:SizeofImage-$Script:SizeofPartition_System-$Script:SizeofFAT32-$Script:SizeofPartition_Other
+        $Script:SizeofFreeSpace_Pixels = $Script:SizeofFreeSpace * $Script:PartitionBarPixelperKB
         
         Set-PartitionMaximums
         
-        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width = $Global:SizeofFAT32_Pixels
-        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width = $Global:SizeofPartition_System_Pixels
-        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width = $Global:SizeofPartition_Other_Pixels
-        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Global:SizeofFreeSpace_Pixels
-        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = $Global:SizeofUnallocated_Pixels
+        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width = $Script:SizeofFAT32_Pixels
+        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width = $Script:SizeofPartition_System_Pixels
+        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width = $Script:SizeofPartition_Other_Pixels
+        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Script:SizeofFreeSpace_Pixels
+        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = $Script:SizeofUnallocated_Pixels
         
-        $Global:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Global:SizeofImage
-        $Global:AvailableSpace_WorkingFolderDisk = $Global:Space_WorkingFolderDisk - $Global:RequiredSpace_WorkingFolderDisk 
+        $Script:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Script:SizeofImage
+        $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk 
     
-        $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Global:RequiredSpace_WorkingFolderDisk
-        $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Global:AvailableSpace_WorkingFolderDisk
+        $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:RequiredSpace_WorkingFolderDisk
+        $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpace_WorkingFolderDisk
 
-        $Global:Space_FilestoTransfer = $Global:SizeofPartition_Other - $Global:WorkOverhead
-        $Global:AvailableSpaceFilestoTransfer =  $Global:Space_FilestoTransfer - $Global:SizeofFilestoTransfer    
+        $Script:Space_FilestoTransfer = $Script:SizeofPartition_Other - $Script:WorkOverhead
+        $Script:AvailableSpaceFilestoTransfer =  $Script:Space_FilestoTransfer - $Script:SizeofFilestoTransfer    
         
-        if ($Global:TransferLocation){
-            $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Global:AvailableSpaceFilestoTransfer 
+        if ($Script:TransferLocation){
+            $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpaceFilestoTransfer 
         }
+        
+        Set-GUIPartitionValues
 
-        $WPF_UI_WorkbenchSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofPartition_System -Scale 'GiB'
-        $WPF_UI_WorkbenchSize_Value.Background = 'White'
-        $WPF_UI_WorkSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofPartition_Other -Scale 'GiB'
-        $WPF_UI_WorkSize_Value.Background = 'White'
-        $WPF_UI_ImageSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofImage -Scale 'GiB'
-        $WPF_UI_ImageSize_Value.Background = 'White'
-        $WPF_UI_FAT32Size_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofFAT32 -Scale 'GiB'
-        $WPF_UI_Fat32Size_Value.Background = 'White'
-        $WPF_UI_FreeSpace_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofFreeSpace -Scale 'GiB'
-        $WPF_UI_FreeSpace_Value.Background = 'White'
-        $WPF_UI_Unallocated_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofUnallocated -Scale 'GiB'        
-        }
+    }
 })
    
 $WPF_UI_DefaultAllocation_Refresh.add_Click({
-        if ($Global:HSTDiskName -eq ('\'+(($WPF_UI_MediaSelect_DropDown.SelectedItem).Split(' ',3)[0])+(($WPF_UI_MediaSelect_DropDown.SelectedItem).Split(' ',3)[1]))){
+        if ($Script:HSTDiskName -eq ('\'+(($WPF_UI_MediaSelect_DropDown.SelectedItem).Split(' ',3)[0])+(($WPF_UI_MediaSelect_DropDown.SelectedItem).Split(' ',3)[1]))){
         $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width = '1'
         $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width = '1'
         $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width = '1'
         $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = '1'
         $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = '1'
 
-        $Global:SizeofFat32_Pixels_Minimum = $Global:PartitionBarPixelperKB * $Global:Fat32Minimum 
-        $Global:SizeofPartition_System_Pixels_Minimum = $Global:PartitionBarPixelperKB * $Global:WorkbenchMinimum
-        $Global:SizeofPartition_Other_Pixels_Minimum = $Global:PartitionBarPixelperKB * $Global:WorkMinimum
+        $Script:SizeofFat32_Pixels_Minimum = $Script:PartitionBarPixelperKB * $Script:Fat32Minimum 
+        $Script:SizeofPartition_System_Pixels_Minimum = $Script:PartitionBarPixelperKB * $Script:WorkbenchMinimum
+        $Script:SizeofPartition_Other_Pixels_Minimum = $Script:PartitionBarPixelperKB * $Script:WorkMinimum
     
-        $Global:SizeofFreeSpace_Pixels_Minimum = 0
-        $Global:SizeofFreeSpace_Minimum = 0
+        $Script:SizeofFreeSpace_Pixels_Minimum = 0
+        $Script:SizeofFreeSpace_Minimum = 0
     
-        $Global:SizeofUnallocated_Pixels_Minimum = 0
-        $Global:SizeofUnallocated_Minimum = 0
+        $Script:SizeofUnallocated_Pixels_Minimum = 0
+        $Script:SizeofUnallocated_Minimum = 0
     
-        $Global:SizeofImage=$Global:SizeofDisk
-        if ($Global:SizeofImage /$DefaultDivisorFat32 -ge $Fat32DefaultMaximum){
-            $Global:SizeofFAT32 = $Fat32DefaultMaximum
-            $Global:SizeofFAT32_Pixels = $Global:PartitionBarPixelperKB * $Global:SizeofFAT32   
+        $Script:SizeofImage=$Script:SizeofDisk
+        if ($Script:SizeofImage /$DefaultDivisorFat32 -ge $Fat32DefaultMaximum){
+            $Script:SizeofFAT32 = $Fat32DefaultMaximum
+            $Script:SizeofFAT32_Pixels = $Script:PartitionBarPixelperKB * $Script:SizeofFAT32   
         }
         else{
-            $Global:SizeofFAT32 = $Global:SizeofImage/$DefaultDivisorFat32
-            $Global:SizeofFAT32_Pixels = $Global:PartitionBarPixelperKB * $Global:SizeofFAT32   
+            $Script:SizeofFAT32 = $Script:SizeofImage/$DefaultDivisorFat32
+            $Script:SizeofFAT32_Pixels = $Script:PartitionBarPixelperKB * $Script:SizeofFAT32   
         }
     
-        if ($Global:SizeofImage/$DefaultDivisorWorkbench -ge $Global:WorkbenchDefaultMaximum){
-            $Global:SizeofPartition_System = $Global:WorkbenchDefaultMaximum 
-            $Global:SizeofPartition_System_Pixels = $Global:SizeofPartition_System * $Global:PartitionBarPixelperKB 
+        if ($Script:SizeofImage/$DefaultDivisorWorkbench -ge $Script:WorkbenchDefaultMaximum){
+            $Script:SizeofPartition_System = $Script:WorkbenchDefaultMaximum 
+            $Script:SizeofPartition_System_Pixels = $Script:SizeofPartition_System * $Script:PartitionBarPixelperKB 
         }
         else{
-            $Global:SizeofPartition_System = $Global:SizeofImage/$DefaultDivisorWorkbench
-            $Global:SizeofPartition_System_Pixels = $Global:SizeofPartition_System * $Global:PartitionBarPixelperKB 
+            $Script:SizeofPartition_System = $Script:SizeofImage/$DefaultDivisorWorkbench
+            $Script:SizeofPartition_System_Pixels = $Script:SizeofPartition_System * $Script:PartitionBarPixelperKB 
         }
     
-        $Global:SizeofPartition_Other = ($Global:SizeofImage-$Global:SizeofPartition_System-$Global:SizeofFAT32)
-        $Global:SizeofPartition_Other_Pixels = $Global:SizeofPartition_Other * $Global:PartitionBarPixelperKB
+        $Script:SizeofPartition_Other = ($Script:SizeofImage-$Script:SizeofPartition_System-$Script:SizeofFAT32)
+        $Script:SizeofPartition_Other_Pixels = $Script:SizeofPartition_Other * $Script:PartitionBarPixelperKB
     
-        $Global:SizeofUnallocated = $Global:SizeofDisk-$Global:SizeofImage
-        $Global:SizeofUnallocated_Pixels = $Global:SizeofUnallocated * $Global:PartitionBarPixelperKB
+        $Script:SizeofUnallocated = $Script:SizeofDisk-$Script:SizeofImage
+        $Script:SizeofUnallocated_Pixels = $Script:SizeofUnallocated * $Script:PartitionBarPixelperKB
     
-        $Global:SizeofFreeSpace = $Global:SizeofImage-$Global:SizeofPartition_System-$Global:SizeofFAT32-$Global:SizeofPartition_Other
-        $Global:SizeofFreeSpace_Pixels = $Global:SizeofFreeSpace * $Global:PartitionBarPixelperKB
+        $Script:SizeofFreeSpace = $Script:SizeofImage-$Script:SizeofPartition_System-$Script:SizeofFAT32-$Script:SizeofPartition_Other
+        $Script:SizeofFreeSpace_Pixels = $Script:SizeofFreeSpace * $Script:PartitionBarPixelperKB
         
         Set-PartitionMaximums
             
-        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = $Global:SizeofUnallocated_Pixels
-        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Global:SizeofFreeSpace_Pixels
-        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width = $Global:SizeofPartition_Other_Pixels
-        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width = $Global:SizeofPartition_System_Pixels
-        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width = $Global:SizeofFAT32_Pixels
+        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = $Script:SizeofUnallocated_Pixels
+        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Script:SizeofFreeSpace_Pixels
+        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width = $Script:SizeofPartition_Other_Pixels
+        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width = $Script:SizeofPartition_System_Pixels
+        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width = $Script:SizeofFAT32_Pixels
         
-        if ($Global:SizeofPartition_Other -ge $Global:PFSLimit){
-            $TotalNumberWorkPartitions = [math]::ceiling($Global:SizeofPartition_Other/$Global:PFSLimit)
+        if ($Script:SizeofPartition_Other -ge $Script:PFSLimit){
+            $TotalNumberWorkPartitions = [math]::ceiling($Script:SizeofPartition_Other/$Script:PFSLimit)
             $WPF_UI_WorkSizeNote_Label.Text='*'
             $WPF_UI_WorkSizeNoteFooter_Label.Text=('Due to PFS limitations, Work will be split into '+$TotalNumberWorkPartitions+' partitions of equal size')
         }
@@ -521,86 +1677,83 @@ $WPF_UI_DefaultAllocation_Refresh.add_Click({
             $WPF_UI_WorkSizeNoteFooter_Label.Text='' 
         }
 
-        $WPF_UI_WorkbenchSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofPartition_System -Scale 'GiB'
-        $WPF_UI_WorkbenchSize_Value.Background = 'White'
-        $WPF_UI_WorkSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofPartition_Other -Scale 'GiB'
-        $WPF_UI_WorkSize_Value.Background = 'White'
-        $WPF_UI_ImageSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofImage -Scale 'GiB'
-        $WPF_UI_ImageSize_Value.Background = 'White'
-        $WPF_UI_FAT32Size_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofFAT32 -Scale 'GiB'
-        $WPF_UI_Fat32Size_Value.Background = 'White'
-        $WPF_UI_FreeSpace_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofFreeSpace -Scale 'GiB'
-        $WPF_UI_FreeSpace_Value.Background = 'White'
-        $WPF_UI_Unallocated_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofUnallocated -Scale 'GiB'      
+        Set-GUIPartitionValues
+                
+        $WPF_UI_Unallocated_Value.Text = Get-RoundedDiskSize -Size $Script:SizeofUnallocated -Scale 'GiB'
         
-        $Global:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Global:SizeofImage
-        $Global:AvailableSpace_WorkingFolderDisk = $Global:Space_WorkingFolderDisk - $Global:RequiredSpace_WorkingFolderDisk 
+        if ($WPF_UI_Unallocated_Value.Text -eq 0){
+            $Script:UI_Unallocated_Value = 0
+        }
+        else{
+            $Script:UI_Unallocated_Value = $WPF_UI_Unallocated_Value.Text      
+        }        
+        
+        $Script:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Script:SizeofImage
+        $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk 
     
-        $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Global:RequiredSpace_WorkingFolderDisk
-        $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Global:AvailableSpace_WorkingFolderDisk
+        $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:RequiredSpace_WorkingFolderDisk
+        $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpace_WorkingFolderDisk
 
-        $Global:Space_FilestoTransfer = $Global:SizeofPartition_Other - $Global:WorkOverhead
-        $Global:AvailableSpaceFilestoTransfer =  $Global:Space_FilestoTransfer - $Global:SizeofFilestoTransfer    
+        $Script:Space_FilestoTransfer = $Script:SizeofPartition_Other - $Script:WorkOverhead
+        $Script:AvailableSpaceFilestoTransfer =  $Script:Space_FilestoTransfer - $Script:SizeofFilestoTransfer    
         
-        if ($Global:TransferLocation){
-            $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Global:AvailableSpaceFilestoTransfer 
+        if ($Script:TransferLocation){
+            $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpaceFilestoTransfer 
         }            
     }
 })
 
-
-
 $WPF_UI_Fat32Size_Listview.add_SizeChanged({
     Set-PartitionMaximums -Type 'FAT32'   
-    if ($Global:HSTDiskName){
-        if ($WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value -ge $Global:SizeofFat32_Pixels_Maximum){
-            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width = $Global:SizeofFat32_Pixels_Maximum
+    if ($Script:HSTDiskName){
+        if ($WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value -ge $Script:SizeofFat32_Pixels_Maximum){
+            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width = $Script:SizeofFat32_Pixels_Maximum
         }
-        if ($WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value -le $Global:SizeofFat32_Pixels_Minimum){
-            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width = $Global:SizeofFat32_Pixels_Minimum
+        if ($WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value -le $Script:SizeofFat32_Pixels_Minimum){
+            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width = $Script:SizeofFat32_Pixels_Minimum
         }
 
-        if ([math]::round($Global:PartitionBarWidth-  $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value- `
+        if ([math]::round($Script:PartitionBarWidth-  $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value- `
                                                      $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value- `
                                                      $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value- `
                                                      $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value,4) -lt 0){
             $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = 0
         }else{
-            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = [math]::round($Global:PartitionBarWidth-  $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value- `
+            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = [math]::round($Script:PartitionBarWidth-  $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value- `
                                                                                                 $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value- `
                                                                                                 $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value- `
                                                                                                 $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value,4)
         }      
          
-        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = [math]::round($Global:PartitionBarWidth-  $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value- `
+        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = [math]::round($Script:PartitionBarWidth-  $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value- `
                                                                                             $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value- `
                                                                                             $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value- `
                                                                                             $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width.Value,4)
 
-        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = [math]::round($Global:PartitionBarWidth-  $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value- `
+        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = [math]::round($Script:PartitionBarWidth-  $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value- `
                                                                                             $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value- `
                                                                                             $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value- `
                                                                                             $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value,4)
 
-        $Global:SizeofFAT32_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value
-        $Global:SizeofPartition_System_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value
-        $Global:SizeofPartition_Other_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value
-        $Global:SizeofFreeSpace_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value
-        $Global:SizeofUnallocated_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width.Value
+        $Script:SizeofFAT32_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value
+        $Script:SizeofPartition_System_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value
+        $Script:SizeofPartition_Other_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value
+        $Script:SizeofFreeSpace_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value
+        $Script:SizeofUnallocated_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width.Value
 
-        $Global:SizeofFAT32 = $Global:SizeofFAT32_Pixels * $Global:PartitionBarKBperPixel
-        $Global:SizeofPartition_System  = $Global:SizeofPartition_System_Pixels * $Global:PartitionBarKBperPixel  
-        $Global:SizeofPartition_Other = $Global:SizeofPartition_Other_Pixels * $Global:PartitionBarKBperPixel
-        $Global:SizeofFreeSpace  = $Global:SizeofFreeSpace_Pixels * $Global:PartitionBarKBperPixel
-        $Global:SizeofUnallocated = $Global:SizeofUnallocated_Pixels * $Global:PartitionBarKBperPixel
+        $Script:SizeofFAT32 = $Script:SizeofFAT32_Pixels * $Script:PartitionBarKBperPixel
+        $Script:SizeofPartition_System  = $Script:SizeofPartition_System_Pixels * $Script:PartitionBarKBperPixel  
+        $Script:SizeofPartition_Other = $Script:SizeofPartition_Other_Pixels * $Script:PartitionBarKBperPixel
+        $Script:SizeofFreeSpace  = $Script:SizeofFreeSpace_Pixels * $Script:PartitionBarKBperPixel
+        $Script:SizeofUnallocated = $Script:SizeofUnallocated_Pixels * $Script:PartitionBarKBperPixel
         
-        $Global:SizeofImage = $Global:SizeofFAT32 + $Global:SizeofPartition_System + $Global:SizeofPartition_Other + $Global:SizeofFreeSpace      
-#       Write-host ('FAT32 Size (Pixels) changed to: '+$Global:SizeofFAT32_Pixels)
-        $Global:SizeofFAT32 = $Global:SizeofFAT32_Pixels * $Global:PartitionBarKBperPixel
-        #        Write-host ('FAT32 Size (KiB) changed to: '+$Global:SizeofFAT32)
+        $Script:SizeofImage = $Script:SizeofFAT32 + $Script:SizeofPartition_System + $Script:SizeofPartition_Other + $Script:SizeofFreeSpace      
+#       Write-host ('FAT32 Size (Pixels) changed to: '+$Script:SizeofFAT32_Pixels)
+        $Script:SizeofFAT32 = $Script:SizeofFAT32_Pixels * $Script:PartitionBarKBperPixel
+        #        Write-host ('FAT32 Size (KiB) changed to: '+$Script:SizeofFAT32)
         
-        if ($Global:SizeofPartition_Other -ge $Global:PFSLimit){
-            $TotalNumberWorkPartitions = [math]::ceiling($Global:SizeofPartition_Other/$Global:PFSLimit)
+        if ($Script:SizeofPartition_Other -ge $Script:PFSLimit){
+            $TotalNumberWorkPartitions = [math]::ceiling($Script:SizeofPartition_Other/$Script:PFSLimit)
             $WPF_UI_WorkSizeNote_Label.Text='*'
             $WPF_UI_WorkSizeNoteFooter_Label.Text=('Due to PFS limitations, Work will be split into '+$TotalNumberWorkPartitions+' partitions of equal size')
         }
@@ -609,86 +1762,76 @@ $WPF_UI_Fat32Size_Listview.add_SizeChanged({
             $WPF_UI_WorkSizeNoteFooter_Label.Text='' 
         }
 
-        $WPF_UI_WorkbenchSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofPartition_System -Scale 'GiB'
-        $WPF_UI_WorkbenchSize_Value.Background = 'White'
-        $WPF_UI_WorkSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofPartition_Other -Scale 'GiB'
-        $WPF_UI_WorkSize_Value.Background = 'White'
-        $WPF_UI_ImageSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofImage -Scale 'GiB'
-        $WPF_UI_ImageSize_Value.Background = 'White'
-        $WPF_UI_FAT32Size_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofFAT32 -Scale 'GiB'
-        $WPF_UI_Fat32Size_Value.Background = 'White'
-        $WPF_UI_FreeSpace_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofFreeSpace -Scale 'GiB'
-        $WPF_UI_FreeSpace_Value.Background = 'White'
-        $WPF_UI_Unallocated_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofUnallocated -Scale 'GiB'
-        
-        $Global:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Global:SizeofImage
-        $Global:AvailableSpace_WorkingFolderDisk = $Global:Space_WorkingFolderDisk - $Global:RequiredSpace_WorkingFolderDisk 
+        Set-GUIPartitionValues
+                
+        $Script:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Script:SizeofImage
+        $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk 
     
-        $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Global:RequiredSpace_WorkingFolderDisk
-        $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Global:AvailableSpace_WorkingFolderDisk
+        $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:RequiredSpace_WorkingFolderDisk
+        $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpace_WorkingFolderDisk
 
-        $Global:Space_FilestoTransfer = $Global:SizeofPartition_Other - $Global:WorkOverhead
-        $Global:AvailableSpaceFilestoTransfer =  $Global:Space_FilestoTransfer - $Global:SizeofFilestoTransfer    
+        $Script:Space_FilestoTransfer = $Script:SizeofPartition_Other - $Script:WorkOverhead
+        $Script:AvailableSpaceFilestoTransfer =  $Script:Space_FilestoTransfer - $Script:SizeofFilestoTransfer    
         
-        if ($Global:TransferLocation){
-            $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Global:AvailableSpaceFilestoTransfer 
+        if ($Script:TransferLocation){
+            $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpaceFilestoTransfer 
         }        
     }
 })   
 
 $WPF_UI_WorkbenchSize_Listview.add_SizeChanged({
     Set-PartitionMaximums -Type 'Workbench'
-    if ($Global:HSTDiskName){
-        if ($WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value -ge $Global:SizeofPartition_System_Pixels_Maximum){
-            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width = $Global:SizeofPartition_System_Pixels_Maximum
+    if ($Script:HSTDiskName){
+        if ($WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value -ge $Script:SizeofPartition_System_Pixels_Maximum){
+            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width = $Script:SizeofPartition_System_Pixels_Maximum
         }
-        if ($WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value -le $Global:SizeofPartition_System_Pixels_Minimum){
-            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width = $Global:SizeofPartition_System_Pixels_Minimum
+        if ($WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value -le $Script:SizeofPartition_System_Pixels_Minimum){
+            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width = $Script:SizeofPartition_System_Pixels_Minimum
         }
 
-        if ([math]::round($Global:PartitionBarWidth-  $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value- `
+        if ([math]::round($Script:PartitionBarWidth-  $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value- `
                                                      $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value- `
                                                      $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value- `
                                                      $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value,4) -lt 0){
             $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = 0
         }else{
-            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = [math]::round($Global:PartitionBarWidth-  $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value- `
+            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = [math]::round($Script:PartitionBarWidth-  $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value- `
                                                                                                 $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value- `
                                                                                                 $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value- `
                                                                                                 $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value,4)
         }      
 
-        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = [math]::round($Global:PartitionBarWidth-  $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value- `
+        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = [math]::round($Script:PartitionBarWidth-  $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value- `
                                                                                             $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value- `
                                                                                             $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value- `
                                                                                             $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width.Value,4)
 
-        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = [math]::round($Global:PartitionBarWidth-  $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value- `
+        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = [math]::round($Script:PartitionBarWidth-  $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value- `
                                                                                             $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value- `
                                                                                             $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value- `
                                                                                             $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value,4)
 
-        $Global:SizeofFAT32_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value
-        $Global:SizeofPartition_System_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value
-        $Global:SizeofPartition_Other_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value
-        $Global:SizeofFreeSpace_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value
-        $Global:SizeofUnallocated_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width.Value
+        $Script:SizeofFAT32_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value
+        $Script:SizeofPartition_System_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value
+        $Script:SizeofPartition_Other_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value
+        $Script:SizeofFreeSpace_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value
+        $Script:SizeofUnallocated_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width.Value
 
-        $Global:SizeofFAT32 = $Global:SizeofFAT32_Pixels * $Global:PartitionBarKBperPixel
-        $Global:SizeofPartition_System  = $Global:SizeofPartition_System_Pixels * $Global:PartitionBarKBperPixel  
-        $Global:SizeofPartition_Other = $Global:SizeofPartition_Other_Pixels * $Global:PartitionBarKBperPixel
-        $Global:SizeofFreeSpace  = $Global:SizeofFreeSpace_Pixels * $Global:PartitionBarKBperPixel
-        $Global:SizeofUnallocated = $Global:SizeofUnallocated_Pixels * $Global:PartitionBarKBperPixel
+        $Script:SizeofFAT32 = $Script:SizeofFAT32_Pixels * $Script:PartitionBarKBperPixel
+        $Script:SizeofPartition_System  = $Script:SizeofPartition_System_Pixels * $Script:PartitionBarKBperPixel  
+        $Script:SizeofPartition_Other = $Script:SizeofPartition_Other_Pixels * $Script:PartitionBarKBperPixel
+        $Script:SizeofFreeSpace  = $Script:SizeofFreeSpace_Pixels * $Script:PartitionBarKBperPixel
+        $Script:SizeofUnallocated = $Script:SizeofUnallocated_Pixels * $Script:PartitionBarKBperPixel
 
-        $Global:SizeofImage = $Global:SizeofFAT32 + $Global:SizeofPartition_System + $Global:SizeofPartition_Other + $Global:SizeofFreeSpace
+        $Script:SizeofImage = $Script:SizeofFAT32 + $Script:SizeofPartition_System + $Script:SizeofPartition_Other + $Script:SizeofFreeSpace
 
 #        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = Expand-FreeSpace
-#        Write-host ('Workbench Size (Pixels) changed to: '+$Global:SizeofPartition_System_Pixels)
-        $Global:SizeofPartition_System  = $Global:SizeofPartition_System_Pixels * $Global:PartitionBarKBperPixel
- #       Write-host ('Workbench Size (KiB) changed to: '+$Global:SizeofPartition_System)
+#        Write-host ('Workbench Size (Pixels) changed to: '+$Script:SizeofPartition_System_Pixels)
+        $Script:SizeofPartition_System  = $Script:SizeofPartition_System_Pixels * $Script:PartitionBarKBperPixel
+ #       Write-host ('Workbench Size (KiB) changed to: '+$Script:SizeofPartition_System)
         
-        if ($Global:SizeofPartition_Other -ge $Global:PFSLimit){
-            $TotalNumberWorkPartitions = [math]::ceiling($Global:SizeofPartition_Other/$Global:PFSLimit)
+        if ($Script:SizeofPartition_Other -ge $Script:PFSLimit){
+            $TotalNumberWorkPartitions = [math]::ceiling($Script:SizeofPartition_Other/$Script:PFSLimit)
             $WPF_UI_WorkSizeNote_Label.Text='*'
             $WPF_UI_WorkSizeNoteFooter_Label.Text=('Due to PFS limitations, Work will be split into '+$TotalNumberWorkPartitions+' partitions of equal size')
         }
@@ -697,87 +1840,77 @@ $WPF_UI_WorkbenchSize_Listview.add_SizeChanged({
             $WPF_UI_WorkSizeNoteFooter_Label.Text='' 
         }
 
-        $WPF_UI_WorkbenchSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofPartition_System -Scale 'GiB'
-        $WPF_UI_WorkbenchSize_Value.Background = 'White'
-        $WPF_UI_WorkSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofPartition_Other -Scale 'GiB'
-        $WPF_UI_WorkSize_Value.Background = 'White'
-        $WPF_UI_ImageSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofImage -Scale 'GiB'
-        $WPF_UI_ImageSize_Value.Background = 'White'
-        $WPF_UI_FAT32Size_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofFAT32 -Scale 'GiB'
-        $WPF_UI_Fat32Size_Value.Background = 'White'
-        $WPF_UI_FreeSpace_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofFreeSpace -Scale 'GiB'
-        $WPF_UI_FreeSpace_Value.Background = 'White'
-        $WPF_UI_Unallocated_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofUnallocated -Scale 'GiB'    
+        Set-GUIPartitionValues       
         
-        $Global:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Global:SizeofImage
-        $Global:AvailableSpace_WorkingFolderDisk = $Global:Space_WorkingFolderDisk - $Global:RequiredSpace_WorkingFolderDisk 
+        $Script:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Script:SizeofImage
+        $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk 
     
-        $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Global:RequiredSpace_WorkingFolderDisk
-        $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Global:AvailableSpace_WorkingFolderDisk
+        $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:RequiredSpace_WorkingFolderDisk
+        $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpace_WorkingFolderDisk
 
-        $Global:Space_FilestoTransfer = $Global:SizeofPartition_Other - $Global:WorkOverhead
-        $Global:AvailableSpaceFilestoTransfer =  $Global:Space_FilestoTransfer - $Global:SizeofFilestoTransfer    
+        $Script:Space_FilestoTransfer = $Script:SizeofPartition_Other - $Script:WorkOverhead
+        $Script:AvailableSpaceFilestoTransfer =  $Script:Space_FilestoTransfer - $Script:SizeofFilestoTransfer    
         
-        if ($Global:TransferLocation){
-            $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Global:AvailableSpaceFilestoTransfer 
+        if ($Script:TransferLocation){
+            $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpaceFilestoTransfer 
         }        
     }   
 })
 
 $WPF_UI_WorkSize_Listview.add_SizeChanged({
     Set-PartitionMaximums -Type 'Work'
-    if ($Global:HSTDiskName){
-        if ($WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value -ge $Global:SizeofPartition_Other_Pixels_Maximum){
-            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width = $Global:SizeofPartition_Other_Pixels_Maximum
+    if ($Script:HSTDiskName){
+        if ($WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value -ge $Script:SizeofPartition_Other_Pixels_Maximum){
+            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width = $Script:SizeofPartition_Other_Pixels_Maximum
         }
-        if ($WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value -le $Global:SizeofPartition_Other_Pixels_Minimum){
-            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width = $Global:SizeofPartition_Other_Pixels_Minimum
+        if ($WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value -le $Script:SizeofPartition_Other_Pixels_Minimum){
+            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width = $Script:SizeofPartition_Other_Pixels_Minimum
         }
 
-        if ([math]::round($Global:PartitionBarWidth-  $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value- `
+        if ([math]::round($Script:PartitionBarWidth-  $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value- `
                                                      $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value- `
                                                      $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value- `
                                                      $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value,4) -lt 0){
             $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = 0
         }else{
-            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = [math]::round($Global:PartitionBarWidth-  $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value- `
+            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = [math]::round($Script:PartitionBarWidth-  $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value- `
                                                                                                 $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value- `
                                                                                                 $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value- `
                                                                                                 $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value,4)
         }       
 
-        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = [math]::round($Global:PartitionBarWidth-  $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value- `
+        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = [math]::round($Script:PartitionBarWidth-  $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value- `
                                                                                             $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value- `
                                                                                             $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value- `
                                                                                             $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width.Value,4)
 
         
-        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = [math]::round($Global:PartitionBarWidth-  $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value- `
+        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = [math]::round($Script:PartitionBarWidth-  $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value- `
                                                                                             $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value- `
                                                                                             $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value- `
                                                                                             $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value,4)   
 
-        $Global:SizeofFAT32_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value
-        $Global:SizeofPartition_System_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value
-        $Global:SizeofPartition_Other_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value
-        $Global:SizeofFreeSpace_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value
-        $Global:SizeofUnallocated_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width.Value
+        $Script:SizeofFAT32_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value
+        $Script:SizeofPartition_System_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value
+        $Script:SizeofPartition_Other_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value
+        $Script:SizeofFreeSpace_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value
+        $Script:SizeofUnallocated_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width.Value
 
-        $Global:SizeofFAT32 = $Global:SizeofFAT32_Pixels * $Global:PartitionBarKBperPixel
-        $Global:SizeofPartition_System  = $Global:SizeofPartition_System_Pixels * $Global:PartitionBarKBperPixel  
-        $Global:SizeofPartition_Other = $Global:SizeofPartition_Other_Pixels * $Global:PartitionBarKBperPixel
-        $Global:SizeofFreeSpace  = $Global:SizeofFreeSpace_Pixels * $Global:PartitionBarKBperPixel
-        $Global:SizeofUnallocated = $Global:SizeofUnallocated_Pixels * $Global:PartitionBarKBperPixel
+        $Script:SizeofFAT32 = $Script:SizeofFAT32_Pixels * $Script:PartitionBarKBperPixel
+        $Script:SizeofPartition_System  = $Script:SizeofPartition_System_Pixels * $Script:PartitionBarKBperPixel  
+        $Script:SizeofPartition_Other = $Script:SizeofPartition_Other_Pixels * $Script:PartitionBarKBperPixel
+        $Script:SizeofFreeSpace  = $Script:SizeofFreeSpace_Pixels * $Script:PartitionBarKBperPixel
+        $Script:SizeofUnallocated = $Script:SizeofUnallocated_Pixels * $Script:PartitionBarKBperPixel
 
-        $Global:SizeofImage = $Global:SizeofFAT32 + $Global:SizeofPartition_System + $Global:SizeofPartition_Other + $Global:SizeofFreeSpace
+        $Script:SizeofImage = $Script:SizeofFAT32 + $Script:SizeofPartition_System + $Script:SizeofPartition_Other + $Script:SizeofFreeSpace
 
 #        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = Expand-FreeSpace
- #       Write-host ('Work Size (Pixels) changed to: '+$Global:SizeofPartition_Other_Pixels)
-        $Global:SizeofPartition_Other = $Global:SizeofPartition_Other_Pixels * $Global:PartitionBarKBperPixel
-  #      Write-host ('Work Size (KiB) changed to: '+$Global:SizeofPartition_Other)
+ #       Write-host ('Work Size (Pixels) changed to: '+$Script:SizeofPartition_Other_Pixels)
+        $Script:SizeofPartition_Other = $Script:SizeofPartition_Other_Pixels * $Script:PartitionBarKBperPixel
+  #      Write-host ('Work Size (KiB) changed to: '+$Script:SizeofPartition_Other)
   
-      if ($Global:SizeofPartition_Other -ge $Global:PFSLimit){
-        $TotalNumberWorkPartitions = [math]::ceiling($Global:SizeofPartition_Other/$Global:PFSLimit)
+      if ($Script:SizeofPartition_Other -ge $Script:PFSLimit){
+        $TotalNumberWorkPartitions = [math]::ceiling($Script:SizeofPartition_Other/$Script:PFSLimit)
         $WPF_UI_WorkSizeNote_Label.Text='*'
         $WPF_UI_WorkSizeNoteFooter_Label.Text=('Due to PFS limitations, Work will be split into '+$TotalNumberWorkPartitions+' partitions of equal size')
     }
@@ -786,74 +1919,64 @@ $WPF_UI_WorkSize_Listview.add_SizeChanged({
         $WPF_UI_WorkSizeNoteFooter_Label.Text='' 
     }
   
-  $WPF_UI_WorkbenchSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofPartition_System -Scale 'GiB'
-        $WPF_UI_WorkbenchSize_Value.Background = 'White'
-        $WPF_UI_WorkSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofPartition_Other -Scale 'GiB'
-        $WPF_UI_WorkSize_Value.Background = 'White'
-        $WPF_UI_ImageSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofImage -Scale 'GiB'
-        $WPF_UI_ImageSize_Value.Background = 'White'
-        $WPF_UI_FAT32Size_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofFAT32 -Scale 'GiB'
-        $WPF_UI_Fat32Size_Value.Background = 'White'
-        $WPF_UI_FreeSpace_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofFreeSpace -Scale 'GiB'
-        $WPF_UI_FreeSpace_Value.Background = 'White'
-        $WPF_UI_Unallocated_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofUnallocated -Scale 'GiB'        
-
-        $Global:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Global:SizeofImage
-        $Global:AvailableSpace_WorkingFolderDisk = $Global:Space_WorkingFolderDisk - $Global:RequiredSpace_WorkingFolderDisk 
+    Set-GUIPartitionValues
+   
+        $Script:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Script:SizeofImage
+        $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk 
     
-        $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Global:RequiredSpace_WorkingFolderDisk
-        $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Global:AvailableSpace_WorkingFolderDisk
+        $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:RequiredSpace_WorkingFolderDisk
+        $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpace_WorkingFolderDisk
 
-        $Global:Space_FilestoTransfer = $Global:SizeofPartition_Other - $Global:WorkOverhead
-        $Global:AvailableSpaceFilestoTransfer =  $Global:Space_FilestoTransfer - $Global:SizeofFilestoTransfer    
+        $Script:Space_FilestoTransfer = $Script:SizeofPartition_Other - $Script:WorkOverhead
+        $Script:AvailableSpaceFilestoTransfer =  $Script:Space_FilestoTransfer - $Script:SizeofFilestoTransfer    
         
-        if ($Global:TransferLocation){
-            $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Global:AvailableSpaceFilestoTransfer 
+        if ($Script:TransferLocation){
+            $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpaceFilestoTransfer 
         }        
     }   
 })
 
 $WPF_UI_FreeSpace_Listview.add_SizeChanged({
     Set-PartitionMaximums -Type 'Free'
-    if ($Global:HSTDiskName){
-        if ($WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value -ge $Global:SizeofFreeSpace_Pixels_Maximum){
-            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Global:SizeofFreeSpace_Pixels_Maximum
+    if ($Script:HSTDiskName){
+        if ($WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value -ge $Script:SizeofFreeSpace_Pixels_Maximum){
+            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Script:SizeofFreeSpace_Pixels_Maximum
         }
-        if ($WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value -le $Global:SizeofFreeSpace_Pixels_Minimum){
-            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Global:SizeofFreeSpace_Pixels_Minimum
+        if ($WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value -le $Script:SizeofFreeSpace_Pixels_Minimum){
+            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Script:SizeofFreeSpace_Pixels_Minimum
         }
         
-        if ([math]::round($Global:PartitionBarWidth-  $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value- `
+        if ([math]::round($Script:PartitionBarWidth-  $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value- `
                                                      $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value- `
                                                      $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value- `
                                                      $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value,4) -lt 0){
             $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = 0
         }else{
-            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = [math]::round($Global:PartitionBarWidth-  $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value- `
+            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = [math]::round($Script:PartitionBarWidth-  $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value- `
                                                                                                 $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value- `
                                                                                                 $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value- `
                                                                                                 $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value,4)
         }     
 
-        $Global:SizeofFAT32_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value
-        $Global:SizeofPartition_System_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value
-        $Global:SizeofPartition_Other_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value
-        $Global:SizeofFreeSpace_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value
-        $Global:SizeofUnallocated_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width.Value
+        $Script:SizeofFAT32_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value
+        $Script:SizeofPartition_System_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value
+        $Script:SizeofPartition_Other_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value
+        $Script:SizeofFreeSpace_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value
+        $Script:SizeofUnallocated_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width.Value
 
-        $Global:SizeofFAT32 = $Global:SizeofFAT32_Pixels * $Global:PartitionBarKBperPixel
-        $Global:SizeofPartition_System  = $Global:SizeofPartition_System_Pixels * $Global:PartitionBarKBperPixel  
-        $Global:SizeofPartition_Other = $Global:SizeofPartition_Other_Pixels * $Global:PartitionBarKBperPixel
-        $Global:SizeofFreeSpace  = $Global:SizeofFreeSpace_Pixels * $Global:PartitionBarKBperPixel
-        $Global:SizeofUnallocated = $Global:SizeofUnallocated_Pixels * $Global:PartitionBarKBperPixel
+        $Script:SizeofFAT32 = $Script:SizeofFAT32_Pixels * $Script:PartitionBarKBperPixel
+        $Script:SizeofPartition_System  = $Script:SizeofPartition_System_Pixels * $Script:PartitionBarKBperPixel  
+        $Script:SizeofPartition_Other = $Script:SizeofPartition_Other_Pixels * $Script:PartitionBarKBperPixel
+        $Script:SizeofFreeSpace  = $Script:SizeofFreeSpace_Pixels * $Script:PartitionBarKBperPixel
+        $Script:SizeofUnallocated = $Script:SizeofUnallocated_Pixels * $Script:PartitionBarKBperPixel
 
-        $Global:SizeofImage = $Global:SizeofFAT32 + $Global:SizeofPartition_System + $Global:SizeofPartition_Other + $Global:SizeofFreeSpace
+        $Script:SizeofImage = $Script:SizeofFAT32 + $Script:SizeofPartition_System + $Script:SizeofPartition_Other + $Script:SizeofFreeSpace
 
-   #     Write-host ('Free Space (Pixels) changed to: '+$Global:SizeofFreeSpace_Pixels)
-   #     Write-host ('Free Space Size (KiB) changed to: '+$Global:SizeofFreeSpace)
+   #     Write-host ('Free Space (Pixels) changed to: '+$Script:SizeofFreeSpace_Pixels)
+   #     Write-host ('Free Space Size (KiB) changed to: '+$Script:SizeofFreeSpace)
 
-        if ($Global:SizeofPartition_Other -ge $Global:PFSLimit){
-            $TotalNumberWorkPartitions = [math]::ceiling($Global:SizeofPartition_Other/$Global:PFSLimit)
+        if ($Script:SizeofPartition_Other -ge $Script:PFSLimit){
+            $TotalNumberWorkPartitions = [math]::ceiling($Script:SizeofPartition_Other/$Script:PFSLimit)
             $WPF_UI_WorkSizeNote_Label.Text='*'
             $WPF_UI_WorkSizeNoteFooter_Label.Text=('Due to PFS limitations, Work will be split into '+$TotalNumberWorkPartitions+' partitions of equal size')
         }
@@ -862,29 +1985,19 @@ $WPF_UI_FreeSpace_Listview.add_SizeChanged({
             $WPF_UI_WorkSizeNoteFooter_Label.Text='' 
         }
 
-        $WPF_UI_WorkbenchSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofPartition_System -Scale 'GiB'
-        $WPF_UI_WorkbenchSize_Value.Background = 'White'
-        $WPF_UI_WorkSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofPartition_Other -Scale 'GiB'
-        $WPF_UI_WorkSize_Value.Background = 'White'
-        $WPF_UI_ImageSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofImage -Scale 'GiB'
-        $WPF_UI_ImageSize_Value.Background = 'White'
-        $WPF_UI_FAT32Size_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofFAT32 -Scale 'GiB'
-        $WPF_UI_Fat32Size_Value.Background = 'White'
-        $WPF_UI_FreeSpace_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofFreeSpace -Scale 'GiB'
-        $WPF_UI_FreeSpace_Value.Background = 'White'
-        $WPF_UI_Unallocated_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofUnallocated -Scale 'GiB'        
+        Set-GUIPartitionValues       
 
-        $Global:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Global:SizeofImage
-        $Global:AvailableSpace_WorkingFolderDisk = $Global:Space_WorkingFolderDisk - $Global:RequiredSpace_WorkingFolderDisk 
+        $Script:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Script:SizeofImage
+        $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk 
     
-        $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Global:RequiredSpace_WorkingFolderDisk
-        $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Global:AvailableSpace_WorkingFolderDisk
+        $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:RequiredSpace_WorkingFolderDisk
+        $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpace_WorkingFolderDisk
 
-        $Global:Space_FilestoTransfer = $Global:SizeofPartition_Other - $Global:WorkOverhead
-        $Global:AvailableSpaceFilestoTransfer =  $Global:Space_FilestoTransfer - $Global:SizeofFilestoTransfer    
+        $Script:Space_FilestoTransfer = $Script:SizeofPartition_Other - $Script:WorkOverhead
+        $Script:AvailableSpaceFilestoTransfer =  $Script:Space_FilestoTransfer - $Script:SizeofFilestoTransfer    
         
-        if ($Global:TransferLocation){
-            $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Global:AvailableSpaceFilestoTransfer 
+        if ($Script:TransferLocation){
+            $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpaceFilestoTransfer 
         }        
 
     }    
@@ -892,33 +2005,33 @@ $WPF_UI_FreeSpace_Listview.add_SizeChanged({
 
 $WPF_UI_Unallocated_Listview.add_SizeChanged({
     Set-PartitionMaximums -Type 'Unallocated'
-    if ($Global:HSTDiskName){
-        if ($WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width.Value -ge $Global:SizeofUnallocated_Pixels_Maximum){
-            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = $Global:SizeofUnallocated_Pixels_Maximum
+    if ($Script:HSTDiskName){
+        if ($WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width.Value -ge $Script:SizeofUnallocated_Pixels_Maximum){
+            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = $Script:SizeofUnallocated_Pixels_Maximum
         }
-        if ($WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width.Value -le $Global:SizeofUnallocated_Pixels_Minimum){
-            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = $Global:SizeofUnallocated_Pixels_Minimum
+        if ($WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width.Value -le $Script:SizeofUnallocated_Pixels_Minimum){
+            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = $Script:SizeofUnallocated_Pixels_Minimum
         }
 
-        $Global:SizeofFAT32_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value
-        $Global:SizeofPartition_System_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value
-        $Global:SizeofPartition_Other_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value
-        $Global:SizeofFreeSpace_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value
-        $Global:SizeofUnallocated_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width.Value
+        $Script:SizeofFAT32_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value
+        $Script:SizeofPartition_System_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value
+        $Script:SizeofPartition_Other_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value
+        $Script:SizeofFreeSpace_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value
+        $Script:SizeofUnallocated_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width.Value
 
-        $Global:SizeofFAT32 = $Global:SizeofFAT32_Pixels * $Global:PartitionBarKBperPixel
-        $Global:SizeofPartition_System  = $Global:SizeofPartition_System_Pixels * $Global:PartitionBarKBperPixel  
-        $Global:SizeofPartition_Other = $Global:SizeofPartition_Other_Pixels * $Global:PartitionBarKBperPixel
-        $Global:SizeofFreeSpace  = $Global:SizeofFreeSpace_Pixels * $Global:PartitionBarKBperPixel
-        $Global:SizeofUnallocated = $Global:SizeofUnallocated_Pixels * $Global:PartitionBarKBperPixel
+        $Script:SizeofFAT32 = $Script:SizeofFAT32_Pixels * $Script:PartitionBarKBperPixel
+        $Script:SizeofPartition_System  = $Script:SizeofPartition_System_Pixels * $Script:PartitionBarKBperPixel  
+        $Script:SizeofPartition_Other = $Script:SizeofPartition_Other_Pixels * $Script:PartitionBarKBperPixel
+        $Script:SizeofFreeSpace  = $Script:SizeofFreeSpace_Pixels * $Script:PartitionBarKBperPixel
+        $Script:SizeofUnallocated = $Script:SizeofUnallocated_Pixels * $Script:PartitionBarKBperPixel
 
-        $Global:SizeofImage = $Global:SizeofFAT32 + $Global:SizeofPartition_System + $Global:SizeofPartition_Other + $Global:SizeofFreeSpace
+        $Script:SizeofImage = $Script:SizeofFAT32 + $Script:SizeofPartition_System + $Script:SizeofPartition_Other + $Script:SizeofFreeSpace
 
-     #   Write-host ('Unallocated Space (Pixels) changed to: '+$Global:SizeofUnallocated_Pixels)
-       # Write-host ('Unallocated (KiB) changed to: '+$Global:SizeofUnallocated)
+     #   Write-host ('Unallocated Space (Pixels) changed to: '+$Script:SizeofUnallocated_Pixels)
+       # Write-host ('Unallocated (KiB) changed to: '+$Script:SizeofUnallocated)
 
-       if ($Global:SizeofPartition_Other -ge $Global:PFSLimit){
-        $TotalNumberWorkPartitions = [math]::ceiling($Global:SizeofPartition_Other/$Global:PFSLimit)
+       if ($Script:SizeofPartition_Other -ge $Script:PFSLimit){
+        $TotalNumberWorkPartitions = [math]::ceiling($Script:SizeofPartition_Other/$Script:PFSLimit)
         $WPF_UI_WorkSizeNote_Label.Text='*'
         $WPF_UI_WorkSizeNoteFooter_Label.Text=('Due to PFS limitations, Work will be split into '+$TotalNumberWorkPartitions+' partitions of equal size')
     }
@@ -927,54 +2040,44 @@ $WPF_UI_Unallocated_Listview.add_SizeChanged({
         $WPF_UI_WorkSizeNoteFooter_Label.Text='' 
     }
 
-        $WPF_UI_WorkbenchSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofPartition_System -Scale 'GiB'
-        $WPF_UI_WorkbenchSize_Value.Background = 'White'
-        $WPF_UI_WorkSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofPartition_Other -Scale 'GiB'
-        $WPF_UI_WorkSize_Value.Background = 'White'
-        $WPF_UI_ImageSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofImage -Scale 'GiB'
-        $WPF_UI_ImageSize_Value.Background = 'White'
-        $WPF_UI_FAT32Size_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofFAT32 -Scale 'GiB'
-        $WPF_UI_Fat32Size_Value.Background = 'White'
-        $WPF_UI_FreeSpace_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofFreeSpace -Scale 'GiB'
-        $WPF_UI_FreeSpace_Value.Background = 'White'
-        $WPF_UI_Unallocated_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofUnallocated -Scale 'GiB'       
+    Set-GUIPartitionValues     
         
-        $Global:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Global:SizeofImage
-        $Global:AvailableSpace_WorkingFolderDisk = $Global:Space_WorkingFolderDisk - $Global:RequiredSpace_WorkingFolderDisk 
+        $Script:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Script:SizeofImage
+        $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk 
     
-        $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Global:RequiredSpace_WorkingFolderDisk
-        $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Global:AvailableSpace_WorkingFolderDisk
+        $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:RequiredSpace_WorkingFolderDisk
+        $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpace_WorkingFolderDisk
 
-        $Global:Space_FilestoTransfer = $Global:SizeofPartition_Other - $Global:WorkOverhead
-        $Global:AvailableSpaceFilestoTransfer =  $Global:Space_FilestoTransfer - $Global:SizeofFilestoTransfer    
+        $Script:Space_FilestoTransfer = $Script:SizeofPartition_Other - $Script:WorkOverhead
+        $Script:AvailableSpaceFilestoTransfer =  $Script:Space_FilestoTransfer - $Script:SizeofFilestoTransfer    
         
-        if ($Global:TransferLocation){
-            $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Global:AvailableSpaceFilestoTransfer 
+        if ($Script:TransferLocation){
+            $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpaceFilestoTransfer 
         }        
     }
 })
 
 $WPF_UI_MediaSelect_Refresh.Add_Click({
-    $Global:HSTDiskName = $null
-    $Global:SizeofDisk = $null
-    $Global:SizeofImage = $null
-    $Global:SizeofFat32_Pixels_Minimum = $null
-    $Global:SizeofPartition_System_Pixels_Minimum = $null
-    $Global:SizeofPartition_Other_Pixels_Minimum = $null
-    $Global:SizeofFreeSpace_Pixels_Minimum = $null
-    $Global:SizeofFreeSpace_Minimum = $null
-    $Global:SizeofUnallocated_Pixels_Minimum = $null
-    $Global:SizeofUnallocated_Minimum = $null
-    $Global:SizeofFAT32 = $null
-    $Global:SizeofFAT32_Pixels = $null
-    $Global:SizeofPartition_System = $null
-    $Global:SizeofPartition_System_Pixels = $null
-    $Global:SizeofPartition_Other = $null
-    $Global:SizeofPartition_Other_Pixels = $null
-    $Global:SizeofUnallocated = $null
-    $Global:SizeofUnallocated_Pixels = $null
-    $Global:SizeofFreeSpace = $null
-    $Global:SizeofFreeSpace_Pixels = $null
+    $Script:HSTDiskName = $null
+    $Script:SizeofDisk = $null
+    $Script:SizeofImage = $null
+    $Script:SizeofFat32_Pixels_Minimum = $null
+    $Script:SizeofPartition_System_Pixels_Minimum = $null
+    $Script:SizeofPartition_Other_Pixels_Minimum = $null
+    $Script:SizeofFreeSpace_Pixels_Minimum = $null
+    $Script:SizeofFreeSpace_Minimum = $null
+    $Script:SizeofUnallocated_Pixels_Minimum = $null
+    $Script:SizeofUnallocated_Minimum = $null
+    $Script:SizeofFAT32 = $null
+    $Script:SizeofFAT32_Pixels = $null
+    $Script:SizeofPartition_System = $null
+    $Script:SizeofPartition_System_Pixels = $null
+    $Script:SizeofPartition_Other = $null
+    $Script:SizeofPartition_Other_Pixels = $null
+    $Script:SizeofUnallocated = $null
+    $Script:SizeofUnallocated_Pixels = $null
+    $Script:SizeofFreeSpace = $null
+    $Script:SizeofFreeSpace_Pixels = $null
     $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width = '*'
     $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width = '*'
     $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width = '*'
@@ -991,7 +2094,7 @@ $WPF_UI_MediaSelect_Refresh.Add_Click({
     $WPF_UI_FreeSpace_Value.Text = ''
     $WPF_UI_FreeSpace_Value.Background = 'White'
     $WPF_UI_Unallocated_Value.Text = ''
-    $Global:RemovableMedia = Get-RemovableMedia    
+    $Script:RemovableMedia = Get-RemovableMedia    
     $WPF_UI_FAT32_Splitter.IsEnabled = ""
     $WPF_UI_Workbench_Splitter.IsEnabled = ""
     $WPF_UI_Work_Splitter.IsEnabled = ""
@@ -1001,13 +2104,13 @@ $WPF_UI_MediaSelect_Refresh.Add_Click({
     $WPF_UI_ImageSize_Value.IsEnabled = ""
     $WPF_UI_FAT32Size_Value.IsEnabled = ""
     $WPF_UI_MediaSelect_Dropdown.Items.Clear()
-    foreach ($Disk in $Global:RemovableMedia){
+    foreach ($Disk in $Script:RemovableMedia){
         $WPF_UI_MediaSelect_Dropdown.AddChild($Disk.FriendlyName)
     }
 })
 
 $WPF_UI_RequiredSpaceValueTransferredFiles_TextBox.Add_TextChanged({
-    $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Global:AvailableSpaceFilestoTransfer
+    $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpaceFilestoTransfer
 })
 
 
@@ -1015,11 +2118,11 @@ $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Add_TextChanged({
     if ($WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.text -eq ''){
         $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Background = "Transparent"
     }
-    elseif (($Global:AvailableSpaceFilestoTransfer - $Global:SizeofFilestoTransfer ) -lt $Global:SpaceThreshold_FilestoTransfer){
+    elseif (($Script:AvailableSpaceFilestoTransfer - $Script:SizeofFilestoTransfer ) -lt $Script:SpaceThreshold_FilestoTransfer){
         $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Background = "Red"
         $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Foreground = "Black"
     }
-    elseif (($Global:AvailableSpaceFilestoTransfer - $Global:SizeofFilestoTransfer ) -lt ($Global:SpaceThreshold_FilestoTransfer*2)){
+    elseif (($Script:AvailableSpaceFilestoTransfer - $Script:SizeofFilestoTransfer ) -lt ($Script:SpaceThreshold_FilestoTransfer*2)){
     $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Background = "Yellow"
     $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Foreground = "Black"
     }
@@ -1032,11 +2135,11 @@ $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Add_TextChanged({
 
 
 $WPF_UI_AvailableSpaceValue_TextBox.Add_TextChanged({
-    if ($Global:AvailableSpace_WorkingFolderDisk -le ($Global:SpaceThreshold_WorkingFolderDisk*2)){
+    if ($Script:AvailableSpace_WorkingFolderDisk -le ($Script:SpaceThreshold_WorkingFolderDisk*2)){
         $WPF_UI_AvailableSpaceValue_TextBox.Background = "Yellow"
         $WPF_UI_AvailableSpaceValue_TextBox.Foreground = "Black"
     }
-    elseif ($Global:AvailableSpace_WorkingFolderDisk -le $Global:SpaceThreshold_WorkingFolderDisk){
+    elseif ($Script:AvailableSpace_WorkingFolderDisk -le $Script:SpaceThreshold_WorkingFolderDisk){
         $WPF_UI_AvailableSpaceValue_TextBox.Background = "Red"
         $WPF_UI_AvailableSpaceValue_TextBox.Foreground = "Black"
     }
@@ -1051,18 +2154,22 @@ $WPF_UI_AvailableSpaceValue_TextBox.Add_TextChanged({
 $WPF_UI_FAT32Size_Value.add_LostFocus({
     if (-not ($WPF_UI_FAT32Size_Value.Text -match "^[\d\.]+$")){
         $WPF_UI_FAT32Size_Value.Background = 'Red'
-    }       
-    elseif (((([Double]$WPF_UI_FAT32Size_Value.Text)*1024*1024) -le $Global:FAT32Maximum) -and ((([Double]$WPF_UI_FAT32Size_Value.Text)*1024*1024) -ge $Global:FAT32Minimum)){
-        $ValueDifference = ([double]$WPF_UI_FAT32Size_Value.Text*1024*1024-$Global:SizeofFAT32) 
-        $FreeSpaceDifference = $Global:SizeofFreeSpace-$ValueDifference
+    }   
+    elseif ($WPF_UI_FAT32Size_Value.Text -eq $Script:UI_FAT32Size_Value){
+        $WPF_UI_FAT32Size_Value.Background = 'White'
+    }     
+    elseif (((([Double]$WPF_UI_FAT32Size_Value.Text)*1024*1024) -lt $Script:FAT32Maximum) -and ((([Double]$WPF_UI_FAT32Size_Value.Text)*1024*1024) -gt $Script:FAT32Minimum)){
+        $ValueDifference = ([double]$WPF_UI_FAT32Size_Value.Text*1024*1024-$Script:SizeofFAT32) 
+        $FreeSpaceDifference = $Script:SizeofFreeSpace-$ValueDifference
         if ($FreeSpaceDifference -ge 0){
-            $Global:SizeofFreeSpace -= $ValueDifference 
-            $Global:SizeofFreeSpace_Pixels = $Global:SizeofFreeSpace * $Global:PartitionBarPixelperKB
-            $Global:SizeofFAT32 = [double]$WPF_UI_FAT32Size_Value.Text*1024*1024
-            $Global:SizeofFAT32_Pixels = $Global:SizeofFAT32 * $Global:PartitionBarPixelperKB
-            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Global:SizeofFreeSpace_Pixels 
-            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width = $Global:SizeofFAT32_Pixels
-            $WPF_UI_FAT32Size_Value.Background = 'White'                
+            $Script:SizeofFreeSpace -= $ValueDifference 
+            $Script:SizeofFreeSpace_Pixels = $Script:SizeofFreeSpace * $Script:PartitionBarPixelperKB
+            $Script:SizeofFAT32 = [double]$WPF_UI_FAT32Size_Value.Text*1024*1024
+            $Script:SizeofFAT32_Pixels = $Script:SizeofFAT32 * $Script:PartitionBarPixelperKB
+            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Script:SizeofFreeSpace_Pixels 
+            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width = $Script:SizeofFAT32_Pixels
+            $WPF_UI_FAT32Size_Value.Background = 'White'
+            $Script:UI_FAT32Size_Value=$WPF_UI_FAT32Size_Value.Text                
         }
         else{
             $WPF_UI_FAT32Size_Value.Background = 'Red'
@@ -1076,121 +2183,135 @@ $WPF_UI_FAT32Size_Value.add_LostFocus({
 $WPF_UI_WorkbenchSize_Value.add_LostFocus({
     if (-not ($WPF_UI_WorkbenchSize_Value.Text -match "^[\d\.]+$")){
         $WPF_UI_WorkbenchSize_Value.Background = 'Red'
+    }
+    elseif ($WPF_UI_WorkbenchSize_Value.Text -eq $Script:UI_WorkbenchSize_Value){
+        $WPF_UI_WorkbenchSize_Value.Background = 'White'
     } 
-    elseif (((([double]$WPF_UI_WorkbenchSize_Value.Text)*1024*1024) -le $Global:WorkbenchMaximum) -and ((([double]$WPF_UI_WorkbenchSize_Value.Text)*1024*1024) -ge $Global:WorkbenchMinimum)){
-        $FreeSpaceDifference = $Global:SizeofFreeSpace-$ValueDifference
+    elseif (((([double]$WPF_UI_WorkbenchSize_Value.Text)*1024*1024) -lt $Script:WorkbenchMaximum) -and ((([double]$WPF_UI_WorkbenchSize_Value.Text)*1024*1024) -gt $Script:WorkbenchMinimum)){
+        $ValueDifference = ([double]$WPF_UI_WorkbenchSize_Value.Text*1024*1024-$Script:SizeofPartition_System) 
+        $FreeSpaceDifference = $Script:SizeofFreeSpace-$ValueDifference
         if ($FreeSpaceDifference -ge 0){
-            $Global:SizeofFreeSpace -= $ValueDifference 
-            $Global:SizeofFreeSpace_Pixels = $Global:SizeofFreeSpace * $Global:PartitionBarPixelperKB
-            $global:SizeofPartition_System= [double]$WPF_UI_WorkbenchSize_Value.Text*1024*1024
-            $global:SizeofPartition_System_Pixels = $global:SizeofPartition_System* $Global:PartitionBarPixelperKB
-            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Global:SizeofFreeSpace_Pixels 
-            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width = $global:SizeofPartition_System_Pixels
-            $WPF_UI_WorkbenchSize_Value.Background = 'White'    
+            $Script:SizeofFreeSpace -= $ValueDifference 
+            $Script:SizeofFreeSpace_Pixels = $Script:SizeofFreeSpace * $Script:PartitionBarPixelperKB
+            $Script:SizeofPartition_System= [double]$WPF_UI_WorkbenchSize_Value.Text*1024*1024
+            $Script:SizeofPartition_System_Pixels = $Script:SizeofPartition_System* $Script:PartitionBarPixelperKB
+            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Script:SizeofFreeSpace_Pixels 
+            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width = $Script:SizeofPartition_System_Pixels
+            $WPF_UI_WorkbenchSize_Value.Background = 'White'   
+            $Script:UI_WorkbenchSize_Value= $WPF_UI_WorkbenchSize_Value.Text
         }
     }    
     else {
         $WPF_UI_WorkbenchSize_Value.Background = 'Red'
     }
 })
-       
+ 
+
 $WPF_UI_WorkSize_Value.add_LostFocus({
-    if (($WPF_UI_WorkSize_Value.Text -match "^[\d\.]+$") -and `
-        ($WPF_UI_WorkSize_Value.Text*1024*1024 -ge $Global:WorkMinimum)){
-            $ValueDifference = ([double]$WPF_UI_WorkSize_Value.Text*1024*1024-$global:SizeofPartition_Other) 
-            $FreeSpaceDifference = $Global:SizeofFreeSpace-$ValueDifference
-     #       Write-Host "Difference in value is: $ValueDifference"
-            if ($FreeSpaceDifference -ge 0){
-                $Global:SizeofFreeSpace -= $ValueDifference 
-                $Global:SizeofFreeSpace_Pixels = $Global:SizeofFreeSpace * $Global:PartitionBarPixelperKB
-                $global:SizeofPartition_Other= [double]$WPF_UI_WorkSize_Value.Text*1024*1024
-                $global:SizeofPartition_Other_Pixels = $global:SizeofPartition_Other* $Global:PartitionBarPixelperKB
-                $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Global:SizeofFreeSpace_Pixels 
-                $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width = $global:SizeofPartition_Other_Pixels
-                $WPF_UI_WorkSize_Value.Background = 'White'                
-            }
-            else{
-      #          Write-host 'Not enough free space for change!'
-                $WPF_UI_WorkSize_Value.Background = 'Red'
-            }
-    }
-    else{
+    if (-not ($WPF_UI_WorkSize_Value.Text -match "^[\d\.]+$")){
         $WPF_UI_WorkSize_Value.Background = 'Red'
     }
-})        
-
-$WPF_UI_FreeSpace_Value.add_LostFocus({
-        Write-host "$Global:SizeofFreeSpace"
-        if ($WPF_UI_FreeSpace_Value.Text -match "^[\d\.]+$"){
-        $ValueDifference = ([double]$WPF_UI_FreeSpace_Value.Text*1024*1024-$Global:SizeofFreeSpace)
-   #     Write-Host "Difference in value for FreeSpace is: $ValueDifference"
-        if ($ValueDifference -lt 0){ 
-            $Global:SizeofFreeSpace += $ValueDifference
-            $Global:SizeofUnallocated -= $ValueDifference
-            $Global:SizeofUnallocated_Pixels = $Global:SizeofUnallocated * $Global:PartitionBarPixelperKB
-            $Global:SizeofFreeSpace_Pixels = $Global:SizeofFreeSpace * $Global:PartitionBarPixelperKB
-            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = $Global:SizeofUnallocated_Pixels
-            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Global:SizeofFreeSpace_Pixels  
+    elseif ($WPF_UI_WorkSize_Value.Text -eq $Script:UI_WorkSize_Value){
+        $WPF_UI_WorkSize_Value.Background = 'White'
+    } 
+    elseif (((([double]$WPF_UI_WorkSize_Value.Text)*1024*1024) -gt $Script:WorkMinimum)){
+        $ValueDifference = ([double]$WPF_UI_WorkSize_Value.Text*1024*1024-$Script:SizeofPartition_Other) 
+        $FreeSpaceDifference = $Script:SizeofFreeSpace-$ValueDifference
+        if ($FreeSpaceDifference -ge 0){
+            $Script:SizeofFreeSpace -= $ValueDifference 
+            $Script:SizeofFreeSpace_Pixels = $Script:SizeofFreeSpace * $Script:PartitionBarPixelperKB
+            $Script:SizeofPartition_Other= [double]$WPF_UI_WorkSize_Value.Text*1024*1024
+            $Script:SizeofPartition_Other_Pixels = $Script:SizeofPartition_Other* $Script:PartitionBarPixelperKB
+            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Script:SizeofFreeSpace_Pixels 
+            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width = $Script:SizeofPartition_Other_Pixels
+            $WPF_UI_WorkSize_Value.Background = 'White'
+            $Script:UI_WorkSize_Value= $WPF_UI_WorkSize_Value.Text    
         }
-        elseif($ValueDifference -gt 0 -and ($Global:SizeofUnallocated - $ValueDifference) -gt 0){
-            $Global:SizeofFreeSpace += $ValueDifference
-            $Global:SizeofUnallocated -= $ValueDifference
-            $Global:SizeofUnallocated_Pixels = $Global:SizeofUnallocated * $Global:PartitionBarPixelperKB
-            $Global:SizeofFreeSpace_Pixels = $Global:SizeofFreeSpace * $Global:PartitionBarPixelperKB
-            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = $Global:SizeofUnallocated_Pixels  
-            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Global:SizeofFreeSpace_Pixels  
-        }
-        else{
-            Write-host 'Not enough free space for change!'
-            write-host $ValueDifference
-            $WPF_UI_FreeSpace_Value.Background = 'Red'
-        }
-    }
+    }    
     else {
-        $WPF_UI_FreeSpace_Value.Background = 'Red'
-    }
-})    
-
-$WPF_UI_ImageSize_Value.add_LostFocus({
-        if ($WPF_UI_ImageSize_Value.Text -match "^[\d\.]+$"){
-        $ValueDifference = ([double]$WPF_UI_ImageSize_Value.Text*1024*1024-$Global:SizeofImage)
-        Write-Host $ValueDifference 
-        if (($ValueDifference -lt 0) -and ($ValueDifference+$Global:SizeofFreeSpace -gt 0)) {  # We are reducing image and need free space
-            $Global:SizeofFreeSpace += $ValueDifference
-            $Global:SizeofUnallocated -= $ValueDifference
-            $Global:SizeofFreeSpace_Pixels = $Global:SizeofFreeSpace * $Global:PartitionBarPixelperKB
-            $Global:SizeofFreeSpace_Pixels = $Global:SizeofFreeSpace * $Global:PartitionBarPixelperKB
-            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = $Global:SizeofUnallocated_Pixels  
-            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Global:SizeofFreeSpace_Pixels              
-        }
-        elseif (($ValueDifference -gt 0) -and ($Global:SizeofUnallocated -$ValueDifference -gt 0)) {  # We are reducing image and need free space    
-            $Global:SizeofFreeSpace += $ValueDifference
-            $Global:SizeofUnallocated -= $ValueDifference
-            $Global:SizeofUnallocated_Pixels = $Global:SizeofUnallocated * $Global:PartitionBarPixelperKB
-            $Global:SizeofFreeSpace_Pixels = $Global:SizeofFreeSpace * $Global:PartitionBarPixelperKB
-            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = $Global:SizeofUnallocated_Pixels  
-            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Global:SizeofFreeSpace_Pixels                
-        }
-        else{
-            $WPF_UI_ImageSize_Value.Background = 'Red'
-        }
-    }
-    else{
-        $WPF_UI_ImageSize_Value.Background = 'Red'
+        $WPF_UI_WorkSize_Value.Background = 'Red'
     }
 })
 
+$WPF_UI_FreeSpace_Value.add_LostFocus({
+        if (-not ($WPF_UI_FreeSpace_Value.Text -match "^[\d\.]+$")){
+            $WPF_UI_FreeSpace_Value.Background = 'Red'
+        }
+        elseif ($WPF_UI_FreeSpace_Value.Text -eq $Script:UI_FreeSpace_Value){
+            $WPF_UI_FreeSpace_Value.Background = 'White'
+        } 
+        else{
+            $ValueDifference = ([double]$WPF_UI_FreeSpace_Value.Text*1024*1024-$Script:SizeofFreeSpace)
+       #     Write-Host "Difference in value for FreeSpace is: $ValueDifference"
+            if ($ValueDifference -lt 0){ 
+                $Script:SizeofFreeSpace += $ValueDifference
+                $Script:SizeofUnallocated -= $ValueDifference
+                $Script:SizeofUnallocated_Pixels = $Script:SizeofUnallocated * $Script:PartitionBarPixelperKB
+                $Script:SizeofFreeSpace_Pixels = $Script:SizeofFreeSpace * $Script:PartitionBarPixelperKB
+                $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = $Script:SizeofUnallocated_Pixels
+                $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Script:SizeofFreeSpace_Pixels  
+                $Script:UI_FreeSpace_Value= $WPF_UI_FreeSpace_Value.Text
+            }
+            elseif($ValueDifference -gt 0 -and ($Script:SizeofUnallocated - $ValueDifference) -gt 0){
+                $Script:SizeofFreeSpace += $ValueDifference
+                $Script:SizeofUnallocated -= $ValueDifference
+                $Script:SizeofUnallocated_Pixels = $Script:SizeofUnallocated * $Script:PartitionBarPixelperKB
+                $Script:SizeofFreeSpace_Pixels = $Script:SizeofFreeSpace * $Script:PartitionBarPixelperKB
+                $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = $Script:SizeofUnallocated_Pixels  
+                $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Script:SizeofFreeSpace_Pixels  
+                $Script:UI_FreeSpace_Value= $WPF_UI_FreeSpace_Value.Text
+            }
+            else{
+                Write-Host $WPF_UI_FreeSpace_Value.Text 
+                Write-Host $UI_FreeSpace_Value
+                Write-host 'Not enough free space for change!'
+                write-host $ValueDifference
+                $WPF_UI_FreeSpace_Value.Background = 'Red'
+            }
+        }
+})    
+
+$WPF_UI_ImageSize_Value.add_LostFocus({
+        if (-not ($WPF_UI_ImageSize_Value.Text -match "^[\d\.]+$")){
+             $WPF_UI_ImageSize_Value.Background = 'Red'
+        }
+        elseif ($WPF_UI_ImageSize_Value.Text -eq $Script:UI_ImageSize_Value){
+            $WPF_UI_ImageSize_Value.Background = 'White'
+        }
+        else{
+            $ValueDifference = ([double]$WPF_UI_ImageSize_Value.Text*1024*1024-$Script:SizeofImage)
+            if (($ValueDifference -lt 0) -and ($ValueDifference+$Script:SizeofFreeSpace -gt 0)) {  # We are reducing image and need free space
+                $Script:SizeofFreeSpace += $ValueDifference
+                $Script:SizeofUnallocated -= $ValueDifference
+                $Script:SizeofFreeSpace_Pixels = $Script:SizeofFreeSpace * $Script:PartitionBarPixelperKB
+                $Script:SizeofFreeSpace_Pixels = $Script:SizeofFreeSpace * $Script:PartitionBarPixelperKB
+                $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = $Script:SizeofUnallocated_Pixels  
+                $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Script:SizeofFreeSpace_Pixels  
+                $UI_ImageSize_Value = $WPF_UI_ImageSize_Value.Text           
+            }
+            elseif (($ValueDifference -gt 0) -and ($Script:SizeofUnallocated -$ValueDifference -gt 0)) {  # We are reducing image and need free space    
+                $Script:SizeofFreeSpace += $ValueDifference
+                $Script:SizeofUnallocated -= $ValueDifference
+                $Script:SizeofUnallocated_Pixels = $Script:SizeofUnallocated * $Script:PartitionBarPixelperKB
+                $Script:SizeofFreeSpace_Pixels = $Script:SizeofFreeSpace * $Script:PartitionBarPixelperKB
+                $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = $Script:SizeofUnallocated_Pixels  
+                $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Script:SizeofFreeSpace_Pixels
+                $UI_ImageSize_Value = $WPF_UI_ImageSize_Value.Text                    
+            }
+        }       
+})
+
 $WPF_UI_Start_Button.Add_Click({
-    $Global:SSID = $WPF_UI_SSID_Textbox.Text
-    $Global:WifiPassword = $WPF_UI_Password_Textbox.Text
+    $Script:SSID = $WPF_UI_SSID_Textbox.Text
+    $Script:WifiPassword = $WPF_UI_Password_Textbox.Text
     if ($WPF_UI_DiskWrite_CheckBox.IsChecked){
-        $Global:WriteImage ='FALSE'
+        $Script:WriteImage ='FALSE'
     }
     else{
-        $Global:WriteImage ='TRUE'
+        $Script:WriteImage ='TRUE'
     }
-    if ($Global:TransferLocation){
-        if ($Global:AvailableSpaceFilestoTransfer -lt $Global:SpaceThreshold_FilestoTransfer){
+    if ($Script:TransferLocation){
+        if ($Script:AvailableSpaceFilestoTransfer -lt $Script:SpaceThreshold_FilestoTransfer){
             $Msg = @'
 You do not have sufficient space on your Work partition to transfer the files!
             
@@ -1201,7 +2322,7 @@ Select a location with less space, increase the space on Work, or remove the tra
         }
     }
 
-    if ($Global:AvailableSpace_WorkingFolderDisk -le $Global:SpaceThreshold_WorkingFolderDisk){
+    if ($Script:AvailableSpace_WorkingFolderDisk -le $Script:SpaceThreshold_WorkingFolderDisk){
         $Msg = @'
 You do not have sufficient space on your drive to run the tool!
 
@@ -1211,10 +2332,10 @@ Either select a location with sufficient space or press cancel to quit the tool
         if ($ValueofAction -eq 'OK'){
             $SufficientSpace_Flag =$null
             do {
-                $Global:WorkingPath = Get-FolderPath -Message 'Select location for Working Path' -RootFolder 'MyComputer'-ShowNewFolderButton
-                $Global:Space_WorkingFolderDisk = (Confirm-DiskSpace -PathtoCheck $Global:WorkingPath)/1kb
-                $Global:AvailableSpace_WorkingFolderDisk = $Global:Space_WorkingFolderDisk - $Global:RequiredSpace_WorkingFolderDisk 
-                if ($Global:AvailableSpace_WorkingFolderDisk -le $Global:SpaceThreshold_WorkingFolderDisk){
+                $Script:WorkingPath = Get-FolderPath -Message 'Select location for Working Path' -RootFolder 'MyComputer'-ShowNewFolderButton
+                $Script:Space_WorkingFolderDisk = (Confirm-DiskSpace -PathtoCheck $Script:WorkingPath)/1kb
+                $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk 
+                if ($Script:AvailableSpace_WorkingFolderDisk -le $Script:SpaceThreshold_WorkingFolderDisk){
                     $Msg = @'
 You still do not have sufficient space on your drive to run the tool!
                   
@@ -1223,7 +2344,7 @@ Either select a location with sufficient space or press cancel to quit the tool
                     $ValueofAction = [System.Windows.MessageBox]::Show($Msg, 'Error - Insufficient Space!',1,48)
                     if ($ValueofAction -eq 'Cancel'){
                         $Form_UserInterface.Close() | out-null
-                        $Global:ExitType =2 
+                        $Script:ExitType =2 
                     }    
                 }
                 else{
@@ -1235,11 +2356,11 @@ Either select a location with sufficient space or press cancel to quit the tool
         }
         elseif ($ValueofAction -eq 'Cancel'){
             $Form_UserInterface.Close() | out-null
-            $Global:ExitType =2
+            $Script:ExitType =2
         }      
     } 
     else {
-        $Global:WorkingPath = ($Scriptpath+'Working Folder\') 
+        $Script:WorkingPath = ($Scriptpath+'Working Folder\') 
     }
     $ErrorCheck = Confirm-UIFields
     if ($ErrorCheck){
@@ -1247,13 +2368,13 @@ Either select a location with sufficient space or press cancel to quit the tool
     }
     else {
         $Form_UserInterface.Close() | out-null
-        $Global:ExitType = 1
+        $Script:ExitType = 1
     }
 })
 
 $WPF_UI_RomPath_Button.Add_Click({
-    $Global:ROMPath = Get-FolderPath -Message 'Select path to Roms' -RootFolder 'MyComputer'
-    if ($Global:ROMPath){
+    $Script:ROMPath = Get-FolderPath -Message 'Select path to Roms' -RootFolder 'MyComputer'
+    if ($Script:ROMPath){
         if(Confirm-UIFields){
             $WPF_UI_Start_Button.Background = 'Red'
             $WPF_UI_Start_Button.Foreground = 'Black'
@@ -1262,7 +2383,7 @@ $WPF_UI_RomPath_Button.Add_Click({
             $WPF_UI_Start_Button.Background = 'Green'
             $WPF_UI_Start_Button.Foreground = 'White'
         }
-        $WPF_UI_RomPath_Label.Text = Get-FormattedPathforGUI -PathtoTruncate ($Global:ROMPath)
+        $WPF_UI_RomPath_Label.Text = Get-FormattedPathforGUI -PathtoTruncate ($Script:ROMPath)
         $WPF_UI_RomPath_Button.Background = 'Green'
         $WPF_UI_RomPath_Button.Foreground = 'White'
     }
@@ -1273,8 +2394,8 @@ $WPF_UI_RomPath_Button.Add_Click({
 })
 
 $WPF_UI_ADFPath_Button.Add_Click({
-    $Global:ADFPath = Get-FolderPath -Message 'Select path to ADFs' -RootFolder 'MyComputer'
-    if ($Global:ADFPath){
+    $Script:ADFPath = Get-FolderPath -Message 'Select path to ADFs' -RootFolder 'MyComputer'
+    if ($Script:ADFPath){
         if(Confirm-UIFields){
             $WPF_UI_Start_Button.Background = 'Red'
             $WPF_UI_Start_Button.Foreground = 'Black'
@@ -1283,7 +2404,7 @@ $WPF_UI_ADFPath_Button.Add_Click({
             $WPF_UI_Start_Button.Background = 'Green'
             $WPF_UI_Start_Button.Foreground = 'White'
         }
-        $WPF_UI_ADFPath_Label.Text = Get-FormattedPathforGUI -PathtoTruncate ($Global:ADFPath)
+        $WPF_UI_ADFPath_Label.Text = Get-FormattedPathforGUI -PathtoTruncate ($Script:ADFPath)
         $WPF_UI_ADFPath_Button.Background = 'Green'
         $WPF_UI_ADFPath_Button.Foreground = 'White'
     } 
@@ -1295,28 +2416,28 @@ $WPF_UI_ADFPath_Button.Add_Click({
 })
 
 $WPF_UI_MigratedFiles_Button.Add_Click({
-    If (-not ($Global:TransferLocation)) {
-        $Global:TransferLocation = Get-FolderPath -Message 'Select transfer folder' -RootFolder 'MyComputer'
-        if ($Global:TransferLocation){            
+    If (-not ($Script:TransferLocation)) {
+        $Script:TransferLocation = Get-FolderPath -Message 'Select transfer folder' -RootFolder 'MyComputer'
+        if ($Script:TransferLocation){            
            
             $Msg = @'
 Calculating space requirements. This may take some time if you have selected a large folder for transfer!
 '@
         [System.Windows.MessageBox]::Show($Msg, 'Calculating Space',0,0)            
-            $Global:SizeofFilestoTransfer = Get-TransferredFilesSpaceRequired -FoldertoCheck $Global:TransferLocation
-            $Global:AvailableSpaceFilestoTransfer =  $Global:Space_FilestoTransfer - $Global:SizeofFilestoTransfer      
+            $Script:SizeofFilestoTransfer = Get-TransferredFilesSpaceRequired -FoldertoCheck $Script:TransferLocation
+            $Script:AvailableSpaceFilestoTransfer =  $Script:Space_FilestoTransfer - $Script:SizeofFilestoTransfer      
             
-            $WPF_UI_RequiredSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Global:SizeofFilestoTransfer
-            $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Global:AvailableSpaceFilestoTransfer 
+            $WPF_UI_RequiredSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Script:SizeofFilestoTransfer
+            $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpaceFilestoTransfer 
 
-            $WPF_UI_MigratedPath_Label.Text = Get-FormattedPathforGUI -PathtoTruncate ($Global:TransferLocation)
+            $WPF_UI_MigratedPath_Label.Text = Get-FormattedPathforGUI -PathtoTruncate ($Script:TransferLocation)
             $WPF_UI_MigratedFiles_Button.Content = 'Click to remove Transfer Folder'
             $WPF_UI_MigratedFiles_Button.Background = 'Green'
             $WPF_UI_MigratedFiles_Button.Foreground = 'White' 
 
         }
         else{
-            $Global:SizeofFilestoTransfer = 0
+            $Script:SizeofFilestoTransfer = 0
             $WPF_UI_RequiredSpaceValueTransferredFiles_TextBox.Text = ''
             $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = ''
             $WPF_UI_MigratedFiles_Button.Background = '#FFDDDDDD'
@@ -1324,10 +2445,10 @@ Calculating space requirements. This may take some time if you have selected a l
         }
     }
     else{
-        $Global:SizeofFilestoTransfer= 0
+        $Script:SizeofFilestoTransfer= 0
         $WPF_UI_RequiredSpaceValueTransferredFiles_TextBox.Text = ''
         $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = ''
-        $Global:TransferLocation = $null
+        $Script:TransferLocation = $null
         $WPF_UI_MigratedFiles_Button.Content = 'Click to set Transfer Folder'
         $WPF_UI_MigratedFiles_Button.Background = '#FFDDDDDD'
         $WPF_UI_MigratedFiles_Button.Foreground = 'Black'
@@ -1342,7 +2463,7 @@ foreach ($Kickstart in $AvailableKickstarts) {
 }
 
 $WPF_UI_KickstartVersion_Dropdown.Add_SelectionChanged({
-    $Global:KickstartVersiontoUse = $WPF_UI_KickstartVersion_Dropdown.SelectedItem
+    $Script:KickstartVersiontoUse = $WPF_UI_KickstartVersion_Dropdown.SelectedItem
     if(Confirm-UIFields){
         $WPF_UI_Start_Button.Background = 'Red'
         $WPF_UI_Start_Button.Foreground = 'Black'
@@ -1362,7 +2483,7 @@ foreach ($ScreenMode in $AvailableScreenModes) {
 $WPF_UI_ScreenMode_Dropdown.Add_SelectionChanged({
     foreach ($ScreenMode in $AvailableScreenModes) {
         if ($ScreenMode.FriendlyName -eq $WPF_UI_ScreenMode_Dropdown.SelectedItem){
-            $Global:ScreenModetoUse = $ScreenMode.Name           
+            $Script:ScreenModetoUse = $ScreenMode.Name           
         }
     }
     if(Confirm-UIFields){
@@ -1376,7 +2497,7 @@ $WPF_UI_ScreenMode_Dropdown.Add_SelectionChanged({
 })
 
 $WPF_UI_NoFileInstall_CheckBox.Add_Checked({
-    $Global:SetDiskupOnly = 'TRUE'
+    $Script:SetDiskupOnly = 'TRUE'
     if(Confirm-UIFields){
         $WPF_UI_Start_Button.Background = 'Red'
         $WPF_UI_Start_Button.Foreground = 'Black'
@@ -1385,17 +2506,17 @@ $WPF_UI_NoFileInstall_CheckBox.Add_Checked({
         $WPF_UI_Start_Button.Background = 'Green'
         $WPF_UI_Start_Button.Foreground = 'White'
     }
-    If ($Global:HSTDiskName){
-        $Global:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Global:SizeofImage
-        $Global:AvailableSpace_WorkingFolderDisk = $Global:Space_WorkingFolderDisk - $Global:RequiredSpace_WorkingFolderDisk 
+    If ($Script:HSTDiskName){
+        $Script:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Script:SizeofImage
+        $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk 
     
-        $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Global:RequiredSpace_WorkingFolderDisk
-        $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Global:AvailableSpace_WorkingFolderDisk
+        $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:RequiredSpace_WorkingFolderDisk
+        $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpace_WorkingFolderDisk
     } 
 })
 
 $WPF_UI_NoFileInstall_CheckBox.Add_UnChecked({
-    $Global:SetDiskupOnly = 'FALSE'
+    $Script:SetDiskupOnly = 'FALSE'
     if(Confirm-UIFields){
         $WPF_UI_Start_Button.Background = 'Red'
         $WPF_UI_Start_Button.Foreground = 'Black'
@@ -1404,12 +2525,12 @@ $WPF_UI_NoFileInstall_CheckBox.Add_UnChecked({
         $WPF_UI_Start_Button.Background = 'Green'
         $WPF_UI_Start_Button.Foreground = 'White'
     }
-    If ($Global:HSTDiskName){
-        $Global:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Global:SizeofImage
-        $Global:AvailableSpace_WorkingFolderDisk = $Global:Space_WorkingFolderDisk - $Global:RequiredSpace_WorkingFolderDisk 
+    If ($Script:HSTDiskName){
+        $Script:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Script:SizeofImage
+        $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk 
     
-        $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Global:RequiredSpace_WorkingFolderDisk
-        $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Global:AvailableSpace_WorkingFolderDisk
+        $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:RequiredSpace_WorkingFolderDisk
+        $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpace_WorkingFolderDisk
     }
 })
 
@@ -1518,13 +2639,13 @@ $XAML_DisclaimerWindow.SelectNodes("//*[@Name]") | ForEach-Object{
 
 $WPF_Disclaimer_Button_Acknowledge.Add_Click({
     $Form_Disclaimer.Close() | out-null
-    $Global:IsDisclaimerAccepted = $True
+    $Script:IsDisclaimerAccepted = $True
 })
 
 
 $Form_Disclaimer.ShowDialog() | out-null
 
-if (-not ($Global:IsDisclaimerAccepted -eq $true)){
+if (-not ($Script:IsDisclaimerAccepted -eq $true)){
     Write-ErrorMessage 'Exiting - Disclaimer Not Accepted'
     exit    
 }
@@ -1537,33 +2658,33 @@ $Form_UserInterface.ShowDialog() | out-null
 
 ######################################################################## Command line portion of Script ################################################################################################
 
-if ($Global:ExitType -eq 2){
+if ($Script:ExitType -eq 2){
     Write-ErrorMessage -Message 'Exiting - User has insufficient space'
     exit
 }
-elseif (-not ($Global:ExitType-eq 1)){
+elseif (-not ($Script:ExitType-eq 1)){
     Write-ErrorMessage -Message 'Exiting - UI Window was closed'
     exit
 }
 
 
 Write-InformationMessage -Message "Running Script to perform selected functions. Options selected are:"
-Write-InformationMessage -Message "DiskName to Write: $Global:HSTDiskName"  
-Write-InformationMessage -Message "ScreenMode to Use: $Global:ScreenModetoUse"
-Write-InformationMessage -Message "Kickstart to Use: $Global:KickstartVersiontoUse" 
-Write-InformationMessage -Message "SSID to configure: $Global:SSID" 
-Write-InformationMessage -Message "Password to set: $Global:WifiPassword" 
-Write-InformationMessage -Message "Fat32 Size (MiB): $Global:SizeofFAT32"
-Write-InformationMessage -Message "Image Size (KiB): $Global:SizeofImage"
-Write-InformationMessage -Message "Image Size HST (KiB): $Global:SizeofImage_HST"
-Write-InformationMessage -Message "Workbench Size: $Global:SizeofPartition_System"
-Write-InformationMessage -Message "Work Size: $Global:SizeofPartition_Other"
-Write-InformationMessage -Message "Working Path: $Global:WorkingPath"
-Write-InformationMessage -Message "Rom Path: $Global:ROMPath"
-Write-InformationMessage -Message "ADF Path: $Global:ADFPath" 
-Write-InformationMessage -Message "Transfer Location: $Global:TransferLocation"
-Write-InformationMessage -Message "Write Image to Disk: $Global:WriteImage"
-Write-InformationMessage -Message "Set disk up only: $Global:SetDiskupOnly"
+Write-InformationMessage -Message "DiskName to Write: $Script:HSTDiskName"  
+Write-InformationMessage -Message "ScreenMode to Use: $Script:ScreenModetoUse"
+Write-InformationMessage -Message "Kickstart to Use: $Script:KickstartVersiontoUse" 
+Write-InformationMessage -Message "SSID to configure: $Script:SSID" 
+Write-InformationMessage -Message "Password to set: $Script:WifiPassword" 
+Write-InformationMessage -Message "Fat32 Size (MiB): $Script:SizeofFAT32"
+Write-InformationMessage -Message "Image Size (KiB): $Script:SizeofImage"
+Write-InformationMessage -Message "Image Size HST (KiB): $Script:SizeofImage_HST"
+Write-InformationMessage -Message "Workbench Size: $Script:SizeofPartition_System"
+Write-InformationMessage -Message "Work Size: $Script:SizeofPartition_Other"
+Write-InformationMessage -Message "Working Path: $Script:WorkingPath"
+Write-InformationMessage -Message "Rom Path: $Script:ROMPath"
+Write-InformationMessage -Message "ADF Path: $Script:ADFPath" 
+Write-InformationMessage -Message "Transfer Location: $Script:TransferLocation"
+Write-InformationMessage -Message "Write Image to Disk: $Script:WriteImage"
+Write-InformationMessage -Message "Set disk up only: $Script:SetDiskupOnly"
 
 #[System.Windows.Window].GetEvents() | select Name, *Method, EventHandlerType
 
@@ -1588,18 +2709,18 @@ Foreach ($CSVHash in $CSVHashes){
 
 #Generate CSV MD5 Hashes - End
 
-$Global:TotalSections = 20
+$Script:TotalSections = 20
 
-$Global:CurrentSection = 1
+$Script:CurrentSection = 1
 
-if (-not ($Global:TransferLocation)){
+if (-not ($Script:TransferLocation)){
     $TotalSections --
 }
-if (-not ($Global:WriteImage)){
+if (-not ($Script:WriteImage)){
     $TotalSections --
 }
 
-if ($Global:SetDiskupOnly = 'TRUE'){
+if ($Script:SetDiskupOnly = 'TRUE'){
     $TotalSections = 6 ## Need to update
 }
 
@@ -1607,7 +2728,7 @@ if ($Global:SetDiskupOnly = 'TRUE'){
 
 $StartDateandTime = (Get-Date -Format HH:mm:ss)
 
-$Global:SizeofImage_HST = $Global:SizeofImage-($Global:SizeofFAT32*1024)
+$Script:SizeofImage_HST = $Script:SizeofImage-($Script:SizeofFAT32*1024)
 
 Write-InformationMessage -Message "Starting execution at $StartDateandTime"
 
@@ -1634,7 +2755,7 @@ Write-TaskCompleteMessage -Message 'Performing integrity checks over input files
 
 Write-StartTaskMessage -Message 'Checking existance of folders, programs, and files'
 
-if (((split-path  $Global:WorkingPath  -Parent)+'\') -eq $Scriptpath) {
+if (((split-path  $Script:WorkingPath  -Parent)+'\') -eq $Scriptpath) {
     Write-InformationMessage -Message ('Creating Working Folder under '+$Scriptpath+' (if it does not exist)')
     if (-not (Test-Path ($Scriptpath+'Working Folder\'))){
         $null = New-Item ($Scriptpath+'Working Folder\') -ItemType Directory
@@ -1666,14 +2787,14 @@ else {
 $HDF2emu68Path=($SourceProgramPath+'hdf2emu68.exe')
 $7zipPath=($SourceProgramPath+'7z.exe')
 
-Set-Location  $Global:WorkingPath
+Set-Location  $Script:WorkingPath
 
-$ProgramsFolder= $Global:WorkingPath+'Programs\'
+$ProgramsFolder= $Script:WorkingPath+'Programs\'
 if (-not (Test-Path $ProgramsFolder)){
     $null = New-Item $ProgramsFolder -ItemType Directory
 }
 
-$TempFolder= $Global:WorkingPath+'Temp\'
+$TempFolder= $Script:WorkingPath+'Temp\'
 if (-not (Test-Path $TempFolder)){
     $null = New-Item $TempFolder -ItemType Directory
 }
@@ -1682,10 +2803,10 @@ $HSTImagePath=$ProgramsFolder+'HST-Imager\hst.imager.exe'
 $HSTAmigaPath=$ProgramsFolder+'HST-Amiga\hst.amiga.exe'
 $LZXPath=$ProgramsFolder+'unlzx.exe'
 
-$LocationofImage= $Global:WorkingPath+'OutputImage\'
-$AmigaDrivetoCopy= $Global:WorkingPath+'AmigaImageFiles\'
-$AmigaDownloads= $Global:WorkingPath+'AmigaDownloads\'
-$FAT32Partition= $Global:WorkingPath+'FAT32Partition\'
+$LocationofImage= $Script:WorkingPath+'OutputImage\'
+$AmigaDrivetoCopy= $Script:WorkingPath+'AmigaImageFiles\'
+$AmigaDownloads= $Script:WorkingPath+'AmigaDownloads\'
+$FAT32Partition= $Script:WorkingPath+'FAT32Partition\'
 
 ## Amiga Variables
 
@@ -1700,7 +2821,7 @@ $MigratedFilesFolder='My Files'
 #$InstallPathAmiSSL='SYS:Programs/AmiSSL'
 $GlowIcons='TRUE'
 
-$NameofImage=('Pistorm'+$Global:KickstartVersiontoUse+'.HDF')
+$NameofImage=('Pistorm'+$Script:KickstartVersiontoUse+'.HDF')
 
 ### Clean up
 
@@ -1710,10 +2831,10 @@ $NewFolders = ((split-path $TempFolder -leaf),(split-path $LocationofImage -leaf
 
 try {
     foreach ($NewFolder in $NewFolders) {
-        if (Test-Path ( $Global:WorkingPath+$NewFolder)){
-            $null = Remove-Item ( $Global:WorkingPath+$NewFolder) -Recurse -ErrorAction Stop
+        if (Test-Path ( $Script:WorkingPath+$NewFolder)){
+            $null = Remove-Item ( $Script:WorkingPath+$NewFolder) -Recurse -ErrorAction Stop
         }
-        $null = New-Item -path ( $Global:WorkingPath) -Name $NewFolder -ItemType Directory
+        $null = New-Item -path ( $Script:WorkingPath) -Name $NewFolder -ItemType Directory
     }    
 }
 catch {
@@ -1721,12 +2842,12 @@ catch {
     exit    
 }
 
-if (-not(Test-Path ( $Global:WorkingPath+'AmigaDownloads'))){
-    $null = New-Item -path ( $Global:WorkingPath) -Name 'AmigaDownloads' -ItemType Directory    
+if (-not(Test-Path ( $Script:WorkingPath+'AmigaDownloads'))){
+    $null = New-Item -path ( $Script:WorkingPath) -Name 'AmigaDownloads' -ItemType Directory    
 }
 
-if (-not(Test-Path ( $Global:WorkingPath+'Programs'))){
-    $null = New-Item -path ( $Global:WorkingPath) -Name 'Programs' -ItemType Directory      
+if (-not(Test-Path ( $Script:WorkingPath+'Programs'))){
+    $null = New-Item -path ( $Script:WorkingPath) -Name 'Programs' -ItemType Directory      
 }
 
 Write-TaskCompleteMessage -Message 'Performing Cleanup - Complete!'
@@ -1739,7 +2860,7 @@ Write-TaskCompleteMessage -Message 'Performing Cleanup - Complete!'
 
 Write-StartTaskMessage -Message 'Determining Kickstarts to Use'
 
-$FoundKickstarttoUse = Compare-KickstartHashes -PathtoKickstartHashes ($InputFolder+'RomHashes.csv') -PathtoKickstartFiles $Global:ROMPath -KickstartVersion $Global:KickstartVersiontoUse
+$FoundKickstarttoUse = Compare-KickstartHashes -PathtoKickstartHashes ($InputFolder+'RomHashes.csv') -PathtoKickstartFiles $Script:ROMPath -KickstartVersion $Script:KickstartVersiontoUse
 
 $KickstartPath = $FoundKickstarttoUse.KickstartPath
 
@@ -1754,18 +2875,18 @@ Write-InformationMessage -Message ('Kickstart to be used is: '+$KickstartPath)
 
 Write-TaskCompleteMessage -Message 'Determining Kickstarts to Use - Complete!'
 
-if ($Global:SetDiskupOnly -eq 'FALSE'){
+if ($Script:SetDiskupOnly -eq 'FALSE'){
 
     Write-StartTaskMessage -Message 'Determining ADFs to Use'
     
-    $AvailableADFs = Compare-ADFHashes -PathtoADFFiles $Global:ADFPath -PathtoADFHashes ($InputFolder+'ADFHashes.csv') -KickstartVersion $Global:KickstartVersiontoUse -PathtoListofInstallFiles ($InputFolder+'ListofInstallFiles.csv') 
+    $AvailableADFs = Compare-ADFHashes -PathtoADFFiles $Script:ADFPath -PathtoADFHashes ($InputFolder+'ADFHashes.csv') -KickstartVersion $Script:KickstartVersiontoUse -PathtoListofInstallFiles ($InputFolder+'ListofInstallFiles.csv') 
     
     if (-not ($AvailableADFs)){
         Write-ErrorMessage -Message "One or more ADF files is missing!"
         exit
     } 
     
-    $ListofInstallFiles = Import-Csv ($InputFolder+'ListofInstallFiles.csv') -Delimiter ';' |  Where-Object {$_.Kickstart_Version -eq $Global:KickstartVersiontoUse} | Sort-Object -Property 'InstallSequence'
+    $ListofInstallFiles = Import-Csv ($InputFolder+'ListofInstallFiles.csv') -Delimiter ';' |  Where-Object {$_.Kickstart_Version -eq $Script:KickstartVersiontoUse} | Sort-Object -Property 'InstallSequence'
     
     $ListofInstallFiles | Add-Member -NotePropertyName Path -NotePropertyValue $null
     $ListofInstallFiles | Add-Member -NotePropertyName DrivetoInstall_VolumeName -NotePropertyValue $null
@@ -1811,7 +2932,7 @@ if (-not(Get-GithubRelease -GithubRelease $HSTImagerreleases -Tag_Name '1.1.350'
     exit
 }
 
-if ($Global:SetDiskupOnly -eq 'FALSE'){
+if ($Script:SetDiskupOnly -eq 'FALSE'){
     Write-StartSubTaskMessage -Message 'Downloading HST Amiga'
     
     if (-not(Get-GithubRelease -GithubRelease $HSTAmigareleases -Tag_Name '0.3.163' -Name '_console_windows_x64.zip' -LocationforDownload ($TempFolder+'HSTAmiga.zip') -LocationforProgram ($ProgramsFolder+'HST-Amiga\') -Sort_Flag '')){
@@ -1870,7 +2991,7 @@ Write-TaskCompleteMessage -Message 'Downloading Emu68 Packages - Complete'
 
 ### Begin Download UnLzx
 
-if ($Global:SetDiskupOnly -eq 'FALSE'){
+if ($Script:SetDiskupOnly -eq 'FALSE'){
     Write-StartTaskMessage -Message 'Downloading UnLZX'
     
     if (-not (Test-Path ($ProgramsFolder+'unlzx.exe'))){
@@ -1904,18 +3025,18 @@ if (-not (Start-HSTImager -Command "Blank" -DestinationPath ($LocationofImage+$N
 if (-not (Start-HSTImager -Command "rdb init" -DestinationPath ($LocationofImage+$NameofImage) -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
     exit
 } 
-if (-not (Start-HSTImager -Command "rdb filesystem add" -DestinationPath ($LocationofImage+$NameofImage) -FileSystemPath ($Global:WorkingPath+'Programs\HST-Imager\pfs3aio') -DosType 'PFS3' -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+if (-not (Start-HSTImager -Command "rdb filesystem add" -DestinationPath ($LocationofImage+$NameofImage) -FileSystemPath ($Script:WorkingPath+'Programs\HST-Imager\pfs3aio') -DosType 'PFS3' -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
     exit
 } 
 
 
 ## Setting up Amiga Partitions List
 
-$AmigaPartitionsList = Get-AmigaPartitionList   -SizeofPartition_System_param $Global:SizeofPartition_System `
-                                                -SizeofPartition_Other_param $Global:SizeofPartition_Other `
+$AmigaPartitionsList = Get-AmigaPartitionList   -SizeofPartition_System_param $Script:SizeofPartition_System `
+                                                -SizeofPartition_Other_param $Script:SizeofPartition_Other `
                                                 -VolumeName_System_param $VolumeName_System `
                                                 -DeviceName_System_param $DeviceName_System `
-                                                -PFSLimit $Global:PFSLimit  `
+                                                -PFSLimit $Script:PFSLimit  `
                                                 -VolumeName_Other_param $VolumeName_Other `
                                                 -DeviceName_Other_param $DeviceName_Other `
                                                 -DeviceName_Prefix_param $DeviceName_Prefix
@@ -1937,9 +3058,9 @@ foreach ($AmigaPartition in $AmigaPartitionsList) {
     } 
 }
 
-if ($Global:SetDiskupOnly -eq 'FALSE'){
+if ($Script:SetDiskupOnly -eq 'FALSE'){
     #### Begin - Create NewFolder.info file
-    if (($Global:KickstartVersiontoUse -eq 3.1) -or (($Global:KickstartVersiontoUse -eq 3.2) -and ($GlowIcons -eq 'FALSE'))) {
+    if (($Script:KickstartVersiontoUse -eq 3.1) -or (($Script:KickstartVersiontoUse -eq 3.2) -and ($GlowIcons -eq 'FALSE'))) {
         if (-not (Start-HSTImager -Command 'fs extract' -SourcePath ($StorageADF+'\Monitors.info') -DestinationPath ($TempFolder.TrimEnd('\'))  -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
             exit
         }
@@ -1948,7 +3069,7 @@ if ($Global:SetDiskupOnly -eq 'FALSE'){
         }
         $null = Rename-Item ($TempFolder+'Monitors.info') ($TempFolder+'def_drawer.info')
     }
-    elseif(($Global:KickstartVersiontoUse -eq 3.2) -and ($GlowIcons -eq 'TRUE')){
+    elseif(($Script:KickstartVersiontoUse -eq 3.2) -and ($GlowIcons -eq 'TRUE')){
         if (-not (Start-HSTImager -Command 'fs extract' -SourcePath ($GlowIconsADF+'\Prefs\Env-Archive\Sys\def_drawer.info') -DestinationPath ($TempFolder.TrimEnd('\')) -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
             exit
         }
@@ -1966,7 +3087,7 @@ if ($Global:SetDiskupOnly -eq 'FALSE'){
     Add-AmigaFolder -AmigaFolderPath ($VolumeName_System+'\Programs\') -TempFoldertouse $TempFolder -AmigaDrivetoCopytouse $AmigaDrivetoCopy
     Add-AmigaFolder -AmigaFolderPath ($VolumeName_System+'\Storage\DataTypes\') -TempFoldertouse $TempFolder -AmigaDrivetoCopytouse $AmigaDrivetoCopy
     
-    if ($Global:KickstartVersiontoUse -eq 3.1){
+    if ($Script:KickstartVersiontoUse -eq 3.1){
     
         if (-not (test-path ($AmigaDrivetoCopy+$VolumeName_System+'\WBStartup\'))){
             $null = new-item ($AmigaDrivetoCopy+$VolumeName_System+'\WBStartup\') -ItemType Directory
@@ -1987,11 +3108,11 @@ if ($Global:SetDiskupOnly -eq 'FALSE'){
         
     }
     
-    if ($Global:KickstartVersiontoUse -eq 3.1){
+    if ($Script:KickstartVersiontoUse -eq 3.1){
         $SourcePath = ($InstallADF+'\Update\disk.info') 
     }
     
-    elseif ($Global:KickstartVersiontoUse -eq 3.2){
+    elseif ($Script:KickstartVersiontoUse -eq 3.2){
         $SourcePath = ($GlowIconsADF+'\Prefs\Env-Archive\Sys\def_harddisk.info') 
     }
     
@@ -2006,7 +3127,7 @@ if ($Global:SetDiskupOnly -eq 'FALSE'){
         if (-not (Start-HSTImager -Command 'fs extract' -SourcePath $SourcePath -DestinationPath $DestinationPathtoUse -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
                     exit
         }
-        if (($AmigaPartition.PartitionNumber -le 3) -and ($Global:KickstartVersiontoUse -eq 3.2)) {
+        if (($AmigaPartition.PartitionNumber -le 3) -and ($Script:KickstartVersiontoUse -eq 3.2)) {
             Rename-Item ($AmigaDrivetoCopy+$VolumeName_Other+'\def_harddisk.info') ($AmigaDrivetoCopy+$VolumeName_Other+'\disk.info') 
         }
     }
@@ -2015,7 +3136,7 @@ if ($Global:SetDiskupOnly -eq 'FALSE'){
 
 Write-TaskCompleteMessage -Message 'Preparing Amiga Image - Complete!'
 
-if ($Global:SetDiskupOnly -eq 'FALSE'){
+if ($Script:SetDiskupOnly -eq 'FALSE'){
     ### End Basic Drive Setup
     
     ### Begin Copy Install files from ADF
@@ -2112,7 +3233,7 @@ if ($Global:SetDiskupOnly -eq 'FALSE'){
     
     #######################################################################################################################################################################################################################################
     
-    $ListofPackagestoInstall = Import-Csv ($InputFolder+'ListofPackagestoInstall.csv') -Delimiter ';' |  Where-Object {$_.KickstartVersion -match $Global:KickstartVersiontoUse} | Where-Object {$_.InstallFlag -eq 'TRUE'} #| Sort-Object -Property 'InstallSequence','PackageName'
+    $ListofPackagestoInstall = Import-Csv ($InputFolder+'ListofPackagestoInstall.csv') -Delimiter ';' |  Where-Object {$_.KickstartVersion -match $Script:KickstartVersiontoUse} | Where-Object {$_.InstallFlag -eq 'TRUE'} #| Sort-Object -Property 'InstallSequence','PackageName'
     
     $ListofPackagestoInstall | Add-Member -NotePropertyName DrivetoInstall_VolumeName -NotePropertyValue $null
     
@@ -2186,7 +3307,7 @@ if ($Global:SetDiskupOnly -eq 'FALSE'){
                 if ($PackagetoFind.InstallType -eq "Full"){
                     Write-InformationMessage -Message ('Expanding archive file for package '+$PackagetoFind.PackageName)
                     if ([System.IO.Path]::GetExtension($PackagetoFind.FileDownloadName) -eq '.lzx'){
-                        Expand-LZXArchive -LZXPathtouse $LZXPath -WorkingFoldertouse  $Global:WorkingPath -LZXFile ($AmigaDownloads+$PackagetoFind.FileDownloadName) -TempFoldertouse $TempFolder -DestinationPath ($TempFolder+$PackagetoFind.FileDownloadName) 
+                        Expand-LZXArchive -LZXPathtouse $LZXPath -WorkingFoldertouse  $Script:WorkingPath -LZXFile ($AmigaDownloads+$PackagetoFind.FileDownloadName) -TempFoldertouse $TempFolder -DestinationPath ($TempFolder+$PackagetoFind.FileDownloadName) 
                     } 
                     if ([System.IO.Path]::GetExtension($PackagetoFind.FileDownloadName) -eq '.lha'){
                         if (-not(Expand-Zipfiles -SevenzipPathtouse $7zipPath -TempFoldertouse $TempFolder -InputFile ($AmigaDownloads+$PackagetoFind.FileDownloadName) -OutputDirectory ($TempFolder+$PackagetoFind.FileDownloadName))){
@@ -2320,8 +3441,8 @@ if ($Global:SetDiskupOnly -eq 'FALSE'){
     }
     
     $WirelessPrefs = "network={",
-                     "   ssid=""$Global:SSID""",
-                     "   psk=""$Global:WifiPassword""",
+                     "   ssid=""$Script:SSID""",
+                     "   psk=""$Script:WifiPassword""",
                      "}"
                      
     Export-TextFileforAmiga -ExportFile ($AmigaDrivetoCopy+$VolumeName_System+'\Prefs\Env-Archive\Sys\wireless.prefs') -DatatoExport $WirelessPrefs -AddLineFeeds 'TRUE'                
@@ -2334,7 +3455,7 @@ if ($Global:SetDiskupOnly -eq 'FALSE'){
     
     Write-StartTaskMessage -Message 'Fix WBStartup'
     
-    If ($Global:KickstartVersiontoUse -eq 3.2){
+    If ($Script:KickstartVersiontoUse -eq 3.2){
         Write-Host 'Fixing Menutools'
         if (-not (Start-HSTImager -Command 'fs extract' -SourcePath ($StorageADF+'\WBStartup\MenuTools') -DestinationPath ($AmigaDrivetoCopy+$VolumeName_System+'\WBStartup') -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
             exit
@@ -2383,7 +3504,7 @@ if (-not (Test-Path ($FAT32Partition+'Install\'))){
 
 Write-InformationMessage -Message 'Copying Cmdline.txt' 
 
-Copy-Item ($LocationofAmigaFiles+'FAT32\cmdline_'+$Global:KickstartVersiontoUse+'.txt') -Destination ($FAT32Partition+'cmdline.txt') #Temporary workaround until Michal fixes buptest for 3.1
+Copy-Item ($LocationofAmigaFiles+'FAT32\cmdline_'+$Script:KickstartVersiontoUse+'.txt') -Destination ($FAT32Partition+'cmdline.txt') #Temporary workaround until Michal fixes buptest for 3.1
 
 
 $ConfigTxt = Get-Content -Path ($LocationofAmigaFiles+'FAT32\config.txt')
@@ -2394,7 +3515,7 @@ $RevisedConfigTxt=$null
 
 $AvailableScreenModes = Import-Csv ($InputFolder+'ScreenModes.CSV') -Delimiter (';')
 foreach ($AvailableScreenMode in $AvailableScreenModes){
-    if ($AvailableScreenMode.Name -eq  $Global:ScreenModetoUse){
+    if ($AvailableScreenMode.Name -eq  $Script:ScreenModetoUse){
         $AvailableScreenMode.Selected = $true
     }
 }
@@ -2472,7 +3593,7 @@ Write-TaskCompleteMessage -Message 'Setting up FAT32 Files - Complete!'
 
 ### Transfer files to Work partition
 
-if ($Global:TransferLocation) {
+if ($Script:TransferLocation) {
     Write-StartTaskMessage -Message 'Transferring Migrated Files to Work Partition'
     Write-InformationMessage -Message ('Transferring files from '+$TransferLocation+' to "'+$MigratedFilesFolder+'" directory on Work drive')
     $SourcePathtoUse = $TransferLocation+('*')
@@ -2486,7 +3607,7 @@ if ($Global:TransferLocation) {
     Write-TaskCompleteMessage -Message 'Transferring Migrated Files to Work Partition - Complete!'
 }
 
-if ($Global:SetDiskupOnly -eq 'FALSE'){
+if ($Script:SetDiskupOnly -eq 'FALSE'){
 
     Write-StartTaskMessage -Message 'Transferring Amiga Files to Image'
     
@@ -2510,15 +3631,15 @@ Set-Location $LocationofImage
 
 & $HDF2emu68Path $LocationofImage$NameofImage $SizeofFAT32 ($FAT32Partition).Trim('\')
 
-$null= Rename-Item ($LocationofImager+'emu68_converted.img') -NewName ('Emu68Kickstart'+$Global:KickstartVersiontoUse+'.img')
+$null= Rename-Item ($LocationofImager+'emu68_converted.img') -NewName ('Emu68Kickstart'+$Script:KickstartVersiontoUse+'.img')
 
 Write-TaskCompleteMessage -Message 'Creating Image - Complete!'
 
 Write-StartTaskMessage -Message 'Writing Image to Disk'
 
-Set-location  $Global:WorkingPath
+Set-location  $Script:WorkingPath
 
-Write-Image -HSTImagePathtouse $HSTImagePath -SourcePath ($LocationofImage+'Emu68Kickstart'+$Global:KickstartVersiontoUse+'.img') -DestinationPath $Global:HSTDiskName
+Write-Image -HSTImagePathtouse $HSTImagePath -SourcePath ($LocationofImage+'Emu68Kickstart'+$Script:KickstartVersiontoUse+'.img') -DestinationPath $Script:HSTDiskName
 
 Write-TaskCompleteMessage -Message 'Writing Image to Disk - Complete!'
 
