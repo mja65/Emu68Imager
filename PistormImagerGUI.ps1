@@ -98,6 +98,7 @@ $Global:SizeofUnallocated_Minimum = $null
 $Global:SizeofUnallocated_Pixels = $null
 $Global:SizeofUnallocated_Pixels_Minimum = $null
 $Global:SizeofFreeSpace_Minimum = $null
+$Global:RemovableMedia = $null
 
 ####################################################################### End Null out Global Variables ###############################################################################################
  
@@ -234,6 +235,7 @@ $inputXML_UserInterface = @"
               <TextBox x:Name="MediaSelect_Label" HorizontalAlignment="Left" Margin="10,10,0,0" TextWrapping="Wrap" Text="Select Media to Use" VerticalAlignment="Top" Width="120" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
               <ComboBox x:Name="MediaSelect_DropDown"  HorizontalAlignment="Left" Margin="130,8,0,0" VerticalAlignment="Top" Width="340"/>
               <Button x:Name="MediaSelect_Refresh" Content="Refresh Available Media" HorizontalAlignment="Left" Margin="482,9,0,0" VerticalAlignment="Top" Width="130" Height="20"/>
+              <Button x:Name="DefaultAllocation_Refresh" Content="Reset Partitions to Default" HorizontalAlignment="Left" Margin="725,9,0,0" VerticalAlignment="Top" Width="157" Height="20"/>
           </Grid>
       </GroupBox>
       <GroupBox x:Name="SourceFiles_GroupBox" Header="Source Files" Height="200" Background="Transparent" Margin="7,156,0,128" Width="400" VerticalAlignment="Top" HorizontalAlignment="Left">
@@ -267,7 +269,7 @@ $inputXML_UserInterface = @"
               <CheckBox x:Name="NoFileInstall_CheckBox" Content="Only set disk up. Do not install packages" HorizontalAlignment="Left" Margin="2,6,0,0" VerticalAlignment="Top"/>
           </Grid>
       </GroupBox>
-      <Button x:Name="Start_Button" Content="Run Tool" HorizontalAlignment="Center" Margin="0,489,0,0" VerticalAlignment="Top" Width="880" Height="38" Background = "Red"/>
+      <Button x:Name="Start_Button" Content="Run Tool" HorizontalAlignment="Center" Margin="0,489,0,0" VerticalAlignment="Top" Width="880" Height="38" Background = "Red" Foreground="Black" BorderBrush="Transparent"/>
       <GroupBox x:Name="Space_GroupBox" Header="Space Requirements" Height="150" Background="Transparent" Margin="0,311,10,0" Width="400" VerticalAlignment="Top" HorizontalAlignment="Right">
           <Grid>
                 <TextBox x:Name="RequiredSpace_TextBox" HorizontalAlignment="Left" Margin="40,9,0,0" TextWrapping="Wrap" Text="Space to run tool is:" VerticalAlignment="Top" Width="112" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
@@ -319,7 +321,9 @@ $Global:SetDiskupOnly = 'FALSE'
 $DefaultDivisorFat32 = 15
 $DefaultDivisorWorkbench = 15
 $Global:Fat32DefaultMaximum = 1024*1024 #1gb in Kilobytes
-$Global:WorkbenchMaximum = 1024*1024 #1gb in Kilobytes
+#$Global:WorkbenchMaximum = 1024*1024 #1gb in Kilobytes
+$Global:WorkbenchDefaultMaximum = 1024*1024 #1gb in Kilobytes
+$Global:WorkbenchMaximum = $Global:PFSLimit
 $Global:Fat32Maximum = 4*1024*1024 # in Kilobytes
 $Global:Fat32Minimum = 35840 # In KiB
 $Global:WorkbenchMinimum = 100*1024 # In KiB
@@ -342,14 +346,14 @@ $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Global:Requir
 $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = '' 
 $WPF_UI_RequiredSpaceValueTransferredFiles_TextBox.Text = ''
 
-$RemovableMedia = Get-RemovableMedia
-foreach ($Disk in $RemovableMedia){
+$Global:RemovableMedia = Get-RemovableMedia
+foreach ($Disk in $Global:RemovableMedia){
     $WPF_UI_MediaSelect_Dropdown.AddChild($Disk.FriendlyName)
 }
 
 $WPF_UI_MediaSelect_Dropdown.Add_SelectionChanged({
-    If (-not($RemovableMedia)){
-        $RemovableMedia = Get-RemovableMedia
+    If (-not($Global:RemovableMedia)){
+        $Global:RemovableMedia  = Get-RemovableMedia
     }
     if ($WPF_UI_MediaSelect_DropDown.SelectedItem) {
         $WPF_UI_FAT32_Splitter.IsEnabled = "True"
@@ -362,7 +366,7 @@ $WPF_UI_MediaSelect_Dropdown.Add_SelectionChanged({
         $WPF_UI_FAT32Size_Value.IsEnabled = "True"
         $WPF_UI_FreeSpace_Value.IsEnabled = "True"
 
-        foreach ($Disk in $RemovableMedia){        
+        foreach ($Disk in $Global:RemovableMedia){        
             if ($Disk.FriendlyName -eq $WPF_UI_MediaSelect_DropDown.SelectedItem){
                 $Global:HSTDiskName = $Disk.HSTDiskName
                 $Global:PartitionBarPixelperKB = ($PartitionBarWidth)/$Disk.SizeofDisk
@@ -375,9 +379,9 @@ $WPF_UI_MediaSelect_Dropdown.Add_SelectionChanged({
         $Global:SizeofDisk = $Disk.SizeofDisk
         $Global:SizeofImage = $Global:SizeofDisk
 
-        $Global:SizeofFat32_Pixels_Minimum = $Global:PartitionBarPixelperKB * $Fat32Minimum 
-        $Global:SizeofPartition_System_Pixels_Minimum = $Global:PartitionBarPixelperKB * $WorkbenchMinimum
-        $Global:SizeofPartition_Other_Pixels_Minimum = $Global:PartitionBarPixelperKB * $WorkMinimum
+        $Global:SizeofFat32_Pixels_Minimum = $Global:PartitionBarPixelperKB * $Global:Fat32Minimum 
+        $Global:SizeofPartition_System_Pixels_Minimum = $Global:PartitionBarPixelperKB * $Global:WorkbenchMinimum
+        $Global:SizeofPartition_Other_Pixels_Minimum = $Global:PartitionBarPixelperKB * $Global:WorkMinimum
 
         $Global:SizeofFreeSpace_Pixels_Minimum = 0
         $Global:SizeofFreeSpace_Minimum = 0
@@ -385,8 +389,8 @@ $WPF_UI_MediaSelect_Dropdown.Add_SelectionChanged({
         $Global:SizeofUnallocated_Pixels_Minimum = 0
         $Global:SizeofUnallocated_Minimum = 0
 
-        if ($Global:SizeofImage /$DefaultDivisorFat32 -ge $Fat32DefaultMaximum){
-            $Global:SizeofFAT32 = $Fat32DefaultMaximum
+        if ($Global:SizeofImage /$DefaultDivisorFat32 -ge $Global:Fat32DefaultMaximum){
+            $Global:SizeofFAT32 = $Global:Fat32DefaultMaximum
             $Global:SizeofFAT32_Pixels = $Global:PartitionBarPixelperKB * $Global:SizeofFAT32   
         }
         else{
@@ -394,8 +398,8 @@ $WPF_UI_MediaSelect_Dropdown.Add_SelectionChanged({
             $Global:SizeofFAT32_Pixels = $Global:PartitionBarPixelperKB * $Global:SizeofFAT32   
         }
 
-        if ($Global:SizeofImage/$DefaultDivisorWorkbench -ge $WorkbenchMaximum){
-            $Global:SizeofPartition_System = $WorkbenchMaximum
+        if ($Global:SizeofImage/$DefaultDivisorWorkbench -ge $Global:WorkbenchDefaultMaximum){
+            $Global:SizeofPartition_System = $Global:WorkbenchDefaultMaximum 
             $Global:SizeofPartition_System_Pixels = $Global:SizeofPartition_System * $Global:PartitionBarPixelperKB 
         }
         else{
@@ -434,6 +438,96 @@ $WPF_UI_MediaSelect_Dropdown.Add_SelectionChanged({
         }
 })
    
+$WPF_UI_DefaultAllocation_Refresh.add_Click({
+    
+    # $Global:SizeofDisk = $null
+    # $Global:SizeofImage = $null
+    # $Global:SizeofFat32_Pixels_Minimum = $null
+    # $Global:SizeofPartition_System_Pixels_Minimum = $null
+    # $Global:SizeofPartition_Other_Pixels_Minimum = $null
+    # $Global:SizeofFreeSpace_Pixels_Minimum = $null
+    # $Global:SizeofFreeSpace_Minimum = $null
+    # $Global:SizeofUnallocated_Pixels_Minimum = $null
+    # $Global:SizeofUnallocated_Minimum = $null
+    # $Global:SizeofFAT32 = $null
+    # $Global:SizeofFAT32_Pixels = $null
+    # $Global:SizeofPartition_System = $null
+    # $Global:SizeofPartition_System_Pixels = $null
+    # $Global:SizeofPartition_Other = $null
+    # $Global:SizeofPartition_Other_Pixels = $null
+    # $Global:SizeofUnallocated = $null
+    # $Global:SizeofUnallocated_Pixels = $null
+    # $Global:SizeofFreeSpace = $null
+    # $Global:SizeofFreeSpace_Pixels = $null
+    $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width = '1'
+    $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width = '1'
+    $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width = '1'
+    $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = '1'
+    $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = '1'
+
+    $Global:SizeofDisk = $Disk.SizeofDisk
+    $Global:SizeofImage = $Global:SizeofDisk
+
+    $Global:SizeofFat32_Pixels_Minimum = $Global:PartitionBarPixelperKB * $Global:Fat32Minimum 
+    $Global:SizeofPartition_System_Pixels_Minimum = $Global:PartitionBarPixelperKB * $Global:WorkbenchMinimum
+    $Global:SizeofPartition_Other_Pixels_Minimum = $Global:PartitionBarPixelperKB * $Global:WorkMinimum
+
+    $Global:SizeofFreeSpace_Pixels_Minimum = 0
+    $Global:SizeofFreeSpace_Minimum = 0
+
+    $Global:SizeofUnallocated_Pixels_Minimum = 0
+    $Global:SizeofUnallocated_Minimum = 0
+
+    if ($Global:SizeofImage /$DefaultDivisorFat32 -ge $Fat32DefaultMaximum){
+        $Global:SizeofFAT32 = $Fat32DefaultMaximum
+        $Global:SizeofFAT32_Pixels = $Global:PartitionBarPixelperKB * $Global:SizeofFAT32   
+    }
+    else{
+        $Global:SizeofFAT32 = $Global:SizeofImage/$DefaultDivisorFat32
+        $Global:SizeofFAT32_Pixels = $Global:PartitionBarPixelperKB * $Global:SizeofFAT32   
+    }
+
+    if ($Global:SizeofImage/$DefaultDivisorWorkbench -ge $Global:WorkbenchDefaultMaximum){
+        $Global:SizeofPartition_System = $Global:WorkbenchDefaultMaximum 
+        $Global:SizeofPartition_System_Pixels = $Global:SizeofPartition_System * $Global:PartitionBarPixelperKB 
+    }
+    else{
+        $Global:SizeofPartition_System = $Global:SizeofImage/$DefaultDivisorWorkbench
+        $Global:SizeofPartition_System_Pixels = $Global:SizeofPartition_System * $Global:PartitionBarPixelperKB 
+    }
+
+    $Global:SizeofPartition_Other = ($Global:SizeofImage-$Global:SizeofPartition_System-$Global:SizeofFAT32)
+    $Global:SizeofPartition_Other_Pixels = $Global:SizeofPartition_Other * $Global:PartitionBarPixelperKB
+
+    $Global:SizeofUnallocated = $Global:SizeofDisk-$Global:SizeofImage
+    $Global:SizeofUnallocated_Pixels = $Global:SizeofUnallocated * $Global:PartitionBarPixelperKB
+
+    $Global:SizeofFreeSpace = $Global:SizeofImage-$Global:SizeofPartition_System-$Global:SizeofFAT32-$Global:SizeofPartition_Other
+    $Global:SizeofFreeSpace_Pixels = $Global:SizeofFreeSpace * $Global:PartitionBarPixelperKB
+    
+    Set-PartitionMaximums
+        
+    $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = $Global:SizeofUnallocated_Pixels
+    $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Global:SizeofFreeSpace_Pixels
+    $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width = $Global:SizeofPartition_Other_Pixels
+    $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width = $Global:SizeofPartition_System_Pixels
+    $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width = $Global:SizeofFAT32_Pixels
+    
+    $WPF_UI_WorkbenchSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofPartition_System -Scale 'GiB'
+    $WPF_UI_WorkbenchSize_Value.Background = 'White'
+    $WPF_UI_WorkSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofPartition_Other -Scale 'GiB'
+    $WPF_UI_WorkSize_Value.Background = 'White'
+    $WPF_UI_ImageSize_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofImage -Scale 'GiB'
+    $WPF_UI_ImageSize_Value.Background = 'White'
+    $WPF_UI_FAT32Size_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofFAT32 -Scale 'GiB'
+    $WPF_UI_Fat32Size_Value.Background = 'White'
+    $WPF_UI_FreeSpace_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofFreeSpace -Scale 'GiB'
+    $WPF_UI_FreeSpace_Value.Background = 'White'
+    $WPF_UI_Unallocated_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofUnallocated -Scale 'GiB'        
+})
+
+
+
 $WPF_UI_Fat32Size_Listview.add_SizeChanged({
     Set-PartitionMaximums -Type 'FAT32'   
     if ($Global:HSTDiskName){
@@ -559,7 +653,6 @@ $WPF_UI_WorkbenchSize_Listview.add_SizeChanged({
         $WPF_UI_Unallocated_Value.Text = Get-RoundedDiskSize -Size $Global:SizeofUnallocated -Scale 'GiB'        
     }   
 })
-
 
 $WPF_UI_WorkSize_Listview.add_SizeChanged({
     Set-PartitionMaximums -Type 'Work'
@@ -722,8 +815,43 @@ $WPF_UI_Unallocated_Listview.add_SizeChanged({
 })
 
 $WPF_UI_MediaSelect_Refresh.Add_Click({
-    $Global:HSTDiskName =$null
-    
+    $Global:HSTDiskName = $null
+    $Global:SizeofDisk = $null
+    $Global:SizeofImage = $null
+    $Global:SizeofFat32_Pixels_Minimum = $null
+    $Global:SizeofPartition_System_Pixels_Minimum = $null
+    $Global:SizeofPartition_Other_Pixels_Minimum = $null
+    $Global:SizeofFreeSpace_Pixels_Minimum = $null
+    $Global:SizeofFreeSpace_Minimum = $null
+    $Global:SizeofUnallocated_Pixels_Minimum = $null
+    $Global:SizeofUnallocated_Minimum = $null
+    $Global:SizeofFAT32 = $null
+    $Global:SizeofFAT32_Pixels = $null
+    $Global:SizeofPartition_System = $null
+    $Global:SizeofPartition_System_Pixels = $null
+    $Global:SizeofPartition_Other = $null
+    $Global:SizeofPartition_Other_Pixels = $null
+    $Global:SizeofUnallocated = $null
+    $Global:SizeofUnallocated_Pixels = $null
+    $Global:SizeofFreeSpace = $null
+    $Global:SizeofFreeSpace_Pixels = $null
+    $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width = '*'
+    $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width = '*'
+    $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width = '*'
+    $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = '*'
+    $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = '*'
+    $WPF_UI_WorkbenchSize_Value.Text = ''
+    $WPF_UI_WorkbenchSize_Value.Background = 'White'
+    $WPF_UI_WorkSize_Value.Text = ''
+    $WPF_UI_WorkSize_Value.Background = 'White'
+    $WPF_UI_ImageSize_Value.Text = ''
+    $WPF_UI_ImageSize_Value.Background = 'White'
+    $WPF_UI_FAT32Size_Value.Text = ''
+    $WPF_UI_Fat32Size_Value.Background = 'White'
+    $WPF_UI_FreeSpace_Value.Text = ''
+    $WPF_UI_FreeSpace_Value.Background = 'White'
+    $WPF_UI_Unallocated_Value.Text = ''
+    $Global:RemovableMedia = Get-RemovableMedia    
     $WPF_UI_FAT32_Splitter.IsEnabled = ""
     $WPF_UI_Workbench_Splitter.IsEnabled = ""
     $WPF_UI_Work_Splitter.IsEnabled = ""
@@ -732,9 +860,8 @@ $WPF_UI_MediaSelect_Refresh.Add_Click({
     $WPF_UI_WorkSize_Value.IsEnabled = ""
     $WPF_UI_ImageSize_Value.IsEnabled = ""
     $WPF_UI_FAT32Size_Value.IsEnabled = ""
-    $RemovableMedia = Get-RemovableMedia
     $WPF_UI_MediaSelect_Dropdown.Items.Clear()
-    foreach ($Disk in $RemovableMedia){
+    foreach ($Disk in $Global:RemovableMedia){
         $WPF_UI_MediaSelect_Dropdown.AddChild($Disk.FriendlyName)
     }
 })
@@ -750,12 +877,15 @@ $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Add_TextChanged({
     }
     elseif (($Global:AvailableSpaceFilestoTransfer - $Global:SizeofFilestoTransfer ) -lt $Global:SpaceThreshold_FilestoTransfer){
         $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Background = "Red"
+        $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Foreground = "Black"
     }
     elseif (($Global:AvailableSpaceFilestoTransfer - $Global:SizeofFilestoTransfer ) -lt ($Global:SpaceThreshold_FilestoTransfer*2)){
     $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Background = "Yellow"
+    $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Foreground = "Black"
     }
     else{
         $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Background = "Green"
+        $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Foreground = "White"
     }
     
 })
@@ -764,34 +894,39 @@ $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Add_TextChanged({
 $WPF_UI_AvailableSpaceValue_TextBox.Add_TextChanged({
     if ($Global:AvailableSpace_WorkingFolderDisk -le ($Global:SpaceThreshold_WorkingFolderDisk*2)){
         $WPF_UI_AvailableSpaceValue_TextBox.Background = "Yellow"
+        $WPF_UI_AvailableSpaceValue_TextBox.Foreground = "Black"
     }
     elseif ($Global:AvailableSpace_WorkingFolderDisk -le $Global:SpaceThreshold_WorkingFolderDisk){
         $WPF_UI_AvailableSpaceValue_TextBox.Background = "Red"
+        $WPF_UI_AvailableSpaceValue_TextBox.Foreground = "Black"
     }
     else{
         $WPF_UI_AvailableSpaceValue_TextBox.Background = "Green"
+        $WPF_UI_AvailableSpaceValue_TextBox.Foreground = "White"
     }
     
 })
 
+
 $WPF_UI_FAT32Size_Value.add_LostFocus({
-    if ($WPF_UI_FAT32Size_Value.Text -match "^[\d\.]+$"){
-            $ValueDifference = ([double]$WPF_UI_FAT32Size_Value.Text*1024*1024-$Global:SizeofFAT32) 
-            $FreeSpaceDifference = $Global:SizeofFreeSpace-$ValueDifference
-   #         Write-Host "Difference in value is: $ValueDifference"
-            if ($FreeSpaceDifference -ge 0){
-                $Global:SizeofFreeSpace -= $ValueDifference 
-                $Global:SizeofFreeSpace_Pixels = $Global:SizeofFreeSpace * $Global:PartitionBarPixelperKB
-                $Global:SizeofFAT32 = [double]$WPF_UI_FAT32Size_Value.Text*1024*1024
-                $Global:SizeofFAT32_Pixels = $Global:SizeofFAT32 * $Global:PartitionBarPixelperKB
-                $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Global:SizeofFreeSpace_Pixels 
-                $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width = $Global:SizeofFAT32_Pixels
-                $WPF_UI_FAT32Size_Value.Background = 'White'                
-            }
-            else{
-   #             Write-host 'Not enough free space for change!'
-                $WPF_UI_FAT32Size_Value.Background = 'Red'
-            }
+    if (-not ($WPF_UI_FAT32Size_Value.Text -match "^[\d\.]+$")){
+        $WPF_UI_FAT32Size_Value.Background = 'Red'
+    }       
+    elseif (((([Double]$WPF_UI_FAT32Size_Value.Text)*1024*1024) -le $Global:FAT32Maximum) -and ((([Double]$WPF_UI_FAT32Size_Value.Text)*1024*1024) -ge $Global:FAT32Minimum)){
+        $ValueDifference = ([double]$WPF_UI_FAT32Size_Value.Text*1024*1024-$Global:SizeofFAT32) 
+        $FreeSpaceDifference = $Global:SizeofFreeSpace-$ValueDifference
+        if ($FreeSpaceDifference -ge 0){
+            $Global:SizeofFreeSpace -= $ValueDifference 
+            $Global:SizeofFreeSpace_Pixels = $Global:SizeofFreeSpace * $Global:PartitionBarPixelperKB
+            $Global:SizeofFAT32 = [double]$WPF_UI_FAT32Size_Value.Text*1024*1024
+            $Global:SizeofFAT32_Pixels = $Global:SizeofFAT32 * $Global:PartitionBarPixelperKB
+            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Global:SizeofFreeSpace_Pixels 
+            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width = $Global:SizeofFAT32_Pixels
+            $WPF_UI_FAT32Size_Value.Background = 'White'                
+        }
+        else{
+            $WPF_UI_FAT32Size_Value.Background = 'Red'
+        }
     }
     else{
         $WPF_UI_FAT32Size_Value.Background = 'Red'
@@ -799,31 +934,29 @@ $WPF_UI_FAT32Size_Value.add_LostFocus({
 })
 
 $WPF_UI_WorkbenchSize_Value.add_LostFocus({
-    if ($WPF_UI_WorkbenchSize_Value.Text -match "^[\d\.]+$"){
-            $ValueDifference = ([double]$WPF_UI_WorkbenchSize_Value.Text*1024*1024-$global:SizeofPartition_System) 
-            $FreeSpaceDifference = $Global:SizeofFreeSpace-$ValueDifference
-    #        Write-Host "Difference in value is: $ValueDifference"
-            if ($FreeSpaceDifference -ge 0){
-                $Global:SizeofFreeSpace -= $ValueDifference 
-                $Global:SizeofFreeSpace_Pixels = $Global:SizeofFreeSpace * $Global:PartitionBarPixelperKB
-                $global:SizeofPartition_System= [double]$WPF_UI_WorkbenchSize_Value.Text*1024*1024
-                $global:SizeofPartition_System_Pixels = $global:SizeofPartition_System* $Global:PartitionBarPixelperKB
-                $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Global:SizeofFreeSpace_Pixels 
-                $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width = $global:SizeofPartition_System_Pixels
-                $WPF_UI_WorkbenchSize_Value.Background = 'White'                
-            }
-            else{
-     #           Write-host 'Not enough free space for change!'
-                $WPF_UI_WorkbenchSize_Value.Background = 'Red'
-            }
-    }
-    else{
+    if (-not ($WPF_UI_WorkbenchSize_Value.Text -match "^[\d\.]+$")){
+        $WPF_UI_WorkbenchSize_Value.Background = 'Red'
+    } 
+    elseif (((([double]$WPF_UI_WorkbenchSize_Value.Text)*1024*1024) -le $Global:WorkbenchMaximum) -and ((([double]$WPF_UI_WorkbenchSize_Value.Text)*1024*1024) -ge $Global:WorkbenchMinimum)){
+        $FreeSpaceDifference = $Global:SizeofFreeSpace-$ValueDifference
+        if ($FreeSpaceDifference -ge 0){
+            $Global:SizeofFreeSpace -= $ValueDifference 
+            $Global:SizeofFreeSpace_Pixels = $Global:SizeofFreeSpace * $Global:PartitionBarPixelperKB
+            $global:SizeofPartition_System= [double]$WPF_UI_WorkbenchSize_Value.Text*1024*1024
+            $global:SizeofPartition_System_Pixels = $global:SizeofPartition_System* $Global:PartitionBarPixelperKB
+            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Global:SizeofFreeSpace_Pixels 
+            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width = $global:SizeofPartition_System_Pixels
+            $WPF_UI_WorkbenchSize_Value.Background = 'White'    
+        }
+    }    
+    else {
         $WPF_UI_WorkbenchSize_Value.Background = 'Red'
     }
 })
        
 $WPF_UI_WorkSize_Value.add_LostFocus({
-    if ($WPF_UI_WorkSize_Value.Text -match "^[\d\.]+$"){
+    if (($WPF_UI_WorkSize_Value.Text -match "^[\d\.]+$") -and `
+        ($WPF_UI_WorkSize_Value.Text*1024*1024 -ge $Global:WorkMinimum)){
             $ValueDifference = ([double]$WPF_UI_WorkSize_Value.Text*1024*1024-$global:SizeofPartition_Other) 
             $FreeSpaceDifference = $Global:SizeofFreeSpace-$ValueDifference
      #       Write-Host "Difference in value is: $ValueDifference"
@@ -913,15 +1046,16 @@ $WPF_UI_Start_Button.Add_Click({
     else{
         $Global:WriteImage ='TRUE'
     }
-    
-    if ($Global:AvailableSpaceFilestoTransfer -lt $Global:SpaceThreshold_FilestoTransfer){
-        $Msg = @'
+    if ($Global:TransferLocation){
+        if ($Global:AvailableSpaceFilestoTransfer -lt $Global:SpaceThreshold_FilestoTransfer){
+            $Msg = @'
 You do not have sufficient space on your Work partition to transfer the files!
-        
+            
 Select a location with less space, increase the space on Work, or remove the transfer of files
 '@
-    [System.Windows.MessageBox]::Show($Msg, 'Error - Insufficient Space!',0,48)
-
+        [System.Windows.MessageBox]::Show($Msg, 'Error - Insufficient Space!',0,48)
+    
+        }
     }
 
     if ($Global:AvailableSpace_WorkingFolderDisk -le $Global:SpaceThreshold_WorkingFolderDisk){
@@ -979,12 +1113,15 @@ $WPF_UI_RomPath_Button.Add_Click({
     if ($Global:ROMPath){
         if(Confirm-UIFields){
             $WPF_UI_Start_Button.Background = 'Red'
+            $WPF_UI_Start_Button.Foreground = 'Black'
         }
         else{
             $WPF_UI_Start_Button.Background = 'Green'
+            $WPF_UI_Start_Button.Foreground = 'White'
         }
         $WPF_UI_RomPath_Label.Text = Get-FormattedPathforGUI -PathtoTruncate ($Global:ROMPath)
         $WPF_UI_RomPath_Button.Background = 'Green'
+        $WPF_UI_RomPath_Button.Foreground = 'White'
     }
     else{
         $WPF_UI_RomPath_Label.Text ='No ROM path selected'
@@ -997,16 +1134,20 @@ $WPF_UI_ADFPath_Button.Add_Click({
     if ($Global:ADFPath){
         if(Confirm-UIFields){
             $WPF_UI_Start_Button.Background = 'Red'
+            $WPF_UI_Start_Button.Foreground = 'Black'
         }
         else{
             $WPF_UI_Start_Button.Background = 'Green'
+            $WPF_UI_Start_Button.Foreground = 'White'
         }
         $WPF_UI_ADFPath_Label.Text = Get-FormattedPathforGUI -PathtoTruncate ($Global:ADFPath)
         $WPF_UI_ADFPath_Button.Background = 'Green'
+        $WPF_UI_ADFPath_Button.Foreground = 'White'
     } 
     else{
         $WPF_UI_ADFPath_Label.Text = 'No ADF path selected'
         $WPF_UI_ADFPath_Button.Background = '#FFDDDDDD'
+        $WPF_UI_ADFPath_Button.Foreground = 'Black'
     }
 })
 
@@ -1024,12 +1165,14 @@ $WPF_UI_MigratedFiles_Button.Add_Click({
             $WPF_UI_MigratedPath_Label.Text = Get-FormattedPathforGUI -PathtoTruncate ($Global:TransferLocation)
             $WPF_UI_MigratedFiles_Button.Content = 'Click to remove Transfer Folder'
             $WPF_UI_MigratedFiles_Button.Background = 'Green'
+
         }
         else{
             $Global:SizeofFilestoTransfer = 0
             $WPF_UI_RequiredSpaceValueTransferredFiles_TextBox.Text = ''
             $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = ''
             $WPF_UI_MigratedFiles_Button.Background = '#FFDDDDDD'
+            $WPF_UI_MigratedFiles_Button.Foreground = 'Black'
         }
     }
     else{
@@ -1039,6 +1182,7 @@ $WPF_UI_MigratedFiles_Button.Add_Click({
         $Global:TransferLocation = $null
         $WPF_UI_MigratedFiles_Button.Content = 'Click to set Transfer Folder'
         $WPF_UI_MigratedFiles_Button.Background = '#FFDDDDDD'
+        $WPF_UI_MigratedFiles_Button.Foreground = 'Black'
         $WPF_UI_MigratedPath_Label.Content='No transfer path selected'
     }
 })
@@ -1053,9 +1197,11 @@ $WPF_UI_KickstartVersion_Dropdown.Add_SelectionChanged({
     $Global:KickstartVersiontoUse = $WPF_UI_KickstartVersion_Dropdown.SelectedItem
     if(Confirm-UIFields){
         $WPF_UI_Start_Button.Background = 'Red'
+        $WPF_UI_Start_Button.Foreground = 'Black'
     }
     else{
         $WPF_UI_Start_Button.Background = 'Green'
+        $WPF_UI_Start_Button.Foreground = 'White'
     }
 })
 
@@ -1073,9 +1219,11 @@ $WPF_UI_ScreenMode_Dropdown.Add_SelectionChanged({
     }
     if(Confirm-UIFields){
         $WPF_UI_Start_Button.Background = 'Red'
+        $WPF_UI_Start_Button.Foreground = 'Black'
     }
     else{
         $WPF_UI_Start_Button.Background = 'Green'
+        $WPF_UI_Start_Button.Foreground = 'White'
     }
 })
 
@@ -1083,9 +1231,11 @@ $WPF_UI_NoFileInstall_CheckBox.Add_Checked({
     $Global:SetDiskupOnly = 'TRUE'
     if(Confirm-UIFields){
         $WPF_UI_Start_Button.Background = 'Red'
+        $WPF_UI_Start_Button.Foreground = 'Black'
     }
     else{
         $WPF_UI_Start_Button.Background = 'Green'
+        $WPF_UI_Start_Button.Foreground = 'White'
     }
     If ($Global:HSTDiskName){
         $Global:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $WPF_UI_ImageSize_Slider.Value
@@ -1100,9 +1250,11 @@ $WPF_UI_NoFileInstall_CheckBox.Add_UnChecked({
     $Global:SetDiskupOnly = 'FALSE'
     if(Confirm-UIFields){
         $WPF_UI_Start_Button.Background = 'Red'
+        $WPF_UI_Start_Button.Foreground = 'Black'
     }
     else{
         $WPF_UI_Start_Button.Background = 'Green'
+        $WPF_UI_Start_Button.Foreground = 'White'
     }
     If ($Global:HSTDiskName){
         $Global:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $WPF_UI_ImageSize_Slider.Value
