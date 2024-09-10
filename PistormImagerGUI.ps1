@@ -21,6 +21,41 @@ if ($RunMode -eq 0){
 }
 
 ######################################################################## Functions #################################################################################################################
+function Set-GUISizeofPartitions {
+    param (
+    
+    )
+    $Script:SizeofFAT32_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value
+    $Script:SizeofPartition_System_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value
+    $Script:SizeofPartition_Other_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value
+    $Script:SizeofFreeSpace_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value
+    $Script:SizeofUnallocated_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width.Value 
+    
+    $Overhead_FAT32 = (($Script:SizeofFAT32_Pixels*$Script:PartitionBarKBperPixel)-[math]::floor($Script:SizeofFAT32_Pixels*$Script:PartitionBarKBperPixel))
+    $Overhead_System = (($Script:SizeofPartition_System_Pixels*$Script:PartitionBarKBperPixel)-[math]::floor($Script:SizeofPartition_System_Pixels*$Script:PartitionBarKBperPixel))
+    $Overhead_Other = (($Script:SizeofPartition_Other_Pixels*$Script:PartitionBarKBperPixel)-[math]::floor($Script:SizeofPartition_Other_Pixels*$Script:PartitionBarKBperPixel))
+    $Overhead_FreeSpace = (($Script:SizeofFreeSpace_Pixels*$Script:PartitionBarKBperPixel)-[math]::floor($Script:SizeofFreeSpace_Pixels*$Script:PartitionBarKBperPixel))
+    #$Overhead_Unallocated = (($Script:SizeofUnallocated_Pixels*$Script:PartitionBarKBperPixel)-[math]::floor($Script:Sizeofunallocated_Pixels*$Script:PartitionBarKBperPixel))
+    $Overhead = $Overhead_FAT32 + $Overhead_System + $Overhead_Other + $Overhead_FreeSpace
+    
+    $Script:SizeofFAT32 = [math]::floor($Script:SizeofFAT32_Pixels * $Script:PartitionBarKBperPixel)
+    $Script:SizeofPartition_System  = [math]::floor($Script:SizeofPartition_System_Pixels * $Script:PartitionBarKBperPixel)  
+    $Script:SizeofPartition_Other = [math]::floor($Script:SizeofPartition_Other_Pixels * $Script:PartitionBarKBperPixel)
+    $Script:SizeofFreeSpace  = [math]::floor($Script:SizeofFreeSpace_Pixels * $Script:PartitionBarKBperPixel)
+    $Script:SizeofUnallocated = ($Script:SizeofUnallocated_Pixels * $Script:PartitionBarKBperPixel)+$Overhead       
+    $Script:SizeofImage = $Script:SizeofFAT32 + $Script:SizeofPartition_System + $Script:SizeofPartition_Other + $Script:SizeofFreeSpace      
+
+    if ($Script:SizeofPartition_Other -ge $Script:PFSLimit){
+        $TotalNumberWorkPartitions = [math]::ceiling($Script:SizeofPartition_Other/$Script:PFSLimit)
+        $WPF_UI_WorkSizeNote_Label.Text='*'
+        $WPF_UI_WorkSizeNoteFooter_Label.Text=('Due to PFS limitations, Work will be split into '+$TotalNumberWorkPartitions+' partitions of equal size')
+    }
+    else{
+        $WPF_UI_WorkSizeNote_Label.Text=''
+        $WPF_UI_WorkSizeNoteFooter_Label.Text='' 
+    }
+
+}                                                                                            
 
 function GuiValueIsNumber {
     param (
@@ -193,6 +228,9 @@ function Get-RoundedDiskSize {
     if ($Scale -eq 'GiB'){
         $RoundedSize = ([math]::truncate(($Size/1024/1024)*100)/100)
         
+    }
+    if (($RoundedSize -le 0) -and ($RoundedSize -ge -0.01)){
+        $RoundedSize = 0
     }
     return $RoundedSize
 }
@@ -641,7 +679,7 @@ function Write-Image {
     )
     $arguments ='write "{0}" {1}' -f $SourcePath,$DestinationPath
     Write-InformationMessage -Message 'Opening new window to write image. Please wait for this to finish!'
-    Start-Process -FilePath $HSTImagePathtouse -ArgumentList $arguments
+    Start-Process -NoNewWindow -FilePath $HSTImagePathtouse -ArgumentList $arguments
 }
 
 function Read-AmigaTooltypes {
@@ -1217,6 +1255,113 @@ function Test-ExistenceofFiles {
     }
 }
 
+function Get-ImageSizevsDiskSize {
+    param (
+        $UnallocatedSpace,
+        $ThresholdtocheckMiB,
+        $DiskSizetocheck,
+        $ImageSizetocheck
+    )
+
+    $FormattedImageSize= Get-FormattedSize -Size $ImageSizetocheck
+    $FormattedDiskSize = Get-FormattedSize -Size $DiskSizetocheck
+
+    $Msg_Header ='Check Image Size'    
+    $Msg_Body = @"
+The image size you have selected  ($FormattedImageSize) is smaller than the size of the disk ($FormattedDiskSize). If you are OK to proceed, select 'Yes' otherwise 'No' to return to the interface
+"@
+    if ($UnallocatedSpace -ge $ThresholdtocheckMiB*1024){
+        $ValueofAction = [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,4,48)
+        if ($ValueofAction -eq 'Yes'){
+            return $true
+        }
+        else{
+            return $false
+        }    
+    }
+    else{
+        return $true
+    }
+}
+
+function Get-TransferFileCheck {
+    param (
+        $TransferLocationtocheck,
+        $TransferSpaceThreshold,
+        $TransferAvailableSpace
+    )
+    $Msg_Header ='Error - Insufficient Space!'    
+    $Msg_Body = @"
+You do not have sufficient space on your Work partition to transfer the files!
+            
+Select a location with less space, increase the space on Work, or remove the transfer of files
+"@    
+    if ($TransferLocationtocheck){
+        if ($TransferAvailableSpace -lt $TransferSpaceThreshold){
+            [System.Windows.MessageBox]::Show($Msg, $Msg_Header,0,48)
+            return $false
+        }
+        else{
+            return $true
+        }
+    }
+    else{
+        return $true
+    }
+}
+
+function Get-SpaceCheck {
+    param (
+      $AvailableSpace,
+      $SpaceThreshold
+    )
+    $Msg_Header ='Error - Insufficient Space!'    
+    $Msg_Body = @"
+You do not have sufficient space on your drive to run the tool!
+
+Either select a location with sufficient space or press 'Cancel' to quit the tool
+"@ 
+    if ($AvailableSpace -le $SpaceThreshold){
+        $ValueofAction = [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,1,48)
+        if ($ValueofAction -eq 'Cancel'){
+            $Form_UserInterface.Close() | out-null
+            $Script:ExitType =2
+        }
+        elseif ($ValueofAction -eq 'OK'){
+            $SufficientSpace_Flag =$null
+            do {
+                $Script:WorkingPath = Get-FolderPath -Message 'Select location for Working Path' -RootFolder 'MyComputer'-ShowNewFolderButton
+                $Script:Space_WorkingFolderDisk = (Confirm-DiskSpace -PathtoCheck $Script:WorkingPath)/1kb
+                $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk 
+                if ($Script:AvailableSpace_WorkingFolderDisk -le $Script:SpaceThreshold_WorkingFolderDisk){
+                    $Msg_Header = 'Error - Insufficient Space!'
+                    $Msg_Body = @"
+You still do not have sufficient space on your drive to run the tool!
+                  
+Either select a location with sufficient space or press cancel to quit the tool
+"@    
+                    $ValueofAction = [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,1,48)
+                    if ($ValueofAction -eq 'Cancel'){
+                        $Form_UserInterface.Close() | out-null
+                        $Script:ExitType =2 
+                    }    
+                }
+                else{
+                    $SufficientSpace_Flag = $true    
+                }
+            } until (
+                $SufficientSpace_Flag -eq $true
+            ) 
+            
+            return $true 
+        }
+    }
+    else{
+        $Script:WorkingPath = ($Scriptpath+'Working Folder\') 
+        return $true
+    }      
+}
+
 ### End Functions
 
 ######################################################################### End Functions #############################################################################################################
@@ -1481,7 +1626,7 @@ $inputXML_UserInterface = @"
                 <TextBox x:Name="AvailableSpaceValue_TextBox" HorizontalAlignment="Right" Margin="0,102,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Green" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Right"/>
                 <TextBox x:Name="RequiredSpaceTransferredFiles_TextBox" HorizontalAlignment="Left" Margin="20,28,0,0" TextWrapping="Wrap" Text="Required space for transferred files:" VerticalAlignment="Top" Width="230" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
                 <TextBox x:Name="RequiredSpaceValueTransferredFiles_TextBox" HorizontalAlignment="Left" Margin="288,28,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Right"/>
-                <TextBox x:Name="AvailableSpaceTransferredFiles_TextBox" HorizontalAlignment="Left" Margin="20,49,0,0" TextWrapping="Wrap" Text="Free space is:" VerticalAlignment="Top" Width="230" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" FontWeight="Bold"/>
+                <TextBox x:Name="AvailableSpaceTransferredFiles_TextBox" HorizontalAlignment="Left" Margin="20,49,0,0" TextWrapping="Wrap" Text="Free space after files transferred is:" VerticalAlignment="Top" Width="230" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" FontWeight="Bold"/>
                 <TextBox x:Name="AvailableSpaceValueTransferredFiles_TextBox" HorizontalAlignment="Right" Margin="281,49,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Right"/>
 
           </Grid>
@@ -1732,8 +1877,8 @@ $WPF_UI_DefaultAllocation_Refresh.add_Click({
         $Script:AvailableSpaceFilestoTransfer =  $Script:Space_FilestoTransfer - $Script:SizeofFilestoTransfer    
         
         if ($Script:TransferLocation){
-            $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpaceFilestoTransfer 
-        }            
+            $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpaceFilestoTransfer
+        }
     }
 })
 
@@ -1769,33 +1914,9 @@ $WPF_UI_Fat32Size_Listview.add_SizeChanged({
                                                                                             $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value- `
                                                                                             $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value,4)
 
-        $Script:SizeofFAT32_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value
-        $Script:SizeofPartition_System_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value
-        $Script:SizeofPartition_Other_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value
-        $Script:SizeofFreeSpace_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value
-        $Script:SizeofUnallocated_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width.Value
 
-        $Script:SizeofFAT32 = $Script:SizeofFAT32_Pixels * $Script:PartitionBarKBperPixel
-        $Script:SizeofPartition_System  = $Script:SizeofPartition_System_Pixels * $Script:PartitionBarKBperPixel  
-        $Script:SizeofPartition_Other = $Script:SizeofPartition_Other_Pixels * $Script:PartitionBarKBperPixel
-        $Script:SizeofFreeSpace  = $Script:SizeofFreeSpace_Pixels * $Script:PartitionBarKBperPixel
-        $Script:SizeofUnallocated = $Script:SizeofUnallocated_Pixels * $Script:PartitionBarKBperPixel
+        Set-GUISizeofPartitions
         
-        $Script:SizeofImage = $Script:SizeofFAT32 + $Script:SizeofPartition_System + $Script:SizeofPartition_Other + $Script:SizeofFreeSpace      
-#       Write-host ('FAT32 Size (Pixels) changed to: '+$Script:SizeofFAT32_Pixels)
-        $Script:SizeofFAT32 = $Script:SizeofFAT32_Pixels * $Script:PartitionBarKBperPixel
-        #        Write-host ('FAT32 Size (KiB) changed to: '+$Script:SizeofFAT32)
-        
-        if ($Script:SizeofPartition_Other -ge $Script:PFSLimit){
-            $TotalNumberWorkPartitions = [math]::ceiling($Script:SizeofPartition_Other/$Script:PFSLimit)
-            $WPF_UI_WorkSizeNote_Label.Text='*'
-            $WPF_UI_WorkSizeNoteFooter_Label.Text=('Due to PFS limitations, Work will be split into '+$TotalNumberWorkPartitions+' partitions of equal size')
-        }
-        else{
-            $WPF_UI_WorkSizeNote_Label.Text=''
-            $WPF_UI_WorkSizeNoteFooter_Label.Text='' 
-        }
-
         Set-GUIPartitionValues
                 
         $Script:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Script:SizeofImage
@@ -1808,7 +1929,7 @@ $WPF_UI_Fat32Size_Listview.add_SizeChanged({
         $Script:AvailableSpaceFilestoTransfer =  $Script:Space_FilestoTransfer - $Script:SizeofFilestoTransfer    
         
         if ($Script:TransferLocation){
-            $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpaceFilestoTransfer 
+            $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpaceFilestoTransfer
         }        
     }
 })   
@@ -1845,34 +1966,8 @@ $WPF_UI_WorkbenchSize_Listview.add_SizeChanged({
                                                                                             $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value- `
                                                                                             $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value,4)
 
-        $Script:SizeofFAT32_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value
-        $Script:SizeofPartition_System_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value
-        $Script:SizeofPartition_Other_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value
-        $Script:SizeofFreeSpace_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value
-        $Script:SizeofUnallocated_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width.Value
-
-        $Script:SizeofFAT32 = $Script:SizeofFAT32_Pixels * $Script:PartitionBarKBperPixel
-        $Script:SizeofPartition_System  = $Script:SizeofPartition_System_Pixels * $Script:PartitionBarKBperPixel  
-        $Script:SizeofPartition_Other = $Script:SizeofPartition_Other_Pixels * $Script:PartitionBarKBperPixel
-        $Script:SizeofFreeSpace  = $Script:SizeofFreeSpace_Pixels * $Script:PartitionBarKBperPixel
-        $Script:SizeofUnallocated = $Script:SizeofUnallocated_Pixels * $Script:PartitionBarKBperPixel
-
-        $Script:SizeofImage = $Script:SizeofFAT32 + $Script:SizeofPartition_System + $Script:SizeofPartition_Other + $Script:SizeofFreeSpace
-
-#        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = Expand-FreeSpace
-#        Write-host ('Workbench Size (Pixels) changed to: '+$Script:SizeofPartition_System_Pixels)
-        $Script:SizeofPartition_System  = $Script:SizeofPartition_System_Pixels * $Script:PartitionBarKBperPixel
- #       Write-host ('Workbench Size (KiB) changed to: '+$Script:SizeofPartition_System)
-        
-        if ($Script:SizeofPartition_Other -ge $Script:PFSLimit){
-            $TotalNumberWorkPartitions = [math]::ceiling($Script:SizeofPartition_Other/$Script:PFSLimit)
-            $WPF_UI_WorkSizeNote_Label.Text='*'
-            $WPF_UI_WorkSizeNoteFooter_Label.Text=('Due to PFS limitations, Work will be split into '+$TotalNumberWorkPartitions+' partitions of equal size')
-        }
-        else{
-            $WPF_UI_WorkSizeNote_Label.Text=''
-            $WPF_UI_WorkSizeNoteFooter_Label.Text='' 
-        }
+       
+        Set-GUISizeofPartitions
 
         Set-GUIPartitionValues       
         
@@ -1886,7 +1981,7 @@ $WPF_UI_WorkbenchSize_Listview.add_SizeChanged({
         $Script:AvailableSpaceFilestoTransfer =  $Script:Space_FilestoTransfer - $Script:SizeofFilestoTransfer    
         
         if ($Script:TransferLocation){
-            $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpaceFilestoTransfer 
+            $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpaceFilestoTransfer
         }        
     }   
 })
@@ -1924,34 +2019,8 @@ $WPF_UI_WorkSize_Listview.add_SizeChanged({
                                                                                             $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value- `
                                                                                             $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value,4)   
 
-        $Script:SizeofFAT32_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value
-        $Script:SizeofPartition_System_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value
-        $Script:SizeofPartition_Other_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value
-        $Script:SizeofFreeSpace_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value
-        $Script:SizeofUnallocated_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width.Value
-
-        $Script:SizeofFAT32 = $Script:SizeofFAT32_Pixels * $Script:PartitionBarKBperPixel
-        $Script:SizeofPartition_System  = $Script:SizeofPartition_System_Pixels * $Script:PartitionBarKBperPixel  
-        $Script:SizeofPartition_Other = $Script:SizeofPartition_Other_Pixels * $Script:PartitionBarKBperPixel
-        $Script:SizeofFreeSpace  = $Script:SizeofFreeSpace_Pixels * $Script:PartitionBarKBperPixel
-        $Script:SizeofUnallocated = $Script:SizeofUnallocated_Pixels * $Script:PartitionBarKBperPixel
-
-        $Script:SizeofImage = $Script:SizeofFAT32 + $Script:SizeofPartition_System + $Script:SizeofPartition_Other + $Script:SizeofFreeSpace
-
-#        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = Expand-FreeSpace
- #       Write-host ('Work Size (Pixels) changed to: '+$Script:SizeofPartition_Other_Pixels)
-        $Script:SizeofPartition_Other = $Script:SizeofPartition_Other_Pixels * $Script:PartitionBarKBperPixel
-  #      Write-host ('Work Size (KiB) changed to: '+$Script:SizeofPartition_Other)
-  
-      if ($Script:SizeofPartition_Other -ge $Script:PFSLimit){
-        $TotalNumberWorkPartitions = [math]::ceiling($Script:SizeofPartition_Other/$Script:PFSLimit)
-        $WPF_UI_WorkSizeNote_Label.Text='*'
-        $WPF_UI_WorkSizeNoteFooter_Label.Text=('Due to PFS limitations, Work will be split into '+$TotalNumberWorkPartitions+' partitions of equal size')
-    }
-    else{
-        $WPF_UI_WorkSizeNote_Label.Text=''
-        $WPF_UI_WorkSizeNoteFooter_Label.Text='' 
-    }
+   
+    Set-GUISizeofPartitions                                                                                                
   
     Set-GUIPartitionValues
    
@@ -1965,7 +2034,7 @@ $WPF_UI_WorkSize_Listview.add_SizeChanged({
         $Script:AvailableSpaceFilestoTransfer =  $Script:Space_FilestoTransfer - $Script:SizeofFilestoTransfer    
         
         if ($Script:TransferLocation){
-            $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpaceFilestoTransfer 
+            $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpaceFilestoTransfer
         }        
     }   
 })
@@ -1992,33 +2061,9 @@ $WPF_UI_FreeSpace_Listview.add_SizeChanged({
                                                                                                 $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value,4)
         }     
 
-        $Script:SizeofFAT32_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value
-        $Script:SizeofPartition_System_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value
-        $Script:SizeofPartition_Other_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value
-        $Script:SizeofFreeSpace_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value
-        $Script:SizeofUnallocated_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width.Value
-
-        $Script:SizeofFAT32 = $Script:SizeofFAT32_Pixels * $Script:PartitionBarKBperPixel
-        $Script:SizeofPartition_System  = $Script:SizeofPartition_System_Pixels * $Script:PartitionBarKBperPixel  
-        $Script:SizeofPartition_Other = $Script:SizeofPartition_Other_Pixels * $Script:PartitionBarKBperPixel
-        $Script:SizeofFreeSpace  = $Script:SizeofFreeSpace_Pixels * $Script:PartitionBarKBperPixel
-        $Script:SizeofUnallocated = $Script:SizeofUnallocated_Pixels * $Script:PartitionBarKBperPixel
-
-        $Script:SizeofImage = $Script:SizeofFAT32 + $Script:SizeofPartition_System + $Script:SizeofPartition_Other + $Script:SizeofFreeSpace
-
-   #     Write-host ('Free Space (Pixels) changed to: '+$Script:SizeofFreeSpace_Pixels)
-   #     Write-host ('Free Space Size (KiB) changed to: '+$Script:SizeofFreeSpace)
-
-        if ($Script:SizeofPartition_Other -ge $Script:PFSLimit){
-            $TotalNumberWorkPartitions = [math]::ceiling($Script:SizeofPartition_Other/$Script:PFSLimit)
-            $WPF_UI_WorkSizeNote_Label.Text='*'
-            $WPF_UI_WorkSizeNoteFooter_Label.Text=('Due to PFS limitations, Work will be split into '+$TotalNumberWorkPartitions+' partitions of equal size')
-        }
-        else{
-            $WPF_UI_WorkSizeNote_Label.Text=''
-            $WPF_UI_WorkSizeNoteFooter_Label.Text='' 
-        }
-
+        
+        Set-GUISizeofPartitions 
+        
         Set-GUIPartitionValues       
 
         $Script:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Script:SizeofImage
@@ -2031,7 +2076,7 @@ $WPF_UI_FreeSpace_Listview.add_SizeChanged({
         $Script:AvailableSpaceFilestoTransfer =  $Script:Space_FilestoTransfer - $Script:SizeofFilestoTransfer    
         
         if ($Script:TransferLocation){
-            $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpaceFilestoTransfer 
+            $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpaceFilestoTransfer
         }        
 
     }    
@@ -2047,32 +2092,8 @@ $WPF_UI_Unallocated_Listview.add_SizeChanged({
             $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = $Script:SizeofUnallocated_Pixels_Minimum
         }
 
-        $Script:SizeofFAT32_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value
-        $Script:SizeofPartition_System_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value
-        $Script:SizeofPartition_Other_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value
-        $Script:SizeofFreeSpace_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value
-        $Script:SizeofUnallocated_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width.Value
-
-        $Script:SizeofFAT32 = $Script:SizeofFAT32_Pixels * $Script:PartitionBarKBperPixel
-        $Script:SizeofPartition_System  = $Script:SizeofPartition_System_Pixels * $Script:PartitionBarKBperPixel  
-        $Script:SizeofPartition_Other = $Script:SizeofPartition_Other_Pixels * $Script:PartitionBarKBperPixel
-        $Script:SizeofFreeSpace  = $Script:SizeofFreeSpace_Pixels * $Script:PartitionBarKBperPixel
-        $Script:SizeofUnallocated = $Script:SizeofUnallocated_Pixels * $Script:PartitionBarKBperPixel
-
-        $Script:SizeofImage = $Script:SizeofFAT32 + $Script:SizeofPartition_System + $Script:SizeofPartition_Other + $Script:SizeofFreeSpace
-
-     #   Write-host ('Unallocated Space (Pixels) changed to: '+$Script:SizeofUnallocated_Pixels)
-       # Write-host ('Unallocated (KiB) changed to: '+$Script:SizeofUnallocated)
-
-       if ($Script:SizeofPartition_Other -ge $Script:PFSLimit){
-        $TotalNumberWorkPartitions = [math]::ceiling($Script:SizeofPartition_Other/$Script:PFSLimit)
-        $WPF_UI_WorkSizeNote_Label.Text='*'
-        $WPF_UI_WorkSizeNoteFooter_Label.Text=('Due to PFS limitations, Work will be split into '+$TotalNumberWorkPartitions+' partitions of equal size')
-    }
-    else{
-        $WPF_UI_WorkSizeNote_Label.Text=''
-        $WPF_UI_WorkSizeNoteFooter_Label.Text='' 
-    }
+        
+    Set-GUISizeofPartitions               
 
     Set-GUIPartitionValues     
         
@@ -2394,6 +2415,7 @@ $WPF_UI_ImageSize_Value.add_LostFocus({
 })
 
 $WPF_UI_Start_Button.Add_Click({
+    $ErrorCount = 0
     $Script:SSID = $WPF_UI_SSID_Textbox.Text
     $Script:WifiPassword = $WPF_UI_Password_Textbox.Text
     if ($WPF_UI_DiskWrite_CheckBox.IsChecked){
@@ -2402,63 +2424,29 @@ $WPF_UI_Start_Button.Add_Click({
     else{
         $Script:WriteImage ='TRUE'
     }
-    if ($Script:TransferLocation){
-        if ($Script:AvailableSpaceFilestoTransfer -lt $Script:SpaceThreshold_FilestoTransfer){
-            $Msg = @'
-You do not have sufficient space on your Work partition to transfer the files!
-            
-Select a location with less space, increase the space on Work, or remove the transfer of files
-'@
-        [System.Windows.MessageBox]::Show($Msg, 'Error - Insufficient Space!',0,48)
-    
-        }
+    if (Get-TransferFileCheck -TransferLocationtocheck $Script:TransferLocation -TransferSpaceThreshold $Script:SpaceThreshold_FilestoTransfer -TransferAvailableSpace $Script:AvailableSpaceFilestoTransfer){
+        $ErrorCount = $ErrorCount
     }
-
-    if ($Script:AvailableSpace_WorkingFolderDisk -le $Script:SpaceThreshold_WorkingFolderDisk){
-        $Msg = @'
-You do not have sufficient space on your drive to run the tool!
-
-Either select a location with sufficient space or press cancel to quit the tool
-'@
-        $ValueofAction = [System.Windows.MessageBox]::Show($Msg, 'Error - Insufficient Space!',1,48)
-        if ($ValueofAction -eq 'OK'){
-            $SufficientSpace_Flag =$null
-            do {
-                $Script:WorkingPath = Get-FolderPath -Message 'Select location for Working Path' -RootFolder 'MyComputer'-ShowNewFolderButton
-                $Script:Space_WorkingFolderDisk = (Confirm-DiskSpace -PathtoCheck $Script:WorkingPath)/1kb
-                $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk 
-                if ($Script:AvailableSpace_WorkingFolderDisk -le $Script:SpaceThreshold_WorkingFolderDisk){
-                    $Msg = @'
-You still do not have sufficient space on your drive to run the tool!
-                  
-Either select a location with sufficient space or press cancel to quit the tool
-'@    
-                    $ValueofAction = [System.Windows.MessageBox]::Show($Msg, 'Error - Insufficient Space!',1,48)
-                    if ($ValueofAction -eq 'Cancel'){
-                        $Form_UserInterface.Close() | out-null
-                        $Script:ExitType =2 
-                    }    
-                }
-                else{
-                    $SufficientSpace_Flag = $true    
-                }
-            } until (
-                $SufficientSpace_Flag -eq $true
-            )        
-        }
-        elseif ($ValueofAction -eq 'Cancel'){
-            $Form_UserInterface.Close() | out-null
-            $Script:ExitType =2
-        }      
-    } 
-    else {
-        $Script:WorkingPath = ($Scriptpath+'Working Folder\') 
+    else{
+        $ErrorCount += 1
     }
+    if (Get-SpaceCheck -AvailableSpace $Script:AvailableSpace_WorkingFolderDisk -SpaceThreshold $Script:SpaceThreshold_WorkingFolderDisk){
+        $ErrorCount = $ErrorCount
+    }
+    else{
+        $ErrorCount += 1  
+    }
+    if (Get_ImageSizevsDiskSize -UnallocatedSpace $Script:SizeofUnallocated -ThresholdtocheckMiB 10 -DiskSizetocheck $Script:SizeofDisk -ImageSizetocheck $Script:SizeofImage){
+        $ErrorCount = $ErrorCount
+    }
+    else{
+        $ErrorCount += 1  
+    }    
     $ErrorCheck = Confirm-UIFields
     if ($ErrorCheck){
         [System.Windows.MessageBox]::Show($ErrorCheck, 'Error! Go back and correct')
     }
-    else {
+    elseif ($ErrorCount -eq 0) {
         $Form_UserInterface.Close() | out-null
         $Script:ExitType = 1
     }
@@ -2762,6 +2750,7 @@ elseif (-not ($Script:ExitType-eq 1)){
     exit
 }
 
+$Script:SizeofImage_HST = $Script:SizeofImage-($Script:SizeofFAT32*1024)
 
 Write-InformationMessage -Message "Running Script to perform selected functions. Options selected are:"
 Write-InformationMessage -Message "DiskName to Write: $Script:HSTDiskName"  
@@ -2822,8 +2811,6 @@ if ($Script:SetDiskupOnly = 'TRUE'){
 # Check Integrity of CSVs
 
 $StartDateandTime = (Get-Date -Format HH:mm:ss)
-
-$Script:SizeofImage_HST = $Script:SizeofImage-($Script:SizeofFAT32*1024)
 
 Write-InformationMessage -Message "Starting execution at $StartDateandTime"
 
