@@ -193,7 +193,6 @@ function Get-FormattedPathforGUI {
     return $Output
 }
 
-
 function Get-TransferredFilesSpaceRequired {
     param (
         $FoldertoCheck
@@ -1437,9 +1436,9 @@ Image Size (KiB): $Script:SizeofImage
 
 Image Size HST (KiB): $Script:SizeofImage_HST
 
-Workbench Size: $Script:SizeofPartition_System
+Workbench Size (KiB): $Script:SizeofPartition_System
 
-Work Size: $Script:SizeofPartition_Other
+Work Size (KiB): $Script:SizeofPartition_Other
 
 Write Image to Disk: $Script:WriteImage
 
@@ -2867,6 +2866,8 @@ $AvailableADFstoReport
         }      
     } 
     if ($ErrorCount -eq 0) {
+        $Script:SizeofImage_HST = (($Script:SizeofImage-($Script:SizeofFAT32)).ToString()+'kb')
+        $Script:SizeofFAT32=$Script:SizeofFAT32/1024
         Write-GUIReporttoUseronOptions
         $Form_UserInterface.Close() | out-null
         $Script:ExitType = 1
@@ -3009,15 +3010,12 @@ elseif (-not ($Script:ExitType-eq 1)){
     exit
 }
 
-$Script:SizeofImage_HST = $Script:SizeofImage-($Script:SizeofFAT32)
-$Script:SizeofFAT32=$Script:SizeofFAT32/1024
-
 #[System.Windows.Window].GetEvents() | select Name, *Method, EventHandlerType
 
 #[System.Windows.Controls.GridSplitter].GetEvents() | Select-Object Name, *Method, EventHandlerType
 #[System.Windows.Controls.ListView].GetEvents() | Select-Object Name, *Method, EventHandlerType
 
-<#
+
 ##### Script
 
 $UnLZXURL='http://aminet.net/util/arc/W95unlzx.lha'
@@ -3036,7 +3034,7 @@ Foreach ($CSVHash in $CSVHashes){
 
 #Generate CSV MD5 Hashes - End
 
-$Script:TotalSections = 20
+$Script:TotalSections = 18
 
 $Script:CurrentSection = 1
 
@@ -3168,73 +3166,6 @@ Write-TaskCompleteMessage -Message 'Performing Cleanup - Complete!'
 
 ### End Clean up
 
-# ### Determine Kickstart Rom Path
-
-# #Update-OutputWindow -OutputConsole_Title_Text 'Determining Kickstarts to Use' -ProgressbarValue_Overall 7 -ProgressbarValue_Overall_Text '7%'
-
-# Write-StartTaskMessage -Message 'Determining Kickstarts to Use'
-
-# $FoundKickstarttoUse = Compare-KickstartHashes -PathtoKickstartHashes ($InputFolder+'RomHashes.csv') -PathtoKickstartFiles $Script:ROMPath -KickstartVersion $Script:KickstartVersiontoUse
-
-# $KickstartPath = $FoundKickstarttoUse.KickstartPath
-
-# if (-not($KickstartPath)){
-#     Write-ErrorMessage -Message "Error! No Kickstart file found!"
-#     exit
-# } 
-
-# $KickstartNameFAT32=$FoundKickstarttoUse.Fat32Name
-
-# Write-InformationMessage -Message ('Kickstart to be used is: '+$KickstartPath)
-
-# Write-TaskCompleteMessage -Message 'Determining Kickstarts to Use - Complete!'
-
-if ($Script:SetDiskupOnly -eq 'FALSE'){
-
-    Write-StartTaskMessage -Message 'Determining ADFs to Use'
-    
-    $AvailableADFs = Compare-ADFHashes -PathtoADFFiles $Script:ADFPath -PathtoADFHashes ($InputFolder+'ADFHashes.csv') -KickstartVersion $Script:KickstartVersiontoUse -PathtoListofInstallFiles ($InputFolder+'ListofInstallFiles.csv') 
-    
-    if (-not ($AvailableADFs)){
-        Write-ErrorMessage -Message "One or more ADF files is missing!"
-        exit
-    } 
-    
-    $ListofInstallFiles = Import-Csv ($InputFolder+'ListofInstallFiles.csv') -Delimiter ';' |  Where-Object {$_.Kickstart_Version -eq $Script:KickstartVersiontoUse} | Sort-Object -Property 'InstallSequence'
-    
-    $ListofInstallFiles | Add-Member -NotePropertyName Path -NotePropertyValue $null
-    $ListofInstallFiles | Add-Member -NotePropertyName DrivetoInstall_VolumeName -NotePropertyValue $null
-    
-    foreach ($InstallFileLine in $ListofInstallFiles) {
-        if ($InstallFileLine.DrivetoInstall -eq 'System'){
-            $InstallFileLine.DrivetoInstall_VolumeName = $VolumeName_System
-        }
-        foreach ($MatchedADF in $AvailableADFs ) {
-            if ($InstallFileLine.ADF_Name -eq $MatchedADF.ADF_Name){
-                $InstallFileLine.Path=$MatchedADF.PathtoADF
-            }
-            if ($MatchedADF.ADF_Name -match "GlowIcons"){
-                $GlowIconsADF=$MatchedADF.PathtoADF
-            }
-            if ($MatchedADF.ADF_Name -match "Storage"){
-                $StorageADF=$MatchedADF.PathtoADF
-            }
-            if ($MatchedADF.ADF_Name -match "Install"){
-                $InstallADF=$MatchedADF.PathtoADF
-            }
-        }    
-    }
-    
-    Write-InformationMessage -Message 'ADF install images to be used are:'
-    $ListofInstallFiles |  Select-Object Path,FriendlyName -Unique | ForEach-Object {
-        Write-InformationMessage -Message ($_.FriendlyName+' ('+$_.Path+')')
-    } 
-    
-    Write-TaskCompleteMessage -Message 'Determining ADFs to Use - Complete!'
-
-}
-
-
 ### Download HST-Imager and HST-Amiga
 
 Write-StartTaskMessage -Message 'Downloading HST Packages'
@@ -3253,7 +3184,7 @@ if ($Script:SetDiskupOnly -eq 'FALSE'){
         Write-ErrorMessage -Message 'Error downloading HST-Amiga! Cannot continue!'
         exit
     }
-}Un
+}
 
 Write-TaskCompleteMessage -Message 'Downloading HST Packages - Complete!'
 
@@ -3332,7 +3263,7 @@ if ($Script:SetDiskupOnly -eq 'FALSE'){
 
 Write-StartTaskMessage -Message 'Preparing Amiga Image'
 
-if (-not (Start-HSTImager -Command "Blank" -DestinationPath ($LocationofImage+$NameofImage) -ImageSize $SizeofImagetouse -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+if (-not (Start-HSTImager -Command "Blank" -DestinationPath ($LocationofImage+$NameofImage) -ImageSize $Script:SizeofImage_HST -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
     exit
 } 
 if (-not (Start-HSTImager -Command "rdb init" -DestinationPath ($LocationofImage+$NameofImage) -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
@@ -3960,4 +3891,3 @@ $EndDateandTime = (Get-Date -Format HH:mm:ss)
 $ElapsedTime = (New-TimeSpan -Start $StartDateandTime -End $EndDateandTime).TotalSeconds
 
 Write-Host "Started at: $StartDateandTime Finished at: $EndDateandTime. Total time to run (in seconds) was: $ElapsedTime" 
-#>
