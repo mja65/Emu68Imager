@@ -427,27 +427,49 @@ function Confirm-UIFields {
     param (
         
     )
+    $NumberofErrors = 0
     $ErrorMessage = $null
     if (-not($Script:HSTDiskName)){
         $ErrorMessage += 'You have not selected a disk'+"`n"
+        $NumberofErrors += 1
     }
     if (-not($WPF_UI_KickstartVersion_Dropdown.SelectedItem)) {
         $ErrorMessage += 'You have not populated a Kickstart version'+"`n"
+        $NumberofErrors += 1
     }
     if (-not($WPF_UI_ScreenMode_Dropdown.SelectedItem)) {
         $ErrorMessage += 'You have not populated a sceenmode'+"`n"
+        $NumberofErrors += 1
     }
     if (-not($Script:ROMPath )) {
         $ErrorMessage += 'You have not populated a Rom Path'+"`n"
+        $NumberofErrors += 1
     }
     if ($Script:SetDiskupOnly -ne 'TRUE'){
         if (-not($Script:ADFPath )) {
             $ErrorMessage += 'You have not populated an ADF Path'+"`n"
+            $NumberofErrors += 1
         }          
     }
-    return $ErrorMessage
+    if ($NumberofErrors -gt 0){
+        return $ErrorMessage
+    }
+    else{
+        return
+    }
 }
 
+function Confirm-FreeSpacetoRunTool {
+    param (
+        
+    )
+    if (($Script:RequiredSpace_WorkingFolderDisk -ne 0) -and ($Script:AvailableSpace_WorkingFolderDisk -ge $Script:SpaceThreshold_WorkingFolderDisk)){
+        return $true
+    } 
+    else{
+        return $false
+    }
+}
 
 Function Get-FormVariables{
     if ($Script:ReadmeDisplay -ne $true){Write-host "If you need to reference this display again, run Get-FormVariables" -ForegroundColor Yellow;$Script:ReadmeDisplay=$true}
@@ -1615,21 +1637,20 @@ $inputXML_UserInterface = @"
               <CheckBox x:Name="NoFileInstall_CheckBox" Content="Only set disk up. Do not install packages" HorizontalAlignment="Left" Margin="2,6,0,0" VerticalAlignment="Top"/>
           </Grid>
       </GroupBox>
-      <Button x:Name="Start_Button" Content="Run Tool" HorizontalAlignment="Center" Margin="0,489,0,0" VerticalAlignment="Top" Width="880" Height="38" Background = "Red" Foreground="Black" BorderBrush="Transparent"/>
-      <GroupBox x:Name="Space_GroupBox" Header="Space Requirements" Height="150" Background="Transparent" Margin="0,311,10,0" Width="400" VerticalAlignment="Top" HorizontalAlignment="Right">
-          <Grid>
-
+      <Button x:Name="Start_Button" Content="Missing information! Press to see further details" HorizontalAlignment="Center" Margin="0,489,0,0" VerticalAlignment="Top" Width="880" Height="38" Background = "Red" Foreground="Black" BorderBrush="Transparent"/>
+      <GroupBox x:Name="Space_GroupBox" Header="Space Requirements" Height="170" Background="Transparent" Margin="0,311,10,0" Width="400" VerticalAlignment="Top" HorizontalAlignment="Right">
+    <Grid>
     
-                <TextBox x:Name="RequiredSpace_TextBox" HorizontalAlignment="Left" Margin="20,82,0,0" TextWrapping="Wrap" Text="Required space to run tool is:" VerticalAlignment="Top" Width="230" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-                <TextBox x:Name="RequiredSpaceValue_TextBox" HorizontalAlignment="Left" Margin="288,82,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Right"/>
-                <TextBox x:Name="AvailableSpace_TextBox" HorizontalAlignment="Left" Margin="20,102,0,0" TextWrapping="Wrap" Text="Free space after tool is run:" VerticalAlignment="Top" Width="230" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" FontWeight="Bold"/>
-                <TextBox x:Name="AvailableSpaceValue_TextBox" HorizontalAlignment="Right" Margin="0,102,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Green" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Right"/>
-                <TextBox x:Name="RequiredSpaceTransferredFiles_TextBox" HorizontalAlignment="Left" Margin="20,28,0,0" TextWrapping="Wrap" Text="Required space for transferred files:" VerticalAlignment="Top" Width="230" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-                <TextBox x:Name="RequiredSpaceValueTransferredFiles_TextBox" HorizontalAlignment="Left" Margin="288,28,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Right"/>
-                <TextBox x:Name="AvailableSpaceTransferredFiles_TextBox" HorizontalAlignment="Left" Margin="20,49,0,0" TextWrapping="Wrap" Text="Free space after files transferred is:" VerticalAlignment="Top" Width="230" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" FontWeight="Bold"/>
-                <TextBox x:Name="AvailableSpaceValueTransferredFiles_TextBox" HorizontalAlignment="Right" Margin="281,49,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Right"/>
-
-          </Grid>
+                <TextBox x:Name="RequiredSpace_TextBox" HorizontalAlignment="Left" Margin="20,57,0,0" TextWrapping="Wrap" Text="Required space to run tool is:" VerticalAlignment="Top" Width="230" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+                <TextBox x:Name="RequiredSpaceValue_TextBox" HorizontalAlignment="Left" Margin="288,57,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Right"/>
+                <TextBox x:Name="AvailableSpace_TextBox" HorizontalAlignment="Left" Margin="20,77,0,0" TextWrapping="Wrap" Text="Free space after tool is run:" VerticalAlignment="Top" Width="230" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" FontWeight="Bold"/>
+                <TextBox x:Name="AvailableSpaceValue_TextBox" HorizontalAlignment="Right" Margin="0,77,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Green" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Right"/>
+                <TextBox x:Name="RequiredSpaceTransferredFiles_TextBox" HorizontalAlignment="Left" Margin="20,10,0,0" TextWrapping="Wrap" Text="Required space for transferred files:" VerticalAlignment="Top" Width="230" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+                <TextBox x:Name="RequiredSpaceValueTransferredFiles_TextBox" HorizontalAlignment="Left" Margin="288,10,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Right"/>
+                <TextBox x:Name="AvailableSpaceTransferredFiles_TextBox" HorizontalAlignment="Left" Margin="20,31,0,0" TextWrapping="Wrap" Text="Free space after files transferred is:" VerticalAlignment="Top" Width="230" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" FontWeight="Bold"/>
+                <TextBox x:Name="AvailableSpaceValueTransferredFiles_TextBox" HorizontalAlignment="Right" Margin="0,31,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Right"/>
+                <TextBox x:Name="RequiredSpaceMessage_TextBox" HorizontalAlignment="Left" Margin="20,107,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="358" BorderBrush="Transparent" Foreground="Red" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" Focusable="False" Height="35" IsHitTestVisible="False"/>
+         </Grid>
 
       </GroupBox>
       <TextBox x:Name="WorkSizeNoteFooter_Label" HorizontalAlignment="Left" Margin="15,466,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="608" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
@@ -1788,6 +1809,22 @@ $WPF_UI_MediaSelect_Dropdown.Add_SelectionChanged({
         }
         
         Set-GUIPartitionValues
+
+        if (Confirm-UIFields){
+            $WPF_UI_Start_Button.Background = 'Red'
+            $WPF_UI_Start_Button.Foreground = 'Black'
+            $WPF_UI_Start_Button.Content = 'Missing information! Press to see further details'
+        }
+        elseif (-not (Confirm-FreeSpacetoRunTool)){
+            $WPF_UI_Start_Button.Background = 'Yellow'
+            $WPF_UI_Start_Button.Foreground = 'Black'
+            $WPF_UI_Start_Button.Content = 'Run Tool (with prompt for new drive and folder from which to run the tool)'
+        }
+        else{
+            $WPF_UI_Start_Button.Background = 'Green'
+            $WPF_UI_Start_Button.Foreground = 'White'
+            $WPF_UI_Start_Button.Content = 'Run Tool'
+        }
 
     }
 })
@@ -2199,14 +2236,20 @@ $WPF_UI_AvailableSpaceValue_TextBox.Add_TextChanged({
     if ($Script:AvailableSpace_WorkingFolderDisk -le ($Script:SpaceThreshold_WorkingFolderDisk*2)){
         $WPF_UI_AvailableSpaceValue_TextBox.Background = "Yellow"
         $WPF_UI_AvailableSpaceValue_TextBox.Foreground = "Black"
+        $WPF_UI_RequiredSpaceMessage_TextBox.Text = ""
+
     }
     elseif ($Script:AvailableSpace_WorkingFolderDisk -le $Script:SpaceThreshold_WorkingFolderDisk){
         $WPF_UI_AvailableSpaceValue_TextBox.Background = "Red"
         $WPF_UI_AvailableSpaceValue_TextBox.Foreground = "Black"
+        $WPF_UI_RequiredSpaceMessage_TextBox.Text = "Insufficient space to run tool! You will be prompted to select a new drive and folder from which to run the tool."
+        $WPF_UI_RequiredSpaceMessage_TextBox.Foreground = "Red"
+        
     }
     else{
         $WPF_UI_AvailableSpaceValue_TextBox.Background = "Green"
         $WPF_UI_AvailableSpaceValue_TextBox.Foreground = "White"
+        $WPF_UI_RequiredSpaceMessage_TextBox.Text = ""
     }
     
 })
@@ -2436,7 +2479,7 @@ $WPF_UI_Start_Button.Add_Click({
     else{
         $ErrorCount += 1  
     }
-    if (Get_ImageSizevsDiskSize -UnallocatedSpace $Script:SizeofUnallocated -ThresholdtocheckMiB 10 -DiskSizetocheck $Script:SizeofDisk -ImageSizetocheck $Script:SizeofImage){
+    if (Get-ImageSizevsDiskSize -UnallocatedSpace $Script:SizeofUnallocated -ThresholdtocheckMiB 10 -DiskSizetocheck $Script:SizeofDisk -ImageSizetocheck $Script:SizeofImage){
         $ErrorCount = $ErrorCount
     }
     else{
@@ -2455,13 +2498,20 @@ $WPF_UI_Start_Button.Add_Click({
 $WPF_UI_RomPath_Button.Add_Click({
     $Script:ROMPath = Get-FolderPath -Message 'Select path to Roms' -RootFolder 'MyComputer'
     if ($Script:ROMPath){
-        if(Confirm-UIFields){
+        if (Confirm-UIFields){
             $WPF_UI_Start_Button.Background = 'Red'
             $WPF_UI_Start_Button.Foreground = 'Black'
+            $WPF_UI_Start_Button.Content = 'Missing information! Press to see further details'
+        }
+        elseif (-not (Confirm-FreeSpacetoRunTool)){
+            $WPF_UI_Start_Button.Background = 'Yellow'
+            $WPF_UI_Start_Button.Foreground = 'Black'
+            $WPF_UI_Start_Button.Content = 'Run Tool (with prompt for new drive and folder from which to run the tool)'
         }
         else{
             $WPF_UI_Start_Button.Background = 'Green'
             $WPF_UI_Start_Button.Foreground = 'White'
+            $WPF_UI_Start_Button.Content = 'Run Tool'
         }
         $WPF_UI_RomPath_Label.Text = Get-FormattedPathforGUI -PathtoTruncate ($Script:ROMPath)
         $WPF_UI_RomPath_Button.Background = 'Green'
@@ -2470,19 +2520,42 @@ $WPF_UI_RomPath_Button.Add_Click({
     else{
         $WPF_UI_RomPath_Label.Text ='No ROM path selected'
         $WPF_UI_RomPath_Button.Background = '#FFDDDDDD'
+
+        if (Confirm-UIFields){
+            $WPF_UI_Start_Button.Background = 'Red'
+            $WPF_UI_Start_Button.Foreground = 'Black'
+            $WPF_UI_Start_Button.Content = 'Missing information! Press to see further details'
+        }
+        elseif (-not (Confirm-FreeSpacetoRunTool)){
+            $WPF_UI_Start_Button.Background = 'Yellow'
+            $WPF_UI_Start_Button.Foreground = 'Black'
+            $WPF_UI_Start_Button.Content = 'Run Tool (with prompt for new drive and folder from which to run the tool)'
+        }
+        else{
+            $WPF_UI_Start_Button.Background = 'Green'
+            $WPF_UI_Start_Button.Foreground = 'White'
+            $WPF_UI_Start_Button.Content = 'Run Tool'
+        }
     }
 })
 
 $WPF_UI_ADFPath_Button.Add_Click({
     $Script:ADFPath = Get-FolderPath -Message 'Select path to ADFs' -RootFolder 'MyComputer'
     if ($Script:ADFPath){
-        if(Confirm-UIFields){
+        if (Confirm-UIFields){
             $WPF_UI_Start_Button.Background = 'Red'
             $WPF_UI_Start_Button.Foreground = 'Black'
+            $WPF_UI_Start_Button.Content = 'Missing information! Press to see further details'
+        }
+        elseif (-not (Confirm-FreeSpacetoRunTool)){
+            $WPF_UI_Start_Button.Background = 'Yellow'
+            $WPF_UI_Start_Button.Foreground = 'Black'
+            $WPF_UI_Start_Button.Content = 'Run Tool (with prompt for new drive and folder from which to run the tool)'
         }
         else{
             $WPF_UI_Start_Button.Background = 'Green'
             $WPF_UI_Start_Button.Foreground = 'White'
+            $WPF_UI_Start_Button.Content = 'Run Tool'
         }
         $WPF_UI_ADFPath_Label.Text = Get-FormattedPathforGUI -PathtoTruncate ($Script:ADFPath)
         $WPF_UI_ADFPath_Button.Background = 'Green'
@@ -2492,6 +2565,22 @@ $WPF_UI_ADFPath_Button.Add_Click({
         $WPF_UI_ADFPath_Label.Text = 'No ADF path selected'
         $WPF_UI_ADFPath_Button.Background = '#FFDDDDDD'
         $WPF_UI_ADFPath_Button.Foreground = 'Black'
+
+        if (Confirm-UIFields){
+            $WPF_UI_Start_Button.Background = 'Red'
+            $WPF_UI_Start_Button.Foreground = 'Black'
+            $WPF_UI_Start_Button.Content = 'Missing information! Press to see further details'
+        }
+        elseif (-not (Confirm-FreeSpacetoRunTool)){
+            $WPF_UI_Start_Button.Background = 'Yellow'
+            $WPF_UI_Start_Button.Foreground = 'Black'
+            $WPF_UI_Start_Button.Content = 'Run Tool (with prompt for new drive and folder from which to run the tool)'
+        }
+        else{
+            $WPF_UI_Start_Button.Background = 'Green'
+            $WPF_UI_Start_Button.Foreground = 'White'
+            $WPF_UI_Start_Button.Content = 'Run Tool'
+        }
     }
 })
 
@@ -2543,14 +2632,21 @@ foreach ($Kickstart in $AvailableKickstarts) {
 }
 
 $WPF_UI_KickstartVersion_Dropdown.Add_SelectionChanged({
-    $Script:KickstartVersiontoUse = $WPF_UI_KickstartVersion_Dropdown.SelectedItem
-    if(Confirm-UIFields){
+    $Script:KickstartVersiontoUse = $WPF_UI_KickstartVersion_Dropdown.SelectedItem   
+    if (Confirm-UIFields){
         $WPF_UI_Start_Button.Background = 'Red'
         $WPF_UI_Start_Button.Foreground = 'Black'
+        $WPF_UI_Start_Button.Content = 'Missing information! Press to see further details'
+    }
+    elseif (-not (Confirm-FreeSpacetoRunTool)){
+        $WPF_UI_Start_Button.Background = 'Yellow'
+        $WPF_UI_Start_Button.Foreground = 'Black'
+        $WPF_UI_Start_Button.Content = 'Run Tool (with prompt for new drive and folder from which to run the tool)'
     }
     else{
         $WPF_UI_Start_Button.Background = 'Green'
         $WPF_UI_Start_Button.Foreground = 'White'
+        $WPF_UI_Start_Button.Content = 'Run Tool'
     }
 })
 
@@ -2566,25 +2662,39 @@ $WPF_UI_ScreenMode_Dropdown.Add_SelectionChanged({
             $Script:ScreenModetoUse = $ScreenMode.Name           
         }
     }
-    if(Confirm-UIFields){
+    if (Confirm-UIFields){
         $WPF_UI_Start_Button.Background = 'Red'
         $WPF_UI_Start_Button.Foreground = 'Black'
+        $WPF_UI_Start_Button.Content = 'Missing information! Press to see further details'
+    }
+    elseif (-not (Confirm-FreeSpacetoRunTool)){
+        $WPF_UI_Start_Button.Background = 'Yellow'
+        $WPF_UI_Start_Button.Foreground = 'Black'
+        $WPF_UI_Start_Button.Content = 'Run Tool (with prompt for new drive and folder from which to run the tool)'
     }
     else{
         $WPF_UI_Start_Button.Background = 'Green'
         $WPF_UI_Start_Button.Foreground = 'White'
+        $WPF_UI_Start_Button.Content = 'Run Tool'
     }
 })
 
 $WPF_UI_NoFileInstall_CheckBox.Add_Checked({
     $Script:SetDiskupOnly = 'TRUE'
-    if(Confirm-UIFields){
+    if (Confirm-UIFields){
         $WPF_UI_Start_Button.Background = 'Red'
         $WPF_UI_Start_Button.Foreground = 'Black'
+        $WPF_UI_Start_Button.Content = 'Missing information! Press to see further details'
+    }
+    elseif (-not (Confirm-FreeSpacetoRunTool)){
+        $WPF_UI_Start_Button.Background = 'Yellow'
+        $WPF_UI_Start_Button.Foreground = 'Black'
+        $WPF_UI_Start_Button.Content = 'Run Tool (with prompt for new drive and folder from which to run the tool)'
     }
     else{
         $WPF_UI_Start_Button.Background = 'Green'
         $WPF_UI_Start_Button.Foreground = 'White'
+        $WPF_UI_Start_Button.Content = 'Run Tool'
     }
     If ($Script:HSTDiskName){
         $Script:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Script:SizeofImage
@@ -2597,13 +2707,20 @@ $WPF_UI_NoFileInstall_CheckBox.Add_Checked({
 
 $WPF_UI_NoFileInstall_CheckBox.Add_UnChecked({
     $Script:SetDiskupOnly = 'FALSE'
-    if(Confirm-UIFields){
+    if (Confirm-UIFields){
         $WPF_UI_Start_Button.Background = 'Red'
         $WPF_UI_Start_Button.Foreground = 'Black'
+        $WPF_UI_Start_Button.Content = 'Missing information! Press to see further details'
+    }
+    elseif (-not (Confirm-FreeSpacetoRunTool)){
+        $WPF_UI_Start_Button.Background = 'Yellow'
+        $WPF_UI_Start_Button.Foreground = 'Black'
+        $WPF_UI_Start_Button.Content = 'Run Tool (with prompt for new drive and folder from which to run the tool)'
     }
     else{
         $WPF_UI_Start_Button.Background = 'Green'
         $WPF_UI_Start_Button.Foreground = 'White'
+        $WPF_UI_Start_Button.Content = 'Run Tool'
     }
     If ($Script:HSTDiskName){
         $Script:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Script:SizeofImage
@@ -2750,7 +2867,8 @@ elseif (-not ($Script:ExitType-eq 1)){
     exit
 }
 
-$Script:SizeofImage_HST = $Script:SizeofImage-($Script:SizeofFAT32*1024)
+$Script:SizeofImage_HST = $Script:SizeofImage-($Script:SizeofFAT32)
+$Script:SizeofFAT32=$Script:SizeofFAT32/1024
 
 Write-InformationMessage -Message "Running Script to perform selected functions. Options selected are:"
 Write-InformationMessage -Message "DiskName to Write: $Script:HSTDiskName"  
