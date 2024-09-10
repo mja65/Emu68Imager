@@ -1087,6 +1087,13 @@ function Compare-KickstartHashes {
         $PathtoKickstartFiles,
         $KickstartVersion
     )
+    
+    $Msg_Header ='Finding Kickstart'    
+    $Msg_Body = @"
+Searching folder '$Script:ROMPath' for valid Kickstart file. Depending on the size of the folder you selected this may take some time. 
+"@
+    $null = [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,0)
+
     $KickstartHashestoFind =Import-Csv $PathtoKickstartHashes -Delimiter ';' |  Where-Object {$_.Kickstart_Version -eq $KickstartVersion} | Sort-Object -Property 'Sequence'   
     $ListofKickstartFilestoCheck = Get-ChildItem $PathtoKickstartFiles -force -Recurse | Where-Object { $_.PSIsContainer -eq $false } 
     
@@ -1110,15 +1117,15 @@ function Compare-KickstartHashes {
                 KickstartPath = ($HashTableforKickstartFilestoCheck[$KickstartRomandHash.Hash])
             }        
         }
-        else{
-            $FoundKickstarts += [PSCustomObject]@{
-                Kickstart_Version = $KickstartRomandHash.Kickstart_Version
-                FriendlyName= $KickstartRomandHash.FriendlyName
-                Sequence = $KickstartRomandHash.Sequence 
-                Fat32Name = $KickstartRomandHash.Fat32Name
-                KickstartPath = ""
-            }        
-        }
+        # else{
+        #     $FoundKickstarts += [PSCustomObject]@{
+        #         Kickstart_Version = $KickstartRomandHash.Kickstart_Version
+        #         FriendlyName= $KickstartRomandHash.FriendlyName
+        #         Sequence = $KickstartRomandHash.Sequence 
+        #         Fat32Name = $KickstartRomandHash.Fat32Name
+        #         KickstartPath = ""
+        #     }        
+        # }
     }
     
     if ($FoundKickstarts){
@@ -1126,7 +1133,6 @@ function Compare-KickstartHashes {
         return $KickstarttoUse 
     }
     else{
-        Write-ErrorMessage -Message 'No valid Kickstart file found!'
         return
     }
 }
@@ -1139,10 +1145,16 @@ function Compare-ADFHashes {
         $PathtoListofInstallFiles
     
     )
-    
-    Write-InformationMessage -Message ('Calculating hashes of ADFs in location '+$PathtoADFFiles)
+
+    $Msg_Header ='Finding ADFs'    
+    $Msg_Body = @"
+Searching folder '$Script:ADFPath' for valid ADFs. Depending on the size of the folder you selected this may take some time. 
+"@
+    $null = [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,0)
+
+#    Write-InformationMessage -Message ('Calculating hashes of ADFs in location '+$PathtoADFFiles)
     $ListofADFFilestoCheck = Get-ChildItem $PathtoADFFiles -force -Recurse | Where-Object { $_.PSIsContainer -eq $false } | Get-FileHash  -Algorithm MD5
-    Write-InformationMessage -Message  ('Hashes calculated!')
+#    Write-InformationMessage -Message  ('Hashes calculated!')
     $ADFHashestoFind = Import-Csv $PathtoADFHashes -Delimiter ';' |  Where-Object {$_.Kickstart_Version -eq $KickstartVersion} | Sort-Object -Property 'Sequence'
     $RequiredADFs = Import-Csv $PathtoListofInstallFiles -Delimiter ';' |  Where-Object {$_.Kickstart_Version -eq $KickstartVersion} | Sort-Object -Property 'Sequence'
     $UniqueRequiredADFs = $RequiredADFs | Select-Object FriendlyName -Unique
@@ -1150,6 +1162,7 @@ function Compare-ADFHashes {
     $HashTableforADFFilestoCheck = @{} # Clear Hash
     
     $MatchedADFs = [System.Collections.Generic.List[PSCustomObject]]::New()
+    $MissingADFs = [System.Collections.Generic.List[PSCustomObject]]::New()
     
     foreach ($ADFDetailLine in $ADFHashestoFind){
         $HashTableforADFFilestoCheck += @{
@@ -1160,6 +1173,7 @@ function Compare-ADFHashes {
     foreach ($ADFLine in $ListofADFFilestoCheck){
         if ($HashTableforADFFilestoCheck[$ADFLine.Hash]){
             $MatchedADFs += [PSCustomObject]@{
+                IsMatched = 'TRUE'
                 PathtoADF= $ADFLine.Path
                 Hash = $ADFLine.Hash
                 ADF_Name = $HashTableforADFFilestoCheck[$ADFLine.Hash][0]
@@ -1175,21 +1189,25 @@ function Compare-ADFHashes {
     foreach ($RequiredADF in $UniqueRequiredADFs){
         $ADFFound=$false
         foreach ($AvailableADF in $UniqueAvailableADFs){
-            if ($RequiredADF.FriendlyName -eq $AvailableADF){
+            if ($RequiredADF.FriendlyName -eq $AvailableADF){              
                 $ADFFound=$true
             }
         }
         if ($ADFFound -eq  $true){
-            Write-InformationMessage -Message ('Found ADF file: '+$RequiredADF.FriendlyName)
+#            Write-InformationMessage -Message ('Found ADF file: '+$RequiredADF.FriendlyName)
         }
         if ($ADFFound -eq  $false){
-            Write-ErrorMessage -Message ('ADF file: '+$RequiredADF.FriendlyName+' is missing from directory and/or hash is invalid Please check file!')
+#            Write-ErrorMessage -Message ('ADF file: '+$RequiredADF.FriendlyName+' is missing from directory and/or hash is invalid Please check file!')
+            $MissingADFs += [PSCustomObject]@{
+                IsMatched = 'FALSE'
+                MissingADFName = $RequiredADF.FriendlyName
+            }
             $ErrorCount +=1
         }
     } 
     
     if ($ErrorCount -gt 0){
-        return
+        return $MissingADFs
      }
     else{
         return $MatchedADFs 
@@ -1384,6 +1402,65 @@ Either select a location with sufficient space or press cancel to quit the tool
     }      
 }
 
+function Write-GUINoKickstart {
+    param (
+        
+    )
+    $Msg_Header ='Error - No Kickstart found!'    
+    $Msg_Body = @"  
+No valid Kickstart file was found at the location you specified. Select a location with a valid Kickstart file.    
+"@     
+[System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,48) 
+}
+
+function Write-GUIReporttoUseronOptions {
+    param (
+
+    )
+    $Msg_Header ='Run Options'    
+    $Msg_Body = @"  
+Tool will be run with the following options:  
+
+DiskName to Write: $Script:HSTDiskName
+
+ScreenMode to Use: $Script:ScreenModetoUse
+
+Kickstart to Use: $Script:KickstartVersiontoUse
+
+SSID to configure: $Script:SSID
+
+Password to set: $Script:WifiPassword 
+
+Fat32 Size (MiB): $Script:SizeofFAT32
+
+Image Size (KiB): $Script:SizeofImage
+
+Image Size HST (KiB): $Script:SizeofImage_HST
+
+Workbench Size: $Script:SizeofPartition_System
+
+Work Size: $Script:SizeofPartition_Other
+
+Write Image to Disk: $Script:WriteImage
+
+Set disk up only: $Script:SetDiskupOnly
+
+Working Path: 
+$Script:WorkingPath
+
+Rom Path: 
+$Script:ROMPath
+
+ADF Path: 
+$Script:ADFPath 
+
+Transfer Location: 
+$Script:TransferLocation
+"@     
+    [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,0)  
+
+}
+
 ### End Functions
 
 ######################################################################### End Functions #############################################################################################################
@@ -1395,6 +1472,18 @@ Either select a location with sufficient space or press cancel to quit the tool
 $SourceProgramPath = ($Scriptpath+'Programs\')
 $InputFolder = ($Scriptpath+'InputFiles\')
 $LocationofAmigaFiles = ($Scriptpath+'AmigaFiles\')
+## Amiga Variables
+
+$DeviceName_Prefix = 'SDH'
+$DeviceName_System = ($DeviceName_Prefix+'0')
+$VolumeName_System ='Workbench'
+$DeviceName_Other = ($DeviceName_Prefix+'1')
+$VolumeName_Other = 'Work'
+$MigratedFilesFolder='My Files'
+#$InstallPathMUI='SYS:Programs/MUI'
+#$InstallPathPicasso96='SYS:Programs/Picasso96'
+#$InstallPathAmiSSL='SYS:Programs/AmiSSL'
+$GlowIcons='TRUE'
 
 ####################################################################### End Script Path dependent  Variables ########################################################################################
 
@@ -2079,18 +2168,11 @@ $WPF_UI_FreeSpace_Listview.add_SizeChanged({
             $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Script:SizeofFreeSpace_Pixels_Minimum
         }
         
-        if ([math]::round($Script:PartitionBarWidth-  $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value- `
-                                                     $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value- `
-                                                     $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value- `
-                                                     $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value,4) -lt 0){
+        if ([math]::round($Script:PartitionBarWidth-  $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value,4) -lt 0){
             $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = 0
         }else{
-            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = [math]::round($Script:PartitionBarWidth-  $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value- `
-                                                                                                $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value- `
-                                                                                                $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value- `
-                                                                                                $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value,4)
+            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = [math]::round($Script:PartitionBarWidth-  $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value,4)
         }     
-
         
         Set-GUISizeofPartitions 
         
@@ -2450,44 +2532,6 @@ $WPF_UI_ImageSize_Value.add_LostFocus({
     }
 })
 
-$WPF_UI_Start_Button.Add_Click({
-    $ErrorCount = 0
-    $Script:SSID = $WPF_UI_SSID_Textbox.Text
-    $Script:WifiPassword = $WPF_UI_Password_Textbox.Text
-    if ($WPF_UI_DiskWrite_CheckBox.IsChecked){
-        $Script:WriteImage ='FALSE'
-    }
-    else{
-        $Script:WriteImage ='TRUE'
-    }
-    if (Get-TransferFileCheck -TransferLocationtocheck $Script:TransferLocation -TransferSpaceThreshold $Script:SpaceThreshold_FilestoTransfer -TransferAvailableSpace $Script:AvailableSpaceFilestoTransfer){
-        $ErrorCount = $ErrorCount
-    }
-    else{
-        $ErrorCount += 1
-    }
-    if (Get-SpaceCheck -AvailableSpace $Script:AvailableSpace_WorkingFolderDisk -SpaceThreshold $Script:SpaceThreshold_WorkingFolderDisk){
-        $ErrorCount = $ErrorCount
-    }
-    else{
-        $ErrorCount += 1  
-    }
-    if (Get-ImageSizevsDiskSize -UnallocatedSpace $Script:SizeofUnallocated -ThresholdtocheckMiB 10 -DiskSizetocheck $Script:SizeofDisk -ImageSizetocheck $Script:SizeofImage){
-        $ErrorCount = $ErrorCount
-    }
-    else{
-        $ErrorCount += 1  
-    }    
-    $ErrorCheck = Confirm-UIFields
-    if ($ErrorCheck){
-        [System.Windows.MessageBox]::Show($ErrorCheck, 'Error! Go back and correct')
-    }
-    elseif ($ErrorCount -eq 0) {
-        $Form_UserInterface.Close() | out-null
-        $Script:ExitType = 1
-    }
-})
-
 $WPF_UI_RomPath_Button.Add_Click({
     $Script:ROMPath = Get-FolderPath -Message 'Select path to Roms' -RootFolder 'MyComputer'
     if ($Script:ROMPath){
@@ -2724,6 +2768,111 @@ $WPF_UI_NoFileInstall_CheckBox.Add_UnChecked({
     }
 })
 
+$WPF_UI_Start_Button.Add_Click({
+    $ErrorCount = 0
+    $Script:SSID = $WPF_UI_SSID_Textbox.Text
+    $Script:WifiPassword = $WPF_UI_Password_Textbox.Text
+    if ($WPF_UI_DiskWrite_CheckBox.IsChecked){
+        $Script:WriteImage ='FALSE'
+    }
+    else{
+        $Script:WriteImage ='TRUE'
+    }
+    if (Get-TransferFileCheck -TransferLocationtocheck $Script:TransferLocation -TransferSpaceThreshold $Script:SpaceThreshold_FilestoTransfer -TransferAvailableSpace $Script:AvailableSpaceFilestoTransfer){
+        $ErrorCount = $ErrorCount
+    }
+    else{
+        $ErrorCount += 1
+    }
+    if (Get-SpaceCheck -AvailableSpace $Script:AvailableSpace_WorkingFolderDisk -SpaceThreshold $Script:SpaceThreshold_WorkingFolderDisk){
+        $ErrorCount = $ErrorCount
+    }
+    else{
+        $ErrorCount += 1  
+    }
+    if (Get-ImageSizevsDiskSize -UnallocatedSpace $Script:SizeofUnallocated -ThresholdtocheckMiB 10 -DiskSizetocheck $Script:SizeofDisk -ImageSizetocheck $Script:SizeofImage){
+        $ErrorCount = $ErrorCount
+    }
+    else{
+        $ErrorCount += 1  
+    }    
+    $ErrorCheck = Confirm-UIFields
+    if ($ErrorCheck){
+        [System.Windows.MessageBox]::Show($ErrorCheck, 'Error! Go back and correct')
+        $ErrorCount += 1  
+    } 
+    else{
+        $Script:FoundKickstarttoUse = Compare-KickstartHashes -PathtoKickstartHashes ($InputFolder+'RomHashes.csv') -PathtoKickstartFiles $Script:ROMPath -KickstartVersion $Script:KickstartVersiontoUse
+        if (-not ($Script:FoundKickstarttoUse)){
+            Write-GUINoKickstart
+            $ErrorCount += 1  
+        }
+        else{
+            $Script:KickstartPath = $Script:FoundKickstarttoUse.KickstartPath
+            $Script:KickstartNameFAT32=$Script:FoundKickstarttoUse.Fat32Name
+        }
+        if ($Script:SetDiskupOnly -eq 'FALSE'){           
+            $AvailableADFs = Compare-ADFHashes -PathtoADFFiles $Script:ADFPath -PathtoADFHashes ($InputFolder+'ADFHashes.csv') -KickstartVersion $Script:KickstartVersiontoUse -PathtoListofInstallFiles ($InputFolder+'ListofInstallFiles.csv') 
+            if (($AvailableADFs | Select-Object 'IsMatched' -unique).IsMatched -eq 'FALSE'){
+                $MissingADFstoReport = $null
+                foreach ($MissingADF in $AvailableADFs ){
+                    $MissingADFstoReport += ($MissingADF.MissingADFName+"`n")
+                } 
+                $Msg_Header ='Error - ADFs Missing!'    
+                $Msg_Body = @"  
+The following ADFs are missing:  
+        
+$MissingADFstoReport 
+Select a location with valid ADF files.    
+"@     
+            [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,48) 
+            $ErrorCount += 1  
+            }
+            else{
+                $Script:ListofInstallFiles = Import-Csv ($Script:InputFolder+'ListofInstallFiles.csv') -Delimiter ';' |  Where-Object {$_.Kickstart_Version -eq $Script:KickstartVersiontoUse} | Sort-Object -Property 'InstallSequence'    
+                $Script:ListofInstallFiles | Add-Member -NotePropertyName Path -NotePropertyValue $null
+                $Script:ListofInstallFiles | Add-Member -NotePropertyName DrivetoInstall_VolumeName -NotePropertyValue $null    
+                foreach ($InstallFileLine in $Script:ListofInstallFiles) {
+                    if ($InstallFileLine.DrivetoInstall -eq 'System'){
+                        $InstallFileLine.DrivetoInstall_VolumeName = $Script:VolumeName_System
+                    }
+                    foreach ($MatchedADF in $AvailableADFs ) {
+                        if ($InstallFileLine.ADF_Name -eq $MatchedADF.ADF_Name){
+                            $InstallFileLine.Path=$MatchedADF.PathtoADF
+                        }
+                        if ($MatchedADF.ADF_Name -match "GlowIcons"){
+                            $Script:GlowIconsADF=$MatchedADF.PathtoADF
+                        }
+                        if ($MatchedADF.ADF_Name -match "Storage"){
+                            $Script:StorageADF=$MatchedADF.PathtoADF
+                        }
+                        if ($MatchedADF.ADF_Name -match "Install"){
+                            $Script:InstallADF=$MatchedADF.PathtoADF
+                        }
+                    }          
+                }               
+                $AvailableADFstoReport = $null
+                $Script:ListofInstallFiles |  Select-Object Path,FriendlyName -Unique | ForEach-Object {
+                    $AvailableADFstoReport += (($_.FriendlyName+' ('+$_.Path+')')+"`n")
+                }                
+                $Msg_Header ='ADFs to Use'    
+                $Msg_Body = @"  
+The following ADFs will be used:  
+        
+$AvailableADFstoReport  
+"@     
+            [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,0) 
+
+            }    
+        }      
+    } 
+    if ($ErrorCount -eq 0) {
+        Write-GUIReporttoUseronOptions
+        $Form_UserInterface.Close() | out-null
+        $Script:ExitType = 1
+    }
+})
+
 ####################################################################### End GUI XML for Main Environment ##################################################################################################
 
 ####################################################################### GUI XML for Test Administrator ##################################################################################################
@@ -2863,31 +3012,12 @@ elseif (-not ($Script:ExitType-eq 1)){
 $Script:SizeofImage_HST = $Script:SizeofImage-($Script:SizeofFAT32)
 $Script:SizeofFAT32=$Script:SizeofFAT32/1024
 
-Write-InformationMessage -Message "Running Script to perform selected functions. Options selected are:"
-Write-InformationMessage -Message "DiskName to Write: $Script:HSTDiskName"  
-Write-InformationMessage -Message "ScreenMode to Use: $Script:ScreenModetoUse"
-Write-InformationMessage -Message "Kickstart to Use: $Script:KickstartVersiontoUse" 
-Write-InformationMessage -Message "SSID to configure: $Script:SSID" 
-Write-InformationMessage -Message "Password to set: $Script:WifiPassword" 
-Write-InformationMessage -Message "Fat32 Size (MiB): $Script:SizeofFAT32"
-Write-InformationMessage -Message "Image Size (KiB): $Script:SizeofImage"
-Write-InformationMessage -Message "Image Size HST (KiB): $Script:SizeofImage_HST"
-Write-InformationMessage -Message "Workbench Size: $Script:SizeofPartition_System"
-Write-InformationMessage -Message "Work Size: $Script:SizeofPartition_Other"
-Write-InformationMessage -Message "Working Path: $Script:WorkingPath"
-Write-InformationMessage -Message "Rom Path: $Script:ROMPath"
-Write-InformationMessage -Message "ADF Path: $Script:ADFPath" 
-Write-InformationMessage -Message "Transfer Location: $Script:TransferLocation"
-Write-InformationMessage -Message "Write Image to Disk: $Script:WriteImage"
-Write-InformationMessage -Message "Set disk up only: $Script:SetDiskupOnly"
-
-<#
-
 #[System.Windows.Window].GetEvents() | select Name, *Method, EventHandlerType
 
 #[System.Windows.Controls.GridSplitter].GetEvents() | Select-Object Name, *Method, EventHandlerType
 #[System.Windows.Controls.ListView].GetEvents() | Select-Object Name, *Method, EventHandlerType
 
+<#
 ##### Script
 
 $UnLZXURL='http://aminet.net/util/arc/W95unlzx.lha'
@@ -2917,7 +3047,7 @@ if (-not ($Script:WriteImage)){
     $TotalSections --
 }
 
-if ($Script:SetDiskupOnly = 'TRUE'){
+if ($Script:SetDiskupOnly -eq 'TRUE'){
     $TotalSections = 6 ## Need to update
 }
 
@@ -3003,18 +3133,7 @@ $AmigaDrivetoCopy= $Script:WorkingPath+'AmigaImageFiles\'
 $AmigaDownloads= $Script:WorkingPath+'AmigaDownloads\'
 $FAT32Partition= $Script:WorkingPath+'FAT32Partition\'
 
-## Amiga Variables
 
-$DeviceName_Prefix = 'SDH'
-$DeviceName_System = ($DeviceName_Prefix+'0')
-$VolumeName_System ='Workbench'
-$DeviceName_Other = ($DeviceName_Prefix+'1')
-$VolumeName_Other = 'Work'
-$MigratedFilesFolder='My Files'
-#$InstallPathMUI='SYS:Programs/MUI'
-#$InstallPathPicasso96='SYS:Programs/Picasso96'
-#$InstallPathAmiSSL='SYS:Programs/AmiSSL'
-$GlowIcons='TRUE'
 
 $NameofImage=('Pistorm'+$Script:KickstartVersiontoUse+'.HDF')
 
@@ -3049,26 +3168,26 @@ Write-TaskCompleteMessage -Message 'Performing Cleanup - Complete!'
 
 ### End Clean up
 
-### Determine Kickstart Rom Path
+# ### Determine Kickstart Rom Path
 
-#Update-OutputWindow -OutputConsole_Title_Text 'Determining Kickstarts to Use' -ProgressbarValue_Overall 7 -ProgressbarValue_Overall_Text '7%'
+# #Update-OutputWindow -OutputConsole_Title_Text 'Determining Kickstarts to Use' -ProgressbarValue_Overall 7 -ProgressbarValue_Overall_Text '7%'
 
-Write-StartTaskMessage -Message 'Determining Kickstarts to Use'
+# Write-StartTaskMessage -Message 'Determining Kickstarts to Use'
 
-$FoundKickstarttoUse = Compare-KickstartHashes -PathtoKickstartHashes ($InputFolder+'RomHashes.csv') -PathtoKickstartFiles $Script:ROMPath -KickstartVersion $Script:KickstartVersiontoUse
+# $FoundKickstarttoUse = Compare-KickstartHashes -PathtoKickstartHashes ($InputFolder+'RomHashes.csv') -PathtoKickstartFiles $Script:ROMPath -KickstartVersion $Script:KickstartVersiontoUse
 
-$KickstartPath = $FoundKickstarttoUse.KickstartPath
+# $KickstartPath = $FoundKickstarttoUse.KickstartPath
 
-if (-not($KickstartPath)){
-    Write-ErrorMessage -Message "Error! No Kickstart file found!"
-    exit
-} 
+# if (-not($KickstartPath)){
+#     Write-ErrorMessage -Message "Error! No Kickstart file found!"
+#     exit
+# } 
 
-$KickstartNameFAT32=$FoundKickstarttoUse.Fat32Name
+# $KickstartNameFAT32=$FoundKickstarttoUse.Fat32Name
 
-Write-InformationMessage -Message ('Kickstart to be used is: '+$KickstartPath)
+# Write-InformationMessage -Message ('Kickstart to be used is: '+$KickstartPath)
 
-Write-TaskCompleteMessage -Message 'Determining Kickstarts to Use - Complete!'
+# Write-TaskCompleteMessage -Message 'Determining Kickstarts to Use - Complete!'
 
 if ($Script:SetDiskupOnly -eq 'FALSE'){
 
