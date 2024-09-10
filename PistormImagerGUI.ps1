@@ -21,6 +21,40 @@ if ($RunMode -eq 0){
 }
 
 ######################################################################## Functions #################################################################################################################
+
+function GuiValueIsNumber {
+    param (
+        $ValuetoCheck
+    )
+
+    if ($ValuetoCheck.Text -match "^[\d\.]+$"){
+        $ValuetoCheck.Background = 'White'
+        return $true
+
+    }
+    else {
+        $ValuetoCheck.Background = 'Red'
+        return $false
+    }
+}
+
+function GuiValueIsSame {
+    param (
+        $ValuetoCheck,
+        $ValuetoCheckAgainst
+    )
+
+    if ($ValuetoCheck.Text -eq $ValuetoCheckAgainst){
+        $ValuetoCheck.Background = 'White'
+        return $true
+
+    }
+    else {
+        $ValuetoCheck.Background = 'Red'
+        return $false
+    }
+}
+
 function Set-GUIPartitionValues {
     param (
         
@@ -1441,11 +1475,11 @@ $inputXML_UserInterface = @"
           <Grid>
 
     
-                <TextBox x:Name="RequiredSpace_TextBox" HorizontalAlignment="Left" Margin="20,82,0,0" TextWrapping="Wrap" Text="Space to run tool is:" VerticalAlignment="Top" Width="230" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+                <TextBox x:Name="RequiredSpace_TextBox" HorizontalAlignment="Left" Margin="20,82,0,0" TextWrapping="Wrap" Text="Required space to run tool is:" VerticalAlignment="Top" Width="230" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
                 <TextBox x:Name="RequiredSpaceValue_TextBox" HorizontalAlignment="Left" Margin="288,82,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Right"/>
                 <TextBox x:Name="AvailableSpace_TextBox" HorizontalAlignment="Left" Margin="20,102,0,0" TextWrapping="Wrap" Text="Free space after tool is run:" VerticalAlignment="Top" Width="230" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" FontWeight="Bold"/>
                 <TextBox x:Name="AvailableSpaceValue_TextBox" HorizontalAlignment="Right" Margin="0,102,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Green" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Right"/>
-                <TextBox x:Name="RequiredSpaceTransferredFiles_TextBox" HorizontalAlignment="Left" Margin="20,28,0,0" TextWrapping="Wrap" Text="Space for transferred files:" VerticalAlignment="Top" Width="230" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+                <TextBox x:Name="RequiredSpaceTransferredFiles_TextBox" HorizontalAlignment="Left" Margin="20,28,0,0" TextWrapping="Wrap" Text="Required space for transferred files:" VerticalAlignment="Top" Width="230" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
                 <TextBox x:Name="RequiredSpaceValueTransferredFiles_TextBox" HorizontalAlignment="Left" Margin="288,28,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Right"/>
                 <TextBox x:Name="AvailableSpaceTransferredFiles_TextBox" HorizontalAlignment="Left" Margin="20,49,0,0" TextWrapping="Wrap" Text="Free space is:" VerticalAlignment="Top" Width="230" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" FontWeight="Bold"/>
                 <TextBox x:Name="AvailableSpaceValueTransferredFiles_TextBox" HorizontalAlignment="Right" Margin="281,49,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Right"/>
@@ -2156,100 +2190,145 @@ $WPF_UI_AvailableSpaceValue_TextBox.Add_TextChanged({
     
 })
 
-
 $WPF_UI_FAT32Size_Value.add_LostFocus({
-    if (-not ($WPF_UI_FAT32Size_Value.Text -match "^[\d\.]+$")){
-        $WPF_UI_FAT32Size_Value.Background = 'Red'
-    }   
-    elseif ($WPF_UI_FAT32Size_Value.Text -eq $Script:UI_FAT32Size_Value){
-        $WPF_UI_FAT32Size_Value.Background = 'White'
-    }     
-    elseif (((([Double]$WPF_UI_FAT32Size_Value.Text)*1024*1024) -lt $Script:FAT32Maximum) -and ((([Double]$WPF_UI_FAT32Size_Value.Text)*1024*1024) -gt $Script:FAT32Minimum)){
-        $ValueDifference = ([double]$WPF_UI_FAT32Size_Value.Text*1024*1024-$Script:SizeofFAT32) 
-        $FreeSpaceDifference = $Script:SizeofFreeSpace-$ValueDifference
-        if ($FreeSpaceDifference -ge 0){
-            $Script:SizeofFreeSpace -= $ValueDifference 
-            $Script:SizeofFreeSpace_Pixels = $Script:SizeofFreeSpace * $Script:PartitionBarPixelperKB
-            $Script:SizeofFAT32 = [double]$WPF_UI_FAT32Size_Value.Text*1024*1024
-            $Script:SizeofFAT32_Pixels = $Script:SizeofFAT32 * $Script:PartitionBarPixelperKB
-            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Script:SizeofFreeSpace_Pixels 
-            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width = $Script:SizeofFAT32_Pixels
-            $WPF_UI_FAT32Size_Value.Background = 'White'
-            $Script:UI_FAT32Size_Value=$WPF_UI_FAT32Size_Value.Text                
-        }
-        else{
-            $WPF_UI_FAT32Size_Value.Background = 'Red'
-        }
-    }
-    else{
-        $WPF_UI_FAT32Size_Value.Background = 'Red'
+    if (GuiValueIsNumber -ValuetoCheck $WPF_UI_FAT32Size_Value){
+        if (-not(GuiValueIsSame -ValuetoCheck  $WPF_UI_FAT32Size_Value -ValuetoCheckAgainst $Script:UI_FAT32Size_Value)){
+            $ValueinKB = (([Double]$WPF_UI_FAT32Size_Value.Text)*1024*1024)
+            if (($ValueinKB -le $Script:FAT32Maximum) -and ($ValueinKB -ge $Script:FAT32Minimum)){
+                $ValueDifference = $ValueinKB-$Script:SizeofFAT32
+#                Write-host ('Value difference is '+$ValueDifference) 
+                $FreeSpaceDifference = $Script:SizeofFreeSpace-$ValueDifference
+#                Write-host ('Free Space difference is '+$FreeSpaceDifference) 
+                $UnallocatedDifference = $Script:SizeofUnallocated-$ValueDifference
+#                Write-host ('Unallocated difference is '+$UnallocatedDifference)
+                $CombinedDifference = ($Script:SizeofUnallocated+$Script:SizeofFreeSpace)-$ValueDifference
+#                Write-host ('Combined difference is '+$CombinedDifference)
+                if ($FreeSpaceDifference -ge 0){
+                    $Script:SizeofFreeSpace -= $ValueDifference 
+                    $Script:SizeofFreeSpace_Pixels = $Script:SizeofFreeSpace * $Script:PartitionBarPixelperKB
+                    $Script:SizeofFAT32 = $ValueinKB
+                    $Script:SizeofFAT32_Pixels = $Script:SizeofFAT32 * $Script:PartitionBarPixelperKB
+                    $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Script:SizeofFreeSpace_Pixels 
+                    $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width = $Script:SizeofFAT32_Pixels
+                    $WPF_UI_FAT32Size_Value.Background = 'White'
+                    $Script:UI_FAT32Size_Value=$WPF_UI_FAT32Size_Value.Text                
+                }
+                elseif ($CombinedDifference -ge 0){
+                    $Script:SizeofFreeSpace = 0
+                    $Script:SizeofFreeSpace_Pixels = 0
+                    $Script:SizeofUnallocated -= ($FreeSpaceDifference+$UnallocatedDifference)
+                    $Script:SizeofUnallocated_Pixels = $Script:SizeofUnallocated * $Script:PartitionBarPixelperKB
+                    $Script:SizeofFAT32 = $ValueinKB
+                    $Script:SizeofFAT32_Pixels = $Script:SizeofFAT32 * $Script:PartitionBarPixelperKB
+                    $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Script:SizeofFreeSpace_Pixels
+                    $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = $Script:SizeofUnallocated_Pixels
+                    $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width = $Script:SizeofFAT32_Pixels
+                    $WPF_UI_FAT32Size_Value.Background = 'White'
+                    $Script:UI_FAT32Size_Value=$WPF_UI_FAT32Size_Value.Text       
+                }
+                else{
+                    $WPF_UI_FAT32Size_Value.Background = 'Red'
+                }
+            }
+        }        
     }
 })
 
 $WPF_UI_WorkbenchSize_Value.add_LostFocus({
-    if (-not ($WPF_UI_WorkbenchSize_Value.Text -match "^[\d\.]+$")){
-        $WPF_UI_WorkbenchSize_Value.Background = 'Red'
-    }
-    elseif ($WPF_UI_WorkbenchSize_Value.Text -eq $Script:UI_WorkbenchSize_Value){
-        $WPF_UI_WorkbenchSize_Value.Background = 'White'
-    } 
-    elseif (((([double]$WPF_UI_WorkbenchSize_Value.Text)*1024*1024) -lt $Script:WorkbenchMaximum) -and ((([double]$WPF_UI_WorkbenchSize_Value.Text)*1024*1024) -gt $Script:WorkbenchMinimum)){
-        $ValueDifference = ([double]$WPF_UI_WorkbenchSize_Value.Text*1024*1024-$Script:SizeofPartition_System) 
-        $FreeSpaceDifference = $Script:SizeofFreeSpace-$ValueDifference
-        if ($FreeSpaceDifference -ge 0){
-            $Script:SizeofFreeSpace -= $ValueDifference 
-            $Script:SizeofFreeSpace_Pixels = $Script:SizeofFreeSpace * $Script:PartitionBarPixelperKB
-            $Script:SizeofPartition_System= [double]$WPF_UI_WorkbenchSize_Value.Text*1024*1024
-            $Script:SizeofPartition_System_Pixels = $Script:SizeofPartition_System* $Script:PartitionBarPixelperKB
-            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Script:SizeofFreeSpace_Pixels 
-            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width = $Script:SizeofPartition_System_Pixels
-            $WPF_UI_WorkbenchSize_Value.Background = 'White'   
-            $Script:UI_WorkbenchSize_Value= $WPF_UI_WorkbenchSize_Value.Text
-        }
-    }    
-    else {
-        $WPF_UI_WorkbenchSize_Value.Background = 'Red'
+    if (GuiValueIsNumber -ValuetoCheck $WPF_UI_WorkbenchSize_Value){
+        if (-not(GuiValueIsSame -ValuetoCheck  $WPF_UI_WorkbenchSize_Value -ValuetoCheckAgainst $Script:UI_WorkbenchSize_Value)){
+            $ValueinKB = (([Double]$WPF_UI_WorkbenchSize_Value.Text)*1024*1024)
+            if (($ValueinKB -le $Script:WorkbenchMaximum) -and ($ValueinKB -ge $Script:WorkbenchMinimum)){
+                $ValueDifference = $ValueinKB-$Script:SizeofPartition_System
+#                Write-host ('Value difference is '+$ValueDifference) 
+                $FreeSpaceDifference = $Script:SizeofFreeSpace-$ValueDifference
+#                Write-host ('Free Space difference is '+$FreeSpaceDifference) 
+                $UnallocatedDifference = $Script:SizeofUnallocated-$ValueDifference
+#                Write-host ('Unallocated difference is '+$UnallocatedDifference)
+                $CombinedDifference = ($Script:SizeofUnallocated+$Script:SizeofFreeSpace)-$ValueDifference
+#                Write-host ('Combined difference is '+$CombinedDifference)
+                if ($FreeSpaceDifference -ge 0){
+                    $Script:SizeofFreeSpace -= $ValueDifference 
+                    $Script:SizeofFreeSpace_Pixels = $Script:SizeofFreeSpace * $Script:PartitionBarPixelperKB
+                    $Script:SizeofPartition_System = $ValueinKB
+                    $Script:SizeofPartition_System_Pixels = $Script:SizeofPartition_System * $Script:PartitionBarPixelperKB
+                    $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Script:SizeofFreeSpace_Pixels 
+                    $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width = $Script:SizeofPartition_System_Pixels
+                    $WPF_UI_WorkbenchSize_Value.Background = 'White'
+                    $Script:UI_WorkbenchSize_Value=$WPF_UI_WorkbenchSize_Value.Text                
+                }
+                elseif ($CombinedDifference -ge 0){
+                    $Script:SizeofFreeSpace = 0
+                    $Script:SizeofFreeSpace_Pixels = 0
+                    $Script:SizeofUnallocated -= ($FreeSpaceDifference+$UnallocatedDifference)
+                    $Script:SizeofUnallocated_Pixels = $Script:SizeofUnallocated * $Script:PartitionBarPixelperKB
+                    $Script:SizeofPartition_System = $ValueinKB
+                    $Script:SizeofPartition_System_Pixels = $Script:SizeofPartition_System * $Script:PartitionBarPixelperKB
+                    $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Script:SizeofFreeSpace_Pixels
+                    $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = $Script:SizeofUnallocated_Pixels
+                    $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width = $Script:SizeofPartition_System_Pixels
+                    $WPF_UI_WorkbenchSize_Value.Background = 'White'
+                    $Script:UI_WorkbenchSize_Value=$WPF_UI_WorkbenchSize_Value.Text       
+                }
+                else{
+                    $WPF_UI_WorkbenchSize_Value.Background = 'Red'
+                }
+            }
+        }        
     }
 })
- 
 
 $WPF_UI_WorkSize_Value.add_LostFocus({
-    if (-not ($WPF_UI_WorkSize_Value.Text -match "^[\d\.]+$")){
-        $WPF_UI_WorkSize_Value.Background = 'Red'
-    }
-    elseif ($WPF_UI_WorkSize_Value.Text -eq $Script:UI_WorkSize_Value){
-        $WPF_UI_WorkSize_Value.Background = 'White'
-    } 
-    elseif (((([double]$WPF_UI_WorkSize_Value.Text)*1024*1024) -gt $Script:WorkMinimum)){
-        $ValueDifference = ([double]$WPF_UI_WorkSize_Value.Text*1024*1024-$Script:SizeofPartition_Other) 
-        $FreeSpaceDifference = $Script:SizeofFreeSpace-$ValueDifference
-        if ($FreeSpaceDifference -ge 0){
-            $Script:SizeofFreeSpace -= $ValueDifference 
-            $Script:SizeofFreeSpace_Pixels = $Script:SizeofFreeSpace * $Script:PartitionBarPixelperKB
-            $Script:SizeofPartition_Other= [double]$WPF_UI_WorkSize_Value.Text*1024*1024
-            $Script:SizeofPartition_Other_Pixels = $Script:SizeofPartition_Other* $Script:PartitionBarPixelperKB
-            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Script:SizeofFreeSpace_Pixels 
-            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width = $Script:SizeofPartition_Other_Pixels
-            $WPF_UI_WorkSize_Value.Background = 'White'
-            $Script:UI_WorkSize_Value= $WPF_UI_WorkSize_Value.Text    
-        }
-    }    
-    else {
-        $WPF_UI_WorkSize_Value.Background = 'Red'
+    if (GuiValueIsNumber -ValuetoCheck $WPF_UI_WorkSize_Value){
+        if (-not(GuiValueIsSame -ValuetoCheck  $WPF_UI_WorkSize_Value -ValuetoCheckAgainst $Script:UI_WorkSize_Value)){
+            $ValueinKB = (([Double]$WPF_UI_WorkSize_Value.Text)*1024*1024)
+            if ($ValueinKB -ge $Script:WorkMinimum){
+                $ValueDifference = $ValueinKB-$Script:SizeofPartition_Other
+#                Write-host ('Value difference is '+$ValueDifference) 
+                $FreeSpaceDifference = $Script:SizeofFreeSpace-$ValueDifference
+#                Write-host ('Free Space difference is '+$FreeSpaceDifference) 
+                $UnallocatedDifference = $Script:SizeofUnallocated-$ValueDifference
+#                Write-host ('Unallocated difference is '+$UnallocatedDifference)
+                $CombinedDifference = ($Script:SizeofUnallocated+$Script:SizeofFreeSpace)-$ValueDifference
+#                Write-host ('Combined difference is '+$CombinedDifference)
+                if ($FreeSpaceDifference -ge 0){
+                    $Script:SizeofFreeSpace -= $ValueDifference 
+                    $Script:SizeofFreeSpace_Pixels = $Script:SizeofFreeSpace * $Script:PartitionBarPixelperKB
+                    $Script:SizeofPartition_Other = $ValueinKB
+                    $Script:SizeofPartition_Other_Pixels = $Script:SizeofPartition_Other * $Script:PartitionBarPixelperKB
+                    $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Script:SizeofFreeSpace_Pixels 
+                    $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width = $Script:SizeofPartition_Other_Pixels
+                    $WPF_UI_WorkSize_Value.Background = 'White'
+                    $Script:UI_WorkSize_Value=$WPF_UI_WorkSize_Value.Text                
+                }
+                elseif ($CombinedDifference -ge 0){
+                    $Script:SizeofFreeSpace = 0
+                    $Script:SizeofFreeSpace_Pixels = 0
+                    $Script:SizeofUnallocated -= ($FreeSpaceDifference+$UnallocatedDifference)
+                    $Script:SizeofUnallocated_Pixels = $Script:SizeofUnallocated * $Script:PartitionBarPixelperKB
+                    $Script:SizeofPartition_Other = $ValueinKB
+                    $Script:SizeofPartition_Other_Pixels = $Script:SizeofPartition_Other * $Script:PartitionBarPixelperKB
+                    $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Script:SizeofFreeSpace_Pixels
+                    $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = $Script:SizeofUnallocated_Pixels
+                    $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width = $Script:SizeofPartition_Other_Pixels
+                    $WPF_UI_WorkSize_Value.Background = 'White'
+                    $Script:UI_WorkSize_Value=$WPF_UI_WorkSize_Value.Text       
+                }
+                else{
+                    $WPF_UI_WorkSize_Value.Background = 'Red'
+                }
+            }
+        }        
     }
 })
 
 $WPF_UI_FreeSpace_Value.add_LostFocus({
-        if (-not ($WPF_UI_FreeSpace_Value.Text -match "^[\d\.]+$")){
-            $WPF_UI_FreeSpace_Value.Background = 'Red'
-        }
-        elseif ($WPF_UI_FreeSpace_Value.Text -eq $Script:UI_FreeSpace_Value){
-            $WPF_UI_FreeSpace_Value.Background = 'White'
-        } 
-        else{
-            $ValueDifference = ([double]$WPF_UI_FreeSpace_Value.Text*1024*1024-$Script:SizeofFreeSpace)
-       #     Write-Host "Difference in value for FreeSpace is: $ValueDifference"
-            if ($ValueDifference -lt 0){ 
+    if (GuiValueIsNumber -ValuetoCheck $WPF_UI_FreeSpace_Value){
+        if (-not(GuiValueIsSame -ValuetoCheck  $WPF_UI_FreeSpace_Value -ValuetoCheckAgainst $Script:UI_FreeSpace_Value)){
+            $ValueinKB = (([Double]$WPF_UI_FreeSpace_Value.Text)*1024*1024)
+            $ValueDifference = $ValueinKB-$Script:SizeofFreeSpace
+            # Write-Host "Difference in value for FreeSpace is: $ValueDifference"
+            if ($ValueDifference -lt 0){
                 $Script:SizeofFreeSpace += $ValueDifference
                 $Script:SizeofUnallocated -= $ValueDifference
                 $Script:SizeofUnallocated_Pixels = $Script:SizeofUnallocated * $Script:PartitionBarPixelperKB
@@ -2257,6 +2336,9 @@ $WPF_UI_FreeSpace_Value.add_LostFocus({
                 $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = $Script:SizeofUnallocated_Pixels
                 $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Script:SizeofFreeSpace_Pixels  
                 $Script:UI_FreeSpace_Value= $WPF_UI_FreeSpace_Value.Text
+            }
+            elseif ($ValueDifference -eq 0){
+
             }
             elseif($ValueDifference -gt 0 -and ($Script:SizeofUnallocated - $ValueDifference) -gt 0){
                 $Script:SizeofFreeSpace += $ValueDifference
@@ -2268,32 +2350,32 @@ $WPF_UI_FreeSpace_Value.add_LostFocus({
                 $Script:UI_FreeSpace_Value= $WPF_UI_FreeSpace_Value.Text
             }
             else{
-                Write-Host $WPF_UI_FreeSpace_Value.Text 
-                Write-Host $UI_FreeSpace_Value
-                Write-host 'Not enough free space for change!'
-                write-host $ValueDifference
-                $WPF_UI_FreeSpace_Value.Background = 'Red'
+                # Write-Host $WPF_UI_FreeSpace_Value.Text 
+                # Write-Host $UI_FreeSpace_Value
+                # Write-host 'Not enough free space for change!'
+                # write-host $ValueDifference
+                $WPF_UI_FreeSpace_Value.Background = 'Red'                
             }
         }
-})    
+    }
+})
 
 $WPF_UI_ImageSize_Value.add_LostFocus({
-        if (-not ($WPF_UI_ImageSize_Value.Text -match "^[\d\.]+$")){
-             $WPF_UI_ImageSize_Value.Background = 'Red'
-        }
-        elseif ($WPF_UI_ImageSize_Value.Text -eq $Script:UI_ImageSize_Value){
-            $WPF_UI_ImageSize_Value.Background = 'White'
-        }
-        else{
-            $ValueDifference = ([double]$WPF_UI_ImageSize_Value.Text*1024*1024-$Script:SizeofImage)
-            if (($ValueDifference -lt 0) -and ($ValueDifference+$Script:SizeofFreeSpace -gt 0)) {  # We are reducing image and need free space
+    if (GuiValueIsNumber -ValuetoCheck $WPF_UI_ImageSize_Value){
+        if (-not(GuiValueIsSame -ValuetoCheck  $WPF_UI_ImageSize_Value -ValuetoCheckAgainst $Script:UI_ImageSize_Value)){
+            $ValueinKB = (([Double]$WPF_UI_ImageSize_Value.Text)*1024*1024)
+            $ValueDifference = ($ValueinKB-$Script:SizeofImage)
+            if ($ValueDifference -eq 0){
+
+            }
+            elseif (($ValueDifference -lt 0) -and ($ValueDifference+$Script:SizeofFreeSpace -gt 0)) {  # We are reducing image and need free space
                 $Script:SizeofFreeSpace += $ValueDifference
                 $Script:SizeofUnallocated -= $ValueDifference
                 $Script:SizeofFreeSpace_Pixels = $Script:SizeofFreeSpace * $Script:PartitionBarPixelperKB
                 $Script:SizeofFreeSpace_Pixels = $Script:SizeofFreeSpace * $Script:PartitionBarPixelperKB
                 $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = $Script:SizeofUnallocated_Pixels  
                 $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Script:SizeofFreeSpace_Pixels  
-                $UI_ImageSize_Value = $WPF_UI_ImageSize_Value.Text           
+                $UI_ImageSize_Value = $WPF_UI_ImageSize_Value.Text       
             }
             elseif (($ValueDifference -gt 0) -and ($Script:SizeofUnallocated -$ValueDifference -gt 0)) {  # We are reducing image and need free space    
                 $Script:SizeofFreeSpace += $ValueDifference
@@ -2302,9 +2384,13 @@ $WPF_UI_ImageSize_Value.add_LostFocus({
                 $Script:SizeofFreeSpace_Pixels = $Script:SizeofFreeSpace * $Script:PartitionBarPixelperKB
                 $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = $Script:SizeofUnallocated_Pixels  
                 $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Script:SizeofFreeSpace_Pixels
-                $UI_ImageSize_Value = $WPF_UI_ImageSize_Value.Text                    
+                $UI_ImageSize_Value = $WPF_UI_ImageSize_Value.Text         
             }
-        }       
+            else {
+                 $WPF_UI_ImageSize_Value.Background = 'Red'
+            }
+        }
+    }
 })
 
 $WPF_UI_Start_Button.Add_Click({
@@ -2617,8 +2703,11 @@ $InputXML_DisclaimerWindow = @"
         Title="Disclaimer" Height="450" Width="800" HorizontalAlignment="Center" HorizontalContentAlignment="Center" UseLayoutRounding="True" ScrollViewer.VerticalScrollBarVisibility="Disabled" ResizeMode="NoResize" WindowStyle="ToolWindow">
     <Grid Margin="0,-10,0,10">
         <Button x:Name="Button_Acknowledge" Content="Acknowledge" HorizontalAlignment="Left" Margin="259,382,0,0" VerticalAlignment="Top" Width="320"/>
-        <TextBox x:Name="TextBox_Message" HorizontalAlignment="Left" Margin="259,167,0,0" TextWrapping="Wrap" Text="This might harm your computer if you are a stronzo and don't know what you are doing" VerticalAlignment="Top" Width="307" IsReadOnly="True"/>
-    </Grid>
+              <TextBox x:Name="TextBox_Message" HorizontalAlignment="Center" Margin="0,99,0,0" TextWrapping="Wrap" BorderBrush="Transparent"
+                 Text="This software uses the the following to generate images:&#xD;&#xA;&#x9;HST-Imager Copyright (c) 2022 Henrik Nørfjand Stengaard&#xD;&#xA;&#x9;HST-Amiga Copyright (c) 2024 Henrik Nørfjand Stengaard&#xD;&#xA;&#x9;HDF2emu68 Copyright (c) 2023 PiStorm&#xD;&#xA;&#x9;7zip (developed by Igor Pavlov)&#xD;&#xA;&#x9;UnLZX&#xD;&#xA;&#xD;&#xA;This software is used at your own risk! While efforts have been made to test the software, it should be used with caution.  Data will be written to physical media attached to your computer and all data on that media will be erased. If the incorrect media is chosen, data on that media will also be erased!&#xD;&#xA;&#xD;&#xA;If you do not accept this risk, then do not use this software!&#xD;&#xA;" 
+                 VerticalAlignment="Top" Width="772" IsReadOnly="True" Height="198" VerticalScrollBarVisibility="Disabled"
+                 />
+         </Grid>
 </Window>
 "@
 
