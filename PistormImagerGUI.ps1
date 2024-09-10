@@ -1929,28 +1929,26 @@ $WPF_UI_Fat32Size_Listview.add_SizeChanged({
             $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width = $Script:SizeofFat32_Pixels_Minimum
         }
 
-        if ([math]::round($Script:PartitionBarWidth-  $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value- `
-                                                     $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value- `
-                                                     $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value- `
-                                                     $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value,4) -lt 0){
+        if ([math]::round($Script:PartitionBarWidth-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value,4) -lt 0){
             $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = 0
-        }else{
-            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = [math]::round($Script:PartitionBarWidth-  $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value- `
-                                                                                                $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value- `
-                                                                                                $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value- `
-                                                                                                $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value,4)
+        }
+        else{
+            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = [math]::round($Script:PartitionBarWidth-  $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value,4)
         }      
-         
-        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = [math]::round($Script:PartitionBarWidth-  $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value- `
-                                                                                            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value- `
-                                                                                            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value- `
-                                                                                            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width.Value,4)
 
-        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = [math]::round($Script:PartitionBarWidth-  $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value- `
-                                                                                            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value- `
-                                                                                            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value- `
-                                                                                            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value,4)
-
+        if ([math]::round($Script:PartitionBarWidth- $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width.Value,4) -le 0){
+            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = 0
+        }
+        else{
+            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = [math]::round($Script:PartitionBarWidth-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width.Value,4)
+        }
+        
+        if ([math]::round($Script:PartitionBarWidth-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value,4) -le 0){
+            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width =0
+        }
+        else{
+            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = [math]::round($Script:PartitionBarWidth-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value,4)
+        }
 
         Set-GUISizeofPartitions
         
@@ -1981,29 +1979,27 @@ $WPF_UI_WorkbenchSize_Listview.add_SizeChanged({
             $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width = $Script:SizeofPartition_System_Pixels_Minimum
         }
 
-        if ([math]::round($Script:PartitionBarWidth-  $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value- `
-                                                     $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value- `
-                                                     $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value- `
-                                                     $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value,4) -lt 0){
+        if ([math]::round($Script:PartitionBarWidth-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value,4) -lt 0){
             $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = 0
-        }else{
-            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = [math]::round($Script:PartitionBarWidth-  $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value- `
-                                                                                                $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value- `
-                                                                                                $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value- `
-                                                                                                $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value,4)
+        }
+        else{
+            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = [math]::round($Script:PartitionBarWidth-  $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value,4)
         }      
 
-        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = [math]::round($Script:PartitionBarWidth-  $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value- `
-                                                                                            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value- `
-                                                                                            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value- `
-                                                                                            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width.Value,4)
-
-        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = [math]::round($Script:PartitionBarWidth-  $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value- `
-                                                                                            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value- `
-                                                                                            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value- `
-                                                                                            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value,4)
-
-       
+        if ([math]::round($Script:PartitionBarWidth- $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width.Value,4) -le 0){
+            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = 0
+        }
+        else{
+            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = [math]::round($Script:PartitionBarWidth-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width.Value,4)
+        }
+        
+        if ([math]::round($Script:PartitionBarWidth-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value,4) -le 0){
+            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width =0
+        }
+        else{
+            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = [math]::round($Script:PartitionBarWidth-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value,4)
+        }
+        
         Set-GUISizeofPartitions
 
         Set-GUIPartitionValues       
@@ -2033,30 +2029,27 @@ $WPF_UI_WorkSize_Listview.add_SizeChanged({
             $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width = $Script:SizeofPartition_Other_Pixels_Minimum
         }
 
-        if ([math]::round($Script:PartitionBarWidth-  $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value- `
-                                                     $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value- `
-                                                     $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value- `
-                                                     $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value,4) -lt 0){
+        if ([math]::round($Script:PartitionBarWidth-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value,4) -lt 0){
             $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = 0
-        }else{
-            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = [math]::round($Script:PartitionBarWidth-  $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value- `
-                                                                                                $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value- `
-                                                                                                $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value- `
-                                                                                                $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value,4)
-        }       
+        }
+        else{
+            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = [math]::round($Script:PartitionBarWidth-  $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value,4)
+        }      
 
-        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = [math]::round($Script:PartitionBarWidth-  $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value- `
-                                                                                            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value- `
-                                                                                            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value- `
-                                                                                            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width.Value,4)
-
+        if ([math]::round($Script:PartitionBarWidth- $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width.Value,4) -le 0){
+            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = 0
+        }
+        else{
+            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = [math]::round($Script:PartitionBarWidth-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width.Value,4)
+        }
         
-        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = [math]::round($Script:PartitionBarWidth-  $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value- `
-                                                                                            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value- `
-                                                                                            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value- `
-                                                                                            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value,4)   
+        if ([math]::round($Script:PartitionBarWidth-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value,4) -le 0){
+            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width =0
+        }
+        else{
+            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = [math]::round($Script:PartitionBarWidth-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value-$WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value,4)
+        }
 
-   
     Set-GUISizeofPartitions                                                                                                
   
     Set-GUIPartitionValues
@@ -2888,11 +2881,13 @@ Write-InformationMessage -Message "Transfer Location: $Script:TransferLocation"
 Write-InformationMessage -Message "Write Image to Disk: $Script:WriteImage"
 Write-InformationMessage -Message "Set disk up only: $Script:SetDiskupOnly"
 
+<#
+
 #[System.Windows.Window].GetEvents() | select Name, *Method, EventHandlerType
 
 #[System.Windows.Controls.GridSplitter].GetEvents() | Select-Object Name, *Method, EventHandlerType
 #[System.Windows.Controls.ListView].GetEvents() | Select-Object Name, *Method, EventHandlerType
-<#
+
 ##### Script
 
 $UnLZXURL='http://aminet.net/util/arc/W95unlzx.lha'
@@ -3125,7 +3120,7 @@ if ($Script:SetDiskupOnly -eq 'FALSE'){
 
 Write-StartTaskMessage -Message 'Downloading HST Packages'
 
-Write-StartSubTaskMessage -Message 'Downloading HST Imager'
+Write-StartSubTaskMessage -Message 'Downloading HST Imager' -SubtaskNumber 1 -TotalSubtasks 2
 
 if (-not(Get-GithubRelease -GithubRelease $HSTImagerreleases -Tag_Name '1.1.350' -Name '_console_windows_x64.zip' -LocationforDownload ($TempFolder+'HSTImager.zip') -LocationforProgram ($ProgramsFolder+'HST-Imager\') -Sort_Flag '')){
     Write-ErrorMessage -Message 'Error downloading HST-Imager! Cannot continue!'
@@ -3133,14 +3128,13 @@ if (-not(Get-GithubRelease -GithubRelease $HSTImagerreleases -Tag_Name '1.1.350'
 }
 
 if ($Script:SetDiskupOnly -eq 'FALSE'){
-    Write-StartSubTaskMessage -Message 'Downloading HST Amiga'
+    Write-StartSubTaskMessage -Message 'Downloading HST Amiga' -SubtaskNumber 2 -TotalSubtasks 2
     
     if (-not(Get-GithubRelease -GithubRelease $HSTAmigareleases -Tag_Name '0.3.163' -Name '_console_windows_x64.zip' -LocationforDownload ($TempFolder+'HSTAmiga.zip') -LocationforProgram ($ProgramsFolder+'HST-Amiga\') -Sort_Flag '')){
         Write-ErrorMessage -Message 'Error downloading HST-Amiga! Cannot continue!'
         exit
     }
-}
-
+}Un
 
 Write-TaskCompleteMessage -Message 'Downloading HST Packages - Complete!'
 
@@ -3847,5 +3841,4 @@ $EndDateandTime = (Get-Date -Format HH:mm:ss)
 $ElapsedTime = (New-TimeSpan -Start $StartDateandTime -End $EndDateandTime).TotalSeconds
 
 Write-Host "Started at: $StartDateandTime Finished at: $EndDateandTime. Total time to run (in seconds) was: $ElapsedTime" 
-
 #>
