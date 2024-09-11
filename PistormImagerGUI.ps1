@@ -225,7 +225,7 @@ function Get-RoundedDiskSize {
         $Scale
     )
     if ($Scale -eq 'GiB'){
-        $RoundedSize = ([math]::truncate(($Size/1024/1024)*100)/100)
+        $RoundedSize = ([math]::truncate(($Size/1024/1024)*1000)/1000)
         
     }
     if (($RoundedSize -le 0) -and ($RoundedSize -ge -0.01)){
@@ -1413,6 +1413,40 @@ No valid Kickstart file was found at the location you specified. Select a locati
 }
 
 function Write-GUIReporttoUseronOptions {
+    $WPF_UI_DiskNameValue_Reporting_Detail_TextBox.Text = $Script:HSTDiskName
+    $WPF_UI_ScreenModeValue_Reporting_Detail_TextBox.Text = $Script:ScreenModetoUse
+    $WPF_UI_KickstartValue_Reporting_Detail_TextBox.Text =$Script:KickstartVersiontoUse
+    if ($Script:SSID){
+        $WPF_UI_SSIDValue_Reporting_Detail_TextBox.Text =  $Script:SSID
+    }
+    else{
+        $WPF_UI_SSIDValue_Reporting_Detail_TextBox.Text = 'No SSID Set'
+    }
+    if ($Script:WifiPassword){
+        $WPF_UI_PasswordValue_Reporting_Detail_TextBox.Text = $Script:WifiPassword 
+
+    } 
+    else{
+        $WPF_UI_PasswordValue_Reporting_Detail_TextBox.Text = 'No Password Set'
+    }
+    $WPF_UI_Fat32SizeValue_Reporting_Detail_TextBox.Text =  Get-FormattedSize -Size ($Script:SizeofFAT32*1024)
+    $WPF_UI_ImageSizeValue_Reporting_Detail_TextBox.Text = Get-FormattedSize -Size $Script:SizeofImage
+    $WPF_UI_WorkbenchSizeValue_Reporting_Detail_TextBox.Text = Get-FormattedSize -Size $Script:SizeofPartition_System
+    $WPF_UI_WorkSizeValue_Reporting_Detail_TextBox.Text = Get-FormattedSize -Size $Script:SizeofPartition_Other
+    $WPF_UI_WriteImagetoDiskValue_Reporting_Detail_TextBox.Text =  $Script:WriteImage
+    $WPF_UI_SetupDiskOnlyValue_Detail_TextBox.Text = $Script:SetDiskupOnly
+    $WPF_UI_WorkingPathValue_Reporting_Detail_TextBox.Text = $Script:WorkingPath
+    $WPF_UI_RomPathValue_Reporting_Detail_TextBox.Text = $Script:ROMPath
+    $WPF_UI_ADFPathValue_Detail_TextBox.Text = $Script:ADFPath 
+    if ($Script:TransferLocation){
+        $WPF_UI_TransferPathValue_Detail_TextBox.Text = $Script:TransferLocation
+    }
+    else{
+        $WPF_UI_TransferPathValue_Detail_TextBox.Text = 'No Transfer Location Set'
+    }
+}
+
+function Write-GUIReporttoUseronOptionsDebug {
     param (
 
     )
@@ -1580,169 +1614,228 @@ $inputXML_UserInterface = @"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:WpfApp14"
         mc:Ignorable="d"
            Title="Emu68 Imager" Height="600" Width="910" HorizontalAlignment="Left" VerticalAlignment="Top" ResizeMode="NoResize">
-   <Grid Background="#FFE5E5E5" >
-      <GroupBox x:Name="DiskSetup_GroupBox" Header="Disk Setup" VerticalAlignment="Top" Height="153" Background="Transparent" HorizontalAlignment="Center">
-          <Grid Background="Transparent">
-              <Grid x:Name="DiskPartition_Grid" Background="Transparent" Height="30" Width="903" MaxWidth="903" VerticalAlignment="Center">
-                  <Grid.RowDefinitions>
-                      <RowDefinition Height="30"/>
-                  </Grid.RowDefinitions>
-                  <Grid.ColumnDefinitions>
-                      <ColumnDefinition Width="*" />
-                      <ColumnDefinition Width="auto" />
-                      <ColumnDefinition Width="*" />
-                      <ColumnDefinition Width="auto" />
-                      <ColumnDefinition Width="*" />
-                      <ColumnDefinition Width="auto" />
-                      <ColumnDefinition Width="*" />
-                      <ColumnDefinition Width="auto" />
-                      <ColumnDefinition Width="*" />
-                  </Grid.ColumnDefinitions>
-                  <ListView x:Name="Fat32Size_Listview" Grid.Row="0" Grid.Column="0" Background="#FF3B67A2" 
+    <Grid x:Name="Overall_Grid" Background="Transparent" Visibility="Visible">
+        <Grid x:Name="Main_Grid" Background="#FFE5E5E5" Visibility="Visible" >
+            <GroupBox x:Name="DiskSetup_GroupBox" Header="Disk Setup" VerticalAlignment="Top" Height="153" Background="Transparent" HorizontalAlignment="Center">
+                <Grid Background="Transparent">
+                    <Grid x:Name="DiskPartition_Grid" Background="Transparent" Height="30" Width="903" MaxWidth="903" VerticalAlignment="Center">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="30"/>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <ListView x:Name="Fat32Size_Listview" Grid.Row="0" Grid.Column="0" Background="#FF3B67A2" 
                   HorizontalAlignment="Stretch" 
                   VerticalAlignment="Stretch" 
                   ScrollViewer.VerticalScrollBarVisibility="Disabled"  
                   ScrollViewer.HorizontalScrollBarVisibility="Disabled" IsTabStop="True"
               >
-                      <ListViewItem x:Name="FAT32Size_ListViewItem" Content="FAT32" Height="30" Width="Auto" HorizontalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                  </ListView>
-                  <GridSplitter x:Name="FAT32_Splitter" Grid.Row="0" Grid.Column="1" Margin="2,0,2,0"
+                            <ListViewItem x:Name="FAT32Size_ListViewItem" Content="FAT32" Height="30" Width="Auto" HorizontalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </ListView>
+                        <GridSplitter x:Name="FAT32_Splitter" Grid.Row="0" Grid.Column="1" Margin="2,0,2,0"
                Width="3" Background="Purple" 
                VerticalAlignment="Stretch" 
                HorizontalAlignment="Center" 
                IsEnabled="False" 
               />
-                  <ListView x:Name="WorkbenchSize_Listview" Grid.Row="0" Grid.Column="2" Background="#FFFFA997" 
+                        <ListView x:Name="WorkbenchSize_Listview" Grid.Row="0" Grid.Column="2" Background="#FFFFA997" 
                   HorizontalAlignment="Stretch" 
                   VerticalAlignment="Stretch" 
                   ScrollViewer.VerticalScrollBarVisibility="Disabled"  
                   ScrollViewer.HorizontalScrollBarVisibility="Disabled" IsTabStop="True"
            
                   >
-                      <ListViewItem x:Name="WorkbenchSize_ListViewItem" Content="Workbench" Height="30" HorizontalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                  </ListView>
-                  <GridSplitter x:Name="Workbench_Splitter" Grid.Row="0" Grid.Column="3" Margin="2,0,2,0"
+                            <ListViewItem x:Name="WorkbenchSize_ListViewItem" Content="Workbench" Height="30" HorizontalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </ListView>
+                        <GridSplitter x:Name="Workbench_Splitter" Grid.Row="0" Grid.Column="3" Margin="2,0,2,0"
                Width="3" Background="Purple" 
                VerticalAlignment="Stretch" 
                HorizontalAlignment="Center" 
                IsEnabled="False" 
               />
-                  <ListView x:Name="WorkSize_Listview" Grid.Row="0" Grid.Column="4" Background="#FFAA907C" 
+                        <ListView x:Name="WorkSize_Listview" Grid.Row="0" Grid.Column="4" Background="#FFAA907C" 
                   HorizontalAlignment="Stretch" 
                   VerticalAlignment="Stretch" 
                   ScrollViewer.VerticalScrollBarVisibility="Disabled"  
                   ScrollViewer.HorizontalScrollBarVisibility="Disabled" IsTabStop="True"
               >
-                      <ListViewItem x:Name="WorkSize_ListViewItem" Content="Work" Height="30" HorizontalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                  </ListView>
-                  <GridSplitter x:Name="Work_Splitter" Grid.Row="0" Grid.Column="5" Margin="2,0,2,0"
+                            <ListViewItem x:Name="WorkSize_ListViewItem" Content="Work" Height="30" HorizontalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </ListView>
+                        <GridSplitter x:Name="Work_Splitter" Grid.Row="0" Grid.Column="5" Margin="2,0,2,0"
                Width="3" Background="Purple" 
                VerticalAlignment="Stretch" 
                HorizontalAlignment="Center" 
                IsEnabled="False" 
               />
-                  <ListView x:Name="FreeSpace_Listview" Grid.Row="0" Grid.Column="6" Background="#FF7B7B7B" 
+                        <ListView x:Name="FreeSpace_Listview" Grid.Row="0" Grid.Column="6" Background="#FF7B7B7B" 
                   HorizontalAlignment="Stretch" 
                   VerticalAlignment="Stretch" 
                   ScrollViewer.VerticalScrollBarVisibility="Disabled"  
                   ScrollViewer.HorizontalScrollBarVisibility="Disabled" IsTabStop="True"
               >
-                      <ListViewItem x:Name="FreeSpace_ListViewItem" Content="Free Space" Height="30" HorizontalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                  </ListView>
-                  <GridSplitter x:Name="Image_Splitter" Grid.Row="0" Grid.Column="7" Margin="2,0,2,0"
+                            <ListViewItem x:Name="FreeSpace_ListViewItem" Content="Free Space" Height="30" HorizontalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </ListView>
+                        <GridSplitter x:Name="Image_Splitter" Grid.Row="0" Grid.Column="7" Margin="2,0,2,0"
                Width="3" Background="Purple" 
                VerticalAlignment="Stretch" 
                HorizontalAlignment="Center" 
                IsEnabled="False" 
               />
-                    <ListView x:Name="Unallocated_Listview" Grid.Row="0" Grid.Column="8" Background="#FFAFAFAF" 
+                        <ListView x:Name="Unallocated_Listview" Grid.Row="0" Grid.Column="8" Background="#FFAFAFAF" 
                     HorizontalAlignment="Stretch" 
                     VerticalAlignment="Stretch" 
                     ScrollViewer.VerticalScrollBarVisibility="Disabled"  
                     ScrollViewer.HorizontalScrollBarVisibility="Disabled" IsTabStop="True"
                 >
-                        <ListViewItem x:Name="Unallocated_ListViewItem" Content="Not Used" Height="30" HorizontalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </ListView>
-              </Grid>
+                            <ListViewItem x:Name="Unallocated_ListViewItem" Content="Not Used" Height="30" HorizontalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </ListView>
+                    </Grid>
 
-                <TextBox x:Name="Fat32Size_Label" HorizontalAlignment="Left" Margin="36,84,0,0" TextWrapping="Wrap" Text="FAT32 (GiB)" VerticalAlignment="Top" Width="82" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-                <TextBox x:Name="WorkbenchSize_Label" HorizontalAlignment="Left" Margin="167,84,0,0" TextWrapping="Wrap" Text="Workbench (GiB)" VerticalAlignment="Top" Width="113" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-                <TextBox x:Name="WorkSize_Label" HorizontalAlignment="Left" Margin="309,84,0,0" TextWrapping="Wrap" Text="Work (GiB)" VerticalAlignment="Top" Width="63" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-                <TextBox x:Name="WorkSizeNote_Label" HorizontalAlignment="Left" Margin="279,85,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="16" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" FontSize="17" />
-                <TextBox x:Name="Unallocated_Label" HorizontalAlignment="Left" Margin="771,84,0,0" TextWrapping="Wrap" Text="Not Used (GiB)" VerticalAlignment="Top" Width="105" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-                <TextBox x:Name="ImageSize_Label" HorizontalAlignment="Left" Margin="540,84,0,0" TextWrapping="Wrap" Text="Total Image Size (GiB)" VerticalAlignment="Top" Width="144" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-                <TextBox x:Name="FreeSpace_Label" HorizontalAlignment="Left" Margin="424,84,0,0" TextWrapping="Wrap" Text="Free Space (GiB)" VerticalAlignment="Top" Width="108" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+                    <TextBox x:Name="Fat32Size_Label" HorizontalAlignment="Left" Margin="36,84,0,0" TextWrapping="Wrap" Text="FAT32 (GiB)" VerticalAlignment="Top" Width="82" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+                    <TextBox x:Name="WorkbenchSize_Label" HorizontalAlignment="Left" Margin="167,84,0,0" TextWrapping="Wrap" Text="Workbench (GiB)" VerticalAlignment="Top" Width="113" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+                    <TextBox x:Name="WorkSize_Label" HorizontalAlignment="Left" Margin="309,84,0,0" TextWrapping="Wrap" Text="Work (GiB)" VerticalAlignment="Top" Width="63" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+                    <TextBox x:Name="WorkSizeNote_Label" HorizontalAlignment="Left" Margin="279,85,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="16" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" FontSize="17" />
+                    <TextBox x:Name="Unallocated_Label" HorizontalAlignment="Left" Margin="771,84,0,0" TextWrapping="Wrap" Text="Not Used (GiB)" VerticalAlignment="Top" Width="105" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+                    <TextBox x:Name="ImageSize_Label" HorizontalAlignment="Left" Margin="540,84,0,0" TextWrapping="Wrap" Text="Total Image Size (GiB)" VerticalAlignment="Top" Width="144" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+                    <TextBox x:Name="FreeSpace_Label" HorizontalAlignment="Left" Margin="424,84,0,0" TextWrapping="Wrap" Text="Free Space (GiB)" VerticalAlignment="Top" Width="108" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
 
-                <TextBox x:Name="FAT32Size_Value" Text="" HorizontalAlignment="Left" Margin="20,106,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" IsEnabled="False"/>
-                <TextBox x:Name="WorkbenchSize_Value" Text="" HorizontalAlignment="Left" Margin="162,106,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" IsEnabled="False"/>
-                <TextBox x:Name="WorkSize_Value" Text="" HorizontalAlignment="Left" Margin="278,106,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" IsEnabled="False"/>
-                <TextBox x:Name="Unallocated_Value" Text="0" HorizontalAlignment="Left" Margin="780,106,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" BorderBrush="Transparent"/>
-                <TextBox x:Name="ImageSize_Value" Text="" HorizontalAlignment="Left" Margin="551,106,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" IsEnabled="False"/>
-                <TextBox x:Name="FreeSpace_Value" Text="" HorizontalAlignment="Left" Margin="416,106,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" IsEnabled="False"/>
+                    <TextBox x:Name="FAT32Size_Value" Text="" HorizontalAlignment="Left" Margin="20,106,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" IsEnabled="False"/>
+                    <TextBox x:Name="WorkbenchSize_Value" Text="" HorizontalAlignment="Left" Margin="162,106,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" IsEnabled="False"/>
+                    <TextBox x:Name="WorkSize_Value" Text="" HorizontalAlignment="Left" Margin="278,106,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" IsEnabled="False"/>
+                    <TextBox x:Name="Unallocated_Value" Text="0" HorizontalAlignment="Left" Margin="780,106,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" BorderBrush="Transparent"/>
+                    <TextBox x:Name="ImageSize_Value" Text="" HorizontalAlignment="Left" Margin="551,106,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" IsEnabled="False"/>
+                    <TextBox x:Name="FreeSpace_Value" Text="" HorizontalAlignment="Left" Margin="416,106,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" IsEnabled="False"/>
 
-                <Rectangle x:Name="Fat32_Key" HorizontalAlignment="Left" Height="10" Margin="22,90,0,0" VerticalAlignment="Top" Width="10" Fill="#FF3B67A2" />
-                <Rectangle x:Name="Workbench_Key" HorizontalAlignment="Left" Height="10" Margin="154,90,0,0" VerticalAlignment="Top" Width="10" Fill="#FFFFA997"  />
-                <Rectangle x:Name="Work_Key" HorizontalAlignment="Left" Height="10" Margin="295,90,0,0" VerticalAlignment="Top" Width="10" Fill="#FFAA907C"  />
-                <Rectangle x:Name="FreeSpace_Key" HorizontalAlignment="Left" Height="10" Margin="409,90,0,0" VerticalAlignment="Top" Width="10" Fill="#FF7B7B7B" />
-                <Rectangle x:Name="Unallocated_Key" HorizontalAlignment="Left" Height="10" Margin="756,90,0,0" VerticalAlignment="Top" Width="10" Fill="#FFAFAFAF"  />
-              
-              <TextBox x:Name="MediaSelect_Label" HorizontalAlignment="Left" Margin="10,10,0,0" TextWrapping="Wrap" Text="Select Media to Use" VerticalAlignment="Top" Width="120" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-              <ComboBox x:Name="MediaSelect_DropDown"  HorizontalAlignment="Left" Margin="130,8,0,0" VerticalAlignment="Top" Width="340"/>
-              <Button x:Name="MediaSelect_Refresh" Content="Refresh Available Media" HorizontalAlignment="Left" Margin="482,9,0,0" VerticalAlignment="Top" Width="130" Height="20"/>
-              <Button x:Name="DefaultAllocation_Refresh" Content="Reset Partitions to Default" HorizontalAlignment="Left" Margin="725,9,0,0" VerticalAlignment="Top" Width="157" Height="20"/>
-          </Grid>
-      </GroupBox>
-      <GroupBox x:Name="SourceFiles_GroupBox" Header="Source Files" Height="200" Background="Transparent" Margin="7,156,0,128" Width="400" VerticalAlignment="Top" HorizontalAlignment="Left">
-          <Grid Background="Transparent" HorizontalAlignment="Left" VerticalAlignment="Top">
-              <ComboBox x:Name="KickstartVersion_DropDown" HorizontalAlignment="Left" Margin="10,32,0,0" VerticalAlignment="Top" Width="200"/>
-              <Button x:Name="ADFpath_Button" Content="Click to set ADF path" HorizontalAlignment="Left" Margin="10,94,0,0" VerticalAlignment="Top"  Width="200" Height="30"/>
-              <TextBox x:Name="ADFPath_Label" HorizontalAlignment="Left" Margin="223,100,0,0" TextWrapping="Wrap" Text="No ADF path selected" VerticalAlignment="Top" Width="200" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-              <TextBox x:Name="ROMPath_Label" HorizontalAlignment="Left" Margin="223,65,0,0" TextWrapping="Wrap" Text="No Kickstart path selected" VerticalAlignment="Top" Width="200" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-              <Button x:Name="Rompath_Button" Content="Click to set Kickstart path" HorizontalAlignment="Left" Margin="10,59,0,0" VerticalAlignment="Top"  Width="200" Height="30"/>
-              <Button x:Name="MigratedFiles_Button" Content="Click to set Transfer path" HorizontalAlignment="Left" Margin="10,129,0,0" VerticalAlignment="Top"  Width="200" Height="30"/>
-              <TextBox x:Name="MigratedPath_Label" HorizontalAlignment="Left" Margin="223,139,0,0" TextWrapping="Wrap" Text="No transfer path selected" VerticalAlignment="Top" Width="200" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-              <TextBox x:Name="KickstartVersion_Label" HorizontalAlignment="Left" Margin="10,10,0,0" TextWrapping="Wrap" Text="Select OS Version" VerticalAlignment="Top" Width="200" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Center"/>
+                    <Rectangle x:Name="Fat32_Key" HorizontalAlignment="Left" Height="10" Margin="22,90,0,0" VerticalAlignment="Top" Width="10" Fill="#FF3B67A2" />
+                    <Rectangle x:Name="Workbench_Key" HorizontalAlignment="Left" Height="10" Margin="154,90,0,0" VerticalAlignment="Top" Width="10" Fill="#FFFFA997"  />
+                    <Rectangle x:Name="Work_Key" HorizontalAlignment="Left" Height="10" Margin="295,90,0,0" VerticalAlignment="Top" Width="10" Fill="#FFAA907C"  />
+                    <Rectangle x:Name="FreeSpace_Key" HorizontalAlignment="Left" Height="10" Margin="409,90,0,0" VerticalAlignment="Top" Width="10" Fill="#FF7B7B7B" />
+                    <Rectangle x:Name="Unallocated_Key" HorizontalAlignment="Left" Height="10" Margin="756,90,0,0" VerticalAlignment="Top" Width="10" Fill="#FFAFAFAF"  />
 
-          </Grid>
-      </GroupBox>
-      <GroupBox x:Name="Settings_GroupBox" Header="Settings" Height="150" Background="Transparent" Margin="0,156,7,128" Width="400" VerticalAlignment="Top" HorizontalAlignment="Right">
-          <Grid>
-              <ComboBox x:Name="ScreenMode_Dropdown" HorizontalAlignment="Left" Margin="10,26,0,0" VerticalAlignment="Top" Width="300"/>
-              <TextBox x:Name="ScreenMode_Label" HorizontalAlignment="Left" Margin="10,3,0,0" TextWrapping="Wrap" Text="Select ScreenMode" VerticalAlignment="Top" Width="300" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Center"/>
-              <TextBox x:Name="SSID_Label" HorizontalAlignment="Left" Margin="12,71,0,0" TextWrapping="Wrap" Text="Enter your SSID" VerticalAlignment="Top" Width="150" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-              <TextBox x:Name="Password_Label" HorizontalAlignment="Left" Margin="6,94,0,0" TextWrapping="Wrap" Text="Enter your Wifi password"  VerticalAlignment="Top" Width="150" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Center"/>
-              <TextBox x:Name="SSID_Textbox" HorizontalAlignment="Left" Margin="187,71,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="120"/>
-              <TextBox x:Name="Password_Textbox" HorizontalAlignment="Left" Margin="187,94,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="120"/>
+                    <TextBox x:Name="MediaSelect_Label" HorizontalAlignment="Left" Margin="10,10,0,0" TextWrapping="Wrap" Text="Select Media to Use" VerticalAlignment="Top" Width="120" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+                    <ComboBox x:Name="MediaSelect_DropDown"  HorizontalAlignment="Left" Margin="130,8,0,0" VerticalAlignment="Top" Width="340"/>
+                    <Button x:Name="MediaSelect_Refresh" Content="Refresh Available Media" HorizontalAlignment="Left" Margin="482,9,0,0" VerticalAlignment="Top" Width="130" Height="20"/>
+                    <Button x:Name="DefaultAllocation_Refresh" Content="Reset Partitions to Default" HorizontalAlignment="Left" Margin="725,9,0,0" VerticalAlignment="Top" Width="157" Height="20"/>
+                </Grid>
+            </GroupBox>
+            <GroupBox x:Name="SourceFiles_GroupBox" Header="Source Files" Height="200" Background="Transparent" Margin="7,156,0,128" Width="400" VerticalAlignment="Top" HorizontalAlignment="Left">
+                <Grid Background="Transparent" HorizontalAlignment="Left" VerticalAlignment="Top">
+                    <ComboBox x:Name="KickstartVersion_DropDown" HorizontalAlignment="Left" Margin="10,32,0,0" VerticalAlignment="Top" Width="200"/>
+                    <Button x:Name="ADFpath_Button" Content="Click to set ADF path" HorizontalAlignment="Left" Margin="10,94,0,0" VerticalAlignment="Top"  Width="200" Height="30"/>
+                    <TextBox x:Name="ADFPath_Label" HorizontalAlignment="Left" Margin="223,100,0,0" TextWrapping="Wrap" Text="No ADF path selected" VerticalAlignment="Top" Width="200" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+                    <TextBox x:Name="ROMPath_Label" HorizontalAlignment="Left" Margin="223,65,0,0" TextWrapping="Wrap" Text="No Kickstart path selected" VerticalAlignment="Top" Width="200" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+                    <Button x:Name="Rompath_Button" Content="Click to set Kickstart path" HorizontalAlignment="Left" Margin="10,59,0,0" VerticalAlignment="Top"  Width="200" Height="30"/>
+                    <Button x:Name="MigratedFiles_Button" Content="Click to set Transfer path" HorizontalAlignment="Left" Margin="10,129,0,0" VerticalAlignment="Top"  Width="200" Height="30"/>
+                    <TextBox x:Name="MigratedPath_Label" HorizontalAlignment="Left" Margin="223,139,0,0" TextWrapping="Wrap" Text="No transfer path selected" VerticalAlignment="Top" Width="200" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+                    <TextBox x:Name="KickstartVersion_Label" HorizontalAlignment="Left" Margin="10,10,0,0" TextWrapping="Wrap" Text="Select OS Version" VerticalAlignment="Top" Width="200" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Center"/>
 
-          </Grid>
+                </Grid>
+            </GroupBox>
+            <GroupBox x:Name="Settings_GroupBox" Header="Settings" Height="150" Background="Transparent" Margin="0,156,7,128" Width="400" VerticalAlignment="Top" HorizontalAlignment="Right">
+                <Grid>
+                    <ComboBox x:Name="ScreenMode_Dropdown" HorizontalAlignment="Left" Margin="10,26,0,0" VerticalAlignment="Top" Width="300"/>
+                    <TextBox x:Name="ScreenMode_Label" HorizontalAlignment="Left" Margin="10,3,0,0" TextWrapping="Wrap" Text="Select ScreenMode" VerticalAlignment="Top" Width="300" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Center"/>
+                    <TextBox x:Name="SSID_Label" HorizontalAlignment="Left" Margin="12,71,0,0" TextWrapping="Wrap" Text="Enter your SSID" VerticalAlignment="Top" Width="150" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+                    <TextBox x:Name="Password_Label" HorizontalAlignment="Left" Margin="6,94,0,0" TextWrapping="Wrap" Text="Enter your Wifi password"  VerticalAlignment="Top" Width="150" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Center"/>
+                    <TextBox x:Name="SSID_Textbox" HorizontalAlignment="Left" Margin="187,71,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="120"/>
+                    <TextBox x:Name="Password_Textbox" HorizontalAlignment="Left" Margin="187,94,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="120"/>
 
-      </GroupBox>
-      <GroupBox x:Name="RunOptions_GroupBox" Header="Run Options" Margin="7,365,0,100" Background="Transparent" HorizontalAlignment="Left" Width="400" VerticalAlignment="Top" >
-          <Grid Background="Transparent" >
-              <CheckBox x:Name="DiskWrite_CheckBox" Content="Do not write to disk. Produce .img file only" HorizontalAlignment="Left" Margin="2,29,0,0" VerticalAlignment="Top"/>
-              <CheckBox x:Name="NoFileInstall_CheckBox" Content="Only set disk up. Do not install packages" HorizontalAlignment="Left" Margin="2,6,0,0" VerticalAlignment="Top"/>
-          </Grid>
-      </GroupBox>
-      <Button x:Name="Start_Button" Content="Missing information! Press to see further details" HorizontalAlignment="Center" Margin="0,489,0,0" VerticalAlignment="Top" Width="880" Height="38" Background = "Red" Foreground="Black" BorderBrush="Transparent"/>
-      <GroupBox x:Name="Space_GroupBox" Header="Space Requirements" Height="170" Background="Transparent" Margin="0,311,10,0" Width="400" VerticalAlignment="Top" HorizontalAlignment="Right">
-    <Grid>
-    
-                <TextBox x:Name="RequiredSpace_TextBox" HorizontalAlignment="Left" Margin="20,57,0,0" TextWrapping="Wrap" Text="Required space to run tool is:" VerticalAlignment="Top" Width="230" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-                <TextBox x:Name="RequiredSpaceValue_TextBox" HorizontalAlignment="Left" Margin="288,57,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Right"/>
-                <TextBox x:Name="AvailableSpace_TextBox" HorizontalAlignment="Left" Margin="20,77,0,0" TextWrapping="Wrap" Text="Free space after tool is run:" VerticalAlignment="Top" Width="230" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" FontWeight="Bold"/>
-                <TextBox x:Name="AvailableSpaceValue_TextBox" HorizontalAlignment="Right" Margin="0,77,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Green" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Right"/>
-                <TextBox x:Name="RequiredSpaceTransferredFiles_TextBox" HorizontalAlignment="Left" Margin="20,10,0,0" TextWrapping="Wrap" Text="Required space for transferred files:" VerticalAlignment="Top" Width="230" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-                <TextBox x:Name="RequiredSpaceValueTransferredFiles_TextBox" HorizontalAlignment="Left" Margin="288,10,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Right"/>
-                <TextBox x:Name="AvailableSpaceTransferredFiles_TextBox" HorizontalAlignment="Left" Margin="20,31,0,0" TextWrapping="Wrap" Text="Free space after files transferred is:" VerticalAlignment="Top" Width="230" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" FontWeight="Bold"/>
-                <TextBox x:Name="AvailableSpaceValueTransferredFiles_TextBox" HorizontalAlignment="Right" Margin="0,31,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Right"/>
-                <TextBox x:Name="RequiredSpaceMessage_TextBox" HorizontalAlignment="Left" Margin="20,107,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="358" BorderBrush="Transparent" Foreground="Red" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" Focusable="False" Height="35" IsHitTestVisible="False"/>
-         </Grid>
+                </Grid>
 
-      </GroupBox>
-      <TextBox x:Name="WorkSizeNoteFooter_Label" HorizontalAlignment="Left" Margin="15,466,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="608" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-  </Grid>
+            </GroupBox>
+            <GroupBox x:Name="RunOptions_GroupBox" Header="Run Options" Margin="7,365,0,100" Background="Transparent" HorizontalAlignment="Left" Width="400" VerticalAlignment="Top" >
+                <Grid Background="Transparent" >
+                    <CheckBox x:Name="DiskWrite_CheckBox" Content="Do not write to disk. Produce .img file only" HorizontalAlignment="Left" Margin="2,29,0,0" VerticalAlignment="Top"/>
+                    <CheckBox x:Name="NoFileInstall_CheckBox" Content="Only set disk up. Do not install packages" HorizontalAlignment="Left" Margin="2,6,0,0" VerticalAlignment="Top"/>
+                </Grid>
+            </GroupBox>
+            <Button x:Name="Start_Button" Content="Missing information! Press to see further details" HorizontalAlignment="Center" Margin="0,489,0,0" VerticalAlignment="Top" Width="880" Height="38" Background = "Red" Foreground="Black" BorderBrush="Transparent"/>
+            <GroupBox x:Name="Space_GroupBox" Header="Space Requirements" Height="170" Background="Transparent" Margin="0,311,10,0" Width="400" VerticalAlignment="Top" HorizontalAlignment="Right">
+                <Grid>
+
+                    <TextBox x:Name="RequiredSpace_TextBox" HorizontalAlignment="Left" Margin="20,57,0,0" TextWrapping="Wrap" Text="Required space to run tool is:" VerticalAlignment="Top" Width="230" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+                    <TextBox x:Name="RequiredSpaceValue_TextBox" HorizontalAlignment="Left" Margin="288,57,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Right"/>
+                    <TextBox x:Name="AvailableSpace_TextBox" HorizontalAlignment="Left" Margin="20,77,0,0" TextWrapping="Wrap" Text="Free space after tool is run:" VerticalAlignment="Top" Width="230" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" FontWeight="Bold"/>
+                    <TextBox x:Name="AvailableSpaceValue_TextBox" HorizontalAlignment="Right" Margin="0,77,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Green" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Right"/>
+                    <TextBox x:Name="RequiredSpaceTransferredFiles_TextBox" HorizontalAlignment="Left" Margin="20,10,0,0" TextWrapping="Wrap" Text="Required space for transferred files:" VerticalAlignment="Top" Width="230" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+                    <TextBox x:Name="RequiredSpaceValueTransferredFiles_TextBox" HorizontalAlignment="Left" Margin="288,10,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Right"/>
+                    <TextBox x:Name="AvailableSpaceTransferredFiles_TextBox" HorizontalAlignment="Left" Margin="20,31,0,0" TextWrapping="Wrap" Text="Free space after files transferred is:" VerticalAlignment="Top" Width="230" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" FontWeight="Bold"/>
+                    <TextBox x:Name="AvailableSpaceValueTransferredFiles_TextBox" HorizontalAlignment="Right" Margin="0,31,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Right"/>
+                    <TextBox x:Name="RequiredSpaceMessage_TextBox" HorizontalAlignment="Left" Margin="20,107,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="358" BorderBrush="Transparent" Foreground="Red" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" Focusable="False" Height="35" IsHitTestVisible="False"/>
+                </Grid>
+
+            </GroupBox>
+            <TextBox x:Name="WorkSizeNoteFooter_Label" HorizontalAlignment="Left" Margin="15,466,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="608" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+        </Grid>
+        <Grid x:Name="Reporting_Grid" Background="#FFE5E5E5" Visibility="Hidden">
+            <Button x:Name="GoBack_Button" Content="Back" HorizontalAlignment="Left" Margin="20,523,0,0" Background="red" VerticalAlignment="Top" Width="199"/>
+            <Button x:Name="Process_Button" Content="Run" HorizontalAlignment="Left" Margin="689,523,0,0" Background="green" VerticalAlignment="Top" Width="199"/>
+
+
+
+            <TextBox x:Name="Reporting_Header_TextBox" HorizontalAlignment="Center" Margin="0,126,0,0" TextWrapping="Wrap" Text="Tool will be run with the following options:  " VerticalAlignment="Top" Width="438" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Center"/>
+           
+          <TextBox x:Name="DiskName_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,175,0,0" TextWrapping="Wrap" Text="DiskName to Write:" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>         
+          <TextBox x:Name="DiskNameValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,175,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+          
+          <TextBox x:Name="ScreenMode_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,195,0,0" TextWrapping="Wrap" Text="ScreenMode to Use:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+          <TextBox x:Name="ScreenModeValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,195,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+          
+          <TextBox x:Name="Kickstart_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,215,0,0" TextWrapping="Wrap" Text="Kickstart to Use:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+          <TextBox x:Name="KickstartValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,215,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+          
+          <TextBox x:Name="SSID_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,235,0,0" TextWrapping="Wrap" Text="SSID to configure:" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+          <TextBox x:Name="SSIDValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,235,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+          
+          <TextBox x:Name="Password_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,255,0,0" TextWrapping="Wrap" Text="Password to set:" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+          <TextBox x:Name="PasswordValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,255,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+          
+          <TextBox x:Name="ImageSize_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,275,0,0" TextWrapping="Wrap" Text="Total Image Size:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+          <TextBox x:Name="ImageSizeValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,275,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+          
+          <TextBox x:Name="Fat32Size_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,295,0,0" TextWrapping="Wrap" Text="Fat32 Size:" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+          <TextBox x:Name="Fat32SizeValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,295,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+          
+           <TextBox x:Name="WorkbenchSize_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,315,0,0" TextWrapping="Wrap" Text="Workbench Size:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+          <TextBox x:Name="WorkbenchSizeValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,315,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+          
+          <TextBox x:Name="WorkSize_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,335,0,0" TextWrapping="Wrap" Text="Work Size:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+          <TextBox x:Name="WorkSizeValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,335,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+          
+          <TextBox x:Name="WorkingPath_Detail_TextBox" HorizontalAlignment="Left" Margin="100,355,0,0" TextWrapping="Wrap" Text="Working Path:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+          <TextBox x:Name="WorkingPathValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,355,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="450" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+          
+          <TextBox x:Name="RomPath_Detail_TextBox" HorizontalAlignment="Left" Margin="100,375,0,0" TextWrapping="Wrap" Text="Rom Path:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+          <TextBox x:Name="RomPathValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,375,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="450" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" />
+          
+          <TextBox x:Name="ADFPath_Detail_TextBox" HorizontalAlignment="Left" Margin="100,395,0,0" TextWrapping="Wrap" Text="ADF Path:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+          <TextBox x:Name="ADFPathValue_Detail_TextBox" HorizontalAlignment="Left" Margin="360,395,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="450" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+         
+          <TextBox x:Name="TransferPath_Detail_TextBox" HorizontalAlignment="Left" Margin="100,415,0,0" TextWrapping="Wrap" Text="Transfer Path:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+          <TextBox x:Name="TransferPathValue_Detail_TextBox" HorizontalAlignment="Left" Margin="360,415,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="450" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+         
+
+          <TextBox x:Name="WriteImagetoDisk_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,435,0,0" TextWrapping="Wrap" Text="Write Image to Disk:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+          <TextBox x:Name="WriteImagetoDiskValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,435,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" />
+          
+          <TextBox x:Name="SetupDiskOnly_Detail_TextBox" HorizontalAlignment="Left" Margin="100,455,0,0" TextWrapping="Wrap" Text="Set disk up only:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+          <TextBox x:Name="SetupDiskOnlyValue_Detail_TextBox" HorizontalAlignment="Left" Margin="360,455,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+            
+           
+        </Grid>
+    </Grid>
 </Window>
 "@
 
@@ -2868,11 +2961,26 @@ $AvailableADFstoReport
     if ($ErrorCount -eq 0) {
         $Script:SizeofImage_HST = (($Script:SizeofImage-($Script:SizeofFAT32)).ToString()+'kb')
         $Script:SizeofFAT32=$Script:SizeofFAT32/1024
+        $WPF_UI_Main_Grid.Visibility="Hidden"
         Write-GUIReporttoUseronOptions
-        $Form_UserInterface.Close() | out-null
-        $Script:ExitType = 1
+        $WPF_UI_Reporting_Grid.Visibility="Visible"
+#        $Form_UserInterface.Close() | out-null
+#        $Script:ExitType = 1
     }
 })
+
+$WPF_UI_GoBack_Button.add_Click({
+        $WPF_UI_Reporting_Grid.Visibility="Hidden"
+        $WPF_UI_Main_Grid.Visibility="Visible"
+})
+
+$WPF_UI_Process_Button.add_Click({
+        Write-GUIReporttoUseronOptionsDebug
+        $Form_UserInterface.Close() | out-null
+        $Script:ExitType = 1
+})
+
+
 
 ####################################################################### End GUI XML for Main Environment ##################################################################################################
 
@@ -3000,6 +3108,7 @@ if (-not ($Script:IsDisclaimerAccepted -eq $true)){
 $Form_UserInterface.ShowDialog() | out-null
 
 ######################################################################## Command line portion of Script ################################################################################################
+
 
 if ($Script:ExitType -eq 2){
     Write-ErrorMessage -Message 'Exiting - User has insufficient space'
@@ -3273,11 +3382,10 @@ if (-not (Start-HSTImager -Command "rdb filesystem add" -DestinationPath ($Locat
     exit
 } 
 
-
 ## Setting up Amiga Partitions List
 
 $AmigaPartitionsList = Get-AmigaPartitionList   -SizeofPartition_System_param $Script:SizeofPartition_System `
-                                                -SizeofPartition_Other_param $Script:SizeofPartition_Other `
+                                                -SizeofPartition_Other_param ($Script:SizeofPartition_Other-2048) `
                                                 -VolumeName_System_param $VolumeName_System `
                                                 -DeviceName_System_param $DeviceName_System `
                                                 -PFSLimit $Script:PFSLimit  `
