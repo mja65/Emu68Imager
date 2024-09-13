@@ -433,6 +433,7 @@ function Get-UICapturedData {
 
     )
     Write-InformationMessage -message "HSTDiskName is: $Script:HSTDiskName" 
+    Write-InformationMessage -message "HSTDiskNumber is: $Script:HSTDiskNumber"
     Write-InformationMessage -message "ScreenModetoUse is: $Script:ScreenModetoUse"
     Write-InformationMessage -message "KickstartVersiontoUse is: $Script:KickstartVersiontoUse"
     Write-InformationMessage -message "SSID is: $Script:SSID" 
@@ -551,6 +552,7 @@ Function Get-FormVariables{
                 EnglishSize = ([math]::Round($SizeofDiskwithBuffer/1GB,3).ToString())
                 FriendlyName = 'Disk '+$DriveNumber+' '+$_.Model+' '+([math]::Round($SizeofDiskwithBuffer/1GB,3).ToString()+' GiB') 
                 HSTDiskName = ('\disk'+$DriveNumber)
+                HSTDiskNumber = $DriveNumber
             }
         
         }
@@ -1478,6 +1480,79 @@ function Write-GUIReporttoUseronOptions {
         $WPF_UI_TransferPathValue_Detail_TextBox.Text = 'No Transfer Location Set'
     }
 }
+
+function Clear-Emu68ImagerSDDisk {
+    param (
+        $DiskNumbertoUse
+    )
+    try {
+        $null = Clear-Disk -Number $DiskNumbertoUse -RemoveData -Confirm:$false   ## Clear existing disk
+        return $true            
+    }
+    catch {
+        return $false
+    }
+}
+
+function Set-Emu68ImagerSDDiskPartition {
+    param (
+        $DiskNumbertoUse,
+        $PartitionSizeFAT32,
+        $PartitionSizeFAT32Unit,
+        $PartitionSizeAmiga,
+        $PartitionSizeAmigaUnit
+    )
+    try {
+        $null = New-Partition -DiskNumber $DiskNumber -Size $PartitionSizeFAT32$PartitionSizeFAT32Unit -MbrType FAT32 | format-volume -filesystem FAT32 -newfilesystemlabel 'EMU68BOOT' # Create Fat32 partition
+        $null = New-Partition -DiskNumber $DiskNumber -Size $PartitionSizeAmiga$PartitionSizeAmigaUnit -MbrType FAT32 # Create Partition for Amiga
+        $null = Set-Partition -DiskNumber $DiskNumber -PartitionNumber 2 -MbrType 0x76 # Change ID type to 76
+        return $true            
+    }
+    catch {
+        return $false
+    }
+}
+
+function Write-HDFtoDisk {
+    param (
+        $ddtcpathtouse,
+        $DeviceIDtoUse,
+        $SectorOffset,
+        $SectorSizetoUse
+    )
+    
+    & $ddtcpathtouse $DeviceIDtoUse $SectorOffset $SectorSizetoUse
+
+}
+
+function Get-WMICInformation {
+    param (
+        $DiskNumbertoUse
+    )
+    $WMICData = wmic partition 
+    $Counter =1
+    $WMICTable = [System.Collections.Generic.List[PSCustomObject]]::New()
+    foreach ($WMICEntry in $WMICData){
+        if (($WMICEntry.Length -gt 0) -and ($Counter -gt 1)){
+            if ($WMICEntry.Substring(191,11).TrimEnd(' ') -eq $DiskNumbertoUse){
+                $WMICTable += [PSCustomObject]@{
+                    BlockSize = ($WMICEntry.Substring(22,11)).TrimEnd(' ')
+                    Caption  = ($WMICEntry.Substring(58,21)).TrimEnd(' ')
+                    DeviceID = ($WMICEntry.Substring(168,21)).TrimEnd(' ')
+                    DiskIndex = ($WMICEntry.Substring(191,11)).TrimEnd(' ')
+                    PartitionIndex = ($WMICEntry.Substring(267,7)).TrimEnd(' ')
+                    Name = ($WMICEntry.Substring(302,22)).TrimEnd(' ')
+                    Size = ($WMICEntry.Substring(454,15)).TrimEnd(' ')
+                    StartingOffset = ($WMICEntry.Substring(469,16)).TrimEnd(' ')
+                    StartingOffsetSectors = [int]$WMICEntry.Substring(469,16)/[int]$WMICEntry.Substring(22,11)
+                }
+            }
+        }
+        $Counter ++
+    }
+    return $WMICTable
+}
+
 ### End Functions
 
 ######################################################################### End Functions #############################################################################################################
@@ -1510,6 +1585,8 @@ $GlowIcons='TRUE'
 
 $Script:ExitType = $null
 $Script:HSTDiskName = $null
+$Script:HSTDiskNumber = $null
+$Script:HSTDiskDeviceID = $null
 $Script:ScreenModetoUse = $null
 $Script:KickstartVersiontoUse = $null
 $Script:SSID = $null
@@ -1905,6 +1982,8 @@ $WPF_UI_MediaSelect_Dropdown.Add_SelectionChanged({
         foreach ($Disk in $Script:RemovableMedia){        
             if ($Disk.FriendlyName -eq $WPF_UI_MediaSelect_DropDown.SelectedItem){
                 $Script:HSTDiskName = $Disk.HSTDiskName
+                $Script:HSTDiskNumber = $Disk.HSTDiskNumber
+                $Script:HSTDiskDeviceID =$Disk.DeviceID
                 $Script:PartitionBarPixelperKB = ($PartitionBarWidth)/$Disk.SizeofDisk
                 $Script:PartitionBarKBperPixel = $Disk.SizeofDisk/($PartitionBarWidth)
                 break
@@ -2306,6 +2385,8 @@ $WPF_UI_Unallocated_Listview.add_SizeChanged({
 
 $WPF_UI_MediaSelect_Refresh.Add_Click({
     $Script:HSTDiskName = $null
+    $Script:HSTDiskNumber = $null
+    $Script:HSTDiskDeviceID = $null
     $Script:SizeofDisk = $null
     $Script:SizeofImage = $null
     $Script:SizeofFat32_Pixels_Minimum = $null
@@ -2948,9 +3029,10 @@ $AvailableADFstoReport
             }    
         }      
     } 
-    if ($ErrorCount -eq 0) {
+    if ($ErrorCount -eq 0) {      
         $Script:SizeofImage_HST = (($Script:SizeofImage-($Script:SizeofFAT32)).ToString()+'kb')
-        $Script:SizeofFAT32=$Script:SizeofFAT32/1024
+        $Script:SizeofImage_Powershell=($Script:SizeofImage-$Script:SizeofFAT32)
+#        $Script:SizeofFAT32=$Script:SizeofFAT32/1024
         $WPF_UI_Main_Grid.Visibility="Hidden"
         Write-GUIReporttoUseronOptions
         $WPF_UI_Reporting_Grid.Visibility="Visible"
@@ -3243,6 +3325,7 @@ if (-not (Test-Path $TempFolder)){
 
 $HSTImagePath=$ProgramsFolder+'HST-Imager\hst.imager.exe'
 $HSTAmigaPath=$ProgramsFolder+'HST-Amiga\hst.amiga.exe'
+$DDTCPath=$ProgramsFolder+'ddtc.exe'
 $LZXPath=$ProgramsFolder+'unlzx.exe'
 
 $LocationofImage= $Script:WorkingPath+'OutputImage\'
@@ -3252,9 +3335,7 @@ $FAT32Partition= $Script:WorkingPath+'FAT32Partition\'
 
 $NameofImage=('Pistorm'+$Script:KickstartVersiontoUse+'.HDF')
 
-### Download HST-Imager and HST-Amiga
 
-$StartDateandTime = (Get-Date -Format HH:mm:ss)
 
 $Script:TotalSections = 18
 
@@ -3271,7 +3352,30 @@ if ($Script:SetDiskupOnly -eq 'TRUE'){
     $TotalSections = 6 ## Need to update
 }
 
+$StartDateandTime = (Get-Date -Format HH:mm:ss)
 Write-InformationMessage -Message "Starting execution at $StartDateandTime"
+
+Write-StartTaskMessage -Message 'Setting up SD card'
+
+Write-StartSubTaskMessage -Message 'Clearing Contents of SD Card' -SubtaskNumber 1 -TotalSubtasks 2
+
+if (-not(Clear-Emu68ImagerSDDisk -DiskNumbertoUse $Script:HSTDiskNumber)){
+    Write-ErrorMessage 'Unable to clear disk! Program halting!'
+    exit
+}
+
+Write-StartSubTaskMessage -Message 'Adding Partitions to SD Card'
+
+if (-not(Set-Emu68ImagerSDDiskPartition -DiskNumbertoUse $Script:HSTDiskNumber -PartitionSizeFAT32 $Script:SizeofFAT32 -PartitionSizeFAT32Unit 'KB' -PartitionSizeAmiga $Script:SizeofImage_Powershell -PartitionSizeAmigaUnit 'KB')){
+    Write-ErrorMessage 'Unable to create partitions! Program halting!'
+    exit
+}
+
+Add-PartitionAccessPath -DiskNumber $Script:HSTDiskNumber -PartitionNumber 1 -AssignDriveLetter
+
+Write-TaskCompleteMessage -Message 'Setting up SD card - Complete!'
+
+### Download HST-Imager and HST-Amiga
 
 Write-StartTaskMessage -Message 'Downloading HST Packages'
 
@@ -3982,7 +4086,9 @@ if ($Script:SetDiskupOnly -eq 'FALSE'){
     }  
     
     Write-TaskCompleteMessage -Message 'Transferring Amiga Files to Image - Complete!'
+}
 
+If ($Script:WriteImage -eq 'FALSE'){
     Write-StartTaskMessage -Message 'Creating Image'
     
     Set-Location $LocationofImage
@@ -3996,15 +4102,19 @@ if ($Script:SetDiskupOnly -eq 'FALSE'){
     Write-TaskCompleteMessage -Message 'Creating Image - Complete!'
 }
 
-
 If ($Script:WriteImage -eq 'TRUE'){
     Write-StartTaskMessage -Message 'Writing Image to Disk (will be complete when HST-Imager has written image to SD card)'
     
     Set-location  $Script:WorkingPath
     
-    Write-Image -HSTImagePathtouse $HSTImagePath -SourcePath ($LocationofImage+'Emu68Kickstart'+$Script:KickstartVersiontoUse+'.img') -DestinationPath $Script:HSTDiskName
+    $SectorSize = (Get-WMICInformation -DiskNumbertoUse $Script:HSTDiskNumber).BlockSize| Select-Object  -unique
+    $Offset = ((Get-WMICInformation -DiskNumbertoUse $Script:HSTDiskNumber) | Where-Object 'PartitionIndex' -eq 1).StartingOffsetSectors
     
-    #Write-TaskCompleteMessage -Message 'Writing Image to Disk - Complete!'
+    Write-HDFtoDisk -ddtcpathtouse $Script:DDTCPath -DeviceIDtoUse $Script:HSTDiskDeviceID -SectorSizetoUse $SectorSize -SectorOffset $Offset
+
+    #Write-Image -HSTImagePathtouse $HSTImagePath -SourcePath ($LocationofImage+'Emu68Kickstart'+$Script:KickstartVersiontoUse+'.img') -DestinationPath $Script:HSTDiskName
+    
+    Write-TaskCompleteMessage -Message 'Writing Image to Disk - Complete!'
 }
 
 
