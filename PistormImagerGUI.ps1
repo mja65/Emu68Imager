@@ -17,7 +17,7 @@ if  ($RunMode -eq 1){
 } 
 
 if ($RunMode -eq 0){
-    $Scriptpath = 'C:\Users\Matt\OneDrive\Documents\Emu68Imager\'    
+    $Scriptpath = 'E:\Emu68Imager\'    
 }
 
 ######################################################################## Functions #################################################################################################################
@@ -254,6 +254,26 @@ function Get-FormattedSize {
     }
     return $ReportedSize
 }
+
+function Get-SizeofPartitionNearestCylinder {
+    param (
+        $Heads,
+        $Sectors,
+        $BlockSize,
+        $PartitionSizeKiB
+    )
+    $SizeperCylinder = $Heads * $Sectors * $BlockSize
+    $PartitionSizeB = $PartitionSizeKiB*1024
+#    Write-host $PartitionSizeB
+    $NumberofCylindersforPartition = ([math]::floor($PartitionSizeB/$SizeperCylinder))
+#    Write-host $NumberofCylindersforPartition
+    $NewSize = $NumberofCylindersforPartition*$SizeperCylinder
+    $NewSizeKiB = $NewSize/1024 
+    return $NewSizeKiB
+     
+}
+
+
 function Get-AmigaPartitionList {
     param (
         $SizeofPartition_System_param,
@@ -270,7 +290,7 @@ function Get-AmigaPartitionList {
     $SizeofPartition_Systemtouse = (([math]::truncate($SizeofPartition_System_param)).ToString()+'kb')
     $SizeofPartition_Othertouse = ([math]::truncate($SizeofPartition_Other_param))
 
-    $PartitionNumbertoPopulate =1
+    $PartitionNumbertoPopulate = 1
 
     $AmigaPartitionsList += [PSCustomObject]@{
         PartitionNumber = $PartitionNumbertoPopulate 
@@ -279,22 +299,24 @@ function Get-AmigaPartitionList {
         VolumeName = $VolumeName_System_param
         DeviceName = $DeviceName_System_param  
     }
-    
     $PartitionNumbertoPopulate ++
     $CapacitytoFill = $SizeofPartition_Othertouse
 
     $TotalNumberWorkPartitions = [math]::ceiling($CapacitytoFill/$PFSLimit)
+    
+    $WorkPartitionSize = Get-SizeofPartitionNearestCylinder -Heads 16 -Sectors 63 -BlockSize 512 ([math]::floor($SizeofPartition_Othertouse/$TotalNumberWorkPartitions))
 
-    $WorkPartitionSize = $SizeofPartition_Othertouse/$TotalNumberWorkPartitions
- 
+    $WorkPartitionCounter = 0 
+    [char]$WorkNameCounter = 'A'
     do {
-        if ($PartitionNumbertoPopulate -eq 2){
+        if ($WorkPartitionCounter -eq 0){
             $VolumeNametoPopulate = $VolumeName_Other_param  
             $DeviceNametoPopulate = $DeviceName_Other_param  
         }
         else{
-            $VolumeNametoPopulate = ($VolumeName_Other_param+(($PartitionNumbertoPopulate-1).ToString()))
+            $VolumeNametoPopulate = ($VolumeName_Other_param+$WorkNameCounter).ToString()
             $DeviceNametoPopulate = ($DeviceName_Prefix_param+(($PartitionNumbertoPopulate-1).ToString()))
+            $WorkNameCounter = [byte]$WorkNameCounter + 1
            
         }
         $AmigaPartitionsList += [PSCustomObject]@{
@@ -305,8 +327,9 @@ function Get-AmigaPartitionList {
             DeviceName = $DeviceNametoPopulate    
         }
         $PartitionNumbertoPopulate ++
+        $WorkPartitionCounter ++
     } until (
-        $PartitionNumbertoPopulate -ge  $TotalNumberWorkPartitions
+        $WorkPartitionCounter -eq  $TotalNumberWorkPartitions
     )
 
     return $AmigaPartitionsList
@@ -520,12 +543,13 @@ Function Get-FormVariables{
             $DriveEndpoint = $_.DeviceID.Length
             $DriveLength = $DriveEndpoint- $DriveStartpoint
             $DriveNumber = $_.DeviceID.Substring($DriveStartpoint,$DriveLength)
+            $SizeofDiskwithBuffer=($_.Size)-(3076*1024) 
             $RemovableMediaList += [PSCustomObject]@{
                 DeviceID = $_.DeviceID
                 Model = $_.Model
-                SizeofDisk = $_.Size/1024 # KiB
-                EnglishSize = ([math]::Round($_.Size/1GB,3).ToString())
-                FriendlyName = 'Disk '+$DriveNumber+' '+$_.Model+' '+([math]::Round($_.Size/1GB,3).ToString()+' GiB') 
+                SizeofDisk = $SizeofDiskwithBuffer/1024 # KiB
+                EnglishSize = ([math]::Round($SizeofDiskwithBuffer/1GB,3).ToString())
+                FriendlyName = 'Disk '+$DriveNumber+' '+$_.Model+' '+([math]::Round($SizeofDiskwithBuffer/1GB,3).ToString()+' GiB') 
                 HSTDiskName = ('\disk'+$DriveNumber)
             }
         
@@ -665,7 +689,7 @@ function Start-HSTImager {
     }
     elseif ($Command -eq 'rdb part format'){
         Write-InformationMessage -Message ('Formatting partition '+$VolumeName)
-        & $HSTImagePathtouse rdb part format $DestinationPath $PartitionNumber $VolumeName $Options >$Logoutput            
+        & $HSTImagePathtouse rdb part format $DestinationPath $PartitionNumber $VolumeName --verbose          
     }   
     elseif ($Command -eq 'fs extract') {
         Write-InformationMessage -Message ('Extracting data from ADF. Source path is: '+$SourcePath+' Destination path is: '+$DestinationPath)
@@ -1284,13 +1308,19 @@ function Test-ExistenceofFiles {
         $PathtoTest,
         $PathType
     )
+    $Message
     if (-not (Test-Path $PathtoTest)){
-        Write-ErrorMessage -Message ('Error! '+$PathtoTest+' is not available! Please check your download of the tool!')
-        return 1 
+        if ($PathType -eq 'Folder'){
+            $PathtoTesttoreport = $PathtoTest
+        }
+        if ($PathType -eq 'File'){
+            $PathtoTesttoreport = Split-Path -Path $PathtoTest -Leaf
+        }
+        $Message = "$PathType $PathtoTesttoreport `n`n"
+        return $Message 
     }
     else{
-        Write-InformationMessage -Message ($PathtoTest+' is available!')
-        return 0
+        return
     }
 }
 
@@ -1396,6 +1426,9 @@ Either select a location with sufficient space or press cancel to quit the tool
         }
     }
     else{
+        if (-not (Test-Path ($Scriptpath+'Working Folder\'))){
+            $null = New-Item -Path ($Scriptpath+'Working Folder\') -ItemType Directory
+        }
         $Script:WorkingPath = ($Scriptpath+'Working Folder\') 
         return $true
     }      
@@ -1445,55 +1478,6 @@ function Write-GUIReporttoUseronOptions {
         $WPF_UI_TransferPathValue_Detail_TextBox.Text = 'No Transfer Location Set'
     }
 }
-
-function Write-GUIReporttoUseronOptionsDebug {
-    param (
-
-    )
-    $Msg_Header ='Run Options'    
-    $Msg_Body = @"  
-Tool will be run with the following options:  
-
-DiskName to Write: $Script:HSTDiskName
-
-ScreenMode to Use: $Script:ScreenModetoUse
-
-Kickstart to Use: $Script:KickstartVersiontoUse
-
-SSID to configure: $Script:SSID
-
-Password to set: $Script:WifiPassword 
-
-Fat32 Size (MiB): $Script:SizeofFAT32
-
-Image Size (KiB): $Script:SizeofImage
-
-Image Size HST (KiB): $Script:SizeofImage_HST
-
-Workbench Size (KiB): $Script:SizeofPartition_System
-
-Work Size (KiB): $Script:SizeofPartition_Other
-
-Write Image to Disk: $Script:WriteImage
-
-Set disk up only: $Script:SetDiskupOnly
-
-Working Path: 
-$Script:WorkingPath
-
-Rom Path: 
-$Script:ROMPath
-
-ADF Path: 
-$Script:ADFPath 
-
-Transfer Location: 
-$Script:TransferLocation
-"@     
-    [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,0)  
-
-}
-
 ### End Functions
 
 ######################################################################### End Functions #############################################################################################################
@@ -1976,6 +1960,8 @@ $WPF_UI_MediaSelect_Dropdown.Add_SelectionChanged({
         $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Script:SizeofFreeSpace_Pixels
         $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = $Script:SizeofUnallocated_Pixels
         
+        $Script:Space_WorkingFolderDisk = (Confirm-DiskSpace -PathtoCheck $Scriptpath)/1Kb 
+
         $Script:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Script:SizeofImage
         $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk 
     
@@ -2085,6 +2071,8 @@ $WPF_UI_DefaultAllocation_Refresh.add_Click({
             $Script:UI_Unallocated_Value = $WPF_UI_Unallocated_Value.Text      
         }        
         
+        $Script:Space_WorkingFolderDisk = (Confirm-DiskSpace -PathtoCheck $Scriptpath)/1Kb 
+
         $Script:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Script:SizeofImage
         $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk 
     
@@ -2343,6 +2331,7 @@ $WPF_UI_MediaSelect_Refresh.Add_Click({
     $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = '*'
     $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = '*'
     $Script:RequiredSpace_WorkingFolderDisk = 0 #In Kilobytes
+    $Script:Space_WorkingFolderDisk = (Confirm-DiskSpace -PathtoCheck $Scriptpath)/1Kb 
     $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:RequiredSpace_WorkingFolderDisk
     $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk
     $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpace_WorkingFolderDisk 
@@ -2400,13 +2389,7 @@ $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Add_TextChanged({
 
 
 $WPF_UI_AvailableSpaceValue_TextBox.Add_TextChanged({
-    if ($Script:AvailableSpace_WorkingFolderDisk -le ($Script:SpaceThreshold_WorkingFolderDisk*2)){
-        $WPF_UI_AvailableSpaceValue_TextBox.Background = "Yellow"
-        $WPF_UI_AvailableSpaceValue_TextBox.Foreground = "Black"
-        $WPF_UI_RequiredSpaceMessage_TextBox.Text = ""
-
-    }
-    elseif ($Script:AvailableSpace_WorkingFolderDisk -le $Script:SpaceThreshold_WorkingFolderDisk){
+    if ($Script:AvailableSpace_WorkingFolderDisk -le $Script:SpaceThreshold_WorkingFolderDisk){
         $WPF_UI_AvailableSpaceValue_TextBox.Background = "Red"
         $WPF_UI_AvailableSpaceValue_TextBox.Foreground = "Black"
         $WPF_UI_RequiredSpaceMessage_TextBox.Text = "Insufficient space to run tool! You will be prompted to select a new drive and folder from which to run the tool."
@@ -2414,11 +2397,18 @@ $WPF_UI_AvailableSpaceValue_TextBox.Add_TextChanged({
         
     }
     else{
-        $WPF_UI_AvailableSpaceValue_TextBox.Background = "Green"
-        $WPF_UI_AvailableSpaceValue_TextBox.Foreground = "White"
-        $WPF_UI_RequiredSpaceMessage_TextBox.Text = ""
-    }
+        if ($Script:AvailableSpace_WorkingFolderDisk -le ($Script:SpaceThreshold_WorkingFolderDisk*2)){
+            $WPF_UI_AvailableSpaceValue_TextBox.Background = "Yellow"
+            $WPF_UI_AvailableSpaceValue_TextBox.Foreground = "Black"
+            $WPF_UI_RequiredSpaceMessage_TextBox.Text = ""
     
+        }
+        else{
+            $WPF_UI_AvailableSpaceValue_TextBox.Background = "Green"
+            $WPF_UI_AvailableSpaceValue_TextBox.Foreground = "White"
+            $WPF_UI_RequiredSpaceMessage_TextBox.Text = ""
+        }
+    }  
 })
 
 $WPF_UI_FAT32Size_Value.add_LostFocus({
@@ -2975,12 +2965,9 @@ $WPF_UI_GoBack_Button.add_Click({
 })
 
 $WPF_UI_Process_Button.add_Click({
-        Write-GUIReporttoUseronOptionsDebug
         $Form_UserInterface.Close() | out-null
         $Script:ExitType = 1
 })
-
-
 
 ####################################################################### End GUI XML for Main Environment ##################################################################################################
 
@@ -3103,6 +3090,102 @@ if (-not ($Script:IsDisclaimerAccepted -eq $true)){
 
 ####################################################################### End GUI XML for Disclaimer ##################################################################################################
 
+##################################################################### Peform Pre-GUI Checks ##############################################################################################################
+
+#Generate CSV MD5 Hashes - Begin (To be disabled or removed for production version)
+$CSVHashes = Get-FileHash ($InputFolder+'*.CSV') -Algorithm MD5
+
+'Name;Hash' | Out-File -FilePath ($InputFolder+'CSVHASH')
+Foreach ($CSVHash in $CSVHashes){
+    ((Split-Path $CSVHash.Path -Leaf)+';'+$CSVHash.Hash) | Out-File -FilePath ($InputFolder+'CSVHASH') -Append
+}
+
+#Generate CSV MD5 Hashes - End
+
+# Check Integrity of CSVs
+
+$CSVHashestoCheck = Import-Csv -Path ($InputFolder+'CSVHASH') -Delimiter ';'
+foreach ($CSVHashtoCheck in $CSVHashestoCheck){
+    foreach ($CSVHash in $CSVHashes){
+        if (($CSVHashtoCheck.Name+$CSVHashtoCheck.Hash) -eq ((split-path $CSVHash.Path -leaf)+($CSVHash.Hash))){
+            $HashMatch=$true
+        }
+    }
+    if ($HashMatch -eq $false) {
+        $Msg_Header ='Integrity Issue with Files'    
+        $Msg_Body = @"  
+One or more of input files is missing and/or has been altered!' 
+
+Re-download file and try again. Tool will now exit.
+"@     
+    [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,16) 
+    exit
+    }
+}
+
+$ErrorMessage = $null
+$ErrorMessage += Test-ExistenceofFiles -PathtoTest $SourceProgramPath -PathType 'Folder'
+$ErrorMessage += Test-ExistenceofFiles -PathtoTest $LocationofAmigaFiles -PathType 'Folder'
+$ErrorMessage += Test-ExistenceofFiles -PathtoTest ($SourceProgramPath+'hdf2emu68.exe') -PathType 'File'
+$ErrorMessage += Test-ExistenceofFiles -PathtoTest ($SourceProgramPath+'7z.exe') -PathType 'File'
+$ErrorMessage += Test-ExistenceofFiles -PathtoTest ($SourceProgramPath+'7z.dll') -PathType 'File'
+
+$ListofPackagestoInstall = Import-Csv ($InputFolder+'ListofPackagestoInstall.csv') -Delimiter ';' | Where-Object {$_.Source -eq 'Local'} | Where-Object {$_.InstallType -ne 'StartupSequenceOnly'} |Where-Object {$_.InstallFlag -eq 'TRUE'}
+$ListofPackagestoInstall |  Select-Object SourceLocation -Unique | Where-Object SourceLocation -NotMatch 'Onetime' | ForEach-Object {
+    $ErrorMessage += Test-ExistenceofFiles -PathtoTest ($LocationofAmigaFiles+$_.SourceLocation) -PathType 'File'
+}
+
+if ($ErrorMessage){
+        $Msg_Header ='Missing Files'    
+        $Msg_Body = @"  
+One or more Programs and/or files is missing and/or has been altered! Cannot Continue! Re-download file and try again. Tool will now exit. 
+
+The following files are affected:
+
+$ErrorMessage
+"@  
+    $null = [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,16) 
+    exit
+}
+
+$HDF2emu68Path=($SourceProgramPath+'hdf2emu68.exe')
+$7zipPath=($SourceProgramPath+'7z.exe')
+
+$TempFolder = ($Scriptpath+'Working Folder\Temp\')
+$LocationofImage= ($Scriptpath+'Working Folder\OutputImage\')
+$AmigaDrivetoCopy= ($Scriptpath+'Working Folder\AmigaImageFiles\')
+$FAT32Partition= ($Scriptpath+'Working Folder\FAT32Partition\')
+
+### Clean up
+
+if (Test-Path ($Scriptpath+'Working Folder\')){
+    $NewFolders = $TempFolder,$LocationofImage,($AmigaDrivetoCopy+$VolumeName_System),($AmigaDrivetoCopy+$VolumeName_Other),$FAT32Partition
+    try {
+        foreach ($NewFolder in $NewFolders) {
+            Write-host ( $Script:WorkingPath+$NewFolder)
+            if (Test-Path ( $Script:WorkingPath+$NewFolder)){
+                $null = Remove-Item ( $Script:WorkingPath+$NewFolder) -Recurse -ErrorAction Stop
+            }
+        }    
+    }
+    catch {
+        $Msg_Header ='Error Deleting Files'    
+        $Msg_Body = @"  
+Error deleting files! 
+    
+Tool will now exit.
+    
+"@  
+        $null = [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,16) 
+        exit    
+    }
+
+} 
+
+### End Clean up
+
+####################################################################### End Pre GUI Checks #################################################################################################################
+
 ####################################################################### Show Main Gui     ##################################################################################################################
 
 $Form_UserInterface.ShowDialog() | out-null
@@ -3124,7 +3207,6 @@ elseif (-not ($Script:ExitType-eq 1)){
 #[System.Windows.Controls.GridSplitter].GetEvents() | Select-Object Name, *Method, EventHandlerType
 #[System.Windows.Controls.ListView].GetEvents() | Select-Object Name, *Method, EventHandlerType
 
-
 ##### Script
 
 $UnLZXURL='http://aminet.net/util/arc/W95unlzx.lha'
@@ -3133,93 +3215,21 @@ $HSTAmigareleases= 'https://api.github.com/repos/henrikstengaard/hst-amiga/relea
 $Emu68releases= 'https://api.github.com/repos/michalsc/Emu68/releases'
 $Emu68Toolsreleases= 'https://api.github.com/repos/michalsc/Emu68-tools/releases'
 
-#Generate CSV MD5 Hashes - Begin (To be disabled or removed for production version)
-$CSVHashes = Get-FileHash ($InputFolder+'*.CSV') -Algorithm MD5
-
-'Name;Hash' | Out-File -FilePath ($InputFolder+'CSVHASH')
-Foreach ($CSVHash in $CSVHashes){
-    ((Split-Path $CSVHash.Path -Leaf)+';'+$CSVHash.Hash) | Out-File -FilePath ($InputFolder+'CSVHASH') -Append
-}
-
-#Generate CSV MD5 Hashes - End
-
-$Script:TotalSections = 18
-
-$Script:CurrentSection = 1
-
-if (-not ($Script:TransferLocation)){
-    $TotalSections --
-}
-if (-not ($Script:WriteImage)){
-    $TotalSections --
-}
-
-if ($Script:SetDiskupOnly -eq 'TRUE'){
-    $TotalSections = 6 ## Need to update
-}
-
-# Check Integrity of CSVs
-
-$StartDateandTime = (Get-Date -Format HH:mm:ss)
-
-Write-InformationMessage -Message "Starting execution at $StartDateandTime"
-
-Write-StartTaskMessage -Message 'Performing integrity checks over input files'
-
-$CSVHashestoCheck = Import-Csv -Path ($InputFolder+'CSVHASH') -Delimiter ';'
-foreach ($CSVHashtoCheck in $CSVHashestoCheck){
-    Write-InformationMessage -Message ('Checking integrity of: '+$CSVHashtoCheck.Name)
-    foreach ($CSVHash in $CSVHashes){
-        if (($CSVHashtoCheck.Name+$CSVHashtoCheck.Hash) -eq ((split-path $CSVHash.Path -leaf)+($CSVHash.Hash))){
-            $HashMatch=$true
-        }
-    }
-    if ($HashMatch -eq $false) {
-        Write-ErrorMessage -Message 'One or more of input files is missing and/or has been altered!' 
-        exit
-    }
-    else{
-        Write-InformationMessage -Message 'File OK!'
-    }
-}
-
-Write-TaskCompleteMessage -Message 'Performing integrity checks over input files - Complete!'
-
-Write-StartTaskMessage -Message 'Checking existance of folders, programs, and files'
+Set-Location  $Script:WorkingPath
 
 if (((split-path  $Script:WorkingPath  -Parent)+'\') -eq $Scriptpath) {
-    Write-InformationMessage -Message ('Creating Working Folder under '+$Scriptpath+' (if it does not exist)')
     if (-not (Test-Path ($Scriptpath+'Working Folder\'))){
         $null = New-Item ($Scriptpath+'Working Folder\') -ItemType Directory
     }
 }
 
-$ErrorCount = 0
-
-$ErrorCount+= Test-ExistenceofFiles -PathtoTest $SourceProgramPath -PathType 'Folder'
-$ErrorCount+= Test-ExistenceofFiles -PathtoTest $LocationofAmigaFiles -PathType 'Folder'
-$ErrorCount+= Test-ExistenceofFiles -PathtoTest ($SourceProgramPath+'hdf2emu68.exe') -PathType 'File'
-$ErrorCount+= Test-ExistenceofFiles -PathtoTest ($SourceProgramPath+'7z.exe') -PathType 'File'
-$ErrorCount+= Test-ExistenceofFiles -PathtoTest ($SourceProgramPath+'7z.dll') -PathType 'File'
-
-$ListofPackagestoInstall = Import-Csv ($InputFolder+'ListofPackagestoInstall.csv') -Delimiter ';' | Where-Object {$_.Source -eq 'Local'} | Where-Object {$_.InstallType -ne 'StartupSequenceOnly'} |Where-Object {$_.InstallFlag -eq 'TRUE'}
-$ListofPackagestoInstall |  Select-Object SourceLocation -Unique | Where-Object SourceLocation -NotMatch 'Onetime' | ForEach-Object {
-    $ErrorCount+= Test-ExistenceofFiles -PathtoTest ($LocationofAmigaFiles+$_.SourceLocation) -PathType 'File'
+if (-not(Test-Path ( $Script:WorkingPath+'FAT32Partition'))){
+    $null = New-Item -path ( $Script:WorkingPath) -Name 'FAT32Partition' -ItemType Directory    
 }
 
-if ($ErrorCount -ge 1){
-    Write-ErrorMessage -Message 'One or more Programs is missing and/or has been altered! Cannot Continue!'
-    exit
+if (-not(Test-Path ( $Script:WorkingPath+'AmigaDownloads'))){
+    $null = New-Item -path ( $Script:WorkingPath) -Name 'AmigaDownloads' -ItemType Directory    
 }
-else {
-    $null = $ErrorCount
-    Write-TaskCompleteMessage -Message 'Checking existance of folders, programs, and files - Complete!'
-}
-
-$HDF2emu68Path=($SourceProgramPath+'hdf2emu68.exe')
-$7zipPath=($SourceProgramPath+'7z.exe')
-
-Set-Location  $Script:WorkingPath
 
 $ProgramsFolder= $Script:WorkingPath+'Programs\'
 if (-not (Test-Path $ProgramsFolder)){
@@ -3240,42 +3250,28 @@ $AmigaDrivetoCopy= $Script:WorkingPath+'AmigaImageFiles\'
 $AmigaDownloads= $Script:WorkingPath+'AmigaDownloads\'
 $FAT32Partition= $Script:WorkingPath+'FAT32Partition\'
 
-
-
 $NameofImage=('Pistorm'+$Script:KickstartVersiontoUse+'.HDF')
 
-### Clean up
-
-Write-StartTaskMessage -Message 'Performing Cleanup'
-
-$NewFolders = ((split-path $TempFolder -leaf),(split-path $LocationofImage -leaf),((Split-Path $AmigaDrivetoCopy -Leaf)+'\'+$VolumeName_System),((Split-Path $AmigaDrivetoCopy -Leaf)+'\'+$VolumeName_Other),(split-path $FAT32Partition -leaf))
-
-try {
-    foreach ($NewFolder in $NewFolders) {
-        if (Test-Path ( $Script:WorkingPath+$NewFolder)){
-            $null = Remove-Item ( $Script:WorkingPath+$NewFolder) -Recurse -ErrorAction Stop
-        }
-        $null = New-Item -path ( $Script:WorkingPath) -Name $NewFolder -ItemType Directory
-    }    
-}
-catch {
-    Write-ErrorMessage -Message "Cannot delete temporary files!"
-    exit    
-}
-
-if (-not(Test-Path ( $Script:WorkingPath+'AmigaDownloads'))){
-    $null = New-Item -path ( $Script:WorkingPath) -Name 'AmigaDownloads' -ItemType Directory    
-}
-
-if (-not(Test-Path ( $Script:WorkingPath+'Programs'))){
-    $null = New-Item -path ( $Script:WorkingPath) -Name 'Programs' -ItemType Directory      
-}
-
-Write-TaskCompleteMessage -Message 'Performing Cleanup - Complete!'
-
-### End Clean up
-
 ### Download HST-Imager and HST-Amiga
+
+$StartDateandTime = (Get-Date -Format HH:mm:ss)
+
+$Script:TotalSections = 18
+
+$Script:CurrentSection = 1
+
+if (-not ($Script:TransferLocation)){
+    $TotalSections --
+}
+if (-not ($Script:WriteImage)){
+    $TotalSections --
+}
+
+if ($Script:SetDiskupOnly -eq 'TRUE'){
+    $TotalSections = 6 ## Need to update
+}
+
+Write-InformationMessage -Message "Starting execution at $StartDateandTime"
 
 Write-StartTaskMessage -Message 'Downloading HST Packages'
 
@@ -3384,8 +3380,8 @@ if (-not (Start-HSTImager -Command "rdb filesystem add" -DestinationPath ($Locat
 
 ## Setting up Amiga Partitions List
 
-$AmigaPartitionsList = Get-AmigaPartitionList   -SizeofPartition_System_param $Script:SizeofPartition_System `
-                                                -SizeofPartition_Other_param ($Script:SizeofPartition_Other-2048) `
+$AmigaPartitionsList = Get-AmigaPartitionList   -SizeofPartition_System_param  (Get-SizeofPartitionNearestCylinder -Heads 16 -Sectors 63 -blocksize 512 -PartitionSizeKiB $Script:SizeofPartition_System) `
+                                                -SizeofPartition_Other_param ($Script:SizeofPartition_Other-1024) `
                                                 -VolumeName_System_param $VolumeName_System `
                                                 -DeviceName_System_param $DeviceName_System `
                                                 -PFSLimit $Script:PFSLimit  `
@@ -3405,10 +3401,19 @@ foreach ($AmigaPartition in $AmigaPartitionsList) {
             exit
         } 
     }
-    if (-not (Start-HSTImager -Command "rdb part format" -DestinationPath ($LocationofImage+$NameofImage) -PartitionNumber $AmigaPartition.PartitionNumber -VolumeName $AmigaPartition.VolumeName -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
-        exit
-    } 
 }
+
+if (-not (Start-HSTImager -Command "rdb part format" -DestinationPath ($LocationofImage+$NameofImage) -PartitionNumber 1 -VolumeName $VolumeName_System -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+    exit
+} 
+if (-not (Start-HSTImager -Command "rdb part format" -DestinationPath ($LocationofImage+$NameofImage) -PartitionNumber 2 -VolumeName $VolumeName_Other -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+    exit
+} 
+# foreach ($AmigaPartition in $AmigaPartitionsList) {
+#         if (-not (Start-HSTImager -Command "rdb part format" -DestinationPath ($LocationofImage+$NameofImage) -PartitionNumber ($AmigaPartition.PartitionNumber).tostring() -VolumeName $AmigaPartition.VolumeName -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+#         exit
+#     } 
+# }
 
 if ($Script:SetDiskupOnly -eq 'FALSE'){
     #### Begin - Create NewFolder.info file
@@ -3468,25 +3473,31 @@ if ($Script:SetDiskupOnly -eq 'FALSE'){
         $SourcePath = ($GlowIconsADF+'\Prefs\Env-Archive\Sys\def_harddisk.info') 
     }
     
-    foreach ($AmigaPartition in $AmigaPartitionsList | Where-Object {$_.VolumeName -ne $VolumeName_System} ){
-        If ($AmigaPartition.PartitionNumber -ge 3){
-            $DestinationPathtoUse = ($LocationofImage+$NameofImage+'\rdb\'+$AmigaPartition.DeviceName+'\')
-        }
-        else{
-            $DestinationPathtoUse = ($AmigaDrivetoCopy+$VolumeName_Other) 
-        }
-        Write-InformationMessage -Message ('Copying Icons to Work Partition. Source is: '+$SourcePath+' Destination is: '+$DestinationPathtoUse)
-        if (-not (Start-HSTImager -Command 'fs extract' -SourcePath $SourcePath -DestinationPath $DestinationPathtoUse -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
-                    exit
-        }
-        if (($AmigaPartition.PartitionNumber -le 3) -and ($Script:KickstartVersiontoUse -eq 3.2)) {
-            Rename-Item ($AmigaDrivetoCopy+$VolumeName_Other+'\def_harddisk.info') ($AmigaDrivetoCopy+$VolumeName_Other+'\disk.info') 
-        }
+    Write-InformationMessage -Message ('Copying Icons to Work Partition. Source is: '+$SourcePath+' Destination is: '+$DestinationPathtoUse)
+    $DestinationPathtoUse = ($AmigaDrivetoCopy+$VolumeName_Other)
+    if (-not (Start-HSTImager -Command 'fs extract' -SourcePath $SourcePath -DestinationPath $DestinationPathtoUse -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+                exit
     }
 
-}
+    # foreach ($AmigaPartition in $AmigaPartitionsList | Where-Object {$_.VolumeName -ne $VolumeName_System} ){
+    #     If ($AmigaPartition.PartitionNumber -ge 2){
+    #         $DestinationPathtoUse = ($LocationofImage+$NameofImage+'\rdb\'+$AmigaPartition.DeviceName+'\')
+    #     }
+    #     else{
+    #         $DestinationPathtoUse = ($AmigaDrivetoCopy+$VolumeName_Other) 
+    #     }
+    #     Write-InformationMessage -Message ('Copying Icons to Work Partition. Source is: '+$SourcePath+' Destination is: '+$DestinationPathtoUse)
+    #     if (-not (Start-HSTImager -Command 'fs extract' -SourcePath $SourcePath -DestinationPath $DestinationPathtoUse -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+    #                 exit
+    #     }
+    #     if (($AmigaPartition.PartitionNumber -le 3) -and ($Script:KickstartVersiontoUse -eq 3.2)) {
+    #         Rename-Item ($AmigaDrivetoCopy+$VolumeName_Other+'\def_harddisk.info') ($AmigaDrivetoCopy+$VolumeName_Other+'\disk.info') 
+    #     }
+    # }
 
-Write-TaskCompleteMessage -Message 'Preparing Amiga Image - Complete!'
+    Write-TaskCompleteMessage -Message 'Preparing Amiga Image - Complete!'
+
+}
 
 if ($Script:SetDiskupOnly -eq 'FALSE'){
     ### End Basic Drive Setup
@@ -3972,30 +3983,33 @@ if ($Script:SetDiskupOnly -eq 'FALSE'){
     
     Write-TaskCompleteMessage -Message 'Transferring Amiga Files to Image - Complete!'
 
+    Write-StartTaskMessage -Message 'Creating Image'
+    
+    Set-Location $LocationofImage
+    
+    #Update-OutputWindow -OutputConsole_Title_Text 'Creating Image' -ProgressbarValue_Overall 83 -ProgressbarValue_Overall_Text '83%'
+    
+    & $HDF2emu68Path $LocationofImage$NameofImage $SizeofFAT32 ($FAT32Partition).Trim('\')
+    
+    $null= Rename-Item ($LocationofImager+'emu68_converted.img') -NewName ('Emu68Kickstart'+$Script:KickstartVersiontoUse+'.img')
+    
+    Write-TaskCompleteMessage -Message 'Creating Image - Complete!'
 }
 
 
-Write-StartTaskMessage -Message 'Creating Image'
+If ($Script:WriteImage -eq 'TRUE'){
+    Write-StartTaskMessage -Message 'Writing Image to Disk (will be complete when HST-Imager has written image to SD card)'
+    
+    Set-location  $Script:WorkingPath
+    
+    Write-Image -HSTImagePathtouse $HSTImagePath -SourcePath ($LocationofImage+'Emu68Kickstart'+$Script:KickstartVersiontoUse+'.img') -DestinationPath $Script:HSTDiskName
+    
+    #Write-TaskCompleteMessage -Message 'Writing Image to Disk - Complete!'
+}
 
-Set-Location $LocationofImage
-
-#Update-OutputWindow -OutputConsole_Title_Text 'Creating Image' -ProgressbarValue_Overall 83 -ProgressbarValue_Overall_Text '83%'
-
-& $HDF2emu68Path $LocationofImage$NameofImage $SizeofFAT32 ($FAT32Partition).Trim('\')
-
-$null= Rename-Item ($LocationofImager+'emu68_converted.img') -NewName ('Emu68Kickstart'+$Script:KickstartVersiontoUse+'.img')
-
-Write-TaskCompleteMessage -Message 'Creating Image - Complete!'
-
-Write-StartTaskMessage -Message 'Writing Image to Disk'
-
-Set-location  $Script:WorkingPath
-
-Write-Image -HSTImagePathtouse $HSTImagePath -SourcePath ($LocationofImage+'Emu68Kickstart'+$Script:KickstartVersiontoUse+'.img') -DestinationPath $Script:HSTDiskName
-
-Write-TaskCompleteMessage -Message 'Writing Image to Disk - Complete!'
 
 $EndDateandTime = (Get-Date -Format HH:mm:ss)
 $ElapsedTime = (New-TimeSpan -Start $StartDateandTime -End $EndDateandTime).TotalSeconds
 
-Write-Host "Started at: $StartDateandTime Finished at: $EndDateandTime. Total time to run (in seconds) was: $ElapsedTime" 
+Write-Host "Started at: $StartDateandTime Finished at (excluding write to disk if applicable): $EndDateandTime. Total time to run (in seconds) was: $ElapsedTime" 
+
