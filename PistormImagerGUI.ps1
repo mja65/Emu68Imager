@@ -339,7 +339,7 @@ function Get-RequiredSpace {
     param (
         $ImageSize
     )    
-    $SpaceNeeded = (2*$ImageSize) #Image
+    $SpaceNeeded = ($ImageSize) #Image
     if ($Script:SetDiskupOnly -ne 'TRUE'){
         $SpaceNeeded +=
         (10*1024) + ` #FAT32 Files
@@ -1502,27 +1502,26 @@ function Set-Emu68ImagerSDDiskPartition {
         $PartitionSizeAmiga,
         $PartitionSizeAmigaUnit
     )
+    $PartitionSizeFAT32touse = (($PartitionSizeFAT32).tostring()+$PartitionSizeFAT32Unit)
+    $PartitionSizeAmigatouse = (($PartitionSizeAmiga).tostring()+$PartitionSizeAmigaUnit)
+    Write-InformationMessage ('Creating FAT32 Partition for Disk: '+$DiskNumbertoUse+' with size '+$PartitionSizeFAT32touse) 
     try {
-        $null = New-Partition -DiskNumber $DiskNumber -Size $PartitionSizeFAT32$PartitionSizeFAT32Unit -MbrType FAT32 | format-volume -filesystem FAT32 -newfilesystemlabel 'EMU68BOOT' # Create Fat32 partition
-        $null = New-Partition -DiskNumber $DiskNumber -Size $PartitionSizeAmiga$PartitionSizeAmigaUnit -MbrType FAT32 # Create Partition for Amiga
-        $null = Set-Partition -DiskNumber $DiskNumber -PartitionNumber 2 -MbrType 0x76 # Change ID type to 76
-        return $true            
+        $null = New-Partition -DiskNumber $DiskNumbertoUse -Size $PartitionSizeFAT32touse -MbrType FAT32 | format-volume -filesystem FAT32 -newfilesystemlabel 'EMU68BOOT' # Create Fat32 partition
     }
     catch {
+        Write-ErrorMessage 'Error creating FAT32 Partition!'
         return $false
     }
-}
 
-function Write-HDFtoDisk {
-    param (
-        $ddtcpathtouse,
-        $DeviceIDtoUse,
-        $SectorOffset,
-        $SectorSizetoUse
-    )
-    
-    & $ddtcpathtouse $DeviceIDtoUse $SectorOffset $SectorSizetoUse
-
+    Write-InformationMessage ('Creating Partition for Amiga Drives for Disk: '+$DiskNumbertoUse+' with size '+$PartitionSizeAmigatouse) 
+    try {
+        $null = New-Partition -DiskNumber $DiskNumbertoUse -Size $PartitionSizeAmigatouse -MbrType 'FAT32'  
+    }
+    catch {
+        Write-ErrorMessage 'Error creating Amiga Partition!'
+        return $false
+    }
+    return $true               
 }
 
 function Get-WMICInformation {
@@ -3232,7 +3231,7 @@ $ErrorMessage
 
 $HDF2emu68Path=($SourceProgramPath+'hdf2emu68.exe')
 $7zipPath=($SourceProgramPath+'7z.exe')
-
+$DDTCPath=($SourceProgramPath+'ddtc.exe')
 $TempFolder = ($Scriptpath+'Working Folder\Temp\')
 $LocationofImage= ($Scriptpath+'Working Folder\OutputImage\')
 $AmigaDrivetoCopy= ($Scriptpath+'Working Folder\AmigaImageFiles\')
@@ -3325,7 +3324,6 @@ if (-not (Test-Path $TempFolder)){
 
 $HSTImagePath=$ProgramsFolder+'HST-Imager\hst.imager.exe'
 $HSTAmigaPath=$ProgramsFolder+'HST-Amiga\hst.amiga.exe'
-$DDTCPath=$ProgramsFolder+'ddtc.exe'
 $LZXPath=$ProgramsFolder+'unlzx.exe'
 
 $LocationofImage= $Script:WorkingPath+'OutputImage\'
@@ -3367,7 +3365,15 @@ if (-not(Clear-Emu68ImagerSDDisk -DiskNumbertoUse $Script:HSTDiskNumber)){
 Write-StartSubTaskMessage -Message 'Adding Partitions to SD Card'
 
 if (-not(Set-Emu68ImagerSDDiskPartition -DiskNumbertoUse $Script:HSTDiskNumber -PartitionSizeFAT32 $Script:SizeofFAT32 -PartitionSizeFAT32Unit 'KB' -PartitionSizeAmiga $Script:SizeofImage_Powershell -PartitionSizeAmigaUnit 'KB')){
-    Write-ErrorMessage 'Unable to create partitions! Program halting!'
+    exit
+}
+
+Write-InformationMessage 'Setting Amiga Partition to ID 76'
+try {
+    Set-Partition -DiskNumber $Script:HSTDiskNumber -PartitionNumber 2 -MbrType 0x76
+}
+catch {
+    Write-ErrorMessage 'Error setting Partition ID to 76! Exiting!'
     exit
 }
 
@@ -3949,6 +3955,7 @@ if ($Script:SetDiskupOnly -eq 'FALSE'){
 }
 
 
+$Script:Fat32DrivePath = ((Get-Partition -DiskNumber $Script:HSTDiskNumber -PartitionNumber 1).DriveLetter)+':\'
 
 #### Set up FAT32
 
@@ -3956,22 +3963,22 @@ Write-StartTaskMessage -Message 'Setting up FAT32 files'
 
 Write-InformationMessage -Message 'Copying Emu68Pistorm and Emu68Pistorm32lite files' 
 
-$null = copy-Item ($TempFolder+"Emu68Pistorm\*") -Destination ($FAT32Partition)
-$null = copy-Item ($TempFolder+"Emu68Pistorm32lite\*") -Destination ($FAT32Partition)
-$null= Remove-Item ($FAT32Partition+'config.txt')
-$null = copy-Item ($LocationofAmigaFiles+'FAT32\ps32lite-stealth-firmware.gz') -Destination ($FAT32Partition)
+$null = copy-Item ($TempFolder+"Emu68Pistorm\*") -Destination ($Script:Fat32DrivePath )
+$null = copy-Item ($TempFolder+"Emu68Pistorm32lite\*") -Destination ($Script:Fat32DrivePath )
+$null= Remove-Item ($Script:Fat32DrivePath +'config.txt')
+$null = copy-Item ($LocationofAmigaFiles+'FAT32\ps32lite-stealth-firmware.gz') -Destination ($Script:Fat32DrivePath )
 
-if (-not (Test-Path ($FAT32Partition+'Kickstarts\'))){
-    $null = New-Item -path ($FAT32Partition+'Kickstarts\') -ItemType Directory -Force
+if (-not (Test-Path ($Script:Fat32DrivePath+'Kickstarts\'))){
+    $null = New-Item -path ($Script:Fat32DrivePath +'Kickstarts\') -ItemType Directory -Force
 }
 
-if (-not (Test-Path ($FAT32Partition+'Install\'))){
-    $null = New-Item -path ($FAT32Partition+'Install\') -ItemType Directory -Force
+if (-not (Test-Path ($Script:Fat32DrivePath +'Install\'))){
+    $null = New-Item -path ($Script:Fat32DrivePath +'Install\') -ItemType Directory -Force
 }
 
 Write-InformationMessage -Message 'Copying Cmdline.txt' 
 
-Copy-Item ($LocationofAmigaFiles+'FAT32\cmdline_'+$Script:KickstartVersiontoUse+'.txt') -Destination ($FAT32Partition+'cmdline.txt') #Temporary workaround until Michal fixes buptest for 3.1
+Copy-Item ($LocationofAmigaFiles+'FAT32\cmdline_'+$Script:KickstartVersiontoUse+'.txt') -Destination ($Script:Fat32DrivePath+'cmdline.txt') 
 
 
 $ConfigTxt = Get-Content -Path ($LocationofAmigaFiles+'FAT32\config.txt')
@@ -4051,10 +4058,10 @@ foreach ($Line in $ConfigTxt) {
         $RevisedConfigTxt += ($Line+"`n")
     }    
 }
-Export-TextFileforAmiga -DatatoExport $RevisedConfigTxt -ExportFile ($FAT32Partition+'config.txt') -AddLineFeeds 'TRUE' 
+Export-TextFileforAmiga -DatatoExport $RevisedConfigTxt -ExportFile ($Script:Fat32DrivePath+'config.txt') -AddLineFeeds 'TRUE' 
 
 Write-InformationMessage -Message 'Copying Kickstart file to FAT32 partition'
-$null = copy-Item -LiteralPath $KickstartPath -Destination ($FAT32Partition+$KickstartNameFAT32)
+$null = copy-Item -LiteralPath $KickstartPath -Destination ($Script:Fat32DrivePath+$KickstartNameFAT32)
 
 Write-TaskCompleteMessage -Message 'Setting up FAT32 Files - Complete!'
 
@@ -4103,20 +4110,21 @@ If ($Script:WriteImage -eq 'FALSE'){
 }
 
 If ($Script:WriteImage -eq 'TRUE'){
-    Write-StartTaskMessage -Message 'Writing Image to Disk (will be complete when HST-Imager has written image to SD card)'
+    Write-StartTaskMessage -Message 'Writing Image to Disk '
     
     Set-location  $Script:WorkingPath
     
     $SectorSize = (Get-WMICInformation -DiskNumbertoUse $Script:HSTDiskNumber).BlockSize| Select-Object  -unique
     $Offset = ((Get-WMICInformation -DiskNumbertoUse $Script:HSTDiskNumber) | Where-Object 'PartitionIndex' -eq 1).StartingOffsetSectors
     
-    Write-HDFtoDisk -ddtcpathtouse $Script:DDTCPath -DeviceIDtoUse $Script:HSTDiskDeviceID -SectorSizetoUse $SectorSize -SectorOffset $Offset
-
+    #Write-HDFtoDisk -ddtcpathtouse  -DeviceIDtoUse $Script:HSTDiskDeviceID -SectorSizetoUse $SectorSize -SectorOffset $Offset
+    & $Script:DDTCPath ($LocationofImage+$NameofImage) $Script:HSTDiskDeviceID $Offset $SectorSize
     #Write-Image -HSTImagePathtouse $HSTImagePath -SourcePath ($LocationofImage+'Emu68Kickstart'+$Script:KickstartVersiontoUse+'.img') -DestinationPath $Script:HSTDiskName
     
+    
+
     Write-TaskCompleteMessage -Message 'Writing Image to Disk - Complete!'
 }
-
 
 $EndDateandTime = (Get-Date -Format HH:mm:ss)
 $ElapsedTime = (New-TimeSpan -Start $StartDateandTime -End $EndDateandTime).TotalSeconds
