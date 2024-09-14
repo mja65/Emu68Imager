@@ -1,3 +1,149 @@
+
+function Set-WindowState {
+    <#
+    .SYNOPSIS
+    Set the state of a window.
+    .DESCRIPTION
+    Set the state of a window using the `ShowWindowAsync` function from `user32.dll`.
+    .PARAMETER InputObject
+    The process object(s) to set the state of. Can be piped from `Get-Process`.
+    .PARAMETER State
+    The state to set the window to. Default is 'SHOW'.
+    .PARAMETER SuppressErrors
+    Suppress errors when the main window handle is '0'.
+    .PARAMETER SetForegroundWindow
+    Set the window to the foreground
+    .PARAMETER ThresholdHours
+    The number of hours to keep the window handle in memory. Default is 24.
+    .EXAMPLE
+    Get-Process notepad | Set-WindowState -State HIDE -SuppressErrors
+    .EXAMPLE
+    Get-Process notepad | Set-WindowState -State SHOW -SuppressErrors
+    .LINK
+    https://gist.github.com/lalibi/3762289efc5805f8cfcf
+    .NOTES
+    Original idea from https://gist.github.com/Nora-Ballard/11240204
+    #>
+
+    [CmdletBinding(DefaultParameterSetName = 'InputObject')]
+    param(
+        [Parameter(Position = 0, Mandatory = $true, ValueFromPipeline = $true)]
+        [Object[]] $InputObject,
+
+        [Parameter(Position = 1)]
+        [ValidateSet(
+            'FORCEMINIMIZE', 'HIDE', 'MAXIMIZE', 'MINIMIZE', 'RESTORE',
+            'SHOW', 'SHOWDEFAULT', 'SHOWMAXIMIZED', 'SHOWMINIMIZED',
+            'SHOWMINNOACTIVE', 'SHOWNA', 'SHOWNOACTIVATE', 'SHOWNORMAL'
+        )]
+        [string] $State = 'SHOW',
+        [switch] $SuppressErrors = $false,
+        [switch] $SetForegroundWindow = $false,
+        [int] $ThresholdHours = 24
+    )
+
+    Begin {
+        $WindowStates = @{
+            'FORCEMINIMIZE'      = 11
+            'HIDE'               = 0
+            'MAXIMIZE'           = 3
+            'MINIMIZE'           = 6
+            'RESTORE'            = 9
+            'SHOW'               = 5
+            'SHOWDEFAULT'        = 10
+            'SHOWMAXIMIZED'      = 3
+            'SHOWMINIMIZED'      = 2
+            'SHOWMINNOACTIVE'    = 7
+            'SHOWNA'             = 8
+            'SHOWNOACTIVATE'     = 4
+            'SHOWNORMAL'         = 1
+        }
+
+        $Win32ShowWindowAsync = Add-Type -MemberDefinition @'
+[DllImport("user32.dll")]
+public static extern bool ShowWindowAsync(IntPtr hWnd, int nCmdShow);
+[DllImport("user32.dll", SetLastError = true)]
+public static extern bool SetForegroundWindow(IntPtr hWnd);
+'@ -Name "Win32ShowWindowAsync" -Namespace Win32Functions -PassThru
+
+        $handlesFilePath = "$env:APPDATA\WindowHandles.json"
+
+        $global:MainWindowHandles = @{}
+
+        if (Test-Path $handlesFilePath) {
+            $json = Get-Content $handlesFilePath -Raw
+            $data = $json | ConvertFrom-Json
+            $currentTime = Get-Date
+
+            foreach ($key in $data.PSObject.Properties.Name) {
+                $handleData = $data.$key
+
+                if ($handleData -and $handleData.Timestamp) {
+                    try {
+                        $timestamp = [datetime] $handleData.Timestamp
+                        if ($currentTime - $timestamp -lt (New-TimeSpan -Hours $ThresholdHours)) {
+                            $global:MainWindowHandles[[int] $key] = $handleData
+                        }
+                    } catch {
+                        Write-Verbose "Skipping invalid timestamp for handle $key"
+                    }
+                } else {
+                    Write-Verbose "Skipping entry for handle $key due to missing data"
+                }
+            }
+        }
+    }
+
+    Process {
+        foreach ($process in $InputObject) {
+            $handle = $process.MainWindowHandle
+
+            if ($handle -eq 0 -and $global:MainWindowHandles.ContainsKey($process.Id)) {
+                $handle = [int] $global:MainWindowHandles[$process.Id].Handle
+            }
+
+            if ($handle -eq 0) {
+                if (-not $SuppressErrors) {
+                    Write-Error "Main Window handle is '0'"
+                } else {
+                    Write-Verbose ("Skipping '{0}' with id '{1}', because Main Window handle is '0'" -f $process.ProcessName, $process.Id)
+                }
+
+                continue
+            }
+
+            Write-Verbose ("Processing '{0}' with id '{1}' and handle '{2}'" -f $process.ProcessName, $process.Id, $handle)
+
+            $global:MainWindowHandles[$process.Id] = @{
+                Handle = $handle.ToString()
+                Timestamp = (Get-Date).ToString("o")
+            }
+
+            $Win32ShowWindowAsync::ShowWindowAsync($handle, $WindowStates[$State]) | Out-Null
+
+            if ($SetForegroundWindow) {
+                $Win32ShowWindowAsync::SetForegroundWindow($handle) | Out-Null
+            }
+
+            Write-Verbose ("» Set Window State '{1}' on '{0}'" -f $handle, $State)
+        }
+    }
+
+    End {
+        $data = [ordered] @{}
+
+        foreach ($key in $global:MainWindowHandles.Keys) {
+            if ($global:MainWindowHandles[$key].Handle -ne 0) {
+                $data["$key"] = $global:MainWindowHandles[$key]
+            }
+        }
+
+        $json = $data | ConvertTo-Json
+
+        Set-Content -Path $handlesFilePath -Value $json
+    }
+}
+
 ####################################################################### Check Runtime Environment ##################################################################################################
 
 if ($env:TERM_PROGRAM){
@@ -14,6 +160,7 @@ if ($env:TERM_PROGRAM){
 
 if  ($RunMode -eq 1){
     $Scriptpath = (Split-Path -Parent $MyInvocation.MyCommand.Definition)+'\'
+    get-process -id $Pid | set-windowstate -State MINIMIZE
 } 
 
 if ($RunMode -eq 0){
@@ -21,6 +168,7 @@ if ($RunMode -eq 0){
 }
 
 ######################################################################## Functions #################################################################################################################
+
 function Set-GUISizeofPartitions {
     param (
     
@@ -1494,55 +1642,26 @@ function Clear-Emu68ImagerSDDisk {
     }
 }
 
-function Set-Emu68ImagerSDDiskPartition {
-    param (
-        $DiskNumbertoUse,
-        $PartitionSizeFAT32,
-        $PartitionSizeFAT32Unit,
-        $PartitionSizeAmiga,
-        $PartitionSizeAmigaUnit
-    )
-    $PartitionSizeFAT32touse = (($PartitionSizeFAT32).tostring()+$PartitionSizeFAT32Unit)
-    $PartitionSizeAmigatouse = (($PartitionSizeAmiga).tostring()+$PartitionSizeAmigaUnit)
-    Write-InformationMessage ('Creating FAT32 Partition for Disk: '+$DiskNumbertoUse+' with size '+$PartitionSizeFAT32touse) 
-    try {
-        $null = New-Partition -DiskNumber $DiskNumbertoUse -Size $PartitionSizeFAT32touse -MbrType FAT32 | format-volume -filesystem FAT32 -newfilesystemlabel 'EMU68BOOT' # Create Fat32 partition
-    }
-    catch {
-        Write-ErrorMessage 'Error creating FAT32 Partition!'
-        return $false
-    }
-
-    Write-InformationMessage ('Creating Partition for Amiga Drives for Disk: '+$DiskNumbertoUse+' with size '+$PartitionSizeAmigatouse) 
-    try {
-        $null = New-Partition -DiskNumber $DiskNumbertoUse -Size $PartitionSizeAmigatouse -MbrType 'FAT32'  
-    }
-    catch {
-        Write-ErrorMessage 'Error creating Amiga Partition!'
-        return $false
-    }
-    return $true               
-}
 
 function Get-WMICInformation {
     param (
         $DiskNumbertoUse
     )
-    $WMICData = wmic partition 
+    $WMICData = wmic partition
     $Counter =1
     $WMICTable = [System.Collections.Generic.List[PSCustomObject]]::New()
     foreach ($WMICEntry in $WMICData){
         if (($WMICEntry.Length -gt 0) -and ($Counter -gt 1)){
             if ($WMICEntry.Substring(191,11).TrimEnd(' ') -eq $DiskNumbertoUse){
                 $WMICTable += [PSCustomObject]@{
-                    BlockSize = ($WMICEntry.Substring(22,11)).TrimEnd(' ')
-                    Caption  = ($WMICEntry.Substring(58,21)).TrimEnd(' ')
-                    DeviceID = ($WMICEntry.Substring(168,21)).TrimEnd(' ')
-                    DiskIndex = ($WMICEntry.Substring(191,11)).TrimEnd(' ')
-                    PartitionIndex = ($WMICEntry.Substring(267,7)).TrimEnd(' ')
-                    Name = ($WMICEntry.Substring(302,22)).TrimEnd(' ')
-                    Size = ($WMICEntry.Substring(454,15)).TrimEnd(' ')
-                    StartingOffset = ($WMICEntry.Substring(469,16)).TrimEnd(' ')
+                    BlockSize = (($WMICEntry.Substring(22,11).TrimStart(' ')).TrimEnd(' '))
+                    Caption  = (($WMICEntry.Substring(58,21).TrimStart(' ')).TrimEnd(' '))
+                    DeviceID = (($WMICEntry.Substring(168,21).TrimStart(' ')).TrimEnd(' '))
+                    DiskIndex = (($WMICEntry.Substring(191,11).TrimStart(' ')).TrimEnd(' '))
+                    PartitionIndex = (($WMICEntry.Substring(267,7).TrimStart(' ')).TrimEnd(' '))
+                    Name = (($WMICEntry.Substring(302,22).TrimStart(' ')).TrimEnd(' '))
+                    Size = (($WMICEntry.Substring(454,15).TrimStart(' ')).TrimEnd(' '))
+                    StartingOffset = (($WMICEntry.Substring(469,16).TrimStart(' ')).TrimEnd(' '))
                     StartingOffsetSectors = [int]$WMICEntry.Substring(469,16)/[int]$WMICEntry.Substring(22,11)
                 }
             }
@@ -1558,25 +1677,6 @@ function Get-WMICInformation {
 
 ####################################################################### End Check Runtime Environment ###############################################################################################
 
-####################################################################### Set Script Path dependent  Variables ########################################################################################
-
-$SourceProgramPath = ($Scriptpath+'Programs\')
-$InputFolder = ($Scriptpath+'InputFiles\')
-$LocationofAmigaFiles = ($Scriptpath+'AmigaFiles\')
-## Amiga Variables
-
-$DeviceName_Prefix = 'SDH'
-$DeviceName_System = ($DeviceName_Prefix+'0')
-$VolumeName_System ='Workbench'
-$DeviceName_Other = ($DeviceName_Prefix+'1')
-$VolumeName_Other = 'Work'
-$MigratedFilesFolder='My Files'
-#$InstallPathMUI='SYS:Programs/MUI'
-#$InstallPathPicasso96='SYS:Programs/Picasso96'
-#$InstallPathAmiSSL='SYS:Programs/AmiSSL'
-$GlowIcons='TRUE'
-
-####################################################################### End Script Path dependent  Variables ########################################################################################
 
 ####################################################################### Null out Global Variables ###################################################################################################
 
@@ -1650,13 +1750,45 @@ $Script:RemovableMedia = $null
 $Script:WorkOverhead = $null
 
 ####################################################################### End Null out Global Variables ###############################################################################################
- 
- ####################################################################### Set Global Variables ###############################################################################################
- 
- $Script:PFSLimit = 101*1024*1024 #Kilobytes
 
- ####################################################################### End Set Global Variables ###############################################################################################
- 
+####################################################################### Set Script Path dependent  Variables ########################################################################################
+
+$SourceProgramPath = ($Scriptpath+'Programs\')
+$InputFolder = ($Scriptpath+'InputFiles\')
+$LocationofAmigaFiles = ($Scriptpath+'AmigaFiles\')
+## Amiga Variables
+
+$DeviceName_Prefix = 'SDH'
+$DeviceName_System = ($DeviceName_Prefix+'0')
+$VolumeName_System ='Workbench'
+$DeviceName_Other = ($DeviceName_Prefix+'1')
+$VolumeName_Other = 'Work'
+$MigratedFilesFolder='My Files'
+#$InstallPathMUI='SYS:Programs/MUI'
+#$InstallPathPicasso96='SYS:Programs/Picasso96'
+#$InstallPathAmiSSL='SYS:Programs/AmiSSL'
+$GlowIcons='TRUE'
+$Script:PFSLimit = 101*1024*1024 #Kilobytes
+$Script:Fat32DefaultMaximum = 1024*1024 #1gb in Kilobytes
+#$Script:WorkbenchMaximum = 1024*1024 #1gb in Kilobytes
+$Script:WorkbenchDefaultMaximum = 1024*1024 #1gb in Kilobytes
+$Script:WorkbenchMaximum = $Script:PFSLimit
+$Script:Fat32Maximum = 4*1024*1024 # in Kilobytes
+$Script:Fat32Minimum = 35840 # In KiB
+$Script:WorkbenchMinimum = 100*1024 # In KiB
+$Script:WorkMinimum = 10*1024 # In KiB
+$Script:HDF2emu68Path=($SourceProgramPath+'hdf2emu68.exe')
+$Script:7zipPath=($SourceProgramPath+'7z.exe')
+$Script:DDTCPath=($SourceProgramPath+'ddtc.exe')
+
+$UnLZXURL='http://aminet.net/util/arc/W95unlzx.lha'
+$HSTImagerreleases= 'https://api.github.com/repos/henrikstengaard/hst-imager/releases'
+$HSTAmigareleases= 'https://api.github.com/repos/henrikstengaard/hst-amiga/releases'
+$Emu68releases= 'https://api.github.com/repos/michalsc/Emu68/releases'
+$Emu68Toolsreleases= 'https://api.github.com/repos/michalsc/Emu68-tools/releases'
+
+####################################################################### End Set Script Variables ###############################################################################################
+
 
 ####################################################################### Add GUI Types ################################################################################################################
 
@@ -1931,14 +2063,7 @@ $Script:PartitionBarWidth =  857
 $Script:SetDiskupOnly = 'FALSE'
 $DefaultDivisorFat32 = 15
 $DefaultDivisorWorkbench = 15
-$Script:Fat32DefaultMaximum = 1024*1024 #1gb in Kilobytes
-#$Script:WorkbenchMaximum = 1024*1024 #1gb in Kilobytes
-$Script:WorkbenchDefaultMaximum = 1024*1024 #1gb in Kilobytes
-$Script:WorkbenchMaximum = $Script:PFSLimit
-$Script:Fat32Maximum = 4*1024*1024 # in Kilobytes
-$Script:Fat32Minimum = 35840 # In KiB
-$Script:WorkbenchMinimum = 100*1024 # In KiB
-$Script:WorkMinimum = 10*1024 # In KiB
+
 
 $Script:Space_WorkingFolderDisk = (Confirm-DiskSpace -PathtoCheck $Scriptpath)/1Kb # Available Space on Drive where script is running (Kilobytes)
 $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk
@@ -3229,21 +3354,12 @@ $ErrorMessage
     exit
 }
 
-$HDF2emu68Path=($SourceProgramPath+'hdf2emu68.exe')
-$7zipPath=($SourceProgramPath+'7z.exe')
-$DDTCPath=($SourceProgramPath+'ddtc.exe')
-$TempFolder = ($Scriptpath+'Working Folder\Temp\')
-$LocationofImage= ($Scriptpath+'Working Folder\OutputImage\')
-$AmigaDrivetoCopy= ($Scriptpath+'Working Folder\AmigaImageFiles\')
-$FAT32Partition= ($Scriptpath+'Working Folder\FAT32Partition\')
-
 ### Clean up
 
 if (Test-Path ($Scriptpath+'Working Folder\')){
-    $NewFolders = $TempFolder,$LocationofImage,($AmigaDrivetoCopy+$VolumeName_System),($AmigaDrivetoCopy+$VolumeName_Other),$FAT32Partition
+    $NewFolders = ($Scriptpath+'Working Folder\Temp\'),($Scriptpath+'Working Folder\OutputImage\'),($Scriptpath+'Working Folder\AmigaImageFiles\'+$VolumeName_System),($Scriptpath+'Working Folder\AmigaImageFiles\'+$VolumeName_Other),($Scriptpath+'Working Folder\FAT32Partition\')
     try {
         foreach ($NewFolder in $NewFolders) {
-            Write-host ( $Script:WorkingPath+$NewFolder)
             if (Test-Path ( $Script:WorkingPath+$NewFolder)){
                 $null = Remove-Item ( $Script:WorkingPath+$NewFolder) -Recurse -ErrorAction Stop
             }
@@ -3273,6 +3389,11 @@ $Form_UserInterface.ShowDialog() | out-null
 
 ######################################################################## Command line portion of Script ################################################################################################
 
+if  ($RunMode -eq 1){
+    get-process -id $Pid | set-windowstate -State MAXIMIZE
+} 
+
+
 
 if ($Script:ExitType -eq 2){
     Write-ErrorMessage -Message 'Exiting - User has insufficient space'
@@ -3290,11 +3411,6 @@ elseif (-not ($Script:ExitType-eq 1)){
 
 ##### Script
 
-$UnLZXURL='http://aminet.net/util/arc/W95unlzx.lha'
-$HSTImagerreleases= 'https://api.github.com/repos/henrikstengaard/hst-imager/releases'
-$HSTAmigareleases= 'https://api.github.com/repos/henrikstengaard/hst-amiga/releases'
-$Emu68releases= 'https://api.github.com/repos/michalsc/Emu68/releases'
-$Emu68Toolsreleases= 'https://api.github.com/repos/michalsc/Emu68-tools/releases'
 
 Set-Location  $Script:WorkingPath
 
@@ -3322,18 +3438,16 @@ if (-not (Test-Path $TempFolder)){
     $null = New-Item $TempFolder -ItemType Directory
 }
 
-$HSTImagePath=$ProgramsFolder+'HST-Imager\hst.imager.exe'
-$HSTAmigaPath=$ProgramsFolder+'HST-Amiga\hst.amiga.exe'
-$LZXPath=$ProgramsFolder+'unlzx.exe'
+$HSTImagePath = $ProgramsFolder+'HST-Imager\hst.imager.exe'
+$HSTAmigaPath = $ProgramsFolder+'HST-Amiga\hst.amiga.exe'
+$LZXPath = $ProgramsFolder+'unlzx.exe'
 
-$LocationofImage= $Script:WorkingPath+'OutputImage\'
-$AmigaDrivetoCopy= $Script:WorkingPath+'AmigaImageFiles\'
-$AmigaDownloads= $Script:WorkingPath+'AmigaDownloads\'
-$FAT32Partition= $Script:WorkingPath+'FAT32Partition\'
+$LocationofImage = $Script:WorkingPath+'OutputImage\'
+$AmigaDrivetoCopy = $Script:WorkingPath+'AmigaImageFiles\'
+$AmigaDownloads = $Script:WorkingPath+'AmigaDownloads\'
+$FAT32Partition = $Script:WorkingPath+'FAT32Partition\'
 
-$NameofImage=('Pistorm'+$Script:KickstartVersiontoUse+'.HDF')
-
-
+$NameofImage = ('Pistorm'+$Script:KickstartVersiontoUse+'.HDF')
 
 $Script:TotalSections = 18
 
@@ -3364,7 +3478,22 @@ if (-not(Clear-Emu68ImagerSDDisk -DiskNumbertoUse $Script:HSTDiskNumber)){
 
 Write-StartSubTaskMessage -Message 'Adding Partitions to SD Card'
 
-if (-not(Set-Emu68ImagerSDDiskPartition -DiskNumbertoUse $Script:HSTDiskNumber -PartitionSizeFAT32 $Script:SizeofFAT32 -PartitionSizeFAT32Unit 'KB' -PartitionSizeAmiga $Script:SizeofImage_Powershell -PartitionSizeAmigaUnit 'KB')){
+Write-InformationMessage ('Creating Partition for FAT32 Partition for Disk: '+$Script:HSTDiskNumber+' with size '+($Script:SizeofFAT32.ToString()+'KB')) 
+try {
+    $null = New-Partition -DiskNumber $Script:HSTDiskNumber -Size ($Script:SizeofFAT32.ToString()+'KB') -MbrType FAT32 | format-volume -filesystem FAT32 -newfilesystemlabel EMU68BOOT # Create Fat32 partition
+}
+catch {
+    Write-ErrorMessage 'Error creating FAT32 Partition!'
+    exit
+
+}
+
+Write-InformationMessage ('Creating Partition for Amiga Drives for Disk: '+$Script:HSTDiskNumber+' with size '+($Script:SizeofImage_Powershell.ToString()+'KB')) 
+try {
+    $null = New-Partition -DiskNumber $Script:HSTDiskNumber  -Size ($Script:SizeofImage_Powershell.ToString()+'KB') -MbrType FAT32  
+}
+catch {
+    Write-ErrorMessage 'Error creating Amiga Partition!'
     exit
 }
 
@@ -3380,6 +3509,8 @@ catch {
 Add-PartitionAccessPath -DiskNumber $Script:HSTDiskNumber -PartitionNumber 1 -AssignDriveLetter
 
 Write-TaskCompleteMessage -Message 'Setting up SD card - Complete!'
+
+<#
 
 ### Download HST-Imager and HST-Amiga
 
@@ -4131,3 +4262,4 @@ $ElapsedTime = (New-TimeSpan -Start $StartDateandTime -End $EndDateandTime).Tota
 
 Write-Host "Started at: $StartDateandTime Finished at (excluding write to disk if applicable): $EndDateandTime. Total time to run (in seconds) was: $ElapsedTime" 
 
+#>
