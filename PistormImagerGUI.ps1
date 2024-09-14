@@ -1,4 +1,3 @@
-
 function Set-WindowState {
     <#
     .SYNOPSIS
@@ -159,12 +158,12 @@ if ($env:TERM_PROGRAM){
  } 
 
 if  ($RunMode -eq 1){
-    $Scriptpath = (Split-Path -Parent $MyInvocation.MyCommand.Definition)+'\'
+    $Script:Scriptpath = (Split-Path -Parent $MyInvocation.MyCommand.Definition)+'\'
     get-process -id $Pid | set-windowstate -State MINIMIZE
 } 
 
 if ($RunMode -eq 0){
-    $Scriptpath = 'E:\Emu68Imager\'    
+    $Script:Scriptpath = 'E:\Emu68Imager\'    
 }
 
 ######################################################################## Functions #################################################################################################################
@@ -1517,7 +1516,7 @@ Select a location with less space, increase the space on Work, or remove the tra
 "@    
     if ($TransferLocationtocheck){
         if ($TransferAvailableSpace -lt $TransferSpaceThreshold){
-            [System.Windows.MessageBox]::Show($Msg, $Msg_Header,0,48)
+            [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,48)
             return $false
         }
         else{
@@ -1612,7 +1611,7 @@ function Write-GUIReporttoUseronOptions {
     else{
         $WPF_UI_PasswordValue_Reporting_Detail_TextBox.Text = 'No Password Set'
     }
-    $WPF_UI_Fat32SizeValue_Reporting_Detail_TextBox.Text =  Get-FormattedSize -Size ($Script:SizeofFAT32*1024)
+    $WPF_UI_Fat32SizeValue_Reporting_Detail_TextBox.Text =  Get-FormattedSize -Size ($Script:SizeofFAT32)
     $WPF_UI_ImageSizeValue_Reporting_Detail_TextBox.Text = Get-FormattedSize -Size $Script:SizeofImage
     $WPF_UI_WorkbenchSizeValue_Reporting_Detail_TextBox.Text = Get-FormattedSize -Size $Script:SizeofPartition_System
     $WPF_UI_WorkSizeValue_Reporting_Detail_TextBox.Text = Get-FormattedSize -Size $Script:SizeofPartition_Other
@@ -1670,6 +1669,49 @@ function Get-WMICInformation {
     }
     return $WMICTable
 }
+
+function Write-Image {
+    param (
+        $HSTImagePathtouse,
+        $SourcePath,
+        $DestinationPath
+    )
+    $arguments ='write "{0}" {1}' -f $SourcePath,$DestinationPath
+    Write-InformationMessage -Message 'Opening new window to write image. Please wait for this to finish!'
+    Start-Process -NoNewWindow -FilePath $HSTImagePathtouse -ArgumentList $arguments
+}
+
+
+function Repair-SDDisk {
+    param (
+        $DiskNumbertoUse,
+        $TempFoldertoUse
+        )
+        $SelectDiskLine = ('SELECT DISK '+$DiskNumbertoUse)
+        NEW-ITEM -Path ($TempFoldertoUse+'DiskPartScript.txt') -ItemType file -force | OUT-NULL
+        ADD-CONTENT -Path ($TempFoldertoUse+'DiskPartScript.txt')  $SelectDiskLine
+        ADD-CONTENT -Path ($TempFoldertoUse+'DiskPartScript.txt')  "Clean"
+        $Counter = 1
+        do {
+            Write-InformationMessage ('Attempting to Clean Disk using Diskpart. Attempt #'+$Counter)
+            $CleanDiskOutput = (DISKPART.exe /S ($TempFoldertoUse+'DiskPartScript.txt'))   
+            $CleanDiskOutputLinetoCheck = $CleanDiskOutput[$CleanDisk.count-1] 
+            if ($CleanDiskOutputLinetoCheck -match 'succeeded'){
+                Write-InformationMessage 'DiskPart has Cleaned the Disk'
+                $IsSuccess = $true
+                return $true
+            }
+            else {
+                Write-InformationMessage 'Diskpart did not clean disk! '
+                $IsSuccess = $false
+            }
+            $Counter ++
+        } until (
+            $Counter -gt 5 -or $IsSuccess -eq $true
+        )
+}
+
+  
 
 ### End Functions
 
@@ -2171,7 +2213,8 @@ $WPF_UI_MediaSelect_Dropdown.Add_SelectionChanged({
         $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:RequiredSpace_WorkingFolderDisk
         $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpace_WorkingFolderDisk
 
-        $Script:Space_FilestoTransfer = $Script:SizeofPartition_Other - $Script:WorkOverhead
+        $Script:Space_FilestoTransfer = ($Script:SizeofPartition_Other/([math]::ceiling($Script:SizeofPartition_Other/$Script:PFSLimit)))  - $Script:WorkOverhead
+        
         $Script:AvailableSpaceFilestoTransfer =  $Script:Space_FilestoTransfer - $Script:SizeofFilestoTransfer    
         
         if ($Script:TransferLocation){
@@ -2282,7 +2325,8 @@ $WPF_UI_DefaultAllocation_Refresh.add_Click({
         $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:RequiredSpace_WorkingFolderDisk
         $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpace_WorkingFolderDisk
 
-        $Script:Space_FilestoTransfer = $Script:SizeofPartition_Other - $Script:WorkOverhead
+        $Script:Space_FilestoTransfer = ($Script:SizeofPartition_Other/([math]::ceiling($Script:SizeofPartition_Other/$Script:PFSLimit)))  - $Script:WorkOverhead
+
         $Script:AvailableSpaceFilestoTransfer =  $Script:Space_FilestoTransfer - $Script:SizeofFilestoTransfer    
         
         if ($Script:TransferLocation){
@@ -2332,7 +2376,8 @@ $WPF_UI_Fat32Size_Listview.add_SizeChanged({
         $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:RequiredSpace_WorkingFolderDisk
         $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpace_WorkingFolderDisk
 
-        $Script:Space_FilestoTransfer = $Script:SizeofPartition_Other - $Script:WorkOverhead
+        $Script:Space_FilestoTransfer = ($Script:SizeofPartition_Other/([math]::ceiling($Script:SizeofPartition_Other/$Script:PFSLimit)))  - $Script:WorkOverhead
+
         $Script:AvailableSpaceFilestoTransfer =  $Script:Space_FilestoTransfer - $Script:SizeofFilestoTransfer    
         
         if ($Script:TransferLocation){
@@ -2382,7 +2427,8 @@ $WPF_UI_WorkbenchSize_Listview.add_SizeChanged({
         $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:RequiredSpace_WorkingFolderDisk
         $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpace_WorkingFolderDisk
 
-        $Script:Space_FilestoTransfer = $Script:SizeofPartition_Other - $Script:WorkOverhead
+        $Script:Space_FilestoTransfer = ($Script:SizeofPartition_Other/([math]::ceiling($Script:SizeofPartition_Other/$Script:PFSLimit)))  - $Script:WorkOverhead
+
         $Script:AvailableSpaceFilestoTransfer =  $Script:Space_FilestoTransfer - $Script:SizeofFilestoTransfer    
         
         if ($Script:TransferLocation){
@@ -2432,7 +2478,8 @@ $WPF_UI_WorkSize_Listview.add_SizeChanged({
         $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:RequiredSpace_WorkingFolderDisk
         $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpace_WorkingFolderDisk
 
-        $Script:Space_FilestoTransfer = $Script:SizeofPartition_Other - $Script:WorkOverhead
+        $Script:Space_FilestoTransfer = ($Script:SizeofPartition_Other/([math]::ceiling($Script:SizeofPartition_Other/$Script:PFSLimit)))  - $Script:WorkOverhead
+
         $Script:AvailableSpaceFilestoTransfer =  $Script:Space_FilestoTransfer - $Script:SizeofFilestoTransfer    
         
         if ($Script:TransferLocation){
@@ -2467,7 +2514,8 @@ $WPF_UI_FreeSpace_Listview.add_SizeChanged({
         $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:RequiredSpace_WorkingFolderDisk
         $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpace_WorkingFolderDisk
 
-        $Script:Space_FilestoTransfer = $Script:SizeofPartition_Other - $Script:WorkOverhead
+        $Script:Space_FilestoTransfer = ($Script:SizeofPartition_Other/([math]::ceiling($Script:SizeofPartition_Other/$Script:PFSLimit)))  - $Script:WorkOverhead
+
         $Script:AvailableSpaceFilestoTransfer =  $Script:Space_FilestoTransfer - $Script:SizeofFilestoTransfer    
         
         if ($Script:TransferLocation){
@@ -2498,7 +2546,8 @@ $WPF_UI_Unallocated_Listview.add_SizeChanged({
         $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:RequiredSpace_WorkingFolderDisk
         $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpace_WorkingFolderDisk
 
-        $Script:Space_FilestoTransfer = $Script:SizeofPartition_Other - $Script:WorkOverhead
+        $Script:Space_FilestoTransfer = ($Script:SizeofPartition_Other/([math]::ceiling($Script:SizeofPartition_Other/$Script:PFSLimit)))  - $Script:WorkOverhead
+
         $Script:AvailableSpaceFilestoTransfer =  $Script:Space_FilestoTransfer - $Script:SizeofFilestoTransfer    
         
         if ($Script:TransferLocation){
@@ -2577,11 +2626,11 @@ $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Add_TextChanged({
     if ($WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.text -eq ''){
         $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Background = "Transparent"
     }
-    elseif (($Script:AvailableSpaceFilestoTransfer - $Script:SizeofFilestoTransfer ) -lt $Script:SpaceThreshold_FilestoTransfer){
+    elseif (($Script:AvailableSpaceFilestoTransfer) -lt $Script:SpaceThreshold_FilestoTransfer){
         $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Background = "Red"
         $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Foreground = "Black"
     }
-    elseif (($Script:AvailableSpaceFilestoTransfer - $Script:SizeofFilestoTransfer ) -lt ($Script:SpaceThreshold_FilestoTransfer*2)){
+    elseif (($Script:AvailableSpaceFilestoTransfer) -lt ($Script:SpaceThreshold_FilestoTransfer*2)){
     $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Background = "Yellow"
     $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Foreground = "Black"
     }
@@ -3390,7 +3439,7 @@ $Form_UserInterface.ShowDialog() | out-null
 ######################################################################## Command line portion of Script ################################################################################################
 
 if  ($RunMode -eq 1){
-    get-process -id $Pid | set-windowstate -State MAXIMIZE
+    get-process -id $Pid | set-windowstate -State SHOWDEFAULT
 } 
 
 
@@ -3433,7 +3482,7 @@ if (-not (Test-Path $ProgramsFolder)){
     $null = New-Item $ProgramsFolder -ItemType Directory
 }
 
-$TempFolder= $Script:WorkingPath+'Temp\'
+$TempFolder = $Script:WorkingPath +'Temp\'
 if (-not (Test-Path $TempFolder)){
     $null = New-Item $TempFolder -ItemType Directory
 }
@@ -3449,7 +3498,7 @@ $FAT32Partition = $Script:WorkingPath+'FAT32Partition\'
 
 $NameofImage = ('Pistorm'+$Script:KickstartVersiontoUse+'.HDF')
 
-$Script:TotalSections = 18
+$Script:TotalSections = 15
 
 $Script:CurrentSection = 1
 
@@ -3467,50 +3516,54 @@ if ($Script:SetDiskupOnly -eq 'TRUE'){
 $StartDateandTime = (Get-Date -Format HH:mm:ss)
 Write-InformationMessage -Message "Starting execution at $StartDateandTime"
 
-Write-StartTaskMessage -Message 'Setting up SD card'
-
-Write-StartSubTaskMessage -Message 'Clearing Contents of SD Card' -SubtaskNumber 1 -TotalSubtasks 2
-
-if (-not(Clear-Emu68ImagerSDDisk -DiskNumbertoUse $Script:HSTDiskNumber)){
-    Write-ErrorMessage 'Unable to clear disk! Program halting!'
-    exit
+if ($Script:WriteImage -eq 'TRUE'){
+    Write-StartTaskMessage -Message 'Setting up SD card'
+    
+    Write-StartSubTaskMessage -Message 'Clearing Contents of SD Card' -SubtaskNumber 1 -TotalSubtasks 2
+    
+    # if (-not(Clear-Emu68ImagerSDDisk -DiskNumbertoUse $Script:HSTDiskNumber)){
+    #     Write-ErrorMessage 'Unable to clear disk! Program halting!'
+    #     exit
+    # }
+    
+    if (-not (Repair-SDDisk -DiskNumbertoUse $Script:HSTDiskNumber -TempFoldertoUse $TempFolder)){
+       Write-ErrorMessage 'Unable to clean disk! Program halting!'
+      # exit
+    }   
+        
+    Write-StartSubTaskMessage -Message 'Adding Partitions to SD Card'
+    
+    Write-InformationMessage ('Creating Partition for FAT32 Partition for Disk: '+$Script:HSTDiskNumber+' with size '+($Script:SizeofFAT32.ToString()+'KB')) 
+    try {
+        $null = New-Partition -DiskNumber $Script:HSTDiskNumber -Size ($Script:SizeofFAT32*1024)  -MbrType FAT32 | format-volume -filesystem FAT32 -newfilesystemlabel EMU68BOOT # Create Fat32 partition - fine Tom was right
+    }
+    catch {
+        Write-ErrorMessage 'Error creating FAT32 Partition!'
+        exit
+    
+    }
+    
+    Write-InformationMessage ('Creating Partition for Amiga Drives for Disk: '+$Script:HSTDiskNumber+' with size '+($Script:SizeofImage_Powershell.ToString()+'KB')) 
+    try {
+        $null = New-Partition -DiskNumber $Script:HSTDiskNumber  -Size ($Script:SizeofImage_Powershell*1024) -MbrType FAT32  # fine Tom was right
+    }
+    catch {
+        Write-ErrorMessage 'Error creating Amiga Partition!'
+        exit
+    }
+    
+    Write-InformationMessage 'Setting Amiga Partition to ID 76'
+    try {
+        Set-Partition -DiskNumber $Script:HSTDiskNumber -PartitionNumber 2 -MbrType 0x76
+    }
+    catch {
+        Write-ErrorMessage 'Error setting Partition ID to 76! Exiting!'
+        exit
+    }
+    
+    Write-TaskCompleteMessage -Message 'Setting up SD card - Complete!'
 }
 
-Write-StartSubTaskMessage -Message 'Adding Partitions to SD Card'
-
-Write-InformationMessage ('Creating Partition for FAT32 Partition for Disk: '+$Script:HSTDiskNumber+' with size '+($Script:SizeofFAT32.ToString()+'KB')) 
-try {
-    $null = New-Partition -DiskNumber $Script:HSTDiskNumber -Size ($Script:SizeofFAT32.ToString()+'KB') -MbrType FAT32 | format-volume -filesystem FAT32 -newfilesystemlabel EMU68BOOT # Create Fat32 partition
-}
-catch {
-    Write-ErrorMessage 'Error creating FAT32 Partition!'
-    exit
-
-}
-
-Write-InformationMessage ('Creating Partition for Amiga Drives for Disk: '+$Script:HSTDiskNumber+' with size '+($Script:SizeofImage_Powershell.ToString()+'KB')) 
-try {
-    $null = New-Partition -DiskNumber $Script:HSTDiskNumber  -Size ($Script:SizeofImage_Powershell.ToString()+'KB') -MbrType FAT32  
-}
-catch {
-    Write-ErrorMessage 'Error creating Amiga Partition!'
-    exit
-}
-
-Write-InformationMessage 'Setting Amiga Partition to ID 76'
-try {
-    Set-Partition -DiskNumber $Script:HSTDiskNumber -PartitionNumber 2 -MbrType 0x76
-}
-catch {
-    Write-ErrorMessage 'Error setting Partition ID to 76! Exiting!'
-    exit
-}
-
-Add-PartitionAccessPath -DiskNumber $Script:HSTDiskNumber -PartitionNumber 1 -AssignDriveLetter
-
-Write-TaskCompleteMessage -Message 'Setting up SD card - Complete!'
-
-<#
 
 ### Download HST-Imager and HST-Amiga
 
@@ -3718,6 +3771,10 @@ if ($Script:SetDiskupOnly -eq 'FALSE'){
     $DestinationPathtoUse = ($AmigaDrivetoCopy+$VolumeName_Other)
     if (-not (Start-HSTImager -Command 'fs extract' -SourcePath $SourcePath -DestinationPath $DestinationPathtoUse -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
                 exit
+    }
+
+    if ($Script:KickstartVersiontoUse -eq 3.2){
+        Rename-Item ($AmigaDrivetoCopy+$VolumeName_Other+'\def_harddisk.info') ($AmigaDrivetoCopy+$VolumeName_Other+'\disk.info') 
     }
 
     # foreach ($AmigaPartition in $AmigaPartitionsList | Where-Object {$_.VolumeName -ne $VolumeName_System} ){
@@ -4085,8 +4142,14 @@ if ($Script:SetDiskupOnly -eq 'FALSE'){
     Write-TaskCompleteMessage -Message 'Clean up AmigaImageFiles - Complete!'
 }
 
+If ($Script:WriteImage -eq 'TRUE'){
+    Add-PartitionAccessPath -DiskNumber $Script:HSTDiskNumber -PartitionNumber 1 -AssignDriveLetter
+    $Script:Fat32DrivePath = ((Get-Partition -DiskNumber $Script:HSTDiskNumber -PartitionNumber 1).DriveLetter)+':\'
+}
+else {
+    $Script:Fat32DrivePath = $FAT32Partition
+}
 
-$Script:Fat32DrivePath = ((Get-Partition -DiskNumber $Script:HSTDiskNumber -PartitionNumber 1).DriveLetter)+':\'
 
 #### Set up FAT32
 
@@ -4194,6 +4257,7 @@ Export-TextFileforAmiga -DatatoExport $RevisedConfigTxt -ExportFile ($Script:Fat
 Write-InformationMessage -Message 'Copying Kickstart file to FAT32 partition'
 $null = copy-Item -LiteralPath $KickstartPath -Destination ($Script:Fat32DrivePath+$KickstartNameFAT32)
 
+
 Write-TaskCompleteMessage -Message 'Setting up FAT32 Files - Complete!'
 
 ### Transfer files to Work partition
@@ -4201,7 +4265,7 @@ Write-TaskCompleteMessage -Message 'Setting up FAT32 Files - Complete!'
 if ($Script:TransferLocation) {
     Write-StartTaskMessage -Message 'Transferring Migrated Files to Work Partition'
     Write-InformationMessage -Message ('Transferring files from '+$TransferLocation+' to "'+$MigratedFilesFolder+'" directory on Work drive')
-    $SourcePathtoUse = $TransferLocation+('*')
+    $SourcePathtoUse = $TransferLocation+('\*')
     if (Test-Path ($AmigaDrivetoCopy+$VolumeName_Other+'\'+$MigratedFilesFolder+'.info')){
         Remove-Item ($AmigaDrivetoCopy+$VolumeName_Other+'\'+$MigratedFilesFolder+'.info')
     }
@@ -4233,7 +4297,7 @@ If ($Script:WriteImage -eq 'FALSE'){
     
     #Update-OutputWindow -OutputConsole_Title_Text 'Creating Image' -ProgressbarValue_Overall 83 -ProgressbarValue_Overall_Text '83%'
     
-    & $HDF2emu68Path $LocationofImage$NameofImage $SizeofFAT32 ($FAT32Partition).Trim('\')
+    & $HDF2emu68Path ($LocationofImage+$NameofImage) $SizeofFAT32 ($FAT32Partition).Trim('\')
     
     $null= Rename-Item ($LocationofImager+'emu68_converted.img') -NewName ('Emu68Kickstart'+$Script:KickstartVersiontoUse+'.img')
     
@@ -4241,18 +4305,25 @@ If ($Script:WriteImage -eq 'FALSE'){
 }
 
 If ($Script:WriteImage -eq 'TRUE'){
-    Write-StartTaskMessage -Message 'Writing Image to Disk '
+    Write-StartTaskMessage -Message 'Writing Image to Disk'
     
     Set-location  $Script:WorkingPath
     
-    $SectorSize = (Get-WMICInformation -DiskNumbertoUse $Script:HSTDiskNumber).BlockSize| Select-Object  -unique
-    $Offset = ((Get-WMICInformation -DiskNumbertoUse $Script:HSTDiskNumber) | Where-Object 'PartitionIndex' -eq 1).StartingOffsetSectors
+    # TBC - to use to round partition sizes so they always equal a whole number of sectors. Current code works to a maximum of 1048. If always 512 then can be removed and rely on ddtc calculations
+    $SectorSize = (Get-WmiObject -Class Win32_DiskPartition | Select-Object -Property DiskIndex, Name, Index, BlockSize, Description, BootPartition | Where-Object DiskIndex -eq $Script:HSTDiskNumber | where-object Index -eq 0).BlockSize
+    $Offset = (Get-WmiObject -Class Win32_DiskPartition | Select-Object -Property DiskIndex, Name, Index, BlockSize, Description, StartingOffset,BootPartition | Where-Object DiskIndex -eq $Script:HSTDiskNumber | where-object Index -eq 1).StartingOffset/$SectorSize
     
+    if ($SectorSize -eq 0 -or $SectorSize -eq ""){
+        Write-ErrorMessage 'Incorrect sector size!'
+        exit
+    } 
+
+    Write-InformationMessage ('Offset being used is: '+$Offset+' Sector size is: '+$SectorSize)
+
     #Write-HDFtoDisk -ddtcpathtouse  -DeviceIDtoUse $Script:HSTDiskDeviceID -SectorSizetoUse $SectorSize -SectorOffset $Offset
     & $Script:DDTCPath ($LocationofImage+$NameofImage) $Script:HSTDiskDeviceID $Offset $SectorSize
-    #Write-Image -HSTImagePathtouse $HSTImagePath -SourcePath ($LocationofImage+'Emu68Kickstart'+$Script:KickstartVersiontoUse+'.img') -DestinationPath $Script:HSTDiskName
-    
-    
+    & $Script:DDTCPath ($LocationofImage+$NameofImage) $Script:HSTDiskDeviceID $Offset $SectorSize
+    #Write-Image -HSTImagePathtouse $HSTImagePath -SourcePath ($LocationofImage+'Emu68Kickstart'+$Script:KickstartVersiontoUse+'.img') -DestinationPath $Script:HSTDiskName  
 
     Write-TaskCompleteMessage -Message 'Writing Image to Disk - Complete!'
 }
@@ -4261,5 +4332,3 @@ $EndDateandTime = (Get-Date -Format HH:mm:ss)
 $ElapsedTime = (New-TimeSpan -Start $StartDateandTime -End $EndDateandTime).TotalSeconds
 
 Write-Host "Started at: $StartDateandTime Finished at (excluding write to disk if applicable): $EndDateandTime. Total time to run (in seconds) was: $ElapsedTime" 
-
-#>
