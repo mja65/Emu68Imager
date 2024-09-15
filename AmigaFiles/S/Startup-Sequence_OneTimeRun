@@ -36,8 +36,8 @@ IF NOT FAIL
 EndIf 
 IF NOT ${System} EQ "WinUAE" 
     IF NOT ${System} EQ "RealAmiga" 
-        Dir S:OneTimeRun/#? >NIL: 
-        IF NOT FAIL 
+        c:ce >NIL: S:OneTimeRun 
+        IF WARN 
             ASK "Running One Time Scripts. Press Enter to Continue" 
             Echo >T:RunTimeScript "Failat 21" 
             List >>T:RunTimeScript S:OneTimeRun PAT=~(#?.info) LFORMAT="Echo *"Running Script: %n*"*nEcho *"*"*nExecute *"%p%n*"*nDelete *"%p%n*"*n" ALL FILES

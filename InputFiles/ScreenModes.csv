@@ -1,8 +1,11 @@
-Include;Selected;Name;FriendlyName;hdmi_group;hdmi_mode;hdmi_cvtmax_framebuffer_width;max_framebuffer_height;hdmi_pixel_freq_limit;disable_overscan
-TRUE;;2560*1440-50;Experimental 2560x1440 50Hz mode ;2;87;2560 1440 50 3 0 0 12560;1440;400000000;
-TRUE;;1920*1080-60;1080p 60hz;2;82;;;;
-TRUE;;Auto;Automatic;0;;;;;1
-TRUE;;1280*720-60;720p 60hz;2;85;;;;
-TRUE;;1280*1024-60;1280x1024 60hz;2;35;;;;
-TRUE;;1024*768-60;1024x768 60hz;2;60;;;;
-TRUE;;1366*768-60;1366x768 60hz;2;86;;;;
+Include;Selected;Name;FriendlyName;hdmi_group;hdmi_mode;hdmi_cvt;max_framebuffer_width;max_framebuffer_height;hdmi_pixel_freq_limit;disable_overscan
+TRUE;;Auto;Automatic;0;;;;;;1
+TRUE;;1920*1080-60;1080p 60hz;2;82;;;;;
+TRUE;;1280*720-60;720p 60hz;2;85;;;;;
+TRUE;;1920*1080-50;1080p 50hz;1;31;;;;;
+TRUE;;1280*720-50;720p 50hz;1;19;;;;;
+TRUE;;1280*1024-60;1280x1024 60hz;2;35;;;;;
+TRUE;;1366*768-60;1366x768 60hz;2;86;;;;;
+TRUE;;1024*768-60;1024x768 60hz;2;60;;;;;
+TRUE;;800*600-75;800x600 75hz;2;87;800 600 75;;;;
+FALSE;;2560*1440-50;Experimental 2560x1440 50Hz mode ;2;87;2560 1440 50 3 0 0 1;2560;1440;400000000;

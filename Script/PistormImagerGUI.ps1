@@ -209,7 +209,8 @@ function GuiValueIsNumber {
         $ValuetoCheck
     )
 
-    if ($ValuetoCheck.Text -match "^[\d\.]+$"){
+    $Startingpointforendcheck = (($ValuetoCheck.Text).Length)-1
+    if (($ValuetoCheck.Text -match "^[\d\.]+$") -and (($ValuetoCheck.Text).substring($Startingpointforendcheck,1) -match "^[0-9]")){
         $ValuetoCheck.Background = 'White'
         return $true
 
@@ -3027,14 +3028,18 @@ Calculating space requirements. This may take some time if you have selected a l
     }
 })
 
-$AvailableKickstarts = Import-Csv ($InputFolder+'ListofInstallFiles.csv') -delimiter ';' | Where-Object 'Kickstart_Version' -ne ""| Select-Object 'Kickstart_Version' -unique
+$AvailableKickstarts = Import-Csv ($InputFolder+'ListofInstallFiles.csv') -delimiter ';' | Where-Object 'Kickstart_VersionFriendlyName' -ne ""| Select-Object 'Kickstart_Version','Kickstart_VersionFriendlyName' -unique
 
 foreach ($Kickstart in $AvailableKickstarts) {
-    $WPF_UI_KickstartVersion_Dropdown.AddChild($Kickstart.Kickstart_Version)
+    $WPF_UI_KickstartVersion_Dropdown.AddChild($Kickstart.Kickstart_VersionFriendlyName)
 }
 
 $WPF_UI_KickstartVersion_Dropdown.Add_SelectionChanged({
-    $Script:KickstartVersiontoUse = $WPF_UI_KickstartVersion_Dropdown.SelectedItem   
+    foreach ($Kickstart in $AvailableKickstarts) {
+        if ($Kickstart.Kickstart_VersionFriendlyName -eq $WPF_UI_KickstartVersion_Dropdown.SelectedItem){
+            $Script:KickstartVersiontoUse  = $Kickstart.Kickstart_Version          
+        }
+    }
     if (Confirm-UIFields){
         $WPF_UI_Start_Button.Background = 'Red'
         $WPF_UI_Start_Button.Foreground = 'Black'
@@ -3531,28 +3536,29 @@ $FAT32Partition = $Script:WorkingPath+'FAT32Partition\'
 
 $NameofImage = ('Pistorm'+$Script:KickstartVersiontoUse+'.HDF')
 
-$Script:TotalSections = 15
-
-$Script:CurrentSection = 1
+if ($Script:SetDiskupOnly -eq 'FALSE'){
+    $Script:TotalSections = 15
+}
+else{
+    $TotalSections = 5
+}
 
 if (-not ($Script:TransferLocation)){
     $TotalSections --
 }
+
 if (-not ($Script:WriteImage)){
     $TotalSections --
 }
 
-if ($Script:SetDiskupOnly -eq 'TRUE'){
-    $TotalSections = 6 ## Need to update
-}
-
+$Script:CurrentSection = 1
 $StartDateandTime = (Get-Date -Format HH:mm:ss)
 Write-InformationMessage -Message "Starting execution at $StartDateandTime"
 
 if ($Script:WriteImage -eq 'TRUE'){
     Write-StartTaskMessage -Message 'Setting up SD card'
     
-    Write-StartSubTaskMessage -Message 'Clearing Contents of SD Card' -SubtaskNumber 1 -TotalSubtasks 2
+    Write-StartSubTaskMessage -Message 'Clearing Contents of SD Card' -SubtaskNumber 1 -TotalSubtasks 3
     
     # if (-not(Clear-Emu68ImagerSDDisk -DiskNumbertoUse $Script:HSTDiskNumber)){
     #     Write-ErrorMessage 'Unable to clear disk! Program halting!'
@@ -3564,7 +3570,7 @@ if ($Script:WriteImage -eq 'TRUE'){
        exit
     }   
         
-    Write-StartSubTaskMessage -Message 'Adding Partitions to SD Card'
+    Write-StartSubTaskMessage -Message 'Adding Partitions to SD Card'-SubtaskNumber 2 -TotalSubtasks 3
     
     Write-InformationMessage ('Creating Partition for FAT32 Partition for Disk: '+$Script:HSTDiskNumber+' with size '+($Script:SizeofFAT32.ToString()+'KB')) 
     try {
@@ -3576,7 +3582,7 @@ if ($Script:WriteImage -eq 'TRUE'){
     
     }
     
-    Write-InformationMessage ('Creating Partition for Amiga Drives for Disk: '+$Script:HSTDiskNumber+' with size '+($Script:SizeofImage_Powershell.ToString()+'KB')) 
+    Write-StartSubTaskMessage -message ('Creating Partition for Amiga Drives for Disk: '+$Script:HSTDiskNumber+' with size '+($Script:SizeofImage_Powershell.ToString()+'KB')) -SubtaskNumber 3 -TotalSubtasks 3
     try {
         $null = New-Partition -DiskNumber $Script:HSTDiskNumber  -Size ($Script:SizeofImage_Powershell*1024) -MbrType FAT32  # fine Tom was right
     }
@@ -3585,7 +3591,7 @@ if ($Script:WriteImage -eq 'TRUE'){
         exit
     }
     
-    Write-InformationMessage 'Setting Amiga Partition to ID 76'
+    Write-InformationMessage -message 'Setting Amiga Partition to ID 76'
     try {
         Set-Partition -DiskNumber $Script:HSTDiskNumber -PartitionNumber 2 -MbrType 0x76
     }
@@ -4196,7 +4202,7 @@ Write-InformationMessage -Message 'Copying Emu68Pistorm and Emu68Pistorm32lite f
 
 if ($Script:KickstartVersiontoUse -eq 3.2){
     $SourcePath = ($GlowIconsADF+'\Prefs\Env-Archive\Sys\def_harddisk.info')
-    $DestinationPathtoUse = ($Script:Fat32DrivePath) 
+    $DestinationPathtoUse = ($Script:Fat32DrivePath).TrimEnd('\') 
     if (-not (Start-HSTImager -Command 'fs extract' -SourcePath $SourcePath -DestinationPath $DestinationPathtoUse -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
         exit
     }
@@ -4230,7 +4236,7 @@ Write-InformationMessage -Message 'Preparing Config.txt'
 
 $RevisedConfigTxt=$null
 
-$AvailableScreenModes = Import-Csv ($InputFolder+'ScreenModes.CSV') -Delimiter (';')
+$AvailableScreenModes = Import-Csv ($InputFolder+'ScreenModes.CSV') -Delimiter (';') | Where-Object {$_.Include -eq 'TRUE'}
 foreach ($AvailableScreenMode in $AvailableScreenModes){
     if ($AvailableScreenMode.Name -eq  $Script:ScreenModetoUse){
         $AvailableScreenMode.Selected = $true
@@ -4379,4 +4385,4 @@ If ($Script:WriteImage -eq 'TRUE'){
 $EndDateandTime = (Get-Date -Format HH:mm:ss)
 $ElapsedTime = (New-TimeSpan -Start $StartDateandTime -End $EndDateandTime).TotalSeconds
 
-Write-Host "Started at: $StartDateandTime Finished at (excluding write to disk if applicable): $EndDateandTime. Total time to run (in seconds) was: $ElapsedTime" 
+Write-Host "Started at: $StartDateandTime Finished at: $EndDateandTime. Total time to run (in seconds) was: $ElapsedTime" 
