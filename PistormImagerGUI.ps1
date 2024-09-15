@@ -158,7 +158,7 @@ if ($env:TERM_PROGRAM){
  } 
 
 if  ($RunMode -eq 1){
-    $Script:Scriptpath = (Split-Path -Parent $MyInvocation.MyCommand.Definition)+'\'
+    $Script:Scriptpath = ((Split-Path -Parent -Path (Split-Path -Parent $MyInvocation.MyCommand.Definition))+'\')      
     get-process -id $Pid | set-windowstate -State MINIMIZE
 } 
 
@@ -3236,10 +3236,10 @@ $InputXML_AdministratorWindow = @"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WpfApp14"
         mc:Ignorable="d"
-        Title="Not Run as Administrator" Height="450" Width="800" HorizontalAlignment="Center" HorizontalContentAlignment="Center" UseLayoutRounding="True" ScrollViewer.VerticalScrollBarVisibility="Disabled" ResizeMode="NoResize">
-    <Grid>
-        <Button x:Name="Button_Acknowledge" Content="Acknowledge" HorizontalAlignment="Left" Margin="259,360,0,0" VerticalAlignment="Top" Width="320"/>
-        <TextBox x:Name="TextBox_Message" HorizontalAlignment="Left" Margin="259,167,0,0" TextWrapping="Wrap" Text="You must run the tool in Administrator Mode!" VerticalAlignment="Top" Width="307" IsReadOnly="True"/>        
+        Title="Not Run as Administrator" Height="200" Width="910" HorizontalAlignment="Center" HorizontalContentAlignment="Center" UseLayoutRounding="True" ScrollViewer.VerticalScrollBarVisibility="Disabled" ResizeMode="NoResize">
+    <Grid Background="#FFAAAAAA">
+        <Button x:Name="Button_Acknowledge" HorizontalContentAlignment="Center" Content="Acknowledge" HorizontalAlignment="Center" Margin="0,100,0,0" VerticalAlignment="Top" Height="40" Width="320" BorderBrush="Black" UseLayoutRounding="False" Background="#FF6688BB"/>
+        <TextBox x:Name="TextBox_Message" HorizontalContentAlignment="Center" HorizontalAlignment="center" Margin="0,60,0,0" Background="Transparent" TextWrapping="Wrap" Text="You must run the tool in Administrator Mode!" VerticalAlignment="Top" Width="600" IsReadOnly="True"  FontSize="24" FontWeight="Bold" Foreground="Red" BorderThickness="0,0,0,0" SelectionOpacity="0"/>        
     </Grid>
 </Window>
 "@
@@ -3298,14 +3298,18 @@ $InputXML_DisclaimerWindow = @"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WpfApp14"
         mc:Ignorable="d"
-        Title="Disclaimer" Height="450" Width="800" HorizontalAlignment="Center" HorizontalContentAlignment="Center" UseLayoutRounding="True" ScrollViewer.VerticalScrollBarVisibility="Disabled" ResizeMode="NoResize" WindowStyle="ToolWindow">
-    <Grid Margin="0,-10,0,10">
-        <Button x:Name="Button_Acknowledge" Content="Acknowledge" HorizontalAlignment="Left" Margin="259,382,0,0" VerticalAlignment="Top" Width="320"/>
-              <TextBox x:Name="TextBox_Message" HorizontalAlignment="Center" Margin="0,99,0,0" TextWrapping="Wrap" BorderBrush="Transparent"
-                 Text="This software uses the the following to generate images:&#xD;&#xA;&#x9;HST-Imager Copyright (c) 2022 Henrik Nørfjand Stengaard&#xD;&#xA;&#x9;HST-Amiga Copyright (c) 2024 Henrik Nørfjand Stengaard&#xD;&#xA;&#x9;HDF2emu68 Copyright (c) 2023 PiStorm&#xD;&#xA;&#x9;7zip (developed by Igor Pavlov)&#xD;&#xA;&#x9;UnLZX&#xD;&#xA;&#xD;&#xA;This software is used at your own risk! While efforts have been made to test the software, it should be used with caution.  Data will be written to physical media attached to your computer and all data on that media will be erased. If the incorrect media is chosen, data on that media will also be erased!&#xD;&#xA;&#xD;&#xA;If you do not accept this risk, then do not use this software!&#xD;&#xA;" 
-                 VerticalAlignment="Top" Width="772" IsReadOnly="True" Height="198" VerticalScrollBarVisibility="Disabled"
+        Title="Disclaimer and Acknowledgements" Height="600" Width="910" HorizontalAlignment="Center" HorizontalContentAlignment="Center" ScrollViewer.VerticalScrollBarVisibility="Disabled" ResizeMode="NoResize" WindowStyle="ToolWindow">
+    <Grid Background="#FFAAAAAA" >
+        <Button x:Name="Button_Acknowledge" Content="Acknowledge and Continue" HorizontalAlignment="Left" Height="40" Margin="259,500,0,0" VerticalAlignment="Top" Width="320" BorderBrush="Black" UseLayoutRounding="False" Background="#FF6688BB"/>
+        <TextBox x:Name="TextBox_Message" HorizontalAlignment="Center" Margin="0,40,0,0" TextWrapping="Wrap" Background="Transparent" BorderBrush="Transparent"
+                 Text="[Add authors and contributors]&#xA;&#xA;&#xA;&#xA;&#xA;This software is used at your own risk! While efforts have been made to test the software, it should be used with caution.  Data will be written to physical media attached to your computer and all data on that media will be erased. If the incorrect media is chosen, data on that media will also be erased!&#xA;&#xA;If you do not accept this risk, then do not use this software!&#xA;&#xA;This software uses the the following software to generate images:&#xA;&#xA;&#xA;&#8226; DDTC Copyright &#169;2024 Tom-Cat&#xA;&#8226; HST-Imager Copyright &#169;2022 Henrik N&#xf8;rfjand Stengaard&#xA;&#8226; HST-Amiga Copyright &#169;2024 Henrik N&#xf8;rfjand Stengaard&#xA;&#8226; HDF2emu68 Copyright &#169;2023 PiStorm&#xA;&#8226; 7zip (developed by Igor Pavlov)&#xA;&#8226; UnLZX" 
+                 VerticalAlignment="Top" Width="875" IsReadOnly="True" Height="475" VerticalScrollBarVisibility="Disabled" FontSize="14" BorderThickness="0,0,0,0" SelectionOpacity="0"
                  />
-         </Grid>
+        <TextBox x:Name="TextBox_Header" HorizontalAlignment="Center" Margin="0,20,0,0" TextWrapping="Wrap" Background="Transparent" BorderBrush="Transparent"
+            Text="Emu68 Imager" FontSize="14" BorderThickness="0,0,0,0" SelectionOpacity="0"
+            VerticalAlignment="Top" Width="772" IsReadOnly="True" Height="20" VerticalScrollBarVisibility="Disabled" HorizontalContentAlignment="Center" FontWeight="Bold"
+                 />
+    </Grid>
 </Window>
 "@
 
