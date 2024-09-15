@@ -931,6 +931,35 @@ function Write-AmigaTooltypes {
     }        
 }
 
+function Write-AmigaIconPostition {
+    param (
+        $HSTAmigaPathtouse,
+        $TempFoldertouse,
+        $IconPath,
+        $XPos,
+        $YPos
+    )
+    $Logoutput=($TempFoldertouse+'LogOutputTemp.txt')
+    Write-InformationMessage -Message ('Adjusting position for for info file: '+$IconPath) 
+    & $HSTAmigaPathtouse icon update $IconPath -x $Xpos -y $YPos >$Logoutput
+    $CheckforError = Get-Content ($Logoutput)
+    $ErrorCount=0
+    foreach ($ErrorLine in $CheckforError){
+        if ($ErrorLine -match " ERR]"){
+            $ErrorCount += 1
+            Write-ErrorMessage -Message ('Error in HST-Amiga: '+$ErrorLine)           
+        }
+    }
+    if ($ErrorCount -ge 1){
+        $null=Remove-Item ($Logoutput) -Force
+        return $false    
+    }
+    else{
+        return $true
+    }        
+}
+
+
 
 function Expand-AmigaZFiles {
     param (
@@ -2117,7 +2146,7 @@ $Script:AvailableSpaceFilestoTransfer = 0 #In Kilobytes
 $Script:SizeofFilestoTransfer = 0 #In Kilobytes
 
 $Script:SpaceThreshold_WorkingFolderDisk = 500*1024 #In Kilobytes
-$Script:SpaceThreshold_FilestoTransfer = 10*1024 #In Kilobytes
+$Script:SpaceThreshold_FilestoTransfer = 25*1024 #In Kilobytes
 
 $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpace_WorkingFolderDisk 
 $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:RequiredSpace_WorkingFolderDisk
@@ -3205,7 +3234,7 @@ $AvailableADFstoReport
     if ($ErrorCount -eq 0) {      
         $Script:SizeofImage_HST = (($Script:SizeofImage-($Script:SizeofFAT32)).ToString()+'kb')
         $Script:SizeofImage_Powershell=($Script:SizeofImage-$Script:SizeofFAT32)
-#        $Script:SizeofFAT32=$Script:SizeofFAT32/1024
+        $Script:SizeofFAT32_hdf2emu68 = $Script:SizeofFAT32/1024
         $WPF_UI_Main_Grid.Visibility="Hidden"
         Write-GUIReporttoUseronOptions
         $WPF_UI_Reporting_Grid.Visibility="Visible"
@@ -3302,7 +3331,7 @@ $InputXML_DisclaimerWindow = @"
     <Grid Background="#FFAAAAAA" >
         <Button x:Name="Button_Acknowledge" Content="Acknowledge and Continue" HorizontalAlignment="Left" Height="40" Margin="259,500,0,0" VerticalAlignment="Top" Width="320" BorderBrush="Black" UseLayoutRounding="False" Background="#FF6688BB"/>
         <TextBox x:Name="TextBox_Message" HorizontalAlignment="Center" Margin="0,40,0,0" TextWrapping="Wrap" Background="Transparent" BorderBrush="Transparent"
-                 Text="[Add authors and contributors]&#xA;&#xA;&#xA;&#xA;&#xA;This software is used at your own risk! While efforts have been made to test the software, it should be used with caution.  Data will be written to physical media attached to your computer and all data on that media will be erased. If the incorrect media is chosen, data on that media will also be erased!&#xA;&#xA;If you do not accept this risk, then do not use this software!&#xA;&#xA;This software uses the the following software to generate images:&#xA;&#xA;&#xA;&#8226; DDTC Copyright &#169;2024 Tom-Cat&#xA;&#8226; HST-Imager Copyright &#169;2022 Henrik N&#xf8;rfjand Stengaard&#xA;&#8226; HST-Amiga Copyright &#169;2024 Henrik N&#xf8;rfjand Stengaard&#xA;&#8226; HDF2emu68 Copyright &#169;2023 PiStorm&#xA;&#8226; 7zip (developed by Igor Pavlov)&#xA;&#8226; UnLZX" 
+                 Text="[Add authors and contributors]&#xA;&#xA;&#xA;&#xA;&#xA;This software is used at your own risk! While efforts have been made to test the software, it should be used with caution.  Data will be written to physical media attached to your computer and all data on that media will be erased. If the incorrect media is chosen, data on that media will also be erased!&#xA;&#xA;If you do not accept this risk, then do not use this software!&#xA;&#xA;This software uses the following software to generate images:&#xA;&#xA;&#xA;&#8226; DDTC Copyright &#169;2024 Tom-Cat&#xA;&#8226; HST-Imager Copyright &#169;2022 Henrik N&#xf8;rfjand Stengaard&#xA;&#8226; HST-Amiga Copyright &#169;2024 Henrik N&#xf8;rfjand Stengaard&#xA;&#8226; HDF2emu68 Copyright &#169;2023 PiStorm&#xA;&#8226; 7zip (developed by Igor Pavlov)&#xA;&#8226; UnLZX" 
                  VerticalAlignment="Top" Width="875" IsReadOnly="True" Height="475" VerticalScrollBarVisibility="Disabled" FontSize="14" BorderThickness="0,0,0,0" SelectionOpacity="0"
                  />
         <TextBox x:Name="TextBox_Header" HorizontalAlignment="Center" Margin="0,20,0,0" TextWrapping="Wrap" Background="Transparent" BorderBrush="Transparent"
@@ -3532,7 +3561,7 @@ if ($Script:WriteImage -eq 'TRUE'){
     
     if (-not (Repair-SDDisk -DiskNumbertoUse $Script:HSTDiskNumber -TempFoldertoUse $TempFolder)){
        Write-ErrorMessage 'Unable to clean disk! Program halting!'
-      # exit
+       exit
     }   
         
     Write-StartSubTaskMessage -Message 'Adding Partitions to SD Card'
@@ -3779,7 +3808,11 @@ if ($Script:SetDiskupOnly -eq 'FALSE'){
 
     if ($Script:KickstartVersiontoUse -eq 3.2){
         Rename-Item ($AmigaDrivetoCopy+$VolumeName_Other+'\def_harddisk.info') ($AmigaDrivetoCopy+$VolumeName_Other+'\disk.info') 
+        if (-not (Write-AmigaIconPostition -HSTAmigaPathtouse $HSTAmigaPath -TempFoldertouse $TempFolder -IconPath ($AmigaDrivetoCopy+$VolumeName_Other+'\disk.info') -XPos 15 -YPos 65)){
+            Write-ErrorMessage -Message 'Unable to reposition icon!'
+        }
     }
+      
 
     # foreach ($AmigaPartition in $AmigaPartitionsList | Where-Object {$_.VolumeName -ne $VolumeName_System} ){
     #     If ($AmigaPartition.PartitionNumber -ge 2){
@@ -4161,6 +4194,18 @@ Write-StartTaskMessage -Message 'Setting up FAT32 files'
 
 Write-InformationMessage -Message 'Copying Emu68Pistorm and Emu68Pistorm32lite files' 
 
+if ($Script:KickstartVersiontoUse -eq 3.2){
+    $SourcePath = ($GlowIconsADF+'\Prefs\Env-Archive\Sys\def_harddisk.info')
+    $DestinationPathtoUse = ($Script:Fat32DrivePath) 
+    if (-not (Start-HSTImager -Command 'fs extract' -SourcePath $SourcePath -DestinationPath $DestinationPathtoUse -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+        exit
+    }
+    Rename-Item ($Script:Fat32DrivePath+'def_harddisk.info') ($Script:Fat32DrivePath+'disk.info') 
+    if (-not(Write-AmigaIconPostition -HSTAmigaPathtouse $HSTAmigaPath -TempFoldertouse $TempFolder -IconPath ($Script:Fat32DrivePath+'disk.info') -XPos 109 -YPos 65)){
+        Write-ErrorMessage -Message 'Unable to reposition icon!'
+    }
+}
+
 $null = copy-Item ($TempFolder+"Emu68Pistorm\*") -Destination ($Script:Fat32DrivePath )
 $null = copy-Item ($TempFolder+"Emu68Pistorm32lite\*") -Destination ($Script:Fat32DrivePath )
 $null= Remove-Item ($Script:Fat32DrivePath +'config.txt')
@@ -4301,7 +4346,7 @@ If ($Script:WriteImage -eq 'FALSE'){
     
     #Update-OutputWindow -OutputConsole_Title_Text 'Creating Image' -ProgressbarValue_Overall 83 -ProgressbarValue_Overall_Text '83%'
     
-    & $HDF2emu68Path ($LocationofImage+$NameofImage) $SizeofFAT32 ($FAT32Partition).Trim('\')
+    & $HDF2emu68Path ($LocationofImage+$NameofImage) $Script:SizeofFAT32_hdf2emu68 ($FAT32Partition).Trim('\')
     
     $null= Rename-Item ($LocationofImager+'emu68_converted.img') -NewName ('Emu68Kickstart'+$Script:KickstartVersiontoUse+'.img')
     
@@ -4325,9 +4370,8 @@ If ($Script:WriteImage -eq 'TRUE'){
     Write-InformationMessage ('Offset being used is: '+$Offset+' Sector size is: '+$SectorSize)
 
     #Write-HDFtoDisk -ddtcpathtouse  -DeviceIDtoUse $Script:HSTDiskDeviceID -SectorSizetoUse $SectorSize -SectorOffset $Offset
-    & $Script:DDTCPath ($LocationofImage+$NameofImage) $Script:HSTDiskDeviceID $Offset $SectorSize
-    & $Script:DDTCPath ($LocationofImage+$NameofImage) $Script:HSTDiskDeviceID $Offset $SectorSize
     #Write-Image -HSTImagePathtouse $HSTImagePath -SourcePath ($LocationofImage+'Emu68Kickstart'+$Script:KickstartVersiontoUse+'.img') -DestinationPath $Script:HSTDiskName  
+    & $Script:DDTCPath ($LocationofImage+$NameofImage) $Script:HSTDiskDeviceID -offset $Offset -sectorsize $SectorSize
 
     Write-TaskCompleteMessage -Message 'Writing Image to Disk - Complete!'
 }
