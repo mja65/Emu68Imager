@@ -99,6 +99,7 @@ public static extern bool SetForegroundWindow(IntPtr hWnd);
 
             if ($handle -eq 0 -and $global:MainWindowHandles.ContainsKey($process.Id)) {
                 $handle = [int] $global:MainWindowHandles[$process.Id].Handle
+                $handle = [int] $global:MainWindowHandles[$process.Id].Handle
             }
 
             if ($handle -eq 0) {
@@ -167,6 +168,43 @@ if ($RunMode -eq 0){
 }
 
 ######################################################################## Functions #################################################################################################################
+
+function Start-Emu68ImagerLogging {
+    param (
+        $LocationforLog,
+        $DateandTime
+    )
+
+$LogEntry =     @"
+Emu68 Imager Log
+
+Log created at: $DateandTime
+
+Parameters used: 
+
+Script:HSTDiskName =  [$Script:HSTDiskName]
+Script:ScreenModetoUse = [$Script:ScreenModetoUse]
+Script:KickstartVersiontoUse = [$Script:KickstartVersiontoUse]
+Script:SSID = [$Script:SSID]
+Script:WifiPassword = [$Script:WifiPassword] 
+Script:SizeofFAT32 = [$Script:SizeofFAT32]
+Script:SizeofImage = [$Script:SizeofImage]
+Script:SizeofPartition_System = [$Script:SizeofPartition_System]
+Script:SizeofPartition_Other = [$Script:SizeofPartition_Other]
+Script:WriteImage = [$Script:WriteImage]
+Script:SetDiskupOnly = [$Script:SetDiskupOnly]
+Script:WorkingPath = [$Script:WorkingPath]
+Script:ROMPath = [$Script:ROMPath]
+Script:ADFPath = [$Script:ADFPath]
+Script:LocationofImage = [$Script:LocationofImage]
+Script:TransferLocation = [$Script:TransferLocation]
+
+Activity Commences:
+
+"@
+    $LogEntry| Out-File -FilePath ($LocationforLog)
+
+}
 
 function Set-GUISizeofPartitions {
     param (
@@ -506,6 +544,9 @@ function Write-StartTaskMessage {
     Write-Host ''
     Write-Host "[Section: $Script:CurrentSection of $Script:TotalSections]: `t $Message" -ForegroundColor White
     Write-Host ''
+    '' | Out-File $Script:LogLocation -Append
+    "[Section: $Script:CurrentSection of $Script:TotalSections]: `t $Message" | Out-File $Script:LogLocation -Append
+    '' | Out-File $Script:LogLocation -Append
 }
 
 function Write-StartSubTaskMessage {
@@ -517,13 +558,17 @@ function Write-StartSubTaskMessage {
     Write-Host ''
     Write-Host "[Subtask: $SubtaskNumber of $TotalSubtasks]: `t $Message" -ForegroundColor White
     Write-Host ''
+    '' | Out-File $Script:LogLocation -Append
+    "[Subtask: $SubtaskNumber of $TotalSubtasks]: `t $Message" | Out-File $Script:LogLocation -Append
+    '' | Out-File $Script:LogLocation -Append
 }
 
 function Write-InformationMessage {
     param (
         $Message
     )
-    Write-Host " `t`t $Message" -ForegroundColor Yellow
+    Write-Host " `t $Message" -ForegroundColor Yellow
+    $Message | Out-File $Script:LogLocation -Append
 }
 
 function Write-ErrorMessage {
@@ -531,6 +576,7 @@ function Write-ErrorMessage {
         $Message
     )
     Write-Host "[ERROR] `t $Message" -ForegroundColor Red
+    "[ERROR] `t $Message" | Out-File $Script:LogLocation -Append
 }
 
 function Write-TaskCompleteMessage {
@@ -539,6 +585,7 @@ function Write-TaskCompleteMessage {
     )
     Write-Host "[Section: $Script:CurrentSection of $Script:TotalSections]: `t $Message" -ForegroundColor Green
     $Script:CurrentSection ++
+    "[Section: $Script:CurrentSection of $Script:TotalSections]: `t $Message" | Out-File $Script:LogLocation -Append
 }
 
 
@@ -1650,6 +1697,15 @@ function Write-GUIReporttoUseronOptions {
     $WPF_UI_WorkingPathValue_Reporting_Detail_TextBox.Text = $Script:WorkingPath
     $WPF_UI_RomPathValue_Reporting_Detail_TextBox.Text = $Script:ROMPath
     $WPF_UI_ADFPathValue_Detail_TextBox.Text = $Script:ADFPath 
+    if ($Script:WriteImage -eq 'FALSE'){
+        $WPF_UI_LocationofImageValue_Detail_TextBox.Text = $Script:LocationofImage
+        $WPF_UI_LocationofImage_Detail_TextBox.Visibility = 'Visible'
+        $WPF_UI_LocationofImageValue_Detail_TextBox.Visibility = 'Visible'
+    }
+    else{
+        $WPF_UI_LocationofImage_Detail_TextBox.Visibility = 'Hidden'
+        $WPF_UI_LocationofImageValue_Detail_TextBox.Visibility = 'Hidden'
+    }
     if ($Script:TransferLocation){
         $WPF_UI_TransferPathValue_Detail_TextBox.Text = $Script:TransferLocation
     }
@@ -1726,7 +1782,11 @@ function Repair-SDDisk {
             Write-InformationMessage ('Attempting to Clean Disk using Diskpart. Attempt #'+$Counter)
             $CleanDiskOutput = (DISKPART.exe /S ($TempFoldertoUse+'DiskPartScript.txt'))   
             $CleanDiskOutputLinetoCheck = $CleanDiskOutput[$CleanDisk.count-1] 
-            if ($CleanDiskOutputLinetoCheck -match 'succeeded'){
+            if (($CleanDiskOutputLinetoCheck -match 'succeeded') `
+                -or ($CleanDiskOutputLinetoCheck -match 'completata') `
+                -or ($CleanDiskOutputLinetoCheck -match 'satisfactoriamente') `
+                -or ($CleanDiskOutputLinetoCheck -match 'nettoyer') `
+                -or ($CleanDiskOutputLinetoCheck -match 'bereingt')){  
                 Write-InformationMessage 'DiskPart has Cleaned the Disk'
                 $IsSuccess = $true
                 return $true
@@ -1740,8 +1800,6 @@ function Repair-SDDisk {
             $Counter -gt 5 -or $IsSuccess -eq $true
         )
 }
-
-  
 
 ### End Functions
 
@@ -2049,56 +2107,57 @@ $inputXML_UserInterface = @"
             <Button x:Name="GoBack_Button" Content="Back" HorizontalAlignment="Left" Margin="20,523,0,0" Background="red" VerticalAlignment="Top" Width="199"/>
             <Button x:Name="Process_Button" Content="Run" HorizontalAlignment="Left" Margin="689,523,0,0" Background="green" VerticalAlignment="Top" Width="199"/>
 
+            <TextBox x:Name="Reporting_Header_TextBox" HorizontalAlignment="Center" Margin="0,55,0,0" TextWrapping="Wrap" Text="Tool will be run with the following options:  " VerticalAlignment="Top" Width="438" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Center" FontWeight="Bold" FontSize="14"/>
+
+            <TextBox x:Name="DiskName_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,110,0,0" TextWrapping="Wrap" Text="DiskName to Write:" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+            <TextBox x:Name="DiskNameValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,110,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+
+            <TextBox x:Name="ScreenMode_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,130,0,0" TextWrapping="Wrap" Text="ScreenMode to Use:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+            <TextBox x:Name="ScreenModeValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,130,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+
+            <TextBox x:Name="Kickstart_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,150,0,0" TextWrapping="Wrap" Text="Kickstart to Use:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+            <TextBox x:Name="KickstartValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,150,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+
+            <TextBox x:Name="SSID_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,170,0,0" TextWrapping="Wrap" Text="SSID to configure:" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+            <TextBox x:Name="SSIDValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,170,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+
+            <TextBox x:Name="Password_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,190,0,0" TextWrapping="Wrap" Text="Password to set:" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+            <TextBox x:Name="PasswordValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,190,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+
+            <TextBox x:Name="ImageSize_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,210,0,0" TextWrapping="Wrap" Text="Total Image Size:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+            <TextBox x:Name="ImageSizeValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,210,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+
+            <TextBox x:Name="Fat32Size_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,229,0,0" TextWrapping="Wrap" Text="Fat32 Size:" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+            <TextBox x:Name="Fat32SizeValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,229,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+
+            <TextBox x:Name="WorkbenchSize_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,249,0,0" TextWrapping="Wrap" Text="Workbench Size:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+            <TextBox x:Name="WorkbenchSizeValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,249,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+
+            <TextBox x:Name="WorkSize_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,269,0,0" TextWrapping="Wrap" Text="Work Size:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+            <TextBox x:Name="WorkSizeValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,269,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+
+            <TextBox x:Name="WorkingPath_Detail_TextBox" HorizontalAlignment="Left" Margin="100,290,0,0" TextWrapping="Wrap" Text="Working Path:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+            <TextBox x:Name="WorkingPathValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,290,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="450" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+
+            <TextBox x:Name="RomPath_Detail_TextBox" HorizontalAlignment="Left" Margin="100,310,0,0" TextWrapping="Wrap" Text="Rom Path:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+            <TextBox x:Name="RomPathValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,310,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="450" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" />
+
+            <TextBox x:Name="ADFPath_Detail_TextBox" HorizontalAlignment="Left" Margin="100,330,0,0" TextWrapping="Wrap" Text="ADF Path:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+            <TextBox x:Name="ADFPathValue_Detail_TextBox" HorizontalAlignment="Left" Margin="360,330,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="450" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+
+            <TextBox x:Name="TransferPath_Detail_TextBox" HorizontalAlignment="Left" Margin="100,350,0,0" TextWrapping="Wrap" Text="Transfer Path:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+            <TextBox x:Name="TransferPathValue_Detail_TextBox" HorizontalAlignment="Left" Margin="360,350,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="450" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
 
 
-            <TextBox x:Name="Reporting_Header_TextBox" HorizontalAlignment="Center" Margin="0,126,0,0" TextWrapping="Wrap" Text="Tool will be run with the following options:  " VerticalAlignment="Top" Width="438" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Center"/>
-           
-          <TextBox x:Name="DiskName_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,175,0,0" TextWrapping="Wrap" Text="DiskName to Write:" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>         
-          <TextBox x:Name="DiskNameValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,175,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
-          
-          <TextBox x:Name="ScreenMode_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,195,0,0" TextWrapping="Wrap" Text="ScreenMode to Use:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
-          <TextBox x:Name="ScreenModeValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,195,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-          
-          <TextBox x:Name="Kickstart_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,215,0,0" TextWrapping="Wrap" Text="Kickstart to Use:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-          <TextBox x:Name="KickstartValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,215,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
-          
-          <TextBox x:Name="SSID_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,235,0,0" TextWrapping="Wrap" Text="SSID to configure:" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-          <TextBox x:Name="SSIDValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,235,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
-          
-          <TextBox x:Name="Password_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,255,0,0" TextWrapping="Wrap" Text="Password to set:" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
-          <TextBox x:Name="PasswordValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,255,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
-          
-          <TextBox x:Name="ImageSize_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,275,0,0" TextWrapping="Wrap" Text="Total Image Size:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
-          <TextBox x:Name="ImageSizeValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,275,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
-          
-          <TextBox x:Name="Fat32Size_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,295,0,0" TextWrapping="Wrap" Text="Fat32 Size:" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
-          <TextBox x:Name="Fat32SizeValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,295,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
-          
-           <TextBox x:Name="WorkbenchSize_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,315,0,0" TextWrapping="Wrap" Text="Workbench Size:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
-          <TextBox x:Name="WorkbenchSizeValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,315,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
-          
-          <TextBox x:Name="WorkSize_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,335,0,0" TextWrapping="Wrap" Text="Work Size:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-          <TextBox x:Name="WorkSizeValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,335,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
-          
-          <TextBox x:Name="WorkingPath_Detail_TextBox" HorizontalAlignment="Left" Margin="100,355,0,0" TextWrapping="Wrap" Text="Working Path:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
-          <TextBox x:Name="WorkingPathValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,355,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="450" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
-          
-          <TextBox x:Name="RomPath_Detail_TextBox" HorizontalAlignment="Left" Margin="100,375,0,0" TextWrapping="Wrap" Text="Rom Path:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
-          <TextBox x:Name="RomPathValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,375,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="450" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" />
-          
-          <TextBox x:Name="ADFPath_Detail_TextBox" HorizontalAlignment="Left" Margin="100,395,0,0" TextWrapping="Wrap" Text="ADF Path:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
-          <TextBox x:Name="ADFPathValue_Detail_TextBox" HorizontalAlignment="Left" Margin="360,395,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="450" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
-         
-          <TextBox x:Name="TransferPath_Detail_TextBox" HorizontalAlignment="Left" Margin="100,415,0,0" TextWrapping="Wrap" Text="Transfer Path:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
-          <TextBox x:Name="TransferPathValue_Detail_TextBox" HorizontalAlignment="Left" Margin="360,415,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="450" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
-         
+            <TextBox x:Name="WriteImagetoDisk_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,370,0,0" TextWrapping="Wrap" Text="Write Image to Disk:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+            <TextBox x:Name="WriteImagetoDiskValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,370,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" />
 
-          <TextBox x:Name="WriteImagetoDisk_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,435,0,0" TextWrapping="Wrap" Text="Write Image to Disk:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
-          <TextBox x:Name="WriteImagetoDiskValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,435,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" />
-          
-          <TextBox x:Name="SetupDiskOnly_Detail_TextBox" HorizontalAlignment="Left" Margin="100,455,0,0" TextWrapping="Wrap" Text="Set disk up only:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
-          <TextBox x:Name="SetupDiskOnlyValue_Detail_TextBox" HorizontalAlignment="Left" Margin="360,455,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+            <TextBox x:Name="SetupDiskOnly_Detail_TextBox" HorizontalAlignment="Left" Margin="100,390,0,0" TextWrapping="Wrap" Text="Set disk up only:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+            <TextBox x:Name="SetupDiskOnlyValue_Detail_TextBox" HorizontalAlignment="Left" Margin="360,390,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
             
+            <TextBox x:Name="LocationofImage_Detail_TextBox" HorizontalAlignment="Left" Margin="100,430,0,0" TextWrapping="Wrap" Text="Location of Image:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" FontWeight="Bold" />
+            <TextBox x:Name="LocationofImageValue_Detail_TextBox" HorizontalAlignment="Left" Margin="360,430,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="450" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+     
            
         </Grid>
     </Grid>
@@ -3090,6 +3149,15 @@ $WPF_UI_ScreenMode_Dropdown.Add_SelectionChanged({
 
 $WPF_UI_NoFileInstall_CheckBox.Add_Checked({
     $Script:SetDiskupOnly = 'TRUE'
+    $Script:TransferLocation = $null
+    $WPF_UI_MigratedFiles_Button.Visibility = 'Hidden'
+    $WPF_UI_MigratedPath_Label.Visibility = 'Hidden'
+    $WPF_UI_MigratedFiles_Button.Content = 'Click to set Transfer Path'
+    $WPF_UI_MigratedFiles_Button.Background = '#FFDDDDDD'
+    $WPF_UI_MigratedFiles_Button.Foreground = 'Black'
+    $WPF_UI_MigratedPath_Label.Text='No transfer path selected'
+    $WPF_UI_MigratedFiles_Button.IsEnabled = ""
+
     if (Confirm-UIFields){
         $WPF_UI_Start_Button.Background = 'Red'
         $WPF_UI_Start_Button.Foreground = 'Black'
@@ -3116,6 +3184,9 @@ $WPF_UI_NoFileInstall_CheckBox.Add_Checked({
 
 $WPF_UI_NoFileInstall_CheckBox.Add_UnChecked({
     $Script:SetDiskupOnly = 'FALSE'
+    $WPF_UI_MigratedFiles_Button.IsEnabled = "TRUE"
+    $WPF_UI_MigratedFiles_Button.Visibility = 'Visible'
+    $WPF_UI_MigratedPath_Label.Visibility = 'Visible'
     if (Confirm-UIFields){
         $WPF_UI_Start_Button.Background = 'Red'
         $WPF_UI_Start_Button.Foreground = 'Black'
@@ -3230,7 +3301,7 @@ Select a location with valid ADF files.
                 $Msg_Header ='ADFs to Use'    
                 $Msg_Body = @"  
 The following ADFs will be used:  
-        
+    
 $AvailableADFstoReport  
 "@     
             [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,0) 
@@ -3242,6 +3313,7 @@ $AvailableADFstoReport
         $Script:SizeofImage_HST = (($Script:SizeofImage-($Script:SizeofFAT32)).ToString()+'kb')
         $Script:SizeofImage_Powershell=($Script:SizeofImage-$Script:SizeofFAT32)
         $Script:SizeofFAT32_hdf2emu68 = $Script:SizeofFAT32/1024
+        $Script:LocationofImage = $Script:WorkingPath+'OutputImage\'
         $WPF_UI_Main_Grid.Visibility="Hidden"
         Write-GUIReporttoUseronOptions
         $WPF_UI_Reporting_Grid.Visibility="Visible"
@@ -3503,6 +3575,12 @@ elseif (-not ($Script:ExitType-eq 1)){
 
 Set-Location  $Script:WorkingPath
 
+$Script:LogFolder = ($Script:Scriptpath+'Logs\')  
+
+if (-not (Test-Path ($Script:LogFolder))){
+    $null = New-Item ($Script:LogFolder) -ItemType Directory
+}
+
 if (((split-path  $Script:WorkingPath  -Parent)+'\') -eq $Scriptpath) {
     if (-not (Test-Path ($Scriptpath+'Working Folder\'))){
         $null = New-Item ($Scriptpath+'Working Folder\') -ItemType Directory
@@ -3531,7 +3609,7 @@ $HSTImagePath = $ProgramsFolder+'HST-Imager\hst.imager.exe'
 $HSTAmigaPath = $ProgramsFolder+'HST-Amiga\hst.amiga.exe'
 $LZXPath = $ProgramsFolder+'unlzx.exe'
 
-$LocationofImage = $Script:WorkingPath+'OutputImage\'
+#$Script:LocationofImage = $Script:WorkingPath+'OutputImage\' #Set in click button
 $AmigaDrivetoCopy = $Script:WorkingPath+'AmigaImageFiles\'
 $AmigaDownloads = $Script:WorkingPath+'AmigaDownloads\'
 $FAT32Partition = $Script:WorkingPath+'FAT32Partition\'
@@ -3552,6 +3630,10 @@ if (-not ($Script:TransferLocation)){
 if (-not ($Script:WriteImage)){
     $TotalSections --
 }
+
+$Script:LogLocation = ($Script:LogFolder+'Emu68ImagerLog_'+(Get-Date -Format yyyyMMddHHmmss).tostring())
+
+Start-Emu68ImagerLogging -LocationforLog $Script:LogLocation -DateandTime (Get-Date -Format HH:mm:ss)
 
 $Script:CurrentSection = 1
 $StartDateandTime = (Get-Date -Format HH:mm:ss)
@@ -4358,7 +4440,8 @@ If ($Script:WriteImage -eq 'FALSE'){
     
     $null= Rename-Item ($LocationofImager+'emu68_converted.img') -NewName ('Emu68Kickstart'+$Script:KickstartVersiontoUse+'.img')
     
-    Write-TaskCompleteMessage -Message 'Creating Image - Complete!'
+    Write-TaskCompleteMessage -Message ('Creating Image - Complete! Your image can be found at the following location: '+$LocationofImage+$NameofImage) 
+
 }
 
 If ($Script:WriteImage -eq 'TRUE'){
@@ -4387,4 +4470,7 @@ If ($Script:WriteImage -eq 'TRUE'){
 $EndDateandTime = (Get-Date -Format HH:mm:ss)
 $ElapsedTime = (New-TimeSpan -Start $StartDateandTime -End $EndDateandTime).TotalSeconds
 
-Write-Host "Started at: $StartDateandTime Finished at: $EndDateandTime. Total time to run (in seconds) was: $ElapsedTime" 
+Write-InformationMessage -message "Started at: $StartDateandTime Finished at: $EndDateandTime. Total time to run (in seconds) was: $ElapsedTime" 
+Write-InformationMessage -message ' The tool has finished runnning. A log file was created and has been stored in the folder from which you ran the tool.' 
+Write-InformationMessage -message ('The full path to the file is: '+(Split-Path -Path $Script:LogLocation -Leaf))
+
