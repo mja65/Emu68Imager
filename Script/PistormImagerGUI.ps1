@@ -387,23 +387,6 @@ function Get-TransferredFilesSpaceRequired {
     $SizeofFiles = (Get-ChildItem $FoldertoCheck -force -Recurse | Where-Object { $_.PSIsContainer -eq $false }  | Measure-Object -property Length -sum).sum/1Kb
     return $SizeofFiles #In Kilobytes
 }
-function Get-TransferredFilesAvailableSpace {
-    param (
-        $PFSLimit,
-        $WorkSize #In GB
-    )
-    
-    $WorkSizeKb = $WorkSize*1024*1024
-
-    if ($WorkSizeKb -ge $PFSLimit){
-        $AvailableSpacetoReport = $PFSLimit
-    }
-    else{
-        $AvailableSpacetoReport = $WorkSizeKb
-    }
-    return $AvailableSpacetoReport
-}
-
 
 function Get-RoundedDiskSize {
     param (
@@ -419,7 +402,6 @@ function Get-RoundedDiskSize {
     }
     return $RoundedSize
 }
-
 
 function Get-FormattedSize {
     param (
@@ -458,7 +440,6 @@ function Get-SizeofPartitionNearestCylinder {
     return $NewSizeKiB
      
 }
-
 
 function Get-AmigaPartitionList {
     param (
@@ -565,18 +546,24 @@ function Write-StartSubTaskMessage {
 
 function Write-InformationMessage {
     param (
-        $Message
+        $Message,
+        [switch]$NoLog
     )
     Write-Host " `t $Message" -ForegroundColor Yellow
-    $Message | Out-File $Script:LogLocation -Append
+    if (-not $NoLog){
+        $Message | Out-File $Script:LogLocation -Append
+    }
 }
 
 function Write-ErrorMessage {
     param (
-        $Message
+        $Message,
+        [switch]$NoLog
     )
     Write-Host "[ERROR] `t $Message" -ForegroundColor Red
-    "[ERROR] `t $Message" | Out-File $Script:LogLocation -Append
+    if (-not $NoLog){
+        "[ERROR] `t $Message" | Out-File $Script:LogLocation -Append
+    }
 }
 
 function Write-TaskCompleteMessage {
@@ -621,24 +608,6 @@ function Confirm-DiskSpace {
         $PathtoCheck
     )
     (Get-Volume -DriveLetter (Split-Path -Qualifier $PathtoCheck).Replace(':','')).SizeRemaining
-}
-
-function Get-UICapturedData {
-    param (
-
-    )
-    Write-InformationMessage -message "HSTDiskName is: $Script:HSTDiskName" 
-    Write-InformationMessage -message "HSTDiskNumber is: $Script:HSTDiskNumber"
-    Write-InformationMessage -message "ScreenModetoUse is: $Script:ScreenModetoUse"
-    Write-InformationMessage -message "KickstartVersiontoUse is: $Script:KickstartVersiontoUse"
-    Write-InformationMessage -message "SSID is: $Script:SSID" 
-    Write-InformationMessage -message "WifiPassword is: $Script:WifiPassword" 
-    Write-InformationMessage -message "SizeofFAT32 is: $Script:SizeofFAT32" 
-    Write-InformationMessage -message "SizeofImage is: $Script:SizeofImage"
-    Write-InformationMessage -message "SizeofPartition_System is: $Script:SizeofPartition_System"
-    Write-InformationMessage -message "SizeofPartition_Other is: $Script:SizeofPartition_Other"
-    Write-InformationMessage -message "WorkingPathis: $Script:WorkingPath"
-    Write-InformationMessage -message "ROMPath is: $Script:ROMPath"
 }
 
 function Confirm-UIFields {
@@ -693,68 +662,67 @@ Function Get-FormVariables{
     if ($Script:ReadmeDisplay -ne $true){Write-host "If you need to reference this display again, run Get-FormVariables" -ForegroundColor Yellow;$Script:ReadmeDisplay=$true}
 #    write-host "Found the following interactable elements from our form" -ForegroundColor Cyan
     get-variable WPF*
-    }
+}
+function Get-FolderPath {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$false, ValueFromPipeline=$true, ValueFromPipelineByPropertyName=$true, Position=0)]
+        [string]$Message = "Please select a directory.",
 
-    function Get-FolderPath {
-        [CmdletBinding()]
-        param (
-            [Parameter(Mandatory=$false, ValueFromPipeline=$true, ValueFromPipelineByPropertyName=$true, Position=0)]
-            [string]$Message = "Please select a directory.",
-    
-            [Parameter(Mandatory=$false, Position=1)]
-            [string]$InitialDirectory,
-    
-            [Parameter(Mandatory=$false)]
-            [System.Environment+SpecialFolder]$RootFolder = [System.Environment+SpecialFolder]::Desktop,
-    
-            [switch]$ShowNewFolderButton
-        )
-        Add-Type -AssemblyName System.Windows.Forms
-        $dialog = New-Object System.Windows.Forms.FolderBrowserDialog
-        $dialog.Description  = $Message
-        $dialog.SelectedPath = $InitialDirectory
-        $dialog.RootFolder   = $RootFolder
-        $dialog.ShowNewFolderButton = if ($ShowNewFolderButton) { $true } else { $false }
-        $selected = $null
-    
-        # force the dialog TopMost
-        # Since the owning window will not be used after the dialog has been 
-        # closed we can just create a new form on the fly within the method call
-        $result = $dialog.ShowDialog((New-Object System.Windows.Forms.Form -Property @{TopMost = $true }))
-        if ($result -eq [Windows.Forms.DialogResult]::OK){
-            $selected = $dialog.SelectedPath
-        }
-        # clear the FolderBrowserDialog from memory
-        $dialog.Dispose()
-        # return the selected folder
-        $selected
-    } 
-   
-    function Get-RemovableMedia {
-        param (
-        )
-        $RemovableMediaList = [System.Collections.Generic.List[PSCustomObject]]::New()
-        Get-WmiObject Win32_DiskDrive | Where-Object {$_.MediaType -eq "Removable Media"} | ForEach-Object {
-            $DriveStartpoint = $_.DeviceID.IndexOf('DRIVE')+5 # 5 is length of 'Drive'
-            $DriveEndpoint = $_.DeviceID.Length
-            $DriveLength = $DriveEndpoint- $DriveStartpoint
-            $DriveNumber = $_.DeviceID.Substring($DriveStartpoint,$DriveLength)
-            $SizeofDiskwithBuffer=($_.Size)-(3076*1024) 
-            $RemovableMediaList += [PSCustomObject]@{
-                DeviceID = $_.DeviceID
-                Model = $_.Model
-                SizeofDisk = $SizeofDiskwithBuffer/1024 # KiB
-                EnglishSize = ([math]::Round($SizeofDiskwithBuffer/1GB,3).ToString())
-                FriendlyName = 'Disk '+$DriveNumber+' '+$_.Model+' '+([math]::Round($SizeofDiskwithBuffer/1GB,3).ToString()+' GiB') 
-                HSTDiskName = ('\disk'+$DriveNumber)
-                HSTDiskNumber = $DriveNumber
-            }
-        
-        }
-        return $RemovableMediaList
+        [Parameter(Mandatory=$false, Position=1)]
+        [string]$InitialDirectory,
+
+        [Parameter(Mandatory=$false)]
+        [System.Environment+SpecialFolder]$RootFolder = [System.Environment+SpecialFolder]::Desktop,
+
+        [switch]$ShowNewFolderButton
+    )
+    Add-Type -AssemblyName System.Windows.Forms
+    $dialog = New-Object System.Windows.Forms.FolderBrowserDialog
+    $dialog.Description  = $Message
+    $dialog.SelectedPath = $InitialDirectory
+    $dialog.RootFolder   = $RootFolder
+    $dialog.ShowNewFolderButton = if ($ShowNewFolderButton) { $true } else { $false }
+    $selected = $null
+
+    # force the dialog TopMost
+    # Since the owning window will not be used after the dialog has been 
+    # closed we can just create a new form on the fly within the method call
+    $result = $dialog.ShowDialog((New-Object System.Windows.Forms.Form -Property @{TopMost = $true }))
+    if ($result -eq [Windows.Forms.DialogResult]::OK){
+        $selected = $dialog.SelectedPath
     }
+    # clear the FolderBrowserDialog from memory
+    $dialog.Dispose()
+    # return the selected folder
+    $selected
+} 
+
+function Get-RemovableMedia {
+    param (
+    )
+    $RemovableMediaList = [System.Collections.Generic.List[PSCustomObject]]::New()
+    Get-WmiObject Win32_DiskDrive | Where-Object {$_.MediaType -eq "Removable Media"} | ForEach-Object {
+        $DriveStartpoint = $_.DeviceID.IndexOf('DRIVE')+5 # 5 is length of 'Drive'
+        $DriveEndpoint = $_.DeviceID.Length
+        $DriveLength = $DriveEndpoint- $DriveStartpoint
+        $DriveNumber = $_.DeviceID.Substring($DriveStartpoint,$DriveLength)
+        $SizeofDiskwithBuffer=($_.Size)-(3076*1024) 
+        $RemovableMediaList += [PSCustomObject]@{
+            DeviceID = $_.DeviceID
+            Model = $_.Model
+            SizeofDisk = $SizeofDiskwithBuffer/1024 # KiB
+            EnglishSize = ([math]::Round($SizeofDiskwithBuffer/1GB,3).ToString())
+            FriendlyName = 'Disk '+$DriveNumber+' '+$_.Model+' '+([math]::Round($SizeofDiskwithBuffer/1GB,3).ToString()+' GiB') 
+            HSTDiskName = ('\disk'+$DriveNumber)
+            HSTDiskNumber = $DriveNumber
+        }
+    
+    }
+    return $RemovableMediaList
+}
+
   
-### Functions
 
 function Compare-FileHash {
     param (
@@ -774,7 +742,6 @@ function Compare-FileHash {
     }
         
 }
-
 function Expand-Zipfiles {
     param (
         $InputFile,
@@ -793,7 +760,6 @@ function Expand-Zipfiles {
         return $true
     }
 }
-
 function Expand-LZXArchive {
     param (
         $LZXFile,
@@ -810,7 +776,6 @@ function Expand-LZXArchive {
     & $LZXPathtouse $LZXFile >($TempFoldertouse+'LogOutputTemp.txt')
     Set-Location $WorkingFoldertouse
 }
-
 function Get-AmigaFileWeb {
     param (
         $URL,
@@ -850,7 +815,6 @@ function Get-AmigaFileWeb {
         }        
     }
 }
-
 function Start-HSTImager {
     param (
         $Command,
@@ -912,18 +876,6 @@ function Start-HSTImager {
         return $true
     }
 }
-
-function Write-Image {
-    param (
-        $HSTImagePathtouse,
-        $SourcePath,
-        $DestinationPath
-    )
-    $arguments ='write "{0}" {1}' -f $SourcePath,$DestinationPath
-    Write-InformationMessage -Message 'Opening new window to write image. Please wait for this to finish!'
-    Start-Process -NoNewWindow -FilePath $HSTImagePathtouse -ArgumentList $arguments
-}
-
 function Read-AmigaTooltypes {
     param (
         $HSTAmigaPathtouse,
@@ -951,7 +903,6 @@ function Read-AmigaTooltypes {
         return $true
     }
 }
-
 function Write-AmigaTooltypes {
     param (
         $HSTAmigaPathtouse,
@@ -978,7 +929,6 @@ function Write-AmigaTooltypes {
         return $true
     }        
 }
-
 function Write-AmigaIconPostition {
     param (
         $HSTAmigaPathtouse,
@@ -1007,8 +957,6 @@ function Write-AmigaIconPostition {
     }        
 }
 
-
-
 function Expand-AmigaZFiles {
     param (
         $LocationofZFiles,
@@ -1026,7 +974,6 @@ function Expand-AmigaZFiles {
     Write-InformationMessage -Message ('Deleting .Z files in location: '+$LocationofZFiles)
     Get-ChildItem -Path $LocationofZFiles -Recurse -Filter '*.Z' | remove-Item -Recurse -Force
 }
-
 function Add-AmigaFolder {
     param (
         $AmigaFolderPath,
@@ -1055,7 +1002,6 @@ function Add-AmigaFolder {
         Write-InformationMessage -Message ($FileName+'.info already exists')
     }
 }
-
 function Get-GithubRelease {
     param (
         $GithubRelease,
@@ -1071,10 +1017,24 @@ function Get-GithubRelease {
     }
     else{
         Write-InformationMessage -Message 'Retrieving Github information'
-        try {
-            $GithubDetails = (Invoke-WebRequest $GithubRelease | ConvertFrom-Json)            
-        }
-        catch {
+        $Counter = 0
+        $IsSuccess = $null
+        do {
+            if ($Counter -gt 0){
+                Write-InformationMessage -Message 'Trying to retrieve Githb information again'
+            }
+            try {
+                $GithubDetails = (Invoke-WebRequest $GithubRelease | ConvertFrom-Json)  
+                IsSuccess = $true          
+            }
+            catch {
+                IsSuccess = $false
+            }
+            $Counter ++            
+        } until (
+            IsSuccess -eq $true or $Counter -eq 3 
+        )
+        if (IsSuccess -eq $false){
             Write-ErrorMessage -Message ('Error downloading '+$NameofDL+'!')
             return $false
         }
@@ -1086,11 +1046,25 @@ function Get-GithubRelease {
         }
         $GithubDownloadURL =$GithubDetails_2[0].browser_download_url 
         Write-InformationMessage -Message ('Downloading Files for URL: '+$GithubDownloadURL)
-        try {
-            Invoke-WebRequest $GithubDownloadURL -OutFile $LocationforDownload # Powershell 5 compatibility -AllowInsecureRedirect
-            Write-InformationMessage -Message 'Download completed'            
-        }
-        catch {
+        $Counter = 0
+        $IsSuccess = $null
+        do {
+            if ($Counter -gt 0){
+                Write-InformationMessage -Message 'Trying Download again'
+            }
+            try {
+                Invoke-WebRequest $GithubDownloadURL -OutFile $LocationforDownload # Powershell 5 compatibility -AllowInsecureRedirect
+                Write-InformationMessage -Message 'Download completed'  
+                IsSuccess = $true              
+            }
+            catch {
+                IsSuccess = $false
+            }
+            $Counter ++             
+        } until (
+            IsSuccess -eq $true or $Counter -eq 3 
+        )
+        if ($IsSuccess -eq $false){
             Write-ErrorMessage -Message ('Error downloading '+$NameofDL+'!')
             return $false
         }
@@ -1207,8 +1181,6 @@ function Edit-AmigaScripts {
     }
     return $ScripttoEdit_Revised    
 }
-
-
 function Export-TextFileforAmiga {
     param (
         $ExportFile,
@@ -1227,8 +1199,6 @@ function Export-TextFileforAmiga {
     }
     [System.IO.File]::WriteAllText($ExportFile,$DatatoExportRevised,[System.Text.Encoding]::GetEncoding('iso-8859-1'))
 }
-
-
 function Import-TextFileforAmiga {
     param (
         $ImportFile,
@@ -1248,7 +1218,6 @@ function Import-TextFileforAmiga {
     }
     return $DataRevised
 }
-
 function Find-LatestAminetPackage {
     param (
         $PackagetoFind,
@@ -1277,7 +1246,6 @@ function Find-LatestAminetPackage {
     Write-ErrorMessage -Message 'Could not find package! Unrrecoverable error!'
     return                 
 }
-
 function Find-WHDLoadWrapperURL{
     param (
         $SearchCriteria,
@@ -1328,8 +1296,7 @@ function Get-ModifiedToolTypes {
         }
     }
     return $Tooltypes_Revised    
-}    
-   
+}       
 function Compare-KickstartHashes {
     param (
         $PathtoKickstartHashes,
@@ -1713,61 +1680,6 @@ function Write-GUIReporttoUseronOptions {
         $WPF_UI_TransferPathValue_Detail_TextBox.Text = 'No Transfer Location Set'
     }
 }
-
-function Clear-Emu68ImagerSDDisk {
-    param (
-        $DiskNumbertoUse
-    )
-    try {
-        $null = Clear-Disk -Number $DiskNumbertoUse -RemoveData -Confirm:$false   ## Clear existing disk
-        return $true            
-    }
-    catch {
-        return $false
-    }
-}
-
-
-function Get-WMICInformation {
-    param (
-        $DiskNumbertoUse
-    )
-    $WMICData = wmic partition
-    $Counter =1
-    $WMICTable = [System.Collections.Generic.List[PSCustomObject]]::New()
-    foreach ($WMICEntry in $WMICData){
-        if (($WMICEntry.Length -gt 0) -and ($Counter -gt 1)){
-            if ($WMICEntry.Substring(191,11).TrimEnd(' ') -eq $DiskNumbertoUse){
-                $WMICTable += [PSCustomObject]@{
-                    BlockSize = (($WMICEntry.Substring(22,11).TrimStart(' ')).TrimEnd(' '))
-                    Caption  = (($WMICEntry.Substring(58,21).TrimStart(' ')).TrimEnd(' '))
-                    DeviceID = (($WMICEntry.Substring(168,21).TrimStart(' ')).TrimEnd(' '))
-                    DiskIndex = (($WMICEntry.Substring(191,11).TrimStart(' ')).TrimEnd(' '))
-                    PartitionIndex = (($WMICEntry.Substring(267,7).TrimStart(' ')).TrimEnd(' '))
-                    Name = (($WMICEntry.Substring(302,22).TrimStart(' ')).TrimEnd(' '))
-                    Size = (($WMICEntry.Substring(454,15).TrimStart(' ')).TrimEnd(' '))
-                    StartingOffset = (($WMICEntry.Substring(469,16).TrimStart(' ')).TrimEnd(' '))
-                    StartingOffsetSectors = [int]$WMICEntry.Substring(469,16)/[int]$WMICEntry.Substring(22,11)
-                }
-            }
-        }
-        $Counter ++
-    }
-    return $WMICTable
-}
-
-function Write-Image {
-    param (
-        $HSTImagePathtouse,
-        $SourcePath,
-        $DestinationPath
-    )
-    $arguments ='write "{0}" {1}' -f $SourcePath,$DestinationPath
-    Write-InformationMessage -Message 'Opening new window to write image. Please wait for this to finish!'
-    Start-Process -NoNewWindow -FilePath $HSTImagePathtouse -ArgumentList $arguments
-}
-
-
 function Repair-SDDisk {
     param (
         $DiskNumbertoUse,
@@ -2960,7 +2872,7 @@ $WPF_UI_ImageSize_Value.add_LostFocus({
 })
 
 $WPF_UI_RomPath_Button.Add_Click({
-    $Script:ROMPath = Get-FolderPath -Message 'Select path to Roms' -RootFolder 'MyComputer'
+    $Script:ROMPath = Get-FolderPath -Message 'Select path to Kickstart' -RootFolder 'MyComputer'
     if ($Script:ROMPath){
         if (Confirm-UIFields){
             $WPF_UI_Start_Button.Background = 'Red'
@@ -3157,6 +3069,17 @@ $WPF_UI_NoFileInstall_CheckBox.Add_Checked({
     $WPF_UI_MigratedFiles_Button.Foreground = 'Black'
     $WPF_UI_MigratedPath_Label.Text='No transfer path selected'
     $WPF_UI_MigratedFiles_Button.IsEnabled = ""
+    $Script:ADFPath = $null
+    $WPF_UI_ADFpath_Button.Visibility = 'Hidden'
+    $WPF_UI_ADFPath_Label.Visibility = 'Hidden'
+    $WPF_UI_ADFPath_Label.Text = 'No ADF path selected'
+    $WPF_UI_ADFPath_Button.Background = '#FFDDDDDD'
+    $WPF_UI_ADFPath_Button.Foreground = 'Black'
+    $WPF_UI_ADFPath_Button.IsEnabled = ""
+    $WPF_UI_RequiredSpaceTransferredFiles_TextBox.Visibility = 'Hidden'
+    $WPF_UI_RequiredSpaceValueTransferredFiles_TextBox.Visibility = 'Hidden'
+    $WPF_UI_AvailableSpaceTransferredFiles_TextBox.Visibility = 'Hidden'
+    $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Visibility = 'Hidden'
 
     if (Confirm-UIFields){
         $WPF_UI_Start_Button.Background = 'Red'
@@ -3187,6 +3110,14 @@ $WPF_UI_NoFileInstall_CheckBox.Add_UnChecked({
     $WPF_UI_MigratedFiles_Button.IsEnabled = "TRUE"
     $WPF_UI_MigratedFiles_Button.Visibility = 'Visible'
     $WPF_UI_MigratedPath_Label.Visibility = 'Visible'
+    $WPF_UI_ADFPath_Button.IsEnabled = "TRUE"
+    $WPF_UI_ADFPath_Button.Visibility = 'Visible'
+    $WPF_UI_ADFPath_Label.Visibility = 'Visible'
+    $WPF_UI_RequiredSpaceTransferredFiles_TextBox.Visibility = 'Visible'
+    $WPF_UI_RequiredSpaceValueTransferredFiles_TextBox.Visibility = 'Visible'
+    $WPF_UI_AvailableSpaceTransferredFiles_TextBox.Visibility = 'Visible'
+    $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Visibility = 'Visible'
+
     if (Confirm-UIFields){
         $WPF_UI_Start_Button.Background = 'Red'
         $WPF_UI_Start_Button.Foreground = 'Black'
@@ -3557,11 +3488,11 @@ if  ($RunMode -eq 1){
 
 
 if ($Script:ExitType -eq 2){
-    Write-ErrorMessage -Message 'Exiting - User has insufficient space'
+    Write-ErrorMessage -Message 'Exiting - User has insufficient space' -NoLog
     exit
 }
 elseif (-not ($Script:ExitType-eq 1)){
-    Write-ErrorMessage -Message 'Exiting - UI Window was closed'
+    Write-ErrorMessage -Message 'Exiting - UI Window was closed' -NoLog
     exit
 }
 
@@ -4284,7 +4215,7 @@ Write-StartTaskMessage -Message 'Setting up FAT32 files'
 
 Write-InformationMessage -Message 'Copying Emu68Pistorm and Emu68Pistorm32lite files' 
 
-if ($Script:KickstartVersiontoUse -eq 3.2){
+if (($Script:KickstartVersiontoUse -eq 3.2) -and ($Script:SetDiskupOnly -eq 'FALSE')){
     $SourcePath = ($GlowIconsADF+'\Prefs\Env-Archive\Sys\def_harddisk.info')
     $DestinationPathtoUse = ($Script:Fat32DrivePath).TrimEnd('\') 
     if (-not (Start-HSTImager -Command 'fs extract' -SourcePath $SourcePath -DestinationPath $DestinationPathtoUse -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
@@ -4295,7 +4226,7 @@ if ($Script:KickstartVersiontoUse -eq 3.2){
         Write-ErrorMessage -Message 'Unable to reposition icon!'
     }
 }
-
+ 
 $null = copy-Item ($TempFolder+"Emu68Pistorm\*") -Destination ($Script:Fat32DrivePath )
 $null = copy-Item ($TempFolder+"Emu68Pistorm32lite\*") -Destination ($Script:Fat32DrivePath )
 $null= Remove-Item ($Script:Fat32DrivePath +'config.txt')
@@ -4471,6 +4402,5 @@ $EndDateandTime = (Get-Date -Format HH:mm:ss)
 $ElapsedTime = (New-TimeSpan -Start $StartDateandTime -End $EndDateandTime).TotalSeconds
 
 Write-InformationMessage -message "Started at: $StartDateandTime Finished at: $EndDateandTime. Total time to run (in seconds) was: $ElapsedTime" 
-Write-InformationMessage -message ' The tool has finished runnning. A log file was created and has been stored in the folder from which you ran the tool.' 
-Write-InformationMessage -message ('The full path to the file is: '+(Split-Path -Path $Script:LogLocation -Leaf))
-
+Write-InformationMessage -message 'The tool has finished runnning. A log file was created and has been stored in the log subfolder.' 
+Write-InformationMessage -message ('The full path to the file is: '+$Script:LogLocation)
