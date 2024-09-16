@@ -1025,16 +1025,16 @@ function Get-GithubRelease {
             }
             try {
                 $GithubDetails = (Invoke-WebRequest $GithubRelease | ConvertFrom-Json)  
-                IsSuccess = $true          
+                $IsSuccess = $true          
             }
             catch {
-                IsSuccess = $false
+                $IsSuccess = $false
             }
             $Counter ++            
         } until (
-            IsSuccess -eq $true or $Counter -eq 3 
+            $IsSuccess -eq $true -or $Counter -eq 3 
         )
-        if (IsSuccess -eq $false){
+        if ($IsSuccess -eq $false){
             Write-ErrorMessage -Message ('Error downloading '+$NameofDL+'!')
             return $false
         }
@@ -1055,14 +1055,14 @@ function Get-GithubRelease {
             try {
                 Invoke-WebRequest $GithubDownloadURL -OutFile $LocationforDownload # Powershell 5 compatibility -AllowInsecureRedirect
                 Write-InformationMessage -Message 'Download completed'  
-                IsSuccess = $true              
+                $IsSuccess = $true              
             }
             catch {
-                IsSuccess = $false
+                $IsSuccess = $false
             }
             $Counter ++             
         } until (
-            IsSuccess -eq $true or $Counter -eq 3 
+            $IsSuccess -eq $true -or $Counter -eq 3 
         )
         if ($IsSuccess -eq $false){
             Write-ErrorMessage -Message ('Error downloading '+$NameofDL+'!')
