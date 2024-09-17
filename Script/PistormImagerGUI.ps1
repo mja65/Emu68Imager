@@ -164,7 +164,7 @@ if  ($RunMode -eq 1){
 } 
 
 if ($RunMode -eq 0){
-    $Script:Scriptpath = 'E:\Emu68Imager\'    
+    $Script:Scriptpath = 'H:\Emu68Imager\'    
 }
 
 ######################################################################## Functions #################################################################################################################
@@ -603,11 +603,13 @@ Function Test-Administrator {
     $user = [Security.Principal.WindowsIdentity]::GetCurrent();
     (New-Object Security.Principal.WindowsPrincipal $user).IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)  
 }
+
 function Confirm-DiskSpace {
     param (
         $PathtoCheck
     )
-    (Get-Volume -DriveLetter (Split-Path -Qualifier $PathtoCheck).Replace(':','')).SizeRemaining
+    return ((Get-Volume -DriveLetter (Split-Path -Qualifier $PathtoCheck).Replace(':','')).SizeRemaining)
+    #return 100000000000
 }
 
 function Confirm-UIFields {
@@ -1577,55 +1579,75 @@ function Get-SpaceCheck {
       $AvailableSpace,
       $SpaceThreshold
     )
+    if ($AvailableSpace -gt $SpaceThreshold){
+       if (-not (Test-Path ($Scriptpath+'Working Folder\'))){
+           $null = New-Item -Path ($Scriptpath+'Working Folder\') -ItemType Directory
+       }
+       $Script:WorkingPath = ($Scriptpath+'Working Folder\')   
+       return $true # Sufficient Space
+    }
     $Msg_Header ='Error - Insufficient Space!'    
     $Msg_Body = @"
 You do not have sufficient space on your drive to run the tool!
 
 Either select a location with sufficient space or press 'Cancel' to quit the tool
-"@ 
-    if ($AvailableSpace -le $SpaceThreshold){
-        $ValueofAction = [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,1,48)
-        if ($ValueofAction -eq 'Cancel'){
-            $Form_UserInterface.Close() | out-null
-            $Script:ExitType =2
-        }
-        elseif ($ValueofAction -eq 'OK'){
-            $SufficientSpace_Flag =$null
-            do {
-                $Script:WorkingPath = Get-FolderPath -Message 'Select location for Working Path' -RootFolder 'MyComputer'-ShowNewFolderButton
-                $Script:Space_WorkingFolderDisk = (Confirm-DiskSpace -PathtoCheck $Script:WorkingPath)/1kb
-                $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk 
-                if ($Script:AvailableSpace_WorkingFolderDisk -le $Script:SpaceThreshold_WorkingFolderDisk){
-                    $Msg_Header = 'Error - Insufficient Space!'
-                    $Msg_Body = @"
+"@   
+    $Msg_Body_Repeat = @"
 You still do not have sufficient space on your drive to run the tool!
                   
 Either select a location with sufficient space or press cancel to quit the tool
-"@    
-                    $ValueofAction = [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,1,48)
-                    if ($ValueofAction -eq 'Cancel'){
-                        $Form_UserInterface.Close() | out-null
-                        $Script:ExitType =2 
-                    }    
-                }
-                else{
-                    $SufficientSpace_Flag = $true    
-                }
-            } until (
-                $SufficientSpace_Flag -eq $true
-            ) 
-            
-            return $true 
-        }
+"@         
+
+    $ValueofAction = [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,1,48)
+    if ($ValueofAction -eq 'Cancel'){
+        $Script:ExitType =2
+        return $false
     }
-    else{
-        if (-not (Test-Path ($Scriptpath+'Working Folder\'))){
-            $null = New-Item -Path ($Scriptpath+'Working Folder\') -ItemType Directory
+    $Script:WorkingPath = (Get-FolderPath -Message 'Select location for Working Path' -RootFolder 'MyComputer'-ShowNewFolderButton)+'\'
+    if($Script:WorkingPath){
+        $Script:Space_WorkingFolderDisk = (Confirm-DiskSpace -PathtoCheck $Script:WorkingPath)/1kb
+        $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk 
+            if ($Script:AvailableSpace_WorkingFolderDisk -gt $Script:SpaceThreshold_WorkingFolderDisk){
+                $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpace_WorkingFolderDisk 
+                $WPF_UI_Start_Button.Background = 'Green'
+                $WPF_UI_Start_Button.Foreground = 'White'
+                $WPF_UI_Start_Button.Content = 'Run Tool'
+                return $true
+            }
+            else {
+                $Script:WorkingPath = $null
+            }
+    } 
+    do {
+        $ValueofAction = [System.Windows.MessageBox]::Show($Msg_Body_Repeat, $Msg_Header,1,48)
+        if ($ValueofAction -eq 'OK'){
+            $Script:WorkingPath = (Get-FolderPath -Message 'Select location for Working Path' -RootFolder 'MyComputer'-ShowNewFolderButton)+'\'
+            if($Script:WorkingPath){
+                $Script:Space_WorkingFolderDisk = (Confirm-DiskSpace -PathtoCheck $Script:WorkingPath)/1kb
+                $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk 
+                if ($Script:AvailableSpace_WorkingFolderDisk -gt $Script:SpaceThreshold_WorkingFolderDisk){
+                    $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpace_WorkingFolderDisk 
+                    $WPF_UI_Start_Button.Background = 'Green'
+                    $WPF_UI_Start_Button.Foreground = 'White'
+                    $WPF_UI_Start_Button.Content = 'Run Tool'
+                    return $true
+                }
+                else {
+                    $Script:WorkingPath = $null
+                }        
+            }
         }
-        $Script:WorkingPath = ($Scriptpath+'Working Folder\') 
-        return $true
-    }      
+        else {
+            $Script:ExitType =2
+            return $false
+        }
+    } until (
+        $ValueofAction -eq 'Cancel'
+    )
+    $Script:ExitType =2
+    return $false
 }
+
 
 function Write-GUINoKickstart {
     param (
@@ -1822,6 +1844,7 @@ $Script:WorkMinimum = 10*1024 # In KiB
 $Script:HDF2emu68Path=($SourceProgramPath+'hdf2emu68.exe')
 $Script:7zipPath=($SourceProgramPath+'7z.exe')
 $Script:DDTCPath=($SourceProgramPath+'ddtc.exe')
+
 
 $UnLZXURL='http://aminet.net/util/arc/W95unlzx.lha'
 $HSTImagerreleases= 'https://api.github.com/repos/henrikstengaard/hst-imager/releases'
@@ -2321,6 +2344,7 @@ $WPF_UI_DefaultAllocation_Refresh.add_Click({
             $Script:UI_Unallocated_Value = $WPF_UI_Unallocated_Value.Text      
         }        
         
+        $Script:WorkingPath = $null
         $Script:Space_WorkingFolderDisk = (Confirm-DiskSpace -PathtoCheck $Scriptpath)/1Kb 
 
         $Script:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Script:SizeofImage
@@ -2561,6 +2585,7 @@ $WPF_UI_Unallocated_Listview.add_SizeChanged({
 })
 
 $WPF_UI_MediaSelect_Refresh.Add_Click({
+    $Script:WorkingPath = $null
     $Script:HSTDiskName = $null
     $Script:HSTDiskNumber = $null
     $Script:HSTDiskDeviceID = $null
@@ -3241,11 +3266,18 @@ $AvailableADFstoReport
         }      
     } 
     if ($ErrorCount -eq 0) {
-        if (Get-SpaceCheck -AvailableSpace $Script:AvailableSpace_WorkingFolderDisk -SpaceThreshold $Script:SpaceThreshold_WorkingFolderDisk){
+        if ((Get-SpaceCheck -AvailableSpace $Script:AvailableSpace_WorkingFolderDisk -SpaceThreshold $Script:SpaceThreshold_WorkingFolderDisk) -eq $true){
             $ErrorCount = $ErrorCount
+
         }
         else{
             $ErrorCount += 1  
+            $Script:ExitType = 2
+            if ($Script:ExitType -eq 2){
+                Write-ErrorMessage -Message 'Exiting - User has insufficient space' -NoLog
+                $Form_UserInterface.Close() | out-null
+                exit
+            }
         }
     }
     if ($ErrorCount -eq 0) {      
@@ -3256,8 +3288,6 @@ $AvailableADFstoReport
         $WPF_UI_Main_Grid.Visibility="Hidden"
         Write-GUIReporttoUseronOptions
         $WPF_UI_Reporting_Grid.Visibility="Visible"
-#        $Form_UserInterface.Close() | out-null
-#        $Script:ExitType = 1
     }
 })
 
