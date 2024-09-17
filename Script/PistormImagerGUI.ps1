@@ -1853,7 +1853,7 @@ $inputXML_UserInterface = @"
            Title="Emu68 Imager" Height="600" Width="910" HorizontalAlignment="Left" VerticalAlignment="Top" ResizeMode="NoResize">
     <Grid x:Name="Overall_Grid" Background="Transparent" Visibility="Visible">
         <Grid x:Name="Main_Grid" Background="#FFE5E5E5" Visibility="Visible" >
-            <GroupBox x:Name="DiskSetup_GroupBox" Header="Disk Setup" VerticalAlignment="Top" Height="153" Background="Transparent" HorizontalAlignment="Center">
+            <GroupBox x:Name="DiskSetup_GroupBox" Header="Disk Setup" Margin="0,20,0,0" VerticalAlignment="Top" Height="153" Background="Transparent" HorizontalAlignment="Center">
                 <Grid Background="Transparent">
                     <Grid x:Name="DiskPartition_Grid" Background="Transparent" Height="30" Width="903" MaxWidth="903" VerticalAlignment="Center">
                         <Grid.RowDefinitions>
@@ -1964,7 +1964,7 @@ $inputXML_UserInterface = @"
                     <Button x:Name="DefaultAllocation_Refresh" Content="Reset Partitions to Default" HorizontalAlignment="Left" Margin="725,0,0,0" VerticalAlignment="Top" Width="157" Height="40" Background="#FF6688BB" Foreground="White" FontWeight="Bold" BorderBrush="Transparent"/>
                 </Grid>
             </GroupBox>
-            <GroupBox x:Name="SourceFiles_GroupBox" Header="Source Files" Height="200" Background="Transparent" Margin="7,156,0,128" Width="400" VerticalAlignment="Top" HorizontalAlignment="Left">
+            <GroupBox x:Name="SourceFiles_GroupBox" Header="Source Files" Height="200" Background="Transparent" Margin="7,180,0,128" Width="400" VerticalAlignment="Top" HorizontalAlignment="Left">
                 <Grid Background="Transparent" HorizontalAlignment="Left" VerticalAlignment="Top">
                     <ComboBox x:Name="KickstartVersion_DropDown" HorizontalAlignment="Left" Margin="10,32,0,0" VerticalAlignment="Top" Width="200"/>
                     <Button x:Name="ADFpath_Button" Content="Click to set ADF path" HorizontalAlignment="Left" Margin="10,94,0,0" VerticalAlignment="Top"  Width="200" Height="30"/>
@@ -1977,7 +1977,7 @@ $inputXML_UserInterface = @"
 
                 </Grid>
             </GroupBox>
-            <GroupBox x:Name="Settings_GroupBox" Header="Settings" Height="150" Background="Transparent" Margin="0,156,7,128" Width="400" VerticalAlignment="Top" HorizontalAlignment="Right">
+            <GroupBox x:Name="Settings_GroupBox" Header="Settings" Height="150" Background="Transparent" Margin="0,180,10,128" Width="400" VerticalAlignment="Top" HorizontalAlignment="Right">
                 <Grid>
                     <ComboBox x:Name="ScreenMode_Dropdown" HorizontalAlignment="Left" Margin="10,26,0,0" VerticalAlignment="Top" Width="375"/>
                     <TextBox x:Name="ScreenMode_Label" HorizontalAlignment="Center" Margin="10,0,0,0" TextWrapping="Wrap" Text="Select ScreenMode for Raspberry Pi to Output" VerticalAlignment="Top" Width="280" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Center" FontWeight="Bold"/>
@@ -1991,14 +1991,14 @@ $inputXML_UserInterface = @"
                 </Grid>
 
             </GroupBox>
-            <GroupBox x:Name="RunOptions_GroupBox" Header="Run Options" Margin="7,365,0,100" Background="Transparent" HorizontalAlignment="Left" Width="400" VerticalAlignment="Top" >
+            <GroupBox x:Name="RunOptions_GroupBox" Header="Run Options" Margin="7,385,0,100" Background="Transparent" HorizontalAlignment="Left" Width="400" VerticalAlignment="Top" >
                 <Grid Background="Transparent" >
                     <CheckBox x:Name="DiskWrite_CheckBox" Content="Do not write to disk. Produce .img file only for later writing to disk." HorizontalAlignment="Left" Margin="2,29,0,0" VerticalAlignment="Top"/>
                     <CheckBox x:Name="NoFileInstall_CheckBox" Content="Set disk up only. Do not install packages." HorizontalAlignment="Left" Margin="2,6,0,0" VerticalAlignment="Top"/>
                 </Grid>
             </GroupBox>
-            <Button x:Name="Start_Button" Content="Missing information! Press to see further details" HorizontalAlignment="Center" Margin="0,489,0,0" VerticalAlignment="Top" Width="880" Height="38" Background = "Red" Foreground="Black" BorderBrush="Transparent"/>
-            <GroupBox x:Name="Space_GroupBox" Header="Space Requirements" Height="170" Background="Transparent" Margin="0,311,10,0" Width="400" VerticalAlignment="Top" HorizontalAlignment="Right">
+            <Button x:Name="Start_Button" Content="Missing information! Press to see further details" HorizontalAlignment="Center" Margin="0,510,0,0" VerticalAlignment="Top" Width="890" Height="40" Background = "Red" Foreground="Black" BorderBrush="Transparent"/>
+            <GroupBox x:Name="Space_GroupBox" Header="Space Requirements" Height="170" Background="Transparent" Margin="0,330,10,0" Width="400" VerticalAlignment="Top" HorizontalAlignment="Right">
                 <Grid>
 
                     <TextBox x:Name="RequiredSpace_TextBox" HorizontalAlignment="Left" Margin="20,57,0,0" TextWrapping="Wrap" Text="Required space to run tool is:" VerticalAlignment="Top" Width="230" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
@@ -2014,7 +2014,8 @@ $inputXML_UserInterface = @"
 
             </GroupBox>
             <TextBox x:Name="WorkSizeNoteFooter_Label" HorizontalAlignment="Left" Margin="15,466,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="608" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-        </Grid>
+        <Button x:Name="Documentation_Button" Content="Click for Documentation" HorizontalAlignment="Right" Margin="0,5,10,0" VerticalAlignment="Top" />
+            </Grid>
         <Grid x:Name="Reporting_Grid" Background="#FFE5E5E5" Visibility="Hidden">
             <Button x:Name="GoBack_Button" Content="Back" HorizontalAlignment="Left" Margin="20,523,0,0" Background="red" VerticalAlignment="Top" Width="199"/>
             <Button x:Name="Process_Button" Content="Run" HorizontalAlignment="Left" Margin="689,523,0,0" Background="green" VerticalAlignment="Top" Width="199"/>
@@ -3142,6 +3143,11 @@ $WPF_UI_NoFileInstall_CheckBox.Add_UnChecked({
     }
 })
 
+$WPF_UI_Documentation_Button.Add_Click({
+    Start-Process "https://www.tlc.com/shows/90-day-fiance"
+})
+
+
 $WPF_UI_Start_Button.Add_Click({
     $ErrorCount = 0
     $Script:SSID = $WPF_UI_SSID_Textbox.Text
@@ -3157,12 +3163,6 @@ $WPF_UI_Start_Button.Add_Click({
     }
     else{
         $ErrorCount += 1
-    }
-    if (Get-SpaceCheck -AvailableSpace $Script:AvailableSpace_WorkingFolderDisk -SpaceThreshold $Script:SpaceThreshold_WorkingFolderDisk){
-        $ErrorCount = $ErrorCount
-    }
-    else{
-        $ErrorCount += 1  
     }
     if (Get-ImageSizevsDiskSize -UnallocatedSpace $Script:SizeofUnallocated -ThresholdtocheckMiB 10 -DiskSizetocheck $Script:SizeofDisk -ImageSizetocheck $Script:SizeofImage){
         $ErrorCount = $ErrorCount
@@ -3240,6 +3240,14 @@ $AvailableADFstoReport
             }    
         }      
     } 
+    if ($ErrorCount -eq 0) {
+        if (Get-SpaceCheck -AvailableSpace $Script:AvailableSpace_WorkingFolderDisk -SpaceThreshold $Script:SpaceThreshold_WorkingFolderDisk){
+            $ErrorCount = $ErrorCount
+        }
+        else{
+            $ErrorCount += 1  
+        }
+    }
     if ($ErrorCount -eq 0) {      
         $Script:SizeofImage_HST = (($Script:SizeofImage-($Script:SizeofFAT32)).ToString()+'kb')
         $Script:SizeofImage_Powershell=($Script:SizeofImage-$Script:SizeofFAT32)
