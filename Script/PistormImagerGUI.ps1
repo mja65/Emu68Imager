@@ -718,10 +718,24 @@ function Get-RemovableMedia {
             FriendlyName = 'Disk '+$DriveNumber+' '+$_.Model+' '+([math]::Round($SizeofDiskwithBuffer/1GB,3).ToString()+' GiB') 
             HSTDiskName = ('\disk'+$DriveNumber)
             HSTDiskNumber = $DriveNumber
+            DeviceisScriptRunDevice = ''
         }
     
     }
-    return $RemovableMediaList
+
+    $ScriptDriveLetter = $Script:Scriptpath.substring(($Script:Scriptpath.IndexOf(':\'))-1,1)
+    
+    foreach ($RemovableMediaItem in $RemovableMediaList) {    
+        $DriveNumber = $RemovableMediaItem.DeviceID.Substring($DriveStartpoint,$DriveLength)
+        Get-Disk -Number $DriveNumber | Get-Partition | ForEach-Object {
+            If ($_.DriveLetter -eq $ScriptDriveLetter){
+                $RemovableMediaItem.DeviceisScriptRunDevice = 'TRUE'            
+            } 
+        }    
+    
+    }
+
+    return ($RemovableMediaList | Where-Object {$_.DeviceisScriptRunDevice -ne "TRUE"})
 }
 
   
@@ -1603,8 +1617,9 @@ Either select a location with sufficient space or press cancel to quit the tool
         $Script:ExitType =2
         return $false
     }
-    $Script:WorkingPath = (Get-FolderPath -Message 'Select location for Working Path' -RootFolder 'MyComputer'-ShowNewFolderButton)+'\'
+    $Script:WorkingPath = Get-FolderPath -Message 'Select location for Working Path' -RootFolder 'MyComputer'-ShowNewFolderButton
     if($Script:WorkingPath){
+        $Script:WorkingPath = $Script:WorkingPath.TrimEnd('\')+'\'
         $Script:Space_WorkingFolderDisk = (Confirm-DiskSpace -PathtoCheck $Script:WorkingPath)/1kb
         $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk 
             if ($Script:AvailableSpace_WorkingFolderDisk -gt $Script:SpaceThreshold_WorkingFolderDisk){
@@ -1621,8 +1636,9 @@ Either select a location with sufficient space or press cancel to quit the tool
     do {
         $ValueofAction = [System.Windows.MessageBox]::Show($Msg_Body_Repeat, $Msg_Header,1,48)
         if ($ValueofAction -eq 'OK'){
-            $Script:WorkingPath = (Get-FolderPath -Message 'Select location for Working Path' -RootFolder 'MyComputer'-ShowNewFolderButton)+'\'
+            $Script:WorkingPath = Get-FolderPath -Message 'Select location for Working Path' -RootFolder 'MyComputer'-ShowNewFolderButton
             if($Script:WorkingPath){
+                $Script:WorkingPath = $Script:WorkingPath.TrimEnd('\')+'\'
                 $Script:Space_WorkingFolderDisk = (Confirm-DiskSpace -PathtoCheck $Script:WorkingPath)/1kb
                 $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk 
                 if ($Script:AvailableSpace_WorkingFolderDisk -gt $Script:SpaceThreshold_WorkingFolderDisk){
@@ -2900,6 +2916,7 @@ $WPF_UI_ImageSize_Value.add_LostFocus({
 $WPF_UI_RomPath_Button.Add_Click({
     $Script:ROMPath = Get-FolderPath -Message 'Select path to Kickstart' -RootFolder 'MyComputer'
     if ($Script:ROMPath){
+        $Script:ROMPath = $Script:ROMPath.TrimEnd('\')+'\'
         if (Confirm-UIFields){
             $WPF_UI_Start_Button.Background = 'Red'
             $WPF_UI_Start_Button.Foreground = 'Black'
@@ -2944,6 +2961,7 @@ $WPF_UI_RomPath_Button.Add_Click({
 $WPF_UI_ADFPath_Button.Add_Click({
     $Script:ADFPath = Get-FolderPath -Message 'Select path to ADFs' -RootFolder 'MyComputer'
     if ($Script:ADFPath){
+        $Script:ADFPath = $Script:ADFPath.TrimEnd('\')+'\'
         if (Confirm-UIFields){
             $WPF_UI_Start_Button.Background = 'Red'
             $WPF_UI_Start_Button.Foreground = 'Black'
@@ -2990,7 +3008,7 @@ $WPF_UI_MigratedFiles_Button.Add_Click({
     If (-not ($Script:TransferLocation)) {
         $Script:TransferLocation = Get-FolderPath -Message 'Select transfer folder' -RootFolder 'MyComputer'
         if ($Script:TransferLocation){            
-           
+            $Script:TransferLocation = $Script:TransferLocation.TrimEnd('\')+'\'
             $Msg = @'
 Calculating space requirements. This may take some time if you have selected a large folder for transfer!
 '@
