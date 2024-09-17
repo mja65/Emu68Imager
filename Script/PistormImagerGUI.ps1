@@ -175,10 +175,16 @@ function Start-Emu68ImagerLogging {
         $DateandTime
     )
 
+$NetFrameworkrelease = Get-ItemPropertyValue -LiteralPath 'HKLM:SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full' -Name Release
+$PowershellVersion = ((($PSVersionTable.PSVersion).Major).ToString()+'.'+(($PSVersionTable.PSVersion).Minor))
+
 $LogEntry =     @"
 Emu68 Imager Log
 
 Log created at: $DateandTime
+
+Powershell version used is: $PowershellVersion 
+.Net Framwork Release installed is: $NetFrameworkrelease 
 
 Parameters used: 
 
