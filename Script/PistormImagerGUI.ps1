@@ -1594,11 +1594,14 @@ function Get-SpaceCheck {
       $SpaceThreshold
     )
     if ($AvailableSpace -gt $SpaceThreshold){
-       if (-not (Test-Path ($Scriptpath+'Working Folder\'))){
-           $null = New-Item -Path ($Scriptpath+'Working Folder\') -ItemType Directory
-       }
-       $Script:WorkingPath = ($Scriptpath+'Working Folder\')   
-       return $true # Sufficient Space
+       if ($Script:WorkingPathDefault -ne $false){ #Means we've already defined a custom work folder
+           if (-not (Test-Path ($Scriptpath+'Working Folder\'))){
+               $null = New-Item -Path ($Scriptpath+'Working Folder\') -ItemType Directory
+           }
+           $Script:WorkingPath = ($Scriptpath+'Working Folder\')
+           $Script:WorkingPathDefault = $true          
+        } 
+        return $true # Sufficient Space
     }
     $Msg_Header ='Error - Insufficient Space!'    
     $Msg_Body = @"
@@ -1620,6 +1623,7 @@ Either select a location with sufficient space or press cancel to quit the tool
     $Script:WorkingPath = Get-FolderPath -Message 'Select location for Working Path' -RootFolder 'MyComputer'-ShowNewFolderButton
     if($Script:WorkingPath){
         $Script:WorkingPath = $Script:WorkingPath.TrimEnd('\')+'\'
+        $Script:WorkingPathDefault = $false   
         $Script:Space_WorkingFolderDisk = (Confirm-DiskSpace -PathtoCheck $Script:WorkingPath)/1kb
         $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk 
             if ($Script:AvailableSpace_WorkingFolderDisk -gt $Script:SpaceThreshold_WorkingFolderDisk){
@@ -1631,6 +1635,7 @@ Either select a location with sufficient space or press cancel to quit the tool
             }
             else {
                 $Script:WorkingPath = $null
+                $Script:WorkingPathDefault = $null
             }
     } 
     do {
@@ -1639,6 +1644,7 @@ Either select a location with sufficient space or press cancel to quit the tool
             $Script:WorkingPath = Get-FolderPath -Message 'Select location for Working Path' -RootFolder 'MyComputer'-ShowNewFolderButton
             if($Script:WorkingPath){
                 $Script:WorkingPath = $Script:WorkingPath.TrimEnd('\')+'\'
+                $Script:WorkingPathDefault = $false   
                 $Script:Space_WorkingFolderDisk = (Confirm-DiskSpace -PathtoCheck $Script:WorkingPath)/1kb
                 $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk 
                 if ($Script:AvailableSpace_WorkingFolderDisk -gt $Script:SpaceThreshold_WorkingFolderDisk){
@@ -1650,6 +1656,7 @@ Either select a location with sufficient space or press cancel to quit the tool
                 }
                 else {
                     $Script:WorkingPath = $null
+                    $Script:WorkingPathDefault = $null
                 }        
             }
         }
@@ -1776,6 +1783,7 @@ $Script:SizeofImage_HST = $null
 $Script:SizeofPartition_System = $null
 $Script:SizeofPartition_Other = $null
 $Script:WorkingPath = $null
+$Script:WorkingPathDefault = $null
 $Script:ROMPath = $null
 $Script:ADFPath = $null
 $Script:TransferLocation = $null
@@ -2361,6 +2369,7 @@ $WPF_UI_DefaultAllocation_Refresh.add_Click({
         }        
         
         $Script:WorkingPath = $null
+        $Script:WorkingPathDefault = $null
         $Script:Space_WorkingFolderDisk = (Confirm-DiskSpace -PathtoCheck $Scriptpath)/1Kb 
 
         $Script:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Script:SizeofImage
@@ -2602,6 +2611,7 @@ $WPF_UI_Unallocated_Listview.add_SizeChanged({
 
 $WPF_UI_MediaSelect_Refresh.Add_Click({
     $Script:WorkingPath = $null
+    $Script:WorkingPathDefault = $null
     $Script:HSTDiskName = $null
     $Script:HSTDiskNumber = $null
     $Script:HSTDiskDeviceID = $null
@@ -3284,6 +3294,7 @@ $AvailableADFstoReport
         }      
     } 
     if ($ErrorCount -eq 0) {
+
         if ((Get-SpaceCheck -AvailableSpace $Script:AvailableSpace_WorkingFolderDisk -SpaceThreshold $Script:SpaceThreshold_WorkingFolderDisk) -eq $true){
             $ErrorCount = $ErrorCount
 
