@@ -257,6 +257,12 @@ if ($RunMode -eq 0){
     $Script:Scriptpath = 'E:\Emu68Imager\'    
 }
 
+$Script:LogFolder = ($Script:Scriptpath+'Logs\')  
+
+if (-not (Test-Path ($Script:LogFolder))){
+    $null = New-Item ($Script:LogFolder) -ItemType Directory
+}
+
 $Script:LogLocation = ($Script:LogFolder+'Emu68ImagerLog_'+(Get-Date -Format yyyyMMddHHmmss).tostring())
 
 Write-Emu68ImagerLog -StartorContinue 'Start' -LocationforLog $Script:LogLocation -DateandTime (Get-Date -Format HH:mm:ss)
@@ -3677,12 +3683,6 @@ $Script:RDBWorkbenchStartSector = 2016
 $Script:RDBWorkStartSector =
 
 Set-Location  $Script:WorkingPath
-
-$Script:LogFolder = ($Script:Scriptpath+'Logs\')  
-
-if (-not (Test-Path ($Script:LogFolder))){
-    $null = New-Item ($Script:LogFolder) -ItemType Directory
-}
 
 if (((split-path  $Script:WorkingPath  -Parent)+'\') -eq $Scriptpath) {
     if (-not (Test-Path ($Scriptpath+'Working Folder\'))){
