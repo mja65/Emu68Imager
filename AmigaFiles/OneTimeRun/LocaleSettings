@@ -1,4 +1,4 @@
 Echo "Please set your Country and TimeZone then press SAVE"
-ASK "Press Enter to Continue"
+Wait 2
 SYS:Prefs/Locale
 Setenv Reboot "TRUE"

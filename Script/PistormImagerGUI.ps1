@@ -1,3 +1,148 @@
+####################################################################### Add GUI Types ################################################################################################################
+
+#[void][System.Reflection.Assembly]::LoadWithPartialName('presentationframework')
+Add-Type -AssemblyName PresentationFramework
+Add-Type -AssemblyName System.Windows.Forms
+
+####################################################################### End GUI Types ################################################################################################################
+
+####################################################################### Null out Global Variables ###################################################################################################
+
+#Get-Variable > variables.txt
+
+$Script:ExitType = $null
+$Script:HSTDiskName = $null
+$Script:HSTDiskNumber = $null
+$Script:HSTDiskDeviceID = $null
+$Script:ScreenModetoUse = $null
+$Script:KickstartVersiontoUse = $null
+$Script:SSID = $null
+$Script:WifiPassword = $null
+$Script:SizeofFAT32 = $null
+$Script:SizeofImage = $null
+$Script:SizeofImage_HST = $null
+$Script:SizeofPartition_System = $null
+$Script:SizeofPartition_Other = $null
+$Script:WorkingPath = $null
+$Script:WorkingPathDefault = $null
+$Script:ROMPath = $null
+$Script:ADFPath = $null
+$Script:TransferLocation = $null
+$Script:Space_WorkingFolderDisk = $null
+$Script:AvailableSpace_WorkingFolderDisk = $null
+$Script:RequiredSpace_WorkingFolderDisk = $null
+$Script:AvailableSpaceFilestoTransfer = $null
+$Script:SizeofFilestoTransfer = $null
+$Script:SpaceThreshold_WorkingFolderDisk = $null
+$Script:SpaceThreshold_FilestoTransfer = $null
+$Script:Space_FilestoTransfer = $null
+$Script:PFSLimit =$null
+$Script:WriteImage = $null
+$Script:TotalSections = $null
+$Script:CurrentSection = $null
+$Script:SetDiskupOnly = $null
+$Script:PartitionBarPixelperKB = $null
+$Script:SizeofDisk = $null
+$Script:Fat32Maximum = $null
+$Script:SizeofFat32_Maximum = $null
+$Script:SizeofFat32_Pixels_Maximum = $null
+$Script:SizeofPartition_System_Maximum = $null
+$Script:WorkbenchMaximum = $null
+$Script:SizeofPartition_System_Pixels_Maximum = $null
+$Script:SizeofPartition_Other_Maximum = $null
+$Script:SizeofPartition_Other_Pixels_Maximum = $null
+$Script:SizeofFreeSpace_Maximum = $null
+$Script:SizeofFreeSpace_Pixels_Maximum = $null
+$Script:SizeofFreeSpace_Pixels_Minimum = $null
+$Script:SizeofUnallocated_Pixels_Maximum = $null
+$Script:PartitionBarWidth = $null
+$Script:SizeofFreeSpace = $null
+$Script:SizeofPartition_Other_Pixels = $null
+$Script:SizeofPartition_System_Pixels = $null
+$Script:SizeofFat32_Pixels = $null
+$Script:SizeofUnallocated_Maximum = $null
+$Script:Fat32DefaultMaximum = $null
+$Script:Fat32Minimum = $null
+$Script:WorkbenchMinimum = $null
+$Script:WorkMinimum = $null
+$Script:PartitionBarKBperPixel = $null
+$Script:SizeofFat32_Pixels_Minimum = $null
+$Script:SizeofFreeSpace_Pixels = $null
+$Script:SizeofPartition_System_Pixels_Minimum = $null
+$Script:SizeofPartition_Other_Pixels_Minimum = $null
+$Script:SizeofUnallocated  = $null
+$Script:SizeofUnallocated_Minimum = $null
+$Script:SizeofUnallocated_Pixels = $null
+$Script:SizeofUnallocated_Pixels_Minimum = $null
+$Script:SizeofFreeSpace_Minimum = $null
+$Script:RemovableMedia = $null
+$Script:WorkOverhead = $null
+$Script:AmigaRDBSectors = $null
+
+####################################################################### End Null out Global Variables ###############################################################################################
+
+####################################################################### Set Script Path dependent  Variables ########################################################################################
+
+$SourceProgramPath = ($Scriptpath+'Programs\')
+$InputFolder = ($Scriptpath+'InputFiles\')
+$LocationofAmigaFiles = ($Scriptpath+'AmigaFiles\')
+## Amiga Variables
+
+$DeviceName_Prefix = 'SDH'
+$DeviceName_System = ($DeviceName_Prefix+'0')
+$VolumeName_System ='Workbench'
+$DeviceName_Other = ($DeviceName_Prefix+'1')
+$VolumeName_Other = 'Work'
+$MigratedFilesFolder='My Files'
+#$InstallPathMUI='SYS:Programs/MUI'
+#$InstallPathPicasso96='SYS:Programs/Picasso96'
+#$InstallPathAmiSSL='SYS:Programs/AmiSSL'
+$GlowIcons='TRUE'
+$Script:PFSLimit = 101*1024*1024 #Kilobytes
+$Script:Fat32DefaultMaximum = 1024*1024 #1gb in Kilobytes
+#$Script:WorkbenchMaximum = 1024*1024 #1gb in Kilobytes
+$Script:WorkbenchDefaultMaximum = 1024*1024 #1gb in Kilobytes
+$Script:WorkbenchMaximum = $Script:PFSLimit
+$Script:Fat32Maximum = 4*1024*1024 # in Kilobytes
+$Script:Fat32Minimum = 35840 # In KiB
+$Script:WorkbenchMinimum = 100*1024 # In KiB
+$Script:WorkMinimum = 10*1024 # In KiB
+$Script:HDF2emu68Path=($SourceProgramPath+'hdf2emu68.exe')
+$Script:7zipPath=($SourceProgramPath+'7z.exe')
+$Script:DDTCPath=($SourceProgramPath+'ddtc.exe')
+$Script:AmigaRDBSectors = 2015 #Standard number of sectors at 512bytes per sector 
+
+
+$UnLZXURL='http://aminet.net/util/arc/W95unlzx.lha'
+$HSTImagerreleases= 'https://api.github.com/repos/henrikstengaard/hst-imager/releases'
+$HSTAmigareleases= 'https://api.github.com/repos/henrikstengaard/hst-amiga/releases'
+$Emu68releases= 'https://api.github.com/repos/michalsc/Emu68/releases'
+$Emu68Toolsreleases= 'https://api.github.com/repos/michalsc/Emu68-tools/releases'
+
+####################################################################### End Set Script Variables ###############################################################################################
+
+
+######################################################################## Functions #################################################################################################################
+function Test-ExistenceofFiles {
+    param (
+        $PathtoTest,
+        $PathType
+    )
+    if (-not (Test-Path $PathtoTest)){
+        if ($PathType -eq 'Folder'){
+            $PathtoTesttoreport = $PathtoTest
+        }
+        if ($PathType -eq 'File'){
+            $PathtoTesttoreport = Split-Path -Path $PathtoTest -Leaf
+        }
+        $Message = "$PathType $PathtoTesttoreport `n`n"
+        return $Message 
+    }
+    else{
+        return
+    }
+}
+
 function Write-Emu68ImagerLog {
     param (
         $StartorContinue,
@@ -233,42 +378,7 @@ public static extern bool SetForegroundWindow(IntPtr hWnd);
         Set-Content -Path $handlesFilePath -Value $json
     }
 }
-
-####################################################################### Check Runtime Environment ##################################################################################################
-
-if ($env:TERM_PROGRAM){
-    Write-Host "Run from Visual Studio Code!"
-    $RunMode=0
- } 
- elseif ($psISE){
-    Write-Host "Run from Powershell ISE!"
-    $RunMode=0
- }
- else{
-    $RunMode=1
- } 
-
-if  ($RunMode -eq 1){
-    $Script:Scriptpath = ((Split-Path -Parent -Path (Split-Path -Parent $MyInvocation.MyCommand.Definition))+'\')      
-    get-process -id $Pid | set-windowstate -State MINIMIZE
-} 
-
-if ($RunMode -eq 0){
-    $Script:Scriptpath = 'E:\Emu68Imager\'    
-}
-
-$Script:LogFolder = ($Script:Scriptpath+'Logs\')  
-
-if (-not (Test-Path ($Script:LogFolder))){
-    $null = New-Item ($Script:LogFolder) -ItemType Directory
-}
-
-$Script:LogLocation = ($Script:LogFolder+'Emu68ImagerLog_'+(Get-Date -Format yyyyMMddHHmmss).tostring())
-
-Write-Emu68ImagerLog -StartorContinue 'Start' -LocationforLog $Script:LogLocation -DateandTime (Get-Date -Format HH:mm:ss)
-
-######################################################################## Functions #################################################################################################################
-                                                                                     
+                                                                                    
 function GuiValueIsNumber {
     param (
         $ValuetoCheck
@@ -1599,27 +1709,6 @@ function Get-StartupSequenceInjectionPointfromVersion {
 
 #[Enum]::GetNames([System.Environment+SpecialFolder])
 
-function Test-ExistenceofFiles {
-    param (
-        $PathtoTest,
-        $PathType
-    )
-    $Message
-    if (-not (Test-Path $PathtoTest)){
-        if ($PathType -eq 'Folder'){
-            $PathtoTesttoreport = $PathtoTest
-        }
-        if ($PathType -eq 'File'){
-            $PathtoTesttoreport = Split-Path -Path $PathtoTest -Leaf
-        }
-        $Message = "$PathType $PathtoTesttoreport `n`n"
-        return $Message 
-    }
-    else{
-        return
-    }
-}
-
 function Get-ImageSizevsDiskSize {
     param (
         $UnallocatedSpace,
@@ -1873,132 +1962,132 @@ function Get-AmigaPartitionSizeBlockBytes {
 
 ######################################################################### End Functions #############################################################################################################
 
+
+####################################################################### Check Runtime Environment ##################################################################################################
+
+if ($env:TERM_PROGRAM){
+    Write-Host "Run from Visual Studio Code!"
+    $RunMode=0
+ } 
+ elseif ($psISE){
+    Write-Host "Run from Powershell ISE!"
+    $RunMode=0
+ }
+ else{
+    $RunMode=1
+ } 
+
+if  ($RunMode -eq 1){
+    $Script:Scriptpath = ((Split-Path -Parent -Path (Split-Path -Parent $MyInvocation.MyCommand.Definition))+'\')      
+    get-process -id $Pid | set-windowstate -State MINIMIZE
+} 
+
+if ($RunMode -eq 0){
+    $Script:Scriptpath = 'E:\Emu68Imager\'    
+}
+
+$Script:LogFolder = ($Script:Scriptpath+'Logs\')  
+
+if (-not (Test-Path ($Script:LogFolder))){
+    $null = New-Item ($Script:LogFolder) -ItemType Directory
+}
+
+$Script:LogLocation = ($Script:LogFolder+'Emu68ImagerLog_'+(Get-Date -Format yyyyMMddHHmmss).tostring())
+
+Write-Emu68ImagerLog -StartorContinue 'Start' -LocationforLog $Script:LogLocation -DateandTime (Get-Date -Format HH:mm:ss)
 ####################################################################### End Check Runtime Environment ###############################################################################################
 
+##################################################################### Peform Pre-GUI Checks ##############################################################################################################
 
-####################################################################### Null out Global Variables ###################################################################################################
+$ErrorMessage = $null
+$ErrorMessage += Test-ExistenceofFiles -PathtoTest $SourceProgramPath -PathType 'Folder'
+$ErrorMessage += Test-ExistenceofFiles -PathtoTest $InputFolder -PathType 'Folder'
+$ErrorMessage += Test-ExistenceofFiles -PathtoTest $LocationofAmigaFiles -PathType 'Folder'
+$ErrorMessage += Test-ExistenceofFiles -PathtoTest ($SourceProgramPath+'hdf2emu68.exe') -PathType 'File'
+$ErrorMessage += Test-ExistenceofFiles -PathtoTest ($SourceProgramPath+'7z.exe') -PathType 'File'
+$ErrorMessage += Test-ExistenceofFiles -PathtoTest ($SourceProgramPath+'7z.dll') -PathType 'File'
 
-#Get-Variable > variables.txt
+if (-not (Test-ExistenceofFiles -PathtoTest $InputFolder -PathType 'Folder')){
+    $ListofPackagestoInstall = Import-Csv ($InputFolder+'ListofPackagestoInstall.csv') -Delimiter ';' | Where-Object {$_.Source -eq 'Local'} | Where-Object {$_.InstallType -ne 'StartupSequenceOnly'} |Where-Object {$_.InstallFlag -eq 'TRUE'}
+    $ListofPackagestoInstall |  Select-Object SourceLocation -Unique | Where-Object SourceLocation -NotMatch 'Onetime' | ForEach-Object {
+        $ErrorMessage += Test-ExistenceofFiles -PathtoTest ($LocationofAmigaFiles+$_.SourceLocation) -PathType 'File'
+    }
+}
 
-$Script:ExitType = $null
-$Script:HSTDiskName = $null
-$Script:HSTDiskNumber = $null
-$Script:HSTDiskDeviceID = $null
-$Script:ScreenModetoUse = $null
-$Script:KickstartVersiontoUse = $null
-$Script:SSID = $null
-$Script:WifiPassword = $null
-$Script:SizeofFAT32 = $null
-$Script:SizeofImage = $null
-$Script:SizeofImage_HST = $null
-$Script:SizeofPartition_System = $null
-$Script:SizeofPartition_Other = $null
-$Script:WorkingPath = $null
-$Script:WorkingPathDefault = $null
-$Script:ROMPath = $null
-$Script:ADFPath = $null
-$Script:TransferLocation = $null
-$Script:Space_WorkingFolderDisk = $null
-$Script:AvailableSpace_WorkingFolderDisk = $null
-$Script:RequiredSpace_WorkingFolderDisk = $null
-$Script:AvailableSpaceFilestoTransfer = $null
-$Script:SizeofFilestoTransfer = $null
-$Script:SpaceThreshold_WorkingFolderDisk = $null
-$Script:SpaceThreshold_FilestoTransfer = $null
-$Script:Space_FilestoTransfer = $null
-$Script:PFSLimit =$null
-$Script:WriteImage = $null
-$Script:TotalSections = $null
-$Script:CurrentSection = $null
-$Script:SetDiskupOnly = $null
-$Script:PartitionBarPixelperKB = $null
-$Script:SizeofDisk = $null
-$Script:Fat32Maximum = $null
-$Script:SizeofFat32_Maximum = $null
-$Script:SizeofFat32_Pixels_Maximum = $null
-$Script:SizeofPartition_System_Maximum = $null
-$Script:WorkbenchMaximum = $null
-$Script:SizeofPartition_System_Pixels_Maximum = $null
-$Script:SizeofPartition_Other_Maximum = $null
-$Script:SizeofPartition_Other_Pixels_Maximum = $null
-$Script:SizeofFreeSpace_Maximum = $null
-$Script:SizeofFreeSpace_Pixels_Maximum = $null
-$Script:SizeofFreeSpace_Pixels_Minimum = $null
-$Script:SizeofUnallocated_Pixels_Maximum = $null
-$Script:PartitionBarWidth = $null
-$Script:SizeofFreeSpace = $null
-$Script:SizeofPartition_Other_Pixels = $null
-$Script:SizeofPartition_System_Pixels = $null
-$Script:SizeofFat32_Pixels = $null
-$Script:SizeofUnallocated_Maximum = $null
-$Script:Fat32DefaultMaximum = $null
-$Script:Fat32Minimum = $null
-$Script:WorkbenchMinimum = $null
-$Script:WorkMinimum = $null
-$Script:PartitionBarKBperPixel = $null
-$Script:SizeofFat32_Pixels_Minimum = $null
-$Script:SizeofFreeSpace_Pixels = $null
-$Script:SizeofPartition_System_Pixels_Minimum = $null
-$Script:SizeofPartition_Other_Pixels_Minimum = $null
-$Script:SizeofUnallocated  = $null
-$Script:SizeofUnallocated_Minimum = $null
-$Script:SizeofUnallocated_Pixels = $null
-$Script:SizeofUnallocated_Pixels_Minimum = $null
-$Script:SizeofFreeSpace_Minimum = $null
-$Script:RemovableMedia = $null
-$Script:WorkOverhead = $null
-$Script:AmigaRDBSectors = $null
+if ($ErrorMessage){
+        $Msg_Header ='Missing Files'    
+        $Msg_Body = @"  
+One or more Programs and/or files is missing and/or has been altered! Cannot Continue! Re-download file and try again. Tool will now exit. 
 
-####################################################################### End Null out Global Variables ###############################################################################################
+The following files are affected:
 
-####################################################################### Set Script Path dependent  Variables ########################################################################################
+$ErrorMessage
+"@  
+    $null = [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,16) 
+    exit
+}
 
-$SourceProgramPath = ($Scriptpath+'Programs\')
-$InputFolder = ($Scriptpath+'InputFiles\')
-$LocationofAmigaFiles = ($Scriptpath+'AmigaFiles\')
-## Amiga Variables
+#Generate CSV MD5 Hashes - Begin (To be disabled or removed for production version)
+$CSVHashes = Get-FileHash ($InputFolder+'*.CSV') -Algorithm MD5
 
-$DeviceName_Prefix = 'SDH'
-$DeviceName_System = ($DeviceName_Prefix+'0')
-$VolumeName_System ='Workbench'
-$DeviceName_Other = ($DeviceName_Prefix+'1')
-$VolumeName_Other = 'Work'
-$MigratedFilesFolder='My Files'
-#$InstallPathMUI='SYS:Programs/MUI'
-#$InstallPathPicasso96='SYS:Programs/Picasso96'
-#$InstallPathAmiSSL='SYS:Programs/AmiSSL'
-$GlowIcons='TRUE'
-$Script:PFSLimit = 101*1024*1024 #Kilobytes
-$Script:Fat32DefaultMaximum = 1024*1024 #1gb in Kilobytes
-#$Script:WorkbenchMaximum = 1024*1024 #1gb in Kilobytes
-$Script:WorkbenchDefaultMaximum = 1024*1024 #1gb in Kilobytes
-$Script:WorkbenchMaximum = $Script:PFSLimit
-$Script:Fat32Maximum = 4*1024*1024 # in Kilobytes
-$Script:Fat32Minimum = 35840 # In KiB
-$Script:WorkbenchMinimum = 100*1024 # In KiB
-$Script:WorkMinimum = 10*1024 # In KiB
-$Script:HDF2emu68Path=($SourceProgramPath+'hdf2emu68.exe')
-$Script:7zipPath=($SourceProgramPath+'7z.exe')
-$Script:DDTCPath=($SourceProgramPath+'ddtc.exe')
-$Script:AmigaRDBSectors = 2015 #Standard number of sectors at 512bytes per sector 
+'Name;Hash' | Out-File -FilePath ($InputFolder+'CSVHASH')
+Foreach ($CSVHash in $CSVHashes){
+    ((Split-Path $CSVHash.Path -Leaf)+';'+$CSVHash.Hash) | Out-File -FilePath ($InputFolder+'CSVHASH') -Append
+}
+
+#Generate CSV MD5 Hashes - End
+
+# Check Integrity of CSVs
+
+$CSVHashestoCheck = Import-Csv -Path ($InputFolder+'CSVHASH') -Delimiter ';'
+foreach ($CSVHashtoCheck in $CSVHashestoCheck){
+    foreach ($CSVHash in $CSVHashes){
+        if (($CSVHashtoCheck.Name+$CSVHashtoCheck.Hash) -eq ((split-path $CSVHash.Path -leaf)+($CSVHash.Hash))){
+            $HashMatch=$true
+        }
+    }
+    if ($HashMatch -eq $false) {
+        $Msg_Header ='Integrity Issue with Files'    
+        $Msg_Body = @"  
+One or more of input files is missing and/or has been altered!' 
+
+Re-download file and try again. Tool will now exit.
+"@     
+    [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,16) 
+    exit
+    }
+}
 
 
-$UnLZXURL='http://aminet.net/util/arc/W95unlzx.lha'
-$HSTImagerreleases= 'https://api.github.com/repos/henrikstengaard/hst-imager/releases'
-$HSTAmigareleases= 'https://api.github.com/repos/henrikstengaard/hst-amiga/releases'
-$Emu68releases= 'https://api.github.com/repos/michalsc/Emu68/releases'
-$Emu68Toolsreleases= 'https://api.github.com/repos/michalsc/Emu68-tools/releases'
+### Clean up
 
-####################################################################### End Set Script Variables ###############################################################################################
+if (Test-Path ($Scriptpath+'Working Folder\')){
+    $NewFolders = ($Scriptpath+'Working Folder\Temp\'),($Scriptpath+'Working Folder\OutputImage\'),($Scriptpath+'Working Folder\AmigaImageFiles\'+$VolumeName_System),($Scriptpath+'Working Folder\AmigaImageFiles\'+$VolumeName_Other),($Scriptpath+'Working Folder\FAT32Partition\')
+    try {
+        foreach ($NewFolder in $NewFolders) {
+            if (Test-Path ( $Script:WorkingPath+$NewFolder)){
+                $null = Remove-Item ( $Script:WorkingPath+$NewFolder) -Recurse -ErrorAction Stop
+            }
+        }    
+    }
+    catch {
+        $Msg_Header ='Error Deleting Files'    
+        $Msg_Body = @"  
+Error deleting files! 
+    
+Tool will now exit.
+    
+"@  
+        $null = [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,16) 
+        exit    
+    }
 
+} 
 
-####################################################################### Add GUI Types ################################################################################################################
+### End Clean up
 
-#[void][System.Reflection.Assembly]::LoadWithPartialName('presentationframework')
-Add-Type -AssemblyName PresentationFramework
-Add-Type -AssemblyName System.Windows.Forms
+####################################################################### End Pre GUI Checks #################################################################################################################
 
-####################################################################### End GUI Types ################################################################################################################
 
 ####################################################################### GUI XML for Main Environment ##################################################################################################
 
@@ -3568,92 +3657,6 @@ if (-not ($Script:IsDisclaimerAccepted -eq $true)){
 
 ####################################################################### End GUI XML for Disclaimer ##################################################################################################
 
-##################################################################### Peform Pre-GUI Checks ##############################################################################################################
-
-#Generate CSV MD5 Hashes - Begin (To be disabled or removed for production version)
-$CSVHashes = Get-FileHash ($InputFolder+'*.CSV') -Algorithm MD5
-
-'Name;Hash' | Out-File -FilePath ($InputFolder+'CSVHASH')
-Foreach ($CSVHash in $CSVHashes){
-    ((Split-Path $CSVHash.Path -Leaf)+';'+$CSVHash.Hash) | Out-File -FilePath ($InputFolder+'CSVHASH') -Append
-}
-
-#Generate CSV MD5 Hashes - End
-
-# Check Integrity of CSVs
-
-$CSVHashestoCheck = Import-Csv -Path ($InputFolder+'CSVHASH') -Delimiter ';'
-foreach ($CSVHashtoCheck in $CSVHashestoCheck){
-    foreach ($CSVHash in $CSVHashes){
-        if (($CSVHashtoCheck.Name+$CSVHashtoCheck.Hash) -eq ((split-path $CSVHash.Path -leaf)+($CSVHash.Hash))){
-            $HashMatch=$true
-        }
-    }
-    if ($HashMatch -eq $false) {
-        $Msg_Header ='Integrity Issue with Files'    
-        $Msg_Body = @"  
-One or more of input files is missing and/or has been altered!' 
-
-Re-download file and try again. Tool will now exit.
-"@     
-    [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,16) 
-    exit
-    }
-}
-
-$ErrorMessage = $null
-$ErrorMessage += Test-ExistenceofFiles -PathtoTest $SourceProgramPath -PathType 'Folder'
-$ErrorMessage += Test-ExistenceofFiles -PathtoTest $LocationofAmigaFiles -PathType 'Folder'
-$ErrorMessage += Test-ExistenceofFiles -PathtoTest ($SourceProgramPath+'hdf2emu68.exe') -PathType 'File'
-$ErrorMessage += Test-ExistenceofFiles -PathtoTest ($SourceProgramPath+'7z.exe') -PathType 'File'
-$ErrorMessage += Test-ExistenceofFiles -PathtoTest ($SourceProgramPath+'7z.dll') -PathType 'File'
-
-$ListofPackagestoInstall = Import-Csv ($InputFolder+'ListofPackagestoInstall.csv') -Delimiter ';' | Where-Object {$_.Source -eq 'Local'} | Where-Object {$_.InstallType -ne 'StartupSequenceOnly'} |Where-Object {$_.InstallFlag -eq 'TRUE'}
-$ListofPackagestoInstall |  Select-Object SourceLocation -Unique | Where-Object SourceLocation -NotMatch 'Onetime' | ForEach-Object {
-    $ErrorMessage += Test-ExistenceofFiles -PathtoTest ($LocationofAmigaFiles+$_.SourceLocation) -PathType 'File'
-}
-
-if ($ErrorMessage){
-        $Msg_Header ='Missing Files'    
-        $Msg_Body = @"  
-One or more Programs and/or files is missing and/or has been altered! Cannot Continue! Re-download file and try again. Tool will now exit. 
-
-The following files are affected:
-
-$ErrorMessage
-"@  
-    $null = [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,16) 
-    exit
-}
-
-### Clean up
-
-if (Test-Path ($Scriptpath+'Working Folder\')){
-    $NewFolders = ($Scriptpath+'Working Folder\Temp\'),($Scriptpath+'Working Folder\OutputImage\'),($Scriptpath+'Working Folder\AmigaImageFiles\'+$VolumeName_System),($Scriptpath+'Working Folder\AmigaImageFiles\'+$VolumeName_Other),($Scriptpath+'Working Folder\FAT32Partition\')
-    try {
-        foreach ($NewFolder in $NewFolders) {
-            if (Test-Path ( $Script:WorkingPath+$NewFolder)){
-                $null = Remove-Item ( $Script:WorkingPath+$NewFolder) -Recurse -ErrorAction Stop
-            }
-        }    
-    }
-    catch {
-        $Msg_Header ='Error Deleting Files'    
-        $Msg_Body = @"  
-Error deleting files! 
-    
-Tool will now exit.
-    
-"@  
-        $null = [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,16) 
-        exit    
-    }
-
-} 
-
-### End Clean up
-
-####################################################################### End Pre GUI Checks #################################################################################################################
 
 ####################################################################### Show Main Gui     ##################################################################################################################
 
