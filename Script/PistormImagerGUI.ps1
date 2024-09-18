@@ -482,9 +482,6 @@ function Get-AmigaPartitionList {
     $StartOffset = 0
     $CurrentOffset = $StartOffset 
 
-    $StartSector = 0
-    $CurrentSector = $StartSector
-
     $NumberofCylinders_RDB = 2
     $Size_RDB = $NumberofCylinders_RDB*(Get-AmigaPartitionSizeBlockBytes)
 
@@ -529,7 +526,7 @@ function Get-AmigaPartitionList {
         EndOffset = ($CurrentOffset+($Size_System*1024))-1
         StartSector = $CurrentOffset/512
         EndSector = ($CurrentOffset+($Size_System*1024))/512
-        DosType = 'PFS'
+        DosType = 'PFS3'
         VolumeName = $VolumeName_System_param
         DeviceName = $DeviceName_System_param 
     }
@@ -569,7 +566,7 @@ function Get-AmigaPartitionList {
             EndOffset = ($CurrentOffset+($Size_Other*1024))-1
             StartSector = $CurrentOffset/512
             EndSector = ($CurrentOffset+($Size_Other*1024))/512
-            DosType = 'PFS'
+            DosType = 'PFS3'
             VolumeName = $VolumeNametoPopulate
             DeviceName = $DeviceNametoPopulate 
         }
@@ -3908,32 +3905,39 @@ $AmigaPartitionsList = Get-AmigaPartitionList   -SizeofPartition_System_param  (
                                                 -VolumeName_Other_param $VolumeName_Other `
                                                 -DeviceName_Other_param $DeviceName_Other `
                                                 -DeviceName_Prefix_param $DeviceName_Prefix
-                                                  
+ 
+                                              
+
 foreach ($AmigaPartition in $AmigaPartitionsList) {
-    Write-InformationMessage -Message ('Preparing Partition Device: '+$AmigaPartition.DeviceName+' VolumeName '+$AmigaPartition.VolumeName)
-    if ($AmigaPartition.VolumeName -eq $VolumeName_System){
-        if (-not (Start-HSTImager -Command "rdb part add" -DestinationPath ($LocationofImage+$NameofImage) -DeviceName $AmigaPartition.DeviceName -DosType $AmigaPartition.DosType -SizeofPartition $AmigaPartition.SizeofPartition -Options '--bootable' -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
-            exit
-        } 
-    }
-    else{
-        if (-not (Start-HSTImager -Command "rdb part add" -DestinationPath ($LocationofImage+$NameofImage) -DeviceName $AmigaPartition.DeviceName -DosType $AmigaPartition.DosType -SizeofPartition $AmigaPartition.SizeofPartition -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
-            exit
-        } 
+    if ($AmigaPartition.PartitionNumber -ne 0){
+        Write-InformationMessage -Message ('Preparing Partition Device: '+$AmigaPartition.DeviceName+' VolumeName '+$AmigaPartition.VolumeName)
+        if ($AmigaPartition.VolumeName -eq $VolumeName_System){
+            if (-not (Start-HSTImager -Command "rdb part add" -DestinationPath ($LocationofImage+$NameofImage) -DeviceName $AmigaPartition.DeviceName -DosType $AmigaPartition.DosType -SizeofPartition $AmigaPartition.SizeofPartition -Options '--bootable' -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+                exit
+            } 
+        }
+        else{
+            if (-not (Start-HSTImager -Command "rdb part add" -DestinationPath ($LocationofImage+$NameofImage) -DeviceName $AmigaPartition.DeviceName -DosType $AmigaPartition.DosType -SizeofPartition $AmigaPartition.SizeofPartition -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+                exit
+            } 
+        }
     }
 }
 
-if (-not (Start-HSTImager -Command "rdb part format" -DestinationPath ($LocationofImage+$NameofImage) -PartitionNumber 1 -VolumeName $VolumeName_System -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
-    exit
-} 
-if (-not (Start-HSTImager -Command "rdb part format" -DestinationPath ($LocationofImage+$NameofImage) -PartitionNumber 2 -VolumeName $VolumeName_Other -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
-    exit
-} 
-# foreach ($AmigaPartition in $AmigaPartitionsList) {
-#         if (-not (Start-HSTImager -Command "rdb part format" -DestinationPath ($LocationofImage+$NameofImage) -PartitionNumber ($AmigaPartition.PartitionNumber).tostring() -VolumeName $AmigaPartition.VolumeName -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
-#         exit
-#     } 
-# }
+# if (-not (Start-HSTImager -Command "rdb part format" -DestinationPath ($LocationofImage+$NameofImage) -PartitionNumber 1 -VolumeName $VolumeName_System -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+#     exit
+# } 
+# if (-not (Start-HSTImager -Command "rdb part format" -DestinationPath ($LocationofImage+$NameofImage) -PartitionNumber 2 -VolumeName $VolumeName_Other -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+#     exit
+# } 
+
+foreach ($AmigaPartition in $AmigaPartitionsList) {
+    if ($AmigaPartition.PartitionNumber -ne 0){
+        if (-not (Start-HSTImager -Command "rdb part format" -DestinationPath ($LocationofImage+$NameofImage) -PartitionNumber ($AmigaPartition.PartitionNumber).tostring() -VolumeName $AmigaPartition.VolumeName -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+        exit
+        } 
+    }
+}
 
 if ($Script:SetDiskupOnly -eq 'FALSE'){
     #### Begin - Create NewFolder.info file
@@ -3991,8 +3995,8 @@ if ($Script:SetDiskupOnly -eq 'FALSE'){
     
     elseif ($Script:KickstartVersiontoUse -eq 3.2){
         $SourcePath = ($GlowIconsADF+'\Prefs\Env-Archive\Sys\def_harddisk.info') 
-    }
-    
+    }   
+
     Write-InformationMessage -Message ('Copying Icons to Work Partition. Source is: '+$SourcePath+' Destination is: '+$DestinationPathtoUse)
     $DestinationPathtoUse = ($AmigaDrivetoCopy+$VolumeName_Other)
     if (-not (Start-HSTImager -Command 'fs extract' -SourcePath $SourcePath -DestinationPath $DestinationPathtoUse -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
@@ -4005,7 +4009,17 @@ if ($Script:SetDiskupOnly -eq 'FALSE'){
             Write-ErrorMessage -Message 'Unable to reposition icon!'
         }
     }
-      
+    
+    foreach ($AmigaPartition in $AmigaPartitionsList) {
+        if ($AmigaPartition.PartitionNumber -gt 2){
+            $DestinationPathtoUse = ($LocationofImage+$NameofImage+'\rdb\'+$AmigaPartition.DeviceName+'\')
+            Write-InformationMessage -Message ('Copying Icons to extra Work Partition(s). Source is: '+$SourcePath+' Destination is: '+$DestinationPathtoUse) 
+            if (-not (Start-HSTImager -Command 'fs extract' -SourcePath $SourcePath -DestinationPath $DestinationPathtoUse -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+                     exit
+         }
+        }
+    }
+    
 
     # foreach ($AmigaPartition in $AmigaPartitionsList | Where-Object {$_.VolumeName -ne $VolumeName_System} ){
     #     If ($AmigaPartition.PartitionNumber -ge 2){
