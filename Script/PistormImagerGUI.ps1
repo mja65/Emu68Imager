@@ -1,3 +1,93 @@
+function Write-Emu68ImagerLog {
+    param (
+        $StartorContinue,
+        $LocationforLog,
+        $DateandTime
+    )
+
+    If($StartorContinue -eq 'Start'){
+        $NetFrameworkrelease = Get-ItemPropertyValue -LiteralPath 'HKLM:SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full' -Name Release
+        $PowershellVersion = ((($PSVersionTable.PSVersion).Major).ToString()+'.'+(($PSVersionTable.PSVersion).Minor))
+        $WindowsLocale = ((((Get-WinSystemLocale).Name).Tostring())+' ('+(((Get-WinSystemLocale).DisplayName).Tostring())+')')
+        $WindowsVersion = (Get-WmiObject -class Win32_OperatingSystem).Caption
+        $LogEntry =     @"
+Emu68 Imager Log
+        
+Log created at: $DateandTime
+        
+Windows Version: $WindowsVersion
+Windows Locale Details: $WindowsLocale
+Powershell version used is: $PowershellVersion 
+.Net Framwork Release installed is: $NetFrameworkrelease 
+"@  
+    $LogEntry| Out-File -FilePath ($LocationforLog)
+
+    }
+    If($StartorContinue -eq 'Continue'){ 
+        $LogEntry =     @"
+
+Parameters used: 
+
+Script:HSTDiskName =  [$Script:HSTDiskName]
+Script:ScreenModetoUse = [$Script:ScreenModetoUse]
+Script:KickstartVersiontoUse = [$Script:KickstartVersiontoUse]
+Script:SSID = [$Script:SSID]
+Script:WifiPassword = [$Script:WifiPassword] 
+Script:SizeofFAT32 = [$Script:SizeofFAT32]
+Script:SizeofImage = [$Script:SizeofImage]
+Script:SizeofPartition_System = [$Script:SizeofPartition_System]
+Script:SizeofPartition_Other = [$Script:SizeofPartition_Other]
+Script:WriteImage = [$Script:WriteImage]
+Script:SetDiskupOnly = [$Script:SetDiskupOnly]
+Script:WorkingPath = [$Script:WorkingPath]
+Script:ROMPath = [$Script:ROMPath]
+Script:ADFPath = [$Script:ADFPath]
+Script:LocationofImage = [$Script:LocationofImage]
+Script:TransferLocation = [$Script:TransferLocation]
+
+Activity Commences:
+
+"@
+        $LogEntry| Out-File -FilePath ($LocationforLog) -Append
+    }
+}
+
+function Set-GUISizeofPartitions {
+    param (
+    
+    )
+    $Script:SizeofFAT32_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value
+    $Script:SizeofPartition_System_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value
+    $Script:SizeofPartition_Other_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value
+    $Script:SizeofFreeSpace_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value
+    $Script:SizeofUnallocated_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width.Value 
+    
+    $Overhead_FAT32 = (($Script:SizeofFAT32_Pixels*$Script:PartitionBarKBperPixel)-[math]::floor($Script:SizeofFAT32_Pixels*$Script:PartitionBarKBperPixel))
+    $Overhead_System = (($Script:SizeofPartition_System_Pixels*$Script:PartitionBarKBperPixel)-[math]::floor($Script:SizeofPartition_System_Pixels*$Script:PartitionBarKBperPixel))
+    $Overhead_Other = (($Script:SizeofPartition_Other_Pixels*$Script:PartitionBarKBperPixel)-[math]::floor($Script:SizeofPartition_Other_Pixels*$Script:PartitionBarKBperPixel))
+    $Overhead_FreeSpace = (($Script:SizeofFreeSpace_Pixels*$Script:PartitionBarKBperPixel)-[math]::floor($Script:SizeofFreeSpace_Pixels*$Script:PartitionBarKBperPixel))
+    #$Overhead_Unallocated = (($Script:SizeofUnallocated_Pixels*$Script:PartitionBarKBperPixel)-[math]::floor($Script:Sizeofunallocated_Pixels*$Script:PartitionBarKBperPixel))
+    $Overhead = $Overhead_FAT32 + $Overhead_System + $Overhead_Other + $Overhead_FreeSpace
+    
+    $Script:SizeofFAT32 = [math]::floor($Script:SizeofFAT32_Pixels * $Script:PartitionBarKBperPixel)
+    $Script:SizeofPartition_System  = [math]::floor($Script:SizeofPartition_System_Pixels * $Script:PartitionBarKBperPixel)  
+    $Script:SizeofPartition_Other = [math]::floor($Script:SizeofPartition_Other_Pixels * $Script:PartitionBarKBperPixel)
+    $Script:SizeofFreeSpace  = [math]::floor($Script:SizeofFreeSpace_Pixels * $Script:PartitionBarKBperPixel)
+    $Script:SizeofUnallocated = ($Script:SizeofUnallocated_Pixels * $Script:PartitionBarKBperPixel)+$Overhead       
+    $Script:SizeofImage = $Script:SizeofFAT32 + $Script:SizeofPartition_System + $Script:SizeofPartition_Other + $Script:SizeofFreeSpace      
+
+    if ($Script:SizeofPartition_Other -ge $Script:PFSLimit){
+        $TotalNumberWorkPartitions = [math]::ceiling($Script:SizeofPartition_Other/$Script:PFSLimit)
+        $WPF_UI_WorkSizeNote_Label.Text='*'
+        $WPF_UI_WorkSizeNoteFooter_Label.Text=('* Due to PFS limitations, Work will be split into '+$TotalNumberWorkPartitions+' partitions of equal size')
+    }
+    else{
+        $WPF_UI_WorkSizeNote_Label.Text=''
+        $WPF_UI_WorkSizeNoteFooter_Label.Text='' 
+    }
+
+}     
+
 function Set-WindowState {
     <#
     .SYNOPSIS
@@ -172,97 +262,7 @@ $Script:LogLocation = ($Script:LogFolder+'Emu68ImagerLog_'+(Get-Date -Format yyy
 Write-Emu68ImagerLog -StartorContinue 'Start' -LocationforLog $Script:LogLocation -DateandTime (Get-Date -Format HH:mm:ss)
 
 ######################################################################## Functions #################################################################################################################
-
-function Write-Emu68ImagerLog {
-    param (
-        $StartorContinue,
-        $LocationforLog,
-        $DateandTime
-    )
-
-    If($StartorContinue -eq 'Start'){
-        $NetFrameworkrelease = Get-ItemPropertyValue -LiteralPath 'HKLM:SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full' -Name Release
-        $PowershellVersion = ((($PSVersionTable.PSVersion).Major).ToString()+'.'+(($PSVersionTable.PSVersion).Minor))
-        $WindowsLocale = ((((Get-WinSystemLocale).Name).Tostring())+' ('+(((Get-WinSystemLocale).DisplayName).Tostring())+')')
-        $WindowsVersion = (Get-WmiObject -class Win32_OperatingSystem).Caption
-        $LogEntry =     @"
-Emu68 Imager Log
-        
-Log created at: $DateandTime
-        
-Windows Version: $WindowsVersion
-Windows Locale Details: $WindowsLocale
-Powershell version used is: $PowershellVersion 
-.Net Framwork Release installed is: $NetFrameworkrelease 
-"@  
-    $LogEntry| Out-File -FilePath ($LocationforLog)
-
-    }
-    If($StartorContinue -eq 'Continue'){ 
-        $LogEntry =     @"
-
-Parameters used: 
-
-Script:HSTDiskName =  [$Script:HSTDiskName]
-Script:ScreenModetoUse = [$Script:ScreenModetoUse]
-Script:KickstartVersiontoUse = [$Script:KickstartVersiontoUse]
-Script:SSID = [$Script:SSID]
-Script:WifiPassword = [$Script:WifiPassword] 
-Script:SizeofFAT32 = [$Script:SizeofFAT32]
-Script:SizeofImage = [$Script:SizeofImage]
-Script:SizeofPartition_System = [$Script:SizeofPartition_System]
-Script:SizeofPartition_Other = [$Script:SizeofPartition_Other]
-Script:WriteImage = [$Script:WriteImage]
-Script:SetDiskupOnly = [$Script:SetDiskupOnly]
-Script:WorkingPath = [$Script:WorkingPath]
-Script:ROMPath = [$Script:ROMPath]
-Script:ADFPath = [$Script:ADFPath]
-Script:LocationofImage = [$Script:LocationofImage]
-Script:TransferLocation = [$Script:TransferLocation]
-
-Activity Commences:
-
-"@
-        $LogEntry| Out-File -FilePath ($LocationforLog) -Append
-    }
-}
-
-function Set-GUISizeofPartitions {
-    param (
-    
-    )
-    $Script:SizeofFAT32_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value
-    $Script:SizeofPartition_System_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value
-    $Script:SizeofPartition_Other_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value
-    $Script:SizeofFreeSpace_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value
-    $Script:SizeofUnallocated_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width.Value 
-    
-    $Overhead_FAT32 = (($Script:SizeofFAT32_Pixels*$Script:PartitionBarKBperPixel)-[math]::floor($Script:SizeofFAT32_Pixels*$Script:PartitionBarKBperPixel))
-    $Overhead_System = (($Script:SizeofPartition_System_Pixels*$Script:PartitionBarKBperPixel)-[math]::floor($Script:SizeofPartition_System_Pixels*$Script:PartitionBarKBperPixel))
-    $Overhead_Other = (($Script:SizeofPartition_Other_Pixels*$Script:PartitionBarKBperPixel)-[math]::floor($Script:SizeofPartition_Other_Pixels*$Script:PartitionBarKBperPixel))
-    $Overhead_FreeSpace = (($Script:SizeofFreeSpace_Pixels*$Script:PartitionBarKBperPixel)-[math]::floor($Script:SizeofFreeSpace_Pixels*$Script:PartitionBarKBperPixel))
-    #$Overhead_Unallocated = (($Script:SizeofUnallocated_Pixels*$Script:PartitionBarKBperPixel)-[math]::floor($Script:Sizeofunallocated_Pixels*$Script:PartitionBarKBperPixel))
-    $Overhead = $Overhead_FAT32 + $Overhead_System + $Overhead_Other + $Overhead_FreeSpace
-    
-    $Script:SizeofFAT32 = [math]::floor($Script:SizeofFAT32_Pixels * $Script:PartitionBarKBperPixel)
-    $Script:SizeofPartition_System  = [math]::floor($Script:SizeofPartition_System_Pixels * $Script:PartitionBarKBperPixel)  
-    $Script:SizeofPartition_Other = [math]::floor($Script:SizeofPartition_Other_Pixels * $Script:PartitionBarKBperPixel)
-    $Script:SizeofFreeSpace  = [math]::floor($Script:SizeofFreeSpace_Pixels * $Script:PartitionBarKBperPixel)
-    $Script:SizeofUnallocated = ($Script:SizeofUnallocated_Pixels * $Script:PartitionBarKBperPixel)+$Overhead       
-    $Script:SizeofImage = $Script:SizeofFAT32 + $Script:SizeofPartition_System + $Script:SizeofPartition_Other + $Script:SizeofFreeSpace      
-
-    if ($Script:SizeofPartition_Other -ge $Script:PFSLimit){
-        $TotalNumberWorkPartitions = [math]::ceiling($Script:SizeofPartition_Other/$Script:PFSLimit)
-        $WPF_UI_WorkSizeNote_Label.Text='*'
-        $WPF_UI_WorkSizeNoteFooter_Label.Text=('Due to PFS limitations, Work will be split into '+$TotalNumberWorkPartitions+' partitions of equal size')
-    }
-    else{
-        $WPF_UI_WorkSizeNote_Label.Text=''
-        $WPF_UI_WorkSizeNoteFooter_Label.Text='' 
-    }
-
-}                                                                                            
-
+                                                                                     
 function GuiValueIsNumber {
     param (
         $ValuetoCheck
@@ -475,14 +475,18 @@ function Get-AmigaPartitionList {
     )
     $AmigaPartitionsList = [System.Collections.Generic.List[PSCustomObject]]::New()
 
-    $SizeofPartition_Systemtouse = (([math]::truncate($SizeofPartition_System_param)).ToString()+'kb')
+    $SizeofPartition_SystemtouseNumeric = [math]::truncate($SizeofPartition_System_param)
     $SizeofPartition_Othertouse = ([math]::truncate($SizeofPartition_Other_param))
+    $SizeofPartition_Systemtouse = (($SizeofPartition_SystemtouseNumeric.ToString())+'kb')
+    $EndSector_System = ($SizeofPartition_SystemtouseNumeric*1024/512)-$Script:AmigaRDBSectors
 
     $PartitionNumbertoPopulate = 1
 
     $AmigaPartitionsList += [PSCustomObject]@{
+        StartSector = $Script:AmigaRDBSectors+1 
         PartitionNumber = $PartitionNumbertoPopulate 
         SizeofPartition =  $SizeofPartition_Systemtouse
+        EndSector = $EndSector_System
         DosType = 'PFS3'
         VolumeName = $VolumeName_System_param
         DeviceName = $DeviceName_System_param  
@@ -492,11 +496,14 @@ function Get-AmigaPartitionList {
 
     $TotalNumberWorkPartitions = [math]::ceiling($CapacitytoFill/$PFSLimit)
     
-    $WorkPartitionSize = Get-SizeofPartitionNearestCylinder -Heads 16 -Sectors 63 -BlockSize 512 ([math]::floor($SizeofPartition_Othertouse/$TotalNumberWorkPartitions))
+    $WorkPartitionSize = ([math]::floor($SizeofPartition_Othertouse/$TotalNumberWorkPartitions))
 
     $WorkPartitionCounter = 0 
     [char]$WorkNameCounter = 'A'
     do {
+        if ($WorkPartitionCounter -eq 0){
+            $StartSectorforWork = $EndSector_System+1
+        } 
         if ($WorkPartitionCounter -eq 0){
             $VolumeNametoPopulate = $VolumeName_Other_param  
             $DeviceNametoPopulate = $DeviceName_Other_param  
@@ -508,12 +515,15 @@ function Get-AmigaPartitionList {
            
         }
         $AmigaPartitionsList += [PSCustomObject]@{
+            StartSector = $StartSectorforWork
             PartitionNumber = $PartitionNumbertoPopulate 
             SizeofPartition =  ((($WorkPartitionSize).ToString())+'kb')
+            EndSector = $WorkPartitionSize*1024/512-($StartSectorforWork-1)
             DosType = 'PFS3'
             VolumeName = $VolumeNametoPopulate
             DeviceName = $DeviceNametoPopulate    
         }
+        $StartSectorforWork = ($WorkPartitionSize*1024/512-($StartSectorforWork-1))+1
         $PartitionNumbertoPopulate ++
         $WorkPartitionCounter ++
     } until (
@@ -521,8 +531,8 @@ function Get-AmigaPartitionList {
     )
 
     return $AmigaPartitionsList
-
 }
+
 function Get-RequiredSpace {
     param (
         $ImageSize
@@ -882,7 +892,7 @@ function Start-HSTImager {
         & $HSTImagePathtouse rdb filesystem add $DestinationPath $FileSystemPath $DosType $Options >$Logoutput            
     }
     elseif ($Command -eq 'rdb part add'){
-        Write-InformationMessage -Message ('Adding partition '+$DeviceName+' '+$DosType)
+        Write-InformationMessage -Message ('Adding partition '+$DeviceName+' '+$DosType+' with size '+$SizeofPartition)
         & $HSTImagePathtouse rdb part add $DestinationPath $DeviceName $DosType $SizeofPartition $Options --mask 0x7ffffffe --buffers 300 --max-transfer 0xffffff >$Logoutput
     }
     elseif ($Command -eq 'rdb part format'){
@@ -1857,6 +1867,7 @@ $Script:SizeofUnallocated_Pixels_Minimum = $null
 $Script:SizeofFreeSpace_Minimum = $null
 $Script:RemovableMedia = $null
 $Script:WorkOverhead = $null
+$Script:AmigaRDBSectors = $null
 
 ####################################################################### End Null out Global Variables ###############################################################################################
 
@@ -1889,6 +1900,7 @@ $Script:WorkMinimum = 10*1024 # In KiB
 $Script:HDF2emu68Path=($SourceProgramPath+'hdf2emu68.exe')
 $Script:7zipPath=($SourceProgramPath+'7z.exe')
 $Script:DDTCPath=($SourceProgramPath+'ddtc.exe')
+$Script:AmigaRDBSectors = 2015 #Standard number of sectors at 512bytes per sector 
 
 
 $UnLZXURL='http://aminet.net/util/arc/W95unlzx.lha'
@@ -3573,8 +3585,6 @@ if  ($RunMode -eq 1){
     get-process -id $Pid | set-windowstate -State SHOWDEFAULT
 } 
 
-
-
 if ($Script:ExitType -eq 2){
     Write-ErrorMessage -Message 'Exiting - User has insufficient space' -NoLog
     exit
@@ -3589,8 +3599,8 @@ elseif (-not ($Script:ExitType-eq 1)){
 #[System.Windows.Controls.GridSplitter].GetEvents() | Select-Object Name, *Method, EventHandlerType
 #[System.Windows.Controls.ListView].GetEvents() | Select-Object Name, *Method, EventHandlerType
 
-##### Script
-
+$Script:RDBWorkbenchStartSector = 2016
+$Script:RDBWorkStartSector =
 
 Set-Location  $Script:WorkingPath
 
@@ -3813,15 +3823,15 @@ if (-not (Start-HSTImager -Command "rdb filesystem add" -DestinationPath ($Locat
 
 ## Setting up Amiga Partitions List
 
-$AmigaPartitionsList = Get-AmigaPartitionList   -SizeofPartition_System_param  (Get-SizeofPartitionNearestCylinder -Heads 16 -Sectors 63 -blocksize 512 -PartitionSizeKiB $Script:SizeofPartition_System) `
-                                                -SizeofPartition_Other_param ($Script:SizeofPartition_Other-1024) `
+$AmigaPartitionsList = Get-AmigaPartitionList   -SizeofPartition_System_param  ($Script:SizeofPartition_System-1024) `
+                                                -SizeofPartition_Other_param ($Script:SizeofPartition_Other-2048) `
                                                 -VolumeName_System_param $VolumeName_System `
                                                 -DeviceName_System_param $DeviceName_System `
                                                 -PFSLimit $Script:PFSLimit  `
                                                 -VolumeName_Other_param $VolumeName_Other `
                                                 -DeviceName_Other_param $DeviceName_Other `
                                                 -DeviceName_Prefix_param $DeviceName_Prefix
-                                                
+                                                  
 foreach ($AmigaPartition in $AmigaPartitionsList) {
     Write-InformationMessage -Message ('Preparing Partition Device: '+$AmigaPartition.DeviceName+' VolumeName '+$AmigaPartition.VolumeName)
     if ($AmigaPartition.VolumeName -eq $VolumeName_System){
