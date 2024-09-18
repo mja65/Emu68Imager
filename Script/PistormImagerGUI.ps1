@@ -473,37 +473,80 @@ function Get-AmigaPartitionList {
         $DeviceName_Other_param,
         $DeviceName_Prefix_param  
     )
+    
     $AmigaPartitionsList = [System.Collections.Generic.List[PSCustomObject]]::New()
 
-    $SizeofPartition_SystemtouseNumeric = [math]::truncate($SizeofPartition_System_param)
-    $SizeofPartition_Othertouse = ([math]::truncate($SizeofPartition_Other_param))
-    $SizeofPartition_Systemtouse = (($SizeofPartition_SystemtouseNumeric.ToString())+'kb')
-    $EndSector_System = ($SizeofPartition_SystemtouseNumeric*1024/512)-$Script:AmigaRDBSectors
+    $StartCylinder = 0
+    $CurrentCylinder = $StartCylinder
+    
+    $StartOffset = 0
+    $CurrentOffset = $StartOffset 
 
-    $PartitionNumbertoPopulate = 1
+    $StartSector = 0
+    $CurrentSector = $StartSector
+
+    $NumberofCylinders_RDB = 2
+    $Size_RDB = $NumberofCylinders_RDB*(Get-AmigaPartitionSizeBlockBytes)
+
+    $NumberofCylinders_System = [math]::Floor($SizeofPartition_System_param*1024/(Get-AmigaPartitionSizeBlockBytes))-1
+    $Size_System = ($NumberofCylinders_System * (Get-AmigaPartitionSizeBlockBytes))/1024
+
+    $NumberofCylinders_Other = [math]::Floor($SizeofPartition_Other_param*1024/(Get-AmigaPartitionSizeBlockBytes))-1
+
+    
+    # Add RDB
 
     $AmigaPartitionsList += [PSCustomObject]@{
-        StartSector = $Script:AmigaRDBSectors+1 
-        PartitionNumber = $PartitionNumbertoPopulate 
-        SizeofPartition =  $SizeofPartition_Systemtouse
-        EndSector = $EndSector_System
-        DosType = 'PFS3'
-        VolumeName = $VolumeName_System_param
-        DeviceName = $DeviceName_System_param  
+        Type = 'Partition Table'
+        PartitionNumber = 0
+        NumberofCylinders = $NumberofCylinders_RDB
+        SizeofPartition = $Size_RDB
+        StartCylinder = $CurrentCylinder 
+        EndCylinder = $CurrentCylinder+$NumberofCylinders_RDB-1 
+        StartOffset = $CurrentOffset
+        EndOffset = $CurrentOffset+$Size_RDB-1
+        StartSector = 0
+        EndSector = $CurrentOffset+$Size_RDB/512
+        DosType = ''
+        VolumeName = ''
+        DeviceName = ''  
     }
+
     $PartitionNumbertoPopulate ++
-    $CapacitytoFill = $SizeofPartition_Othertouse
+    $CurrentOffset = $CurrentOffset+$Size_RDB
+    $CurrentCylinder = $CurrentCylinder+$NumberofCylinders_RDB
 
-    $TotalNumberWorkPartitions = [math]::ceiling($CapacitytoFill/$PFSLimit)
-    
-    $WorkPartitionSize = ([math]::floor($SizeofPartition_Othertouse/$TotalNumberWorkPartitions))
+    # Add Workbench
 
-    $WorkPartitionCounter = 0 
-    [char]$WorkNameCounter = 'A'
-    do {
-        if ($WorkPartitionCounter -eq 0){
-            $StartSectorforWork = $EndSector_System+1
-        } 
+    $AmigaPartitionsList += [PSCustomObject]@{
+        Type = 'Partition Table'
+        PartitionNumber = $PartitionNumbertoPopulate
+        NumberofCylinders = $NumberofCylinders_System
+        SizeofPartition = $Size_System
+        StartCylinder = $CurrentCylinder 
+        EndCylinder = $CurrentCylinder+$NumberofCylinders_System-1 
+        StartOffset = $CurrentOffset
+        EndOffset = ($CurrentOffset+($Size_System*1024))-1
+        StartSector = $CurrentOffset/512
+        EndSector = ($CurrentOffset+($Size_System*1024))/512
+        DosType = 'PFS'
+        VolumeName = $VolumeName_System_param
+        DeviceName = $DeviceName_System_param 
+    }
+
+    $PartitionNumbertoPopulate ++
+    $CurrentOffset = $CurrentOffset+($Size_System*1024)
+    $CurrentCylinder = $CurrentCylinder+$NumberofCylinders_System
+
+     $CapacitytoFill = $SizeofPartition_Other_param
+     $TotalNumberWorkPartitions = [math]::ceiling($CapacitytoFill/$PFSLimit)
+     $NumberofCylinders_Other  = ([math]::Floor($NumberofCylinders_Other/$TotalNumberWorkPartitions))  
+     $Size_Other = ($NumberofCylinders_Other * (Get-AmigaPartitionSizeBlockBytes))/1024
+
+     $WorkPartitionCounter = 0 
+     $WorkNameCounter = 1 
+
+     do {
         if ($WorkPartitionCounter -eq 0){
             $VolumeNametoPopulate = $VolumeName_Other_param  
             $DeviceNametoPopulate = $DeviceName_Other_param  
@@ -511,19 +554,29 @@ function Get-AmigaPartitionList {
         else{
             $VolumeNametoPopulate = ($VolumeName_Other_param+$WorkNameCounter).ToString()
             $DeviceNametoPopulate = ($DeviceName_Prefix_param+(($PartitionNumbertoPopulate-1).ToString()))
-            $WorkNameCounter = [byte]$WorkNameCounter + 1
+            $WorkNameCounter ++
            
         }
+
         $AmigaPartitionsList += [PSCustomObject]@{
-            StartSector = $StartSectorforWork
-            PartitionNumber = $PartitionNumbertoPopulate 
-            SizeofPartition =  ((($WorkPartitionSize).ToString())+'kb')
-            EndSector = $WorkPartitionSize*1024/512-($StartSectorforWork-1)
-            DosType = 'PFS3'
+            Type = 'Partition Table'
+            PartitionNumber = $PartitionNumbertoPopulate
+            NumberofCylinders = $NumberofCylinders_Other
+            SizeofPartition = $Size_Other
+            StartCylinder = $CurrentCylinder 
+            EndCylinder = $CurrentCylinder+$NumberofCylinders_Other-1 
+            StartOffset = $CurrentOffset
+            EndOffset = ($CurrentOffset+($Size_Other*1024))-1
+            StartSector = $CurrentOffset/512
+            EndSector = ($CurrentOffset+($Size_Other*1024))/512
+            DosType = 'PFS'
             VolumeName = $VolumeNametoPopulate
-            DeviceName = $DeviceNametoPopulate    
+            DeviceName = $DeviceNametoPopulate 
         }
-        $StartSectorforWork = ($WorkPartitionSize*1024/512-($StartSectorforWork-1))+1
+
+        $CurrentOffset = $CurrentOffset+($Size_Other*1024)
+        $CurrentCylinder = $CurrentCylinder+$NumberofCylinders_Other
+
         $PartitionNumbertoPopulate ++
         $WorkPartitionCounter ++
     } until (
@@ -1787,6 +1840,30 @@ function Repair-SDDisk {
         } until (
             $Counter -gt 5 -or $IsSuccess -eq $true
         )
+}
+
+function Get-Cylinders {
+    param (
+        $SizeofImage
+    )
+    
+    $Heads = 16
+    $Sectors = 63
+    $BlockSize = 512
+    $SizeofImageBytes = [decimal]$SizeofImage.TrimEnd('kb')*1024
+    $Cylinders =  [math]::Floor($SizeofImageBytes/$Heads/$Sectors/$BlockSize) 
+    return $Cylinders
+
+}
+
+function Get-AmigaPartitionSizeBlockBytes {
+    param (
+    )
+    $Heads = 16
+    $Sectors = 63
+    $BlockSize = 512
+
+    return $Heads*$Sectors*$BlockSize
 }
 
 ### End Functions
@@ -3823,8 +3900,8 @@ if (-not (Start-HSTImager -Command "rdb filesystem add" -DestinationPath ($Locat
 
 ## Setting up Amiga Partitions List
 
-$AmigaPartitionsList = Get-AmigaPartitionList   -SizeofPartition_System_param  ($Script:SizeofPartition_System-1024) `
-                                                -SizeofPartition_Other_param ($Script:SizeofPartition_Other-2048) `
+$AmigaPartitionsList = Get-AmigaPartitionList   -SizeofPartition_System_param  ($Script:SizeofPartition_System) `
+                                                -SizeofPartition_Other_param ($Script:SizeofPartition_Other) `
                                                 -VolumeName_System_param $VolumeName_System `
                                                 -DeviceName_System_param $DeviceName_System `
                                                 -PFSLimit $Script:PFSLimit  `
