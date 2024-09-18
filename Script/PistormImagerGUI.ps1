@@ -164,27 +164,42 @@ if  ($RunMode -eq 1){
 } 
 
 if ($RunMode -eq 0){
-    $Script:Scriptpath = 'H:\Emu68Imager\'    
+    $Script:Scriptpath = 'E:\Emu68Imager\'    
 }
+
+$Script:LogLocation = ($Script:LogFolder+'Emu68ImagerLog_'+(Get-Date -Format yyyyMMddHHmmss).tostring())
+
+Write-Emu68ImagerLog -StartorContinue 'Start' -LocationforLog $Script:LogLocation -DateandTime (Get-Date -Format HH:mm:ss)
 
 ######################################################################## Functions #################################################################################################################
 
-function Start-Emu68ImagerLogging {
+function Write-Emu68ImagerLog {
     param (
+        $StartorContinue,
         $LocationforLog,
         $DateandTime
     )
 
-$NetFrameworkrelease = Get-ItemPropertyValue -LiteralPath 'HKLM:SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full' -Name Release
-$PowershellVersion = ((($PSVersionTable.PSVersion).Major).ToString()+'.'+(($PSVersionTable.PSVersion).Minor))
-
-$LogEntry =     @"
+    If($StartorContinue -eq 'Start'){
+        $NetFrameworkrelease = Get-ItemPropertyValue -LiteralPath 'HKLM:SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full' -Name Release
+        $PowershellVersion = ((($PSVersionTable.PSVersion).Major).ToString()+'.'+(($PSVersionTable.PSVersion).Minor))
+        $WindowsLocale = ((((Get-WinSystemLocale).Name).Tostring())+' ('+(((Get-WinSystemLocale).DisplayName).Tostring())+')')
+        $WindowsVersion = (Get-WmiObject -class Win32_OperatingSystem).Caption
+        $LogEntry =     @"
 Emu68 Imager Log
-
+        
 Log created at: $DateandTime
-
+        
+Windows Version: $WindowsVersion
+Windows Locale Details: $WindowsLocale
 Powershell version used is: $PowershellVersion 
 .Net Framwork Release installed is: $NetFrameworkrelease 
+"@  
+    $LogEntry| Out-File -FilePath ($LocationforLog)
+
+    }
+    If($StartorContinue -eq 'Continue'){ 
+        $LogEntry =     @"
 
 Parameters used: 
 
@@ -208,8 +223,8 @@ Script:TransferLocation = [$Script:TransferLocation]
 Activity Commences:
 
 "@
-    $LogEntry| Out-File -FilePath ($LocationforLog)
-
+        $LogEntry| Out-File -FilePath ($LocationforLog) -Append
+    }
 }
 
 function Set-GUISizeofPartitions {
@@ -3635,9 +3650,7 @@ if (-not ($Script:WriteImage)){
     $TotalSections --
 }
 
-$Script:LogLocation = ($Script:LogFolder+'Emu68ImagerLog_'+(Get-Date -Format yyyyMMddHHmmss).tostring())
-
-Start-Emu68ImagerLogging -LocationforLog $Script:LogLocation -DateandTime (Get-Date -Format HH:mm:ss)
+Write-Emu68ImagerLog -StartorContinue 'Continue' -LocationforLog $Script:LogLocation
 
 $Script:CurrentSection = 1
 $StartDateandTime = (Get-Date -Format HH:mm:ss)
@@ -3783,7 +3796,6 @@ if ($Script:SetDiskupOnly -eq 'FALSE'){
     Write-TaskCompleteMessage -Message 'Downloading LZX - Complete!'
 
 }
-
 
 ### End Download UnLzx
 
