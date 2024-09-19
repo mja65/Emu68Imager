@@ -2412,10 +2412,11 @@ $Script:RequiredSpace_WorkingFolderDisk = 0 #In Kilobytes
 $Script:Space_FilestoTransfer = 0 #In Kilobytes
 $Script:WorkOverhead = 1024 #In Kilobytes
 $Script:AvailableSpaceFilestoTransfer = 0 #In Kilobytes
+$Script:SpaceThreshold_FilestoTransfer = 0
 $Script:SizeofFilestoTransfer = 0 #In Kilobytes
 
 $Script:SpaceThreshold_WorkingFolderDisk = 500*1024 #In Kilobytes
-$Script:SpaceThreshold_FilestoTransfer = 25*1024 #In Kilobytes
+#$Script:SpaceThreshold_FilestoTransfer = 25*1024 #In Kilobytes
 
 $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpace_WorkingFolderDisk 
 $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:RequiredSpace_WorkingFolderDisk
@@ -2514,6 +2515,7 @@ $WPF_UI_MediaSelect_Dropdown.Add_SelectionChanged({
         $Script:Space_FilestoTransfer = ($Script:SizeofPartition_Other/([math]::ceiling($Script:SizeofPartition_Other/$Script:PFSLimit)))  - $Script:WorkOverhead
         
         $Script:AvailableSpaceFilestoTransfer =  $Script:Space_FilestoTransfer - $Script:SizeofFilestoTransfer    
+        $Script:SpaceThreshold_FilestoTransfer = ($Script:Space_FilestoTransfer*0.2)
         
         if ($Script:TransferLocation){
             $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpaceFilestoTransfer 
@@ -2628,6 +2630,7 @@ $WPF_UI_DefaultAllocation_Refresh.add_Click({
         $Script:Space_FilestoTransfer = ($Script:SizeofPartition_Other/([math]::ceiling($Script:SizeofPartition_Other/$Script:PFSLimit)))  - $Script:WorkOverhead
 
         $Script:AvailableSpaceFilestoTransfer =  $Script:Space_FilestoTransfer - $Script:SizeofFilestoTransfer    
+        $Script:SpaceThreshold_FilestoTransfer = ($Script:Space_FilestoTransfer*0.2)
         
         if ($Script:TransferLocation){
             $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpaceFilestoTransfer
@@ -2679,6 +2682,7 @@ $WPF_UI_Fat32Size_Listview.add_SizeChanged({
         $Script:Space_FilestoTransfer = ($Script:SizeofPartition_Other/([math]::ceiling($Script:SizeofPartition_Other/$Script:PFSLimit)))  - $Script:WorkOverhead
 
         $Script:AvailableSpaceFilestoTransfer =  $Script:Space_FilestoTransfer - $Script:SizeofFilestoTransfer    
+        $Script:SpaceThreshold_FilestoTransfer = ($Script:Space_FilestoTransfer*0.2)
         
         if ($Script:TransferLocation){
             $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpaceFilestoTransfer
@@ -2730,7 +2734,8 @@ $WPF_UI_WorkbenchSize_Listview.add_SizeChanged({
         $Script:Space_FilestoTransfer = ($Script:SizeofPartition_Other/([math]::ceiling($Script:SizeofPartition_Other/$Script:PFSLimit)))  - $Script:WorkOverhead
 
         $Script:AvailableSpaceFilestoTransfer =  $Script:Space_FilestoTransfer - $Script:SizeofFilestoTransfer    
-        
+        $Script:SpaceThreshold_FilestoTransfer = ($Script:Space_FilestoTransfer*0.2)
+
         if ($Script:TransferLocation){
             $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpaceFilestoTransfer
         }        
@@ -2781,6 +2786,7 @@ $WPF_UI_WorkSize_Listview.add_SizeChanged({
         $Script:Space_FilestoTransfer = ($Script:SizeofPartition_Other/([math]::ceiling($Script:SizeofPartition_Other/$Script:PFSLimit)))  - $Script:WorkOverhead
 
         $Script:AvailableSpaceFilestoTransfer =  $Script:Space_FilestoTransfer - $Script:SizeofFilestoTransfer    
+        $Script:SpaceThreshold_FilestoTransfer = ($Script:Space_FilestoTransfer*0.2)
         
         if ($Script:TransferLocation){
             $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpaceFilestoTransfer
@@ -2817,6 +2823,7 @@ $WPF_UI_FreeSpace_Listview.add_SizeChanged({
         $Script:Space_FilestoTransfer = ($Script:SizeofPartition_Other/([math]::ceiling($Script:SizeofPartition_Other/$Script:PFSLimit)))  - $Script:WorkOverhead
 
         $Script:AvailableSpaceFilestoTransfer =  $Script:Space_FilestoTransfer - $Script:SizeofFilestoTransfer    
+        $Script:SpaceThreshold_FilestoTransfer = ($Script:Space_FilestoTransfer*0.2)
         
         if ($Script:TransferLocation){
             $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpaceFilestoTransfer
@@ -2848,8 +2855,9 @@ $WPF_UI_Unallocated_Listview.add_SizeChanged({
 
         $Script:Space_FilestoTransfer = ($Script:SizeofPartition_Other/([math]::ceiling($Script:SizeofPartition_Other/$Script:PFSLimit)))  - $Script:WorkOverhead
 
-        $Script:AvailableSpaceFilestoTransfer =  $Script:Space_FilestoTransfer - $Script:SizeofFilestoTransfer    
-        
+        $Script:AvailableSpaceFilestoTransfer =  $Script:Space_FilestoTransfer - $Script:SizeofFilestoTransfer          
+        $Script:SpaceThreshold_FilestoTransfer = ($Script:Space_FilestoTransfer*0.2)
+
         if ($Script:TransferLocation){
             $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpaceFilestoTransfer 
         }        
@@ -3271,7 +3279,8 @@ Calculating space requirements. This may take some time if you have selected a l
 '@
         [System.Windows.MessageBox]::Show($Msg, 'Calculating Space',0,0)            
             $Script:SizeofFilestoTransfer = Get-TransferredFilesSpaceRequired -FoldertoCheck $Script:TransferLocation
-            $Script:AvailableSpaceFilestoTransfer =  $Script:Space_FilestoTransfer - $Script:SizeofFilestoTransfer      
+            $Script:AvailableSpaceFilestoTransfer =  $Script:Space_FilestoTransfer - $Script:SizeofFilestoTransfer
+            $Script:SpaceThreshold_FilestoTransfer = ($Script:Space_FilestoTransfer*0.2)      
             
             $WPF_UI_RequiredSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Script:SizeofFilestoTransfer
             $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpaceFilestoTransfer 
@@ -3950,6 +3959,10 @@ if ($Script:SetDiskupOnly -eq 'FALSE'){
 ### End Download UnLzx
 
 Write-StartTaskMessage -Message 'Preparing Amiga Image'
+
+if (Test-Path ($LocationofImage+$NameofImage)){
+    $null = Remove-Item -Path ($LocationofImage+$NameofImage)
+}
 
 if (-not (Start-HSTImager -Command "Blank" -DestinationPath ($LocationofImage+$NameofImage) -ImageSize $Script:SizeofImage_HST -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
     exit
