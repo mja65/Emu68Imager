@@ -2302,7 +2302,7 @@ $inputXML_UserInterface = @"
             <Button x:Name="GoBack_Button" Content="Back" HorizontalAlignment="Left" Margin="20,523,0,0" Background="red" VerticalAlignment="Top" Width="199"/>
             <Button x:Name="Process_Button" Content="Run" HorizontalAlignment="Left" Margin="689,523,0,0" Background="green" VerticalAlignment="Top" Width="199"/>
 
-            <TextBox x:Name="Reporting_Header_TextBox" HorizontalAlignment="Center" Margin="0,55,0,0" TextWrapping="Wrap" Text="Tool will be run with the following options:  " VerticalAlignment="Top" Width="438" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Center" FontWeight="Bold" FontSize="14"/>
+              <TextBox x:Name="Reporting_Header_TextBox" HorizontalAlignment="Center" Margin="0,55,0,0" TextWrapping="Wrap" Text="Tool will be run with the following options:  " VerticalAlignment="Top" Width="438" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Center" FontWeight="Bold" FontSize="14"/>
 
             <TextBox x:Name="DiskName_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,110,0,0" TextWrapping="Wrap" Text="DiskName to Write:" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
             <TextBox x:Name="DiskNameValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,110,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
@@ -2322,14 +2322,14 @@ $inputXML_UserInterface = @"
             <TextBox x:Name="ImageSize_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,210,0,0" TextWrapping="Wrap" Text="Total Image Size:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
             <TextBox x:Name="ImageSizeValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,210,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
 
-            <TextBox x:Name="Fat32Size_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,229,0,0" TextWrapping="Wrap" Text="Fat32 Size:" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
-            <TextBox x:Name="Fat32SizeValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,229,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+            <TextBox x:Name="Fat32Size_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,230,0,0" TextWrapping="Wrap" Text="Fat32 Size:" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+            <TextBox x:Name="Fat32SizeValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,230,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
 
-            <TextBox x:Name="WorkbenchSize_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,249,0,0" TextWrapping="Wrap" Text="Workbench Size:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
-            <TextBox x:Name="WorkbenchSizeValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,249,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+            <TextBox x:Name="WorkbenchSize_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,250,0,0" TextWrapping="Wrap" Text="Workbench Size:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+            <TextBox x:Name="WorkbenchSizeValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,250,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
 
-            <TextBox x:Name="WorkSize_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,269,0,0" TextWrapping="Wrap" Text="Work Size:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-            <TextBox x:Name="WorkSizeValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,269,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+            <TextBox x:Name="WorkSize_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,270,0,0" TextWrapping="Wrap" Text="Work Size:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+            <TextBox x:Name="WorkSizeValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,270,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
 
             <TextBox x:Name="WorkingPath_Detail_TextBox" HorizontalAlignment="Left" Margin="100,290,0,0" TextWrapping="Wrap" Text="Working Path:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
             <TextBox x:Name="WorkingPathValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,290,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="450" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
@@ -2345,18 +2345,18 @@ $inputXML_UserInterface = @"
 
 
             <TextBox x:Name="WriteImagetoDisk_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,370,0,0" TextWrapping="Wrap" Text="Write Image to Disk:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
-            <TextBox x:Name="WriteImagetoDiskValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,370,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" />
+            <TextBox x:Name="WriteImagetoDiskValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,370,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="450" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" />
 
             <TextBox x:Name="WriteMethod_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,390,0,0" TextWrapping="Wrap" Text="Write Method:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
-            <TextBox x:Name="WriteMethodValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,390,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" />
+            <TextBox x:Name="WriteMethodValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,390,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="450" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" />
 
 
             <TextBox x:Name="SetupDiskOnly_Detail_TextBox" HorizontalAlignment="Left" Margin="100,410,0,0" TextWrapping="Wrap" Text="Set disk up only:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
-            <TextBox x:Name="SetupDiskOnlyValue_Detail_TextBox" HorizontalAlignment="Left" Margin="360,410,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
-            
+            <TextBox x:Name="SetupDiskOnlyValue_Detail_TextBox" HorizontalAlignment="Left" Margin="360,410,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="450" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+
             <TextBox x:Name="LocationofImage_Detail_TextBox" HorizontalAlignment="Left" Margin="100,450,0,0" TextWrapping="Wrap" Text="Location of Image:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" FontWeight="Bold" />
             <TextBox x:Name="LocationofImageValue_Detail_TextBox" HorizontalAlignment="Left" Margin="360,450,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="450" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
-     
+
            
         </Grid>
     </Grid>
@@ -4618,6 +4618,10 @@ If ($Script:WriteImage -eq 'TRUE'){
     } 
 
     Write-InformationMessage ('Offset being used is: '+$Offset+' Sector size is: '+$SectorSize)
+    if ($SectorSize -ne $Script:AmigaBlockSize){
+        Write-InformationMessage -Message 'The sector size of your SD card ('+$SectorSize+') does not match the Amiga Blocksize ('+$Script:AmigaBlockSize+'). Using standard write method.'
+        $Script:WriteMethod = 'Normal'
+    }
 
     if ($Script:WriteMethod -eq 'Normal'){
         & $Script:DDTCPath ($LocationofImage+$NameofImage) $Script:HSTDiskDeviceID -offset $Offset -sectorsize $SectorSize
@@ -4645,7 +4649,7 @@ If ($Script:WriteImage -eq 'TRUE'){
       #  Write-InformationMessage -Message ('Writing RDB to Disk. Begin Crop is: ' + $RDBStartBlock + ' End Crop is: ' + ($RDBEndBlock+1)) 
       #  & $Script:DDTCPath ($LocationofImage+$NameofImage) $Script:HSTDiskDeviceID -offset $Offset -sectorsize $SectorSize -begincrop $RDBStartBlock -endcrop ($RDBEndBlock)+1
         Write-InformationMessage -Message ('Writing Workbench to Disk. Begin Crop is: ' + $RDBStartBlock + ' End Crop is: ' + $EmptySpaceStartBlock_System) 
-        & $Script:DDTCPath ($LocationofImage+$NameofImage) $Script:HSTDiskDeviceID -offset $Offset -sectorsize $SectorSize -begincrop $SystemStartBlock -endcrop $EmptySpaceStartBlock_System
+        & $Script:DDTCPath ($LocationofImage+$NameofImage) $Script:HSTDiskDeviceID -offset $Offset -sectorsize $SectorSize -begincrop $RDBStartBlock -endcrop $EmptySpaceStartBlock_System
         Write-InformationMessage -Message ('Writing Work to Disk. Begin Crop is: ' + $WorkStartBlock + ' End Crop is: ' + $EmptySpaceStartBlock_Work) 
         & $Script:DDTCPath ($LocationofImage+$NameofImage) $Script:HSTDiskDeviceID -offset $Offset -sectorsize $SectorSize -begincrop $WorkStartBlock -endcrop $EmptySpaceStartBlock_Work     
     }
