@@ -53,6 +53,7 @@ Script:ROMPath = [$Script:ROMPath]
 Script:ADFPath = [$Script:ADFPath]
 Script:LocationofImage = [$Script:LocationofImage]
 Script:TransferLocation = [$Script:TransferLocation]
+Script:WriteMethod = [$Script:WriteMethod]
 
 Activity Commences:
 
@@ -320,6 +321,7 @@ $Script:SizeofFreeSpace_Minimum = $null
 $Script:RemovableMedia = $null
 $Script:WorkOverhead = $null
 $Script:AmigaRDBSectors = $null
+$Script:WriteMethod = $null
 
 ####################################################################### End Null out Global Variables ###############################################################################################
 
@@ -1928,6 +1930,15 @@ function Write-GUIReporttoUseronOptions {
     $WPF_UI_WorkbenchSizeValue_Reporting_Detail_TextBox.Text = Get-FormattedSize -Size $Script:SizeofPartition_System
     $WPF_UI_WorkSizeValue_Reporting_Detail_TextBox.Text = Get-FormattedSize -Size $Script:SizeofPartition_Other
     $WPF_UI_WriteImagetoDiskValue_Reporting_Detail_TextBox.Text =  $Script:WriteImage
+    if ($Script:WriteMethod -eq 'Normal'){
+        $WPF_UI_WriteMethodValue_Reporting_Detail_TextBox.Text = 'Normal'
+    } 
+    elseif ($Script:WriteMethod -eq 'SkipEmptySpace'){
+        $WPF_UI_WriteMethodValue_Reporting_Detail_TextBox.Text = 'Experimental Mode! Empty space on disk will be skipped'
+    }
+    else{
+        $WPF_UI_WriteMethodValue_Reporting_Detail_TextBox.Text = ''
+    }
     $WPF_UI_SetupDiskOnlyValue_Detail_TextBox.Text = $Script:SetDiskupOnly
     $WPF_UI_WorkingPathValue_Reporting_Detail_TextBox.Text = $Script:WorkingPath
     $WPF_UI_RomPathValue_Reporting_Detail_TextBox.Text = $Script:ROMPath
@@ -2261,10 +2272,11 @@ $inputXML_UserInterface = @"
                 </Grid>
 
             </GroupBox>
-            <GroupBox x:Name="RunOptions_GroupBox" Header="Run Options" Margin="7,385,0,100" Background="Transparent" HorizontalAlignment="Left" Width="400" VerticalAlignment="Top" >
+            <GroupBox x:Name="RunOptions_GroupBox" Header="Run Options" Margin="7,385,0,0" Background="Transparent" HorizontalAlignment="Left" Width="400" VerticalAlignment="Top" >
                 <Grid Background="Transparent" >
-                    <CheckBox x:Name="DiskWrite_CheckBox" Content="Do not write to disk. Produce .img file only for later writing to disk." HorizontalAlignment="Left" Margin="2,29,0,0" VerticalAlignment="Top"/>
-                    <CheckBox x:Name="NoFileInstall_CheckBox" Content="Set disk up only. Do not install packages." HorizontalAlignment="Left" Margin="2,6,0,0" VerticalAlignment="Top"/>
+                    <CheckBox x:Name="NoFileInstall_CheckBox" Content="Set disk up only. Do not install packages." HorizontalAlignment="Left" Margin="2,5,0,0" Height="15" VerticalAlignment="Top"/>
+                    <CheckBox x:Name="DiskWrite_CheckBox" Content="Do not write to disk. Produce .img file only for later writing to disk." HorizontalAlignment="Left" Margin="2,25,0,0" Height="15" VerticalAlignment="Top"/>
+                    <CheckBox x:Name="SkipEmptySpace_CheckBox" Content="Skip empty space when writing to disk. Experimental!" HorizontalAlignment="Left" Margin="2,45,0,0" Height="15" VerticalAlignment="Top"/>
                 </Grid>
             </GroupBox>
             <Button x:Name="Start_Button" Content="Missing information! Press to see further details" HorizontalAlignment="Center" Margin="0,510,0,0" VerticalAlignment="Top" Width="890" Height="40" Background = "Red" Foreground="Black" BorderBrush="Transparent"/>
@@ -2283,7 +2295,7 @@ $inputXML_UserInterface = @"
                 </Grid>
 
             </GroupBox>
-            <TextBox x:Name="WorkSizeNoteFooter_Label" HorizontalAlignment="Left" Margin="15,466,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="608" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+            <TextBox x:Name="WorkSizeNoteFooter_Label" HorizontalAlignment="Left" Margin="15,485,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="480" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
         <Button x:Name="Documentation_Button" Content="Click for Documentation" HorizontalAlignment="Right" Margin="0,5,10,0" VerticalAlignment="Top" />
             </Grid>
         <Grid x:Name="Reporting_Grid" Background="#FFE5E5E5" Visibility="Hidden">
@@ -2335,11 +2347,15 @@ $inputXML_UserInterface = @"
             <TextBox x:Name="WriteImagetoDisk_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,370,0,0" TextWrapping="Wrap" Text="Write Image to Disk:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
             <TextBox x:Name="WriteImagetoDiskValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,370,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" />
 
-            <TextBox x:Name="SetupDiskOnly_Detail_TextBox" HorizontalAlignment="Left" Margin="100,390,0,0" TextWrapping="Wrap" Text="Set disk up only:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
-            <TextBox x:Name="SetupDiskOnlyValue_Detail_TextBox" HorizontalAlignment="Left" Margin="360,390,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+            <TextBox x:Name="WriteMethod_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,390,0,0" TextWrapping="Wrap" Text="Write Method:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+            <TextBox x:Name="WriteMethodValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,390,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" />
+
+
+            <TextBox x:Name="SetupDiskOnly_Detail_TextBox" HorizontalAlignment="Left" Margin="100,410,0,0" TextWrapping="Wrap" Text="Set disk up only:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+            <TextBox x:Name="SetupDiskOnlyValue_Detail_TextBox" HorizontalAlignment="Left" Margin="360,410,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
             
-            <TextBox x:Name="LocationofImage_Detail_TextBox" HorizontalAlignment="Left" Margin="100,430,0,0" TextWrapping="Wrap" Text="Location of Image:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" FontWeight="Bold" />
-            <TextBox x:Name="LocationofImageValue_Detail_TextBox" HorizontalAlignment="Left" Margin="360,430,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="450" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+            <TextBox x:Name="LocationofImage_Detail_TextBox" HorizontalAlignment="Left" Margin="100,450,0,0" TextWrapping="Wrap" Text="Location of Image:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" FontWeight="Bold" />
+            <TextBox x:Name="LocationofImageValue_Detail_TextBox" HorizontalAlignment="Left" Margin="360,450,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="450" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
      
            
         </Grid>
@@ -3336,6 +3352,18 @@ $WPF_UI_ScreenMode_Dropdown.Add_SelectionChanged({
     }
 })
 
+$WPF_UI_DiskWrite_CheckBox.Add_Checked({
+    If ($WPF_UI_SkipEmptySpace_CheckBox.IsChecked -eq 'TRUE'){
+        $WPF_UI_SkipEmptySpace_CheckBox.IsChecked = ''
+    }
+})
+
+$WPF_UI_SkipEmptySpace_CheckBox.Add_Checked({
+    If ($WPF_UI_DiskWrite_CheckBox.IsChecked -eq 'TRUE'){
+        $WPF_UI_DiskWrite_CheckBox.IsChecked = ''
+    }
+})
+
 $WPF_UI_NoFileInstall_CheckBox.Add_Checked({
     $Script:SetDiskupOnly = 'TRUE'
     $Script:TransferLocation = $null
@@ -3433,6 +3461,12 @@ $WPF_UI_Start_Button.Add_Click({
     }
     else{
         $Script:WriteImage ='TRUE'
+        if ($WPF_UI_SkipEmptySpace_CheckBox.IsChecked){
+            $Script:WriteMethod = 'SkipEmptySpace'
+        }
+        else{
+            $Script:WriteMethod = 'Normal'
+        }
     }
     if (Get-TransferFileCheck -TransferLocationtocheck $Script:TransferLocation -TransferSpaceThreshold $Script:SpaceThreshold_FilestoTransfer -TransferAvailableSpace $Script:AvailableSpaceFilestoTransfer){
         $ErrorCount = $ErrorCount
@@ -4585,35 +4619,37 @@ If ($Script:WriteImage -eq 'TRUE'){
 
     Write-InformationMessage ('Offset being used is: '+$Offset+' Sector size is: '+$SectorSize)
 
-    #Write-HDFtoDisk -ddtcpathtouse  -DeviceIDtoUse $Script:HSTDiskDeviceID -SectorSizetoUse $SectorSize -SectorOffset $Offset
-    #Write-Image -HSTImagePathtouse $HSTImagePath -SourcePath ($LocationofImage+'Emu68Kickstart'+$Script:KickstartVersiontoUse+'.img') -DestinationPath $Script:HSTDiskName  
-    & $Script:DDTCPath ($LocationofImage+$NameofImage) $Script:HSTDiskDeviceID -offset $Offset -sectorsize $SectorSize
+    if ($Script:WriteMethod -eq 'Normal'){
+        & $Script:DDTCPath ($LocationofImage+$NameofImage) $Script:HSTDiskDeviceID -offset $Offset -sectorsize $SectorSize
+    }
+    elseif ($Script:WriteMethod -eq 'SkipEmptySpace'){
+        $RDBStartBlock = ($AmigaPartitionsList | Where-Object {$_.PartitionNumber -eq 0} | Select-Object 'StartSector').StartSector
+        $RDBEndBlock = ($AmigaPartitionsList | Where-Object {$_.PartitionNumber -eq 0} | Select-Object 'EndSector').EndSector-1
+        $SystemStartBlock = ($AmigaPartitionsList | Where-Object {$_.PartitionNumber -eq 1} | Select-Object 'StartSector').StartSector
+        $SystemEndBlock = ($AmigaPartitionsList | Where-Object {$_.PartitionNumber -eq 1} | Select-Object 'EndSector').EndSector-1
+        $WorkStartBlock = ($AmigaPartitionsList | Where-Object {$_.PartitionNumber -eq 2} | Select-Object 'StartSector').StartSector
+        $WorkEndBlock = ($AmigaPartitionsList | Where-Object {$_.PartitionNumber -eq 2} | Select-Object 'EndSector').EndSector-1
+    
+        Write-InformationMessage -Message 'Determining start of free space - Workbench Partition (this may take some time)'
+        $Output = & $Script:FindFreeSpacePath ($LocationofImage+$NameofImage) -begincrop $SystemStartBlock -endcrop $SystemEndBlock -noprogress
+        $EmptySpaceStartBlock_System = (Get-StartEmptySpace -OutputMessage $Output[3])+$SystemStartBlock
+        Write-InformationMessage -Message 'Determining start of free space - Workbench - Completed'
+    
+        Write-InformationMessage -Message 'Determining start of free space - Work Partition (this may take some time)'
+        $Output = & $Script:FindFreeSpacePath ($LocationofImage+$NameofImage) -begincrop $WorkStartSector -endcrop $WorkEndSector -noprogress
+        $EmptySpaceStartBlock_Work = (Get-StartEmptySpace -OutputMessage $Output[3])+$WorkStartSector
+        Write-InformationMessage -Message 'Determining start of free space - Work Partition - Completed'
+    
+        $AmigaBlocksPerSector = ($Script:AmigaBlockSize/$SectorSize)  
+       
+        Write-InformationMessage -Message 'Writing RDB to Disk'
+        & $Script:DDTCPath ($LocationofImage+$NameofImage) $Script:HSTDiskDeviceID -offset $Offset -sectorsize $SectorSize -begincrop $RDBStartBlock -endcrop ($RDBEndBlock)+1
+        Write-InformationMessage -Message 'Writing Workbench to Disk'
+        & $Script:DDTCPath ($LocationofImage+$NameofImage) $Script:HSTDiskDeviceID -offset $Offset -sectorsize $SectorSize -begincrop $SystemStartBlock -endcrop $EmptySpaceStartBlock_System
+        Write-InformationMessage -Message 'Writing Work to Disk'
+        & $Script:DDTCPath ($LocationofImage+$NameofImage) $Script:HSTDiskDeviceID -offset $Offset -sectorsize $SectorSize -begincrop $WorkStartBlock -endcrop $EmptySpaceStartBlock_Work     
+    }
 
-    # $RDBStartBlock = ($AmigaPartitionsList | Where-Object {$_.PartitionNumber -eq 0} | Select-Object 'StartSector').StartSector
-    # $RDBEndBlock = ($AmigaPartitionsList | Where-Object {$_.PartitionNumber -eq 0} | Select-Object 'EndSector').EndSector-1
-    # $SystemStartBlock = ($AmigaPartitionsList | Where-Object {$_.PartitionNumber -eq 1} | Select-Object 'StartSector').StartSector
-    # $SystemEndBlock = ($AmigaPartitionsList | Where-Object {$_.PartitionNumber -eq 1} | Select-Object 'EndSector').EndSector-1
-    # $WorkStartBlock = ($AmigaPartitionsList | Where-Object {$_.PartitionNumber -eq 2} | Select-Object 'StartSector').StartSector
-    # $WorkEndBlock = ($AmigaPartitionsList | Where-Object {$_.PartitionNumber -eq 2} | Select-Object 'EndSector').EndSector-1
-
-    # Write-InformationMessage -Message 'Determining start of free space - Workbench Partition (this may take some time)'
-    # $Output = & $Script:FindFreeSpacePath ($LocationofImage+$NameofImage) -begincrop $SystemStartBlock -endcrop $SystemEndBlock -noprogress
-    # $EmptySpaceStartBlock_System = (Get-StartEmptySpace -OutputMessage $Output[3])+$SystemStartBlock
-    # Write-InformationMessage -Message 'Determining start of free space - Workbench - Completed'
-
-    # Write-InformationMessage -Message 'Determining start of free space - Work Partition (this may take some time)'
-    # $Output = & $Script:FindFreeSpacePath ($LocationofImage+$NameofImage) -begincrop $WorkStartSector -endcrop $WorkEndSector -noprogress
-    # $EmptySpaceStartBlock_Work = (Get-StartEmptySpace -OutputMessage $Output[3])+$WorkStartSector
-    # Write-InformationMessage -Message 'Determining start of free space - Work Partition - Completed'
-
-    # $AmigaBlocksPerSector = ($Script:AmigaBlockSize/$SectorSize)  
-    # $Offset_RDB = $Offset
-    # $Offset_Workbench = $Offset_RDB+($SystemStartBlock*$AmigaBlocksPerSector)
-    # $Offset_Work = $Offset_Workbench+($WorkStartBlock*$AmigaBlocksPerSector)
-
-    # & $Script:DDTCPath ($LocationofImage+$NameofImage) $Script:HSTDiskDeviceID -offset $Offset_RDB -sectorsize $SectorSize -endcrop $RDBEndBlock*$AmigaBlocksPerSector
-    # & $Script:DDTCPath ($LocationofImage+$NameofImage) $Script:HSTDiskDeviceID -offset $Offset_Workbench -sectorsize $SectorSize -begincrop $RDBEndBlock -endcrop $EmptySpaceStartBlock_System
-    # & $Script:DDTCPath ($LocationofImage+$NameofImage) $Script:HSTDiskDeviceID -offset $Offset_Work -sectorsize $SectorSize -begincrop $SystemEndBlock -endcrop $EmptySpaceStartBlock_Work 
 
     Write-TaskCompleteMessage -Message 'Writing Image to Disk - Complete!'
 }
