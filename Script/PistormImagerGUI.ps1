@@ -817,8 +817,8 @@ function Write-TaskCompleteMessage {
         $Message
     )
     Write-Host "[Section: $Script:CurrentSection of $Script:TotalSections]: `t $Message" -ForegroundColor Green
-    $Script:CurrentSection ++
     "[Section: $Script:CurrentSection of $Script:TotalSections]: `t $Message" | Out-File $Script:LogLocation -Append
+    $Script:CurrentSection ++
 }
 
 
@@ -4636,32 +4636,47 @@ If ($Script:WriteImage -eq 'TRUE'){
     }
     elseif ($Script:WriteMethod -eq 'SkipEmptySpace'){
         $RDBStartBlock = ($AmigaPartitionsList | Where-Object {$_.PartitionNumber -eq 0} | Select-Object 'StartSector').StartSector
-        $RDBEndBlock = ($AmigaPartitionsList | Where-Object {$_.PartitionNumber -eq 0} | Select-Object 'EndSector').EndSector-1
-        $SystemStartBlock = ($AmigaPartitionsList | Where-Object {$_.PartitionNumber -eq 1} | Select-Object 'StartSector').StartSector
-        $SystemEndBlock = ($AmigaPartitionsList | Where-Object {$_.PartitionNumber -eq 1} | Select-Object 'EndSector').EndSector-1
+#        $RDBEndBlock = ($AmigaPartitionsList | Where-Object {$_.PartitionNumber -eq 0} | Select-Object 'EndSector').EndSector
+#        $SystemStartBlock = ($AmigaPartitionsList | Where-Object {$_.PartitionNumber -eq 1} | Select-Object 'StartSector').StartSector
+        $SystemEndBlock = ($AmigaPartitionsList | Where-Object {$_.PartitionNumber -eq 1} | Select-Object 'EndSector').EndSector
         $WorkStartBlock = ($AmigaPartitionsList | Where-Object {$_.PartitionNumber -eq 2} | Select-Object 'StartSector').StartSector
-        $WorkEndBlock = ($AmigaPartitionsList | Where-Object {$_.PartitionNumber -eq 2} | Select-Object 'EndSector').EndSector-1
-    
+        $WorkEndBlock = ($AmigaPartitionsList | Where-Object {$_.PartitionNumber -eq 2} | Select-Object 'EndSector').EndSector
+        
+        Write-StartSubTaskMessage -SubtaskNumber 1 -TotalSubtasks 3 -Message 'Determing Free Space locations in partitions'
+
         Write-InformationMessage -Message 'Determining start of free space - Workbench Partition (this may take some time)'
-        $Output = & $Script:FindFreeSpacePath ($LocationofImage+$NameofImage) -begincrop $SystemStartBlock -endcrop $SystemEndBlock -noprogress
-        $EmptySpaceStartBlock_System = (Get-StartEmptySpace -OutputMessage $Output[3])+$SystemStartBlock
-        Write-InformationMessage -Message 'Determining start of free space - Workbench - Completed'
+        & $Script:FindFreeSpacePath ($LocationofImage+$NameofImage) -begincrop $RDBStartBlock -endcrop $SystemEndBlock -result ($TempFolder+'FindFreeSpaceLog.txt')
+        $EmptySpaceStartBlock_System = ([decimal](Get-Content -Path ($TempFolder+'FindFreeSpaceLog.txt')))+$RDBStartBlock 
+        Write-InformationMessage -Message ('FreeSpace found at: '+$EmptySpaceStartBlock_System+' (from start of .hdf file)')
+        Write-InformationMessage -Message 'Determining start of free space - Workbench - Completed'              
     
         Write-InformationMessage -Message 'Determining start of free space - Work Partition (this may take some time)'
-        $Output = & $Script:FindFreeSpacePath ($LocationofImage+$NameofImage) -begincrop $WorkStartSector -endcrop $WorkEndSector -noprogress
-        $EmptySpaceStartBlock_Work = (Get-StartEmptySpace -OutputMessage $Output[3])+$WorkStartSector
+        & $Script:FindFreeSpacePath ($LocationofImage+$NameofImage) -begincrop $WorkStartBlock -endcrop $WorkEndBlock -result ($TempFolder+'FindFreeSpaceLog.txt')
+        $EmptySpaceStartBlock_Work = ([decimal](Get-Content -Path ($TempFolder+'FindFreeSpaceLog.txt')))+$WorkStartBlock
+        Write-InformationMessage -Message ('FreeSpace found at: '+$EmptySpaceStartBlock_Work+' (from start of .hdf file)')
         Write-InformationMessage -Message 'Determining start of free space - Work Partition - Completed'
-    
-        $AmigaBlocksPerSector = ($Script:AmigaBlockSize/$SectorSize)  
-       
-      #  Write-InformationMessage -Message ('Writing RDB to Disk. Begin Crop is: ' + $RDBStartBlock + ' End Crop is: ' + ($RDBEndBlock+1)) 
-      #  & $Script:DDTCPath ($LocationofImage+$NameofImage) $Script:HSTDiskDeviceID -offset $Offset -sectorsize $SectorSize -begincrop $RDBStartBlock -endcrop ($RDBEndBlock)+1
+        
+        Write-StartSubTaskMessage -SubtaskNumber 2 -TotalSubtasks 3 -Message 'Writing .hdf to disk'
+        
         Write-InformationMessage -Message ('Writing Workbench to Disk. Begin Crop is: ' + $RDBStartBlock + ' End Crop is: ' + $EmptySpaceStartBlock_System) 
         & $Script:DDTCPath ($LocationofImage+$NameofImage) $Script:HSTDiskDeviceID -offset $Offset -sectorsize $SectorSize -begincrop $RDBStartBlock -endcrop $EmptySpaceStartBlock_System
         Write-InformationMessage -Message ('Writing Work to Disk. Begin Crop is: ' + $WorkStartBlock + ' End Crop is: ' + $EmptySpaceStartBlock_Work) 
-        & $Script:DDTCPath ($LocationofImage+$NameofImage) $Script:HSTDiskDeviceID -offset $Offset -sectorsize $SectorSize -begincrop $WorkStartBlock -endcrop $EmptySpaceStartBlock_Work     
-    }
+        & $Script:DDTCPath ($LocationofImage+$NameofImage) $Script:HSTDiskDeviceID -offset $Offset -sectorsize $SectorSize -begincrop $WorkStartBlock -endcrop $EmptySpaceStartBlock_Work    
+        
+        # Write blank space over reserved PFS space for unformatted Work partitions
 
+        $AdditionalWorkPartitions = $AmigaPartitionsList | Where-Object {$_.PartitionNumber -gt 2}
+
+        if ($AdditionalWorkPartitions){
+            Write-StartSubTaskMessage -SubtaskNumber 3 -TotalSubtasks 3 -Message 'Writing blank space over PFS reserved space for any additional Work partitions'
+            foreach ($AdditionalPartition in $AdditionalWorkPartitions){
+                $StartBlock = $AdditionalPartition.StartSector
+                $SectorstoWrite = (10*1024*1024)/$Script:AmigaBlockSize # Write 10meg of blank space
+                Write-InformationMessage -Message ('Writing Empty Space to extra Work partition #'+($_.PartitionNumber-2)+' (device '+$AdditionalPartition.DeviceName+')')
+                & $Script:DDTCPath ($LocationofImage+$NameofImage) $Script:HSTDiskDeviceID -offset $Offset -sectorsize $SectorSize -begincrop $StartBlock -endcrop $StartBlock+$SectorstoWrite   
+            }
+        }
+    }
 
     Write-TaskCompleteMessage -Message 'Writing Image to Disk - Complete!'
 }
