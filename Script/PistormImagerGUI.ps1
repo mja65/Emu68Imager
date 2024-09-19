@@ -4524,9 +4524,9 @@ Write-TaskCompleteMessage -Message 'Setting up FAT32 Files - Complete!'
 ### Transfer files to Work partition
 
 if ($Script:TransferLocation) {
-    Write-StartTaskMessage -Message 'Transferring Migrated Files to Work Partition'
+    Write-StartTaskMessage -Message 'Transferring files to Work Partition. This might take some time depending on how many files you are transferring'
     Write-InformationMessage -Message ('Transferring files from '+$TransferLocation+' to "'+$MigratedFilesFolder+'" directory on Work drive')
-    $SourcePathtoUse = $TransferLocation+('\*')
+    $SourcePathtoUse = $TransferLocation.TrimEnd('\')+('\*')
     if (Test-Path ($AmigaDrivetoCopy+$VolumeName_Other+'\'+$MigratedFilesFolder+'.info')){
         Remove-Item ($AmigaDrivetoCopy+$VolumeName_Other+'\'+$MigratedFilesFolder+'.info')
     }
