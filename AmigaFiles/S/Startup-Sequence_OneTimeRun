@@ -46,14 +46,14 @@ IF NOT ${System} EQ "WinUAE"
        ENDIF 
    ENDIF 
 ENDIF 
-IF ${Reboot} EQ "TRUE" 
-      Ask "Press Enter and the Amiga will Reboot" 
-      Diskchange SDH0:
-      reboot 
-ENDIF
 if ${FIRSTTIMEBOOT} EQ "TRUE"
 	if NOT ${System} EQ "WINUAE"
 		echo "FALSE" > SYS:PREFS/ENV-ARCHIVE/FIRSTTIMEBOOT
 	endif
 endif
+IF ${Reboot} EQ "TRUE" 
+      Ask "Press Enter and the Amiga will Reboot" 
+      Diskchange SDH0:
+      reboot 
+ENDIF
 failat 10
