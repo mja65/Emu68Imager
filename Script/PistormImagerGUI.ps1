@@ -6,6 +6,99 @@ Add-Type -AssemblyName System.Windows.Forms
 
 ####################################################################### End GUI Types ################################################################################################################
 
+####################################################################### Begin Function for Log     #####################################################################################################
+function Write-Emu68ImagerLog {
+    param (
+        $StartorContinue,
+        $LocationforLog,
+        $DateandTime
+    )
+
+    If($StartorContinue -eq 'Start'){
+        $NetFrameworkrelease = Get-ItemPropertyValue -LiteralPath 'HKLM:SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full' -Name Release
+        $PowershellVersion = ((($PSVersionTable.PSVersion).Major).ToString()+'.'+(($PSVersionTable.PSVersion).Minor))
+        $WindowsLocale = ((((Get-WinSystemLocale).Name).Tostring())+' ('+(((Get-WinSystemLocale).DisplayName).Tostring())+')')
+        $WindowsVersion = (Get-WmiObject -class Win32_OperatingSystem).Caption
+        $LogEntry =     @"
+Emu68 Imager Log
+        
+Log created at: $DateandTime
+        
+Windows Version: $WindowsVersion
+Windows Locale Details: $WindowsLocale
+Powershell version used is: $PowershellVersion 
+.Net Framwork Release installed is: $NetFrameworkrelease 
+"@  
+    $LogEntry| Out-File -FilePath ($LocationforLog)
+
+    }
+    If($StartorContinue -eq 'Continue'){ 
+        $LogEntry =     @"
+
+Parameters used: 
+
+Script:HSTDiskName =  [$Script:HSTDiskName]
+Script:ScreenModetoUse = [$Script:ScreenModetoUse]
+Script:KickstartVersiontoUse = [$Script:KickstartVersiontoUse]
+Script:SSID = [$Script:SSID]
+Script:WifiPassword = [$Script:WifiPassword] 
+Script:SizeofFAT32 = [$Script:SizeofFAT32]
+Script:SizeofImage = [$Script:SizeofImage]
+Script:SizeofPartition_System = [$Script:SizeofPartition_System]
+Script:SizeofPartition_Other = [$Script:SizeofPartition_Other]
+Script:WriteImage = [$Script:WriteImage]
+Script:SetDiskupOnly = [$Script:SetDiskupOnly]
+Script:WorkingPath = [$Script:WorkingPath]
+Script:ROMPath = [$Script:ROMPath]
+Script:ADFPath = [$Script:ADFPath]
+Script:LocationofImage = [$Script:LocationofImage]
+Script:TransferLocation = [$Script:TransferLocation]
+
+Activity Commences:
+
+"@
+        $LogEntry| Out-File -FilePath ($LocationforLog) -Append
+    }
+}
+
+####################################################################### End Function for Log     #####################################################################################################
+
+####################################################################### Check Runtime Environment ##################################################################################################
+
+if ($env:TERM_PROGRAM){
+    Write-Host "Run from Visual Studio Code!"
+    $RunMode=0
+ } 
+ elseif ($psISE){
+    Write-Host "Run from Powershell ISE!"
+    $RunMode=0
+ }
+ else{
+    $RunMode=1
+ } 
+
+if  ($RunMode -eq 1){
+    $Script:Scriptpath = ((Split-Path -Parent -Path (Split-Path -Parent $MyInvocation.MyCommand.Definition))+'\')      
+    get-process -id $Pid | set-windowstate -State MINIMIZE
+} 
+
+if ($RunMode -eq 0){
+    $Script:Scriptpath = 'E:\Emu68Imager\'    
+}
+
+$Script:LogFolder = ($Script:Scriptpath+'Logs\')  
+
+if (-not (Test-Path ($Script:LogFolder))){
+    $null = New-Item ($Script:LogFolder) -ItemType Directory
+}
+
+$Script:LogDateTime = (Get-Date -Format yyyyMMddHHmmss).tostring()
+$Script:LogLocation = ($Script:LogFolder+$Script:LogDateTime+'_Emu68ImagerLog.txt')
+
+Write-Emu68ImagerLog -StartorContinue 'Start' -LocationforLog $Script:LogLocation -DateandTime (Get-Date -Format HH:mm:ss)
+####################################################################### End Check Runtime Environment ###############################################################################################
+
+
 ####################################################################### Null out Global Variables ###################################################################################################
 
 #Get-Variable > variables.txt
@@ -107,10 +200,12 @@ $Script:Fat32Maximum = 4*1024*1024 # in Kilobytes
 $Script:Fat32Minimum = 35840 # In KiB
 $Script:WorkbenchMinimum = 100*1024 # In KiB
 $Script:WorkMinimum = 10*1024 # In KiB
-$Script:HDF2emu68Path=($SourceProgramPath+'hdf2emu68.exe')
-$Script:7zipPath=($SourceProgramPath+'7z.exe')
-$Script:DDTCPath=($SourceProgramPath+'ddtc.exe')
+$Script:HDF2emu68Path = ($SourceProgramPath+'hdf2emu68.exe')
+$Script:7zipPath = ($SourceProgramPath+'7z.exe')
+$Script:DDTCPath = ($SourceProgramPath+'ddtc.exe')
+$Script:FindFreeSpacePath = ($SourceProgramPath+'FindFreeSpace.exe')
 $Script:AmigaRDBSectors = 2015 #Standard number of sectors at 512bytes per sector 
+$Script:AmigaBlockSize = 512
 
 
 $UnLZXURL='http://aminet.net/util/arc/W95unlzx.lha'
@@ -140,60 +235,6 @@ function Test-ExistenceofFiles {
     }
     else{
         return
-    }
-}
-
-function Write-Emu68ImagerLog {
-    param (
-        $StartorContinue,
-        $LocationforLog,
-        $DateandTime
-    )
-
-    If($StartorContinue -eq 'Start'){
-        $NetFrameworkrelease = Get-ItemPropertyValue -LiteralPath 'HKLM:SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full' -Name Release
-        $PowershellVersion = ((($PSVersionTable.PSVersion).Major).ToString()+'.'+(($PSVersionTable.PSVersion).Minor))
-        $WindowsLocale = ((((Get-WinSystemLocale).Name).Tostring())+' ('+(((Get-WinSystemLocale).DisplayName).Tostring())+')')
-        $WindowsVersion = (Get-WmiObject -class Win32_OperatingSystem).Caption
-        $LogEntry =     @"
-Emu68 Imager Log
-        
-Log created at: $DateandTime
-        
-Windows Version: $WindowsVersion
-Windows Locale Details: $WindowsLocale
-Powershell version used is: $PowershellVersion 
-.Net Framwork Release installed is: $NetFrameworkrelease 
-"@  
-    $LogEntry| Out-File -FilePath ($LocationforLog)
-
-    }
-    If($StartorContinue -eq 'Continue'){ 
-        $LogEntry =     @"
-
-Parameters used: 
-
-Script:HSTDiskName =  [$Script:HSTDiskName]
-Script:ScreenModetoUse = [$Script:ScreenModetoUse]
-Script:KickstartVersiontoUse = [$Script:KickstartVersiontoUse]
-Script:SSID = [$Script:SSID]
-Script:WifiPassword = [$Script:WifiPassword] 
-Script:SizeofFAT32 = [$Script:SizeofFAT32]
-Script:SizeofImage = [$Script:SizeofImage]
-Script:SizeofPartition_System = [$Script:SizeofPartition_System]
-Script:SizeofPartition_Other = [$Script:SizeofPartition_Other]
-Script:WriteImage = [$Script:WriteImage]
-Script:SetDiskupOnly = [$Script:SetDiskupOnly]
-Script:WorkingPath = [$Script:WorkingPath]
-Script:ROMPath = [$Script:ROMPath]
-Script:ADFPath = [$Script:ADFPath]
-Script:LocationofImage = [$Script:LocationofImage]
-Script:TransferLocation = [$Script:TransferLocation]
-
-Activity Commences:
-
-"@
-        $LogEntry| Out-File -FilePath ($LocationforLog) -Append
     }
 }
 
@@ -614,6 +655,7 @@ function Get-AmigaPartitionList {
         PartitionNumber = 0
         NumberofCylinders = $NumberofCylinders_RDB
         SizeofPartition = $Size_RDB
+        SizeofPartition_HST = $Size_RDB.ToString()+'kb'
         StartCylinder = $CurrentCylinder 
         EndCylinder = $CurrentCylinder+$NumberofCylinders_RDB-1 
         StartOffset = $CurrentOffset
@@ -636,6 +678,7 @@ function Get-AmigaPartitionList {
         PartitionNumber = $PartitionNumbertoPopulate
         NumberofCylinders = $NumberofCylinders_System
         SizeofPartition = $Size_System
+        SizeofPartition_HST = $Size_System.ToString()+'kb'
         StartCylinder = $CurrentCylinder 
         EndCylinder = $CurrentCylinder+$NumberofCylinders_System-1 
         StartOffset = $CurrentOffset
@@ -676,6 +719,7 @@ function Get-AmigaPartitionList {
             PartitionNumber = $PartitionNumbertoPopulate
             NumberofCylinders = $NumberofCylinders_Other
             SizeofPartition = $Size_Other
+            SizeofPartition_HST = $Size_Other.ToString()+'kb'
             StartCylinder = $CurrentCylinder 
             EndCylinder = $CurrentCylinder+$NumberofCylinders_Other-1 
             StartOffset = $CurrentOffset
@@ -1063,7 +1107,7 @@ function Start-HSTImager {
     }
     elseif ($Command -eq 'rdb part format'){
         Write-InformationMessage -Message ('Formatting partition '+$VolumeName)
-        & $HSTImagePathtouse rdb part format $DestinationPath $PartitionNumber $VolumeName --verbose          
+        & $HSTImagePathtouse rdb part format $DestinationPath $PartitionNumber $VolumeName >$Logoutput         
     }   
     elseif ($Command -eq 'fs extract') {
         Write-InformationMessage -Message ('Extracting data from ADF. Source path is: '+$SourcePath+' Destination path is: '+$DestinationPath)
@@ -1078,11 +1122,11 @@ function Start-HSTImager {
     foreach ($ErrorLine in $CheckforError){
         if ($ErrorLine -match " ERR]"){
             $ErrorCount += 1
-            Write-ErrorMessage -Message ('Error in HST-Imager: '+$ErrorLine)           
+            Write-ErrorMessage -Message ('Error in HST-Imager: '+$ErrorLine)
+            Copy-Item -Path $Logoutput -Destination ($Script:LogFolder+$Script:LogDateTime+'_LastHSTErrorLogFull.txt')        
         }
     }
-    if ($ErrorCount -ge 1){
-        $null=Remove-Item ($Logoutput) -Force 
+    if ($ErrorCount -ge 1){       
         return $false
     }    
     else{
@@ -1958,44 +2002,18 @@ function Get-AmigaPartitionSizeBlockBytes {
     return $Heads*$Sectors*$BlockSize
 }
 
+function Get-StartEmptySpace {
+    param (
+      $OutputMessage
+    )
+    $EmptySpaceStart  = ' - Empty space found at sector '.Length
+    $Length = $OutputMessage.Length
+    return [decimal]$OutputMessage.Substring($EmptySpaceStart,$Length-$EmptySpaceStart)
+  }
+
 ### End Functions
 
 ######################################################################### End Functions #############################################################################################################
-
-
-####################################################################### Check Runtime Environment ##################################################################################################
-
-if ($env:TERM_PROGRAM){
-    Write-Host "Run from Visual Studio Code!"
-    $RunMode=0
- } 
- elseif ($psISE){
-    Write-Host "Run from Powershell ISE!"
-    $RunMode=0
- }
- else{
-    $RunMode=1
- } 
-
-if  ($RunMode -eq 1){
-    $Script:Scriptpath = ((Split-Path -Parent -Path (Split-Path -Parent $MyInvocation.MyCommand.Definition))+'\')      
-    get-process -id $Pid | set-windowstate -State MINIMIZE
-} 
-
-if ($RunMode -eq 0){
-    $Script:Scriptpath = 'E:\Emu68Imager\'    
-}
-
-$Script:LogFolder = ($Script:Scriptpath+'Logs\')  
-
-if (-not (Test-Path ($Script:LogFolder))){
-    $null = New-Item ($Script:LogFolder) -ItemType Directory
-}
-
-$Script:LogLocation = ($Script:LogFolder+'Emu68ImagerLog_'+(Get-Date -Format yyyyMMddHHmmss).tostring())
-
-Write-Emu68ImagerLog -StartorContinue 'Start' -LocationforLog $Script:LogLocation -DateandTime (Get-Date -Format HH:mm:ss)
-####################################################################### End Check Runtime Environment ###############################################################################################
 
 ##################################################################### Peform Pre-GUI Checks ##############################################################################################################
 
@@ -3399,7 +3417,7 @@ $WPF_UI_NoFileInstall_CheckBox.Add_UnChecked({
 })
 
 $WPF_UI_Documentation_Button.Add_Click({
-    Start-Process "https://www.tlc.com/shows/90-day-fiance"
+    Start-Process "https://mja65.github.io/Emu68-Imager/"
 })
 
 
@@ -3762,7 +3780,7 @@ if ($Script:WriteImage -eq 'TRUE'){
     
     Write-InformationMessage ('Creating Partition for FAT32 Partition for Disk: '+$Script:HSTDiskNumber+' with size '+($Script:SizeofFAT32.ToString()+'KB')) 
     try {
-        $null = New-Partition -DiskNumber $Script:HSTDiskNumber -Size ($Script:SizeofFAT32*1024)  -MbrType FAT32 | format-volume -filesystem FAT32 -newfilesystemlabel EMU68BOOT # Create Fat32 partition - fine Tom was right
+        $null = New-Partition -DiskNumber $Script:HSTDiskNumber -Size ($Script:SizeofFAT32*1024)  -MbrType FAT32 | format-volume -filesystem FAT32 -newfilesystemlabel EMU68BOOT
     }
     catch {
         Write-ErrorMessage 'Error creating FAT32 Partition!'
@@ -3772,7 +3790,7 @@ if ($Script:WriteImage -eq 'TRUE'){
     
     Write-StartSubTaskMessage -message ('Creating Partition for Amiga Drives for Disk: '+$Script:HSTDiskNumber+' with size '+($Script:SizeofImage_Powershell.ToString()+'KB')) -SubtaskNumber 3 -TotalSubtasks 3
     try {
-        $null = New-Partition -DiskNumber $Script:HSTDiskNumber  -Size ($Script:SizeofImage_Powershell*1024) -MbrType FAT32  # fine Tom was right
+        $null = New-Partition -DiskNumber $Script:HSTDiskNumber  -Size ($Script:SizeofImage_Powershell*1024) -MbrType FAT32
     }
     catch {
         Write-ErrorMessage 'Error creating Amiga Partition!'
@@ -3915,32 +3933,32 @@ foreach ($AmigaPartition in $AmigaPartitionsList) {
     if ($AmigaPartition.PartitionNumber -ne 0){
         Write-InformationMessage -Message ('Preparing Partition Device: '+$AmigaPartition.DeviceName+' VolumeName '+$AmigaPartition.VolumeName)
         if ($AmigaPartition.VolumeName -eq $VolumeName_System){
-            if (-not (Start-HSTImager -Command "rdb part add" -DestinationPath ($LocationofImage+$NameofImage) -DeviceName $AmigaPartition.DeviceName -DosType $AmigaPartition.DosType -SizeofPartition $AmigaPartition.SizeofPartition -Options '--bootable' -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+            if (-not (Start-HSTImager -Command "rdb part add" -DestinationPath ($LocationofImage+$NameofImage) -DeviceName $AmigaPartition.DeviceName -DosType $AmigaPartition.DosType -SizeofPartition $AmigaPartition.SizeofPartition_HST -Options '--bootable' -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
                 exit
             } 
         }
         else{
-            if (-not (Start-HSTImager -Command "rdb part add" -DestinationPath ($LocationofImage+$NameofImage) -DeviceName $AmigaPartition.DeviceName -DosType $AmigaPartition.DosType -SizeofPartition $AmigaPartition.SizeofPartition -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+            if (-not (Start-HSTImager -Command "rdb part add" -DestinationPath ($LocationofImage+$NameofImage) -DeviceName $AmigaPartition.DeviceName -DosType $AmigaPartition.DosType -SizeofPartition $AmigaPartition.SizeofPartition_HST -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
                 exit
             } 
         }
     }
 }
 
-# if (-not (Start-HSTImager -Command "rdb part format" -DestinationPath ($LocationofImage+$NameofImage) -PartitionNumber 1 -VolumeName $VolumeName_System -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
-#     exit
-# } 
-# if (-not (Start-HSTImager -Command "rdb part format" -DestinationPath ($LocationofImage+$NameofImage) -PartitionNumber 2 -VolumeName $VolumeName_Other -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
-#     exit
-# } 
+if (-not (Start-HSTImager -Command "rdb part format" -DestinationPath ($LocationofImage+$NameofImage) -PartitionNumber 1 -VolumeName $VolumeName_System -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+    exit
+} 
+if (-not (Start-HSTImager -Command "rdb part format" -DestinationPath ($LocationofImage+$NameofImage) -PartitionNumber 2 -VolumeName $VolumeName_Other -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+    exit
+} 
 
-foreach ($AmigaPartition in $AmigaPartitionsList) {
-    if ($AmigaPartition.PartitionNumber -ne 0){
-        if (-not (Start-HSTImager -Command "rdb part format" -DestinationPath ($LocationofImage+$NameofImage) -PartitionNumber ($AmigaPartition.PartitionNumber).tostring() -VolumeName $AmigaPartition.VolumeName -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
-        exit
-        } 
-    }
-}
+# foreach ($AmigaPartition in $AmigaPartitionsList) {
+#     if ($AmigaPartition.PartitionNumber -ne 0){
+#         if (-not (Start-HSTImager -Command "rdb part format" -DestinationPath ($LocationofImage+$NameofImage) -PartitionNumber ($AmigaPartition.PartitionNumber).tostring() -VolumeName $AmigaPartition.VolumeName -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+#         exit
+#         } 
+#     }
+# }
 
 if ($Script:SetDiskupOnly -eq 'FALSE'){
     #### Begin - Create NewFolder.info file
@@ -4012,33 +4030,17 @@ if ($Script:SetDiskupOnly -eq 'FALSE'){
             Write-ErrorMessage -Message 'Unable to reposition icon!'
         }
     }
-    
-    foreach ($AmigaPartition in $AmigaPartitionsList) {
-        if ($AmigaPartition.PartitionNumber -gt 2){
-            $DestinationPathtoUse = ($LocationofImage+$NameofImage+'\rdb\'+$AmigaPartition.DeviceName+'\')
-            Write-InformationMessage -Message ('Copying Icons to extra Work Partition(s). Source is: '+$SourcePath+' Destination is: '+$DestinationPathtoUse) 
-            if (-not (Start-HSTImager -Command 'fs extract' -SourcePath $SourcePath -DestinationPath $DestinationPathtoUse -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
-                     exit
-         }
-        }
-    }
-    
-
-    # foreach ($AmigaPartition in $AmigaPartitionsList | Where-Object {$_.VolumeName -ne $VolumeName_System} ){
-    #     If ($AmigaPartition.PartitionNumber -ge 2){
-    #         $DestinationPathtoUse = ($LocationofImage+$NameofImage+'\rdb\'+$AmigaPartition.DeviceName+'\')
+   
+    # foreach ($AmigaPartition in $AmigaPartitionsList) {
+    #     if ($AmigaPartition.PartitionNumber -gt 2){
+    #         $SourcePathtoUse = ($AmigaDrivetoCopy+$VolumeName_Other+'\disk.info')  #Using Work disk.info extracted to Windows to copy to RDB for additional Work partitions
+    #         $DestinationPathtoUse = ($LocationofImage+$NameofImage+'\rdb\'+$AmigaPartition.DeviceName+'\disk.info')
+    #         Write-InformationMessage -Message ('Copying Icons to extra Work Partition(s). Source is: '+$SourcePathtoUse+' Destination is: '+$DestinationPathtoUse) 
+    #         if (-not (Start-HSTImager -Command 'fs copy' -SourcePath $SourcePathtoUse -DestinationPath $DestinationPathtoUse -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+    #                  exit
+    #      }
     #     }
-    #     else{
-    #         $DestinationPathtoUse = ($AmigaDrivetoCopy+$VolumeName_Other) 
-    #     }
-    #     Write-InformationMessage -Message ('Copying Icons to Work Partition. Source is: '+$SourcePath+' Destination is: '+$DestinationPathtoUse)
-    #     if (-not (Start-HSTImager -Command 'fs extract' -SourcePath $SourcePath -DestinationPath $DestinationPathtoUse -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
-    #                 exit
-    #     }
-    #     if (($AmigaPartition.PartitionNumber -le 3) -and ($Script:KickstartVersiontoUse -eq 3.2)) {
-    #         Rename-Item ($AmigaDrivetoCopy+$VolumeName_Other+'\def_harddisk.info') ($AmigaDrivetoCopy+$VolumeName_Other+'\disk.info') 
-    #     }
-    # }
+    # }   
 
     Write-TaskCompleteMessage -Message 'Preparing Amiga Image - Complete!'
 
@@ -4583,6 +4585,32 @@ If ($Script:WriteImage -eq 'TRUE'){
     #Write-HDFtoDisk -ddtcpathtouse  -DeviceIDtoUse $Script:HSTDiskDeviceID -SectorSizetoUse $SectorSize -SectorOffset $Offset
     #Write-Image -HSTImagePathtouse $HSTImagePath -SourcePath ($LocationofImage+'Emu68Kickstart'+$Script:KickstartVersiontoUse+'.img') -DestinationPath $Script:HSTDiskName  
     & $Script:DDTCPath ($LocationofImage+$NameofImage) $Script:HSTDiskDeviceID -offset $Offset -sectorsize $SectorSize
+
+    # $RDBStartBlock = ($AmigaPartitionsList | Where-Object {$_.PartitionNumber -eq 0} | Select-Object 'StartSector').StartSector
+    # $RDBEndBlock = ($AmigaPartitionsList | Where-Object {$_.PartitionNumber -eq 0} | Select-Object 'EndSector').EndSector-1
+    # $SystemStartBlock = ($AmigaPartitionsList | Where-Object {$_.PartitionNumber -eq 1} | Select-Object 'StartSector').StartSector
+    # $SystemEndBlock = ($AmigaPartitionsList | Where-Object {$_.PartitionNumber -eq 1} | Select-Object 'EndSector').EndSector-1
+    # $WorkStartBlock = ($AmigaPartitionsList | Where-Object {$_.PartitionNumber -eq 2} | Select-Object 'StartSector').StartSector
+    # $WorkEndBlock = ($AmigaPartitionsList | Where-Object {$_.PartitionNumber -eq 2} | Select-Object 'EndSector').EndSector-1
+
+    # Write-InformationMessage -Message 'Determining start of free space - Workbench Partition (this may take some time)'
+    # $Output = & $Script:FindFreeSpacePath ($LocationofImage+$NameofImage) -begincrop $SystemStartBlock -endcrop $SystemEndBlock -noprogress
+    # $EmptySpaceStartBlock_System = (Get-StartEmptySpace -OutputMessage $Output[3])+$SystemStartBlock
+    # Write-InformationMessage -Message 'Determining start of free space - Workbench - Completed'
+
+    # Write-InformationMessage -Message 'Determining start of free space - Work Partition (this may take some time)'
+    # $Output = & $Script:FindFreeSpacePath ($LocationofImage+$NameofImage) -begincrop $WorkStartSector -endcrop $WorkEndSector -noprogress
+    # $EmptySpaceStartBlock_Work = (Get-StartEmptySpace -OutputMessage $Output[3])+$WorkStartSector
+    # Write-InformationMessage -Message 'Determining start of free space - Work Partition - Completed'
+
+    # $AmigaBlocksPerSector = ($Script:AmigaBlockSize/$SectorSize)  
+    # $Offset_RDB = $Offset
+    # $Offset_Workbench = $Offset_RDB+($SystemStartBlock*$AmigaBlocksPerSector)
+    # $Offset_Work = $Offset_Workbench+($WorkStartBlock*$AmigaBlocksPerSector)
+
+    # & $Script:DDTCPath ($LocationofImage+$NameofImage) $Script:HSTDiskDeviceID -offset $Offset_RDB -sectorsize $SectorSize -endcrop $RDBEndBlock*$AmigaBlocksPerSector
+    # & $Script:DDTCPath ($LocationofImage+$NameofImage) $Script:HSTDiskDeviceID -offset $Offset_Workbench -sectorsize $SectorSize -begincrop $RDBEndBlock -endcrop $EmptySpaceStartBlock_System
+    # & $Script:DDTCPath ($LocationofImage+$NameofImage) $Script:HSTDiskDeviceID -offset $Offset_Work -sectorsize $SectorSize -begincrop $SystemEndBlock -endcrop $EmptySpaceStartBlock_Work 
 
     Write-TaskCompleteMessage -Message 'Writing Image to Disk - Complete!'
 }
