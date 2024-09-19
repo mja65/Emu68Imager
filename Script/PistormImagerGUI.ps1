@@ -4642,9 +4642,9 @@ If ($Script:WriteImage -eq 'TRUE'){
     
         $AmigaBlocksPerSector = ($Script:AmigaBlockSize/$SectorSize)  
        
-        Write-InformationMessage -Message ('Writing RDB to Disk. Begin Crop is: ' + $RDBStartBlock + ' End Crop is: ' + ($RDBEndBlock+1)) 
-        & $Script:DDTCPath ($LocationofImage+$NameofImage) $Script:HSTDiskDeviceID -offset $Offset -sectorsize $SectorSize -begincrop $RDBStartBlock -endcrop ($RDBEndBlock)+1
-        Write-InformationMessage -Message ('Writing Workbench to Disk. Begin Crop is: ' + $SystemStartBlock + ' End Crop is: ' + $EmptySpaceStartBlock_System) 
+      #  Write-InformationMessage -Message ('Writing RDB to Disk. Begin Crop is: ' + $RDBStartBlock + ' End Crop is: ' + ($RDBEndBlock+1)) 
+      #  & $Script:DDTCPath ($LocationofImage+$NameofImage) $Script:HSTDiskDeviceID -offset $Offset -sectorsize $SectorSize -begincrop $RDBStartBlock -endcrop ($RDBEndBlock)+1
+        Write-InformationMessage -Message ('Writing Workbench to Disk. Begin Crop is: ' + $RDBStartBlock + ' End Crop is: ' + $EmptySpaceStartBlock_System) 
         & $Script:DDTCPath ($LocationofImage+$NameofImage) $Script:HSTDiskDeviceID -offset $Offset -sectorsize $SectorSize -begincrop $SystemStartBlock -endcrop $EmptySpaceStartBlock_System
         Write-InformationMessage -Message ('Writing Work to Disk. Begin Crop is: ' + $WorkStartBlock + ' End Crop is: ' + $EmptySpaceStartBlock_Work) 
         & $Script:DDTCPath ($LocationofImage+$NameofImage) $Script:HSTDiskDeviceID -offset $Offset -sectorsize $SectorSize -begincrop $WorkStartBlock -endcrop $EmptySpaceStartBlock_Work     
