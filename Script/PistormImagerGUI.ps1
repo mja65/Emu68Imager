@@ -1965,13 +1965,18 @@ function Repair-SDDisk {
         $TempFoldertoUse
         )
         $SelectDiskLine = ('SELECT DISK '+$DiskNumbertoUse)
-        NEW-ITEM -Path ($TempFoldertoUse+'DiskPartScript.txt') -ItemType file -force | OUT-NULL
-        ADD-CONTENT -Path ($TempFoldertoUse+'DiskPartScript.txt')  $SelectDiskLine
-        ADD-CONTENT -Path ($TempFoldertoUse+'DiskPartScript.txt')  "Clean"
+        NEW-ITEM -Path ($TempFoldertoUse+'DiskPartScriptClean.txt') -ItemType file -force | OUT-NULL
+        ADD-CONTENT -Path ($TempFoldertoUse+'DiskPartScriptClean.txt') $SelectDiskLine
+        ADD-CONTENT -Path ($TempFoldertoUse+'DiskPartScriptClean.txt') "Clean"
+        
+        NEW-ITEM -Path ($TempFoldertoUse+'DiskPartScriptConvertMBR.txt') -ItemType file -force | OUT-NULL
+        ADD-CONTENT -Path ($TempFoldertoUse+'DiskPartScriptConvertMBR.txt') $SelectDiskLine
+        ADD-CONTENT -Path ($TempFoldertoUse+'DiskPartScriptConvertMBR.txt') "Convert MBR"
+
         $Counter = 1
         do {
             Write-InformationMessage ('Attempting to Clean Disk using Diskpart. Attempt #'+$Counter)
-            $CleanDiskOutput = (DISKPART.exe /S ($TempFoldertoUse+'DiskPartScript.txt'))   
+            $CleanDiskOutput = (DISKPART.exe /S ($TempFoldertoUse+'DiskPartScriptClean.txt'))   
             $CleanDiskOutputLinetoCheck = $CleanDiskOutput[$CleanDisk.count-1] 
             if (($CleanDiskOutputLinetoCheck -match 'succeeded') `
                 -or ($CleanDiskOutputLinetoCheck -match 'completata') `
@@ -1979,8 +1984,7 @@ function Repair-SDDisk {
                 -or ($CleanDiskOutputLinetoCheck -match 'nettoyer') `
                 -or ($CleanDiskOutputLinetoCheck -match 'bereingt')){  
                 Write-InformationMessage 'DiskPart has Cleaned the Disk'
-                $IsSuccess = $true
-                return $true
+                $IsSuccess = $true              
             }
             else {
                 Write-InformationMessage 'Diskpart did not clean disk! '
@@ -1990,6 +1994,10 @@ function Repair-SDDisk {
         } until (
             $Counter -gt 5 -or $IsSuccess -eq $true
         )
+        Write-InformationMessage 'Setting disk to MBR'
+        $ConvertMBRDiskOutput = (DISKPART.exe /S ($TempFoldertoUse+'DiskPartScriptConvertMBR..txt'))
+        Write-InformationMessage 'Disk set to MBR'   
+        return $true
 }
 
 function Get-Cylinders {
