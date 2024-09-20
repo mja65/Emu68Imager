@@ -1,3 +1,43 @@
+<#PSScriptInfo
+
+.VERSION 0.01
+
+.GUID 73d9401c-ab81-4be5-a2e5-9fc0834be0fc
+
+.AUTHOR SupremeTurnip
+
+.COMPANYNAME
+
+.COPYRIGHT
+
+.TAGS
+
+.LICENSEURI https://github.com/mja65/Emu68-Imager/blob/main/LICENSE
+
+.PROJECTURI https://github.com/mja65/Emu68-Imager
+
+.ICONURI
+
+.EXTERNALMODULEDEPENDENCIES 
+
+.REQUIREDSCRIPTS
+
+.EXTERNALSCRIPTDEPENDENCIES
+
+.RELEASENOTES
+
+
+.PRIVATEDATA
+
+#>
+
+<# 
+
+.DESCRIPTION 
+ Script for Emu68Imager 
+
+#> 
+
 ####################################################################### Add GUI Types ################################################################################################################
 
 #[void][System.Reflection.Assembly]::LoadWithPartialName('presentationframework')
@@ -1989,6 +2029,7 @@ function Repair-SDDisk {
             else {
                 Write-InformationMessage 'Diskpart did not clean disk! '
                 $IsSuccess = $false
+                return $false
             }
             $Counter ++
         } until (
@@ -4612,9 +4653,14 @@ if ($Script:SetDiskupOnly -eq 'FALSE'){
 
     Write-StartTaskMessage -Message 'Transferring Amiga Files to Image'
     
+    Write-StartSubTaskMessage -SubtaskNumber 1 -TotalSubtasks 2 -Message 'Transferring files to Workbench Partition'
+
     if (-not(Start-HSTImager -Command 'fs copy' -SourcePath ($AmigaDrivetoCopy+$VolumeName_System) -DestinationPath ($LocationofImage+$NameofImage+'\rdb\'+$DeviceName_System) -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
         exit
     } 
+
+    Write-StartSubTaskMessage -SubtaskNumber 2 -TotalSubtasks 2 -Message 'Transferring files to Work Partition'
+
     if (-not(Start-HSTImager -Command 'fs copy' -SourcePath ($AmigaDrivetoCopy+$VolumeName_Other) -DestinationPath ($LocationofImage+$NameofImage+'\rdb\'+$DeviceName_Other) -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
         exit
     }  
@@ -4696,10 +4742,11 @@ If ($Script:WriteImage -eq 'TRUE'){
         if ($AdditionalWorkPartitions){
             Write-StartSubTaskMessage -SubtaskNumber 3 -TotalSubtasks 3 -Message 'Writing blank space over PFS reserved space for any additional Work partitions'
             foreach ($AdditionalPartition in $AdditionalWorkPartitions){
-                $StartBlock = $AdditionalPartition.StartSector
+                $StartBlock = [int]$AdditionalPartition.StartSector
                 $SectorstoWrite = (10*1024*1024)/$Script:AmigaBlockSize # Write 10meg of blank space
-                Write-InformationMessage -Message ('Writing Empty Space to extra Work partition #'+($AdditionalPartition.PartitionNumber-2)+' (device '+$AdditionalPartition.DeviceName+') for Startblock: '+$StartBlock+' Endblock: '+$StartBlock+$SectorstoWrite)
-                & $Script:DDTCPath ($LocationofImage+$NameofImage) $Script:HSTDiskDeviceID -offset $Offset -sectorsize $SectorSize -begincrop $StartBlock -endcrop $StartBlock+$SectorstoWrite   
+                $EndBlock = $StartBlock + $SectorstoWrite
+                Write-InformationMessage -Message ('Writing Empty Space to extra Work partition #'+($AdditionalPartition.PartitionNumber-2)+' (device '+$AdditionalPartition.DeviceName+') for Startblock: '+$StartBlock+' Endblock: '+$EndBlock)
+                & $Script:DDTCPath ($LocationofImage+$NameofImage) $Script:HSTDiskDeviceID -offset $Offset -sectorsize $SectorSize -begincrop $StartBlock -endcrop $EndBlock 
             }
         }
     }
