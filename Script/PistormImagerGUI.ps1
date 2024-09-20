@@ -3860,9 +3860,22 @@ if ($Script:WriteImage -eq 'TRUE'){
         exit
     }
     
+    if ((Get-Disk -Number $Script:HSTDiskNumber).PartitionStyle -ne 'MBR'){
+        Write-ErrorMessage 'Card is not set up as MBR!'
+        exit
+    }
+
+    if ([System.Convert]::ToString((((Get-Partition -DiskNumber $Script:HSTDiskNumber) | Where-Object {$_.PartitionNumber -eq 2}).MbrType),16) -ne 76){
+        Write-ErrorMessage 'Amiga Partition is not set up as ID 76!'
+        exit
+    }
+    
+    if ([System.Convert]::ToString((((Get-Partition -DiskNumber $Script:HSTDiskNumber) | Where-Object {$_.PartitionNumber -eq 1}).MbrType),16) -ne 'c'){
+        Write-ErrorMessage 'FAT32 Partition is not set up as FAT32!'
+        exit
+    }
     Write-TaskCompleteMessage -Message 'Setting up SD card - Complete!'
 }
-
 
 ### Download HST-Imager and HST-Amiga
 
@@ -4658,13 +4671,13 @@ If ($Script:WriteImage -eq 'TRUE'){
         Write-StartSubTaskMessage -SubtaskNumber 1 -TotalSubtasks 3 -Message 'Determing Free Space locations in partitions'
 
         Write-InformationMessage -Message 'Determining start of free space - Workbench Partition (this may take some time)'
-        & $Script:FindFreeSpacePath ($LocationofImage+$NameofImage) -begincrop $RDBStartBlock -endcrop $SystemEndBlock -result ($TempFolder+'FindFreeSpaceLog.txt')
+        & $Script:FindFreeSpacePath ($LocationofImage+$NameofImage) -sectorsize $SectorSize .\InputFiles-begincrop $RDBStartBlock -endcrop $SystemEndBlock -result ($TempFolder+'FindFreeSpaceLog.txt')
         $EmptySpaceStartBlock_System = ([decimal](Get-Content -Path ($TempFolder+'FindFreeSpaceLog.txt')))+$RDBStartBlock 
         Write-InformationMessage -Message ('FreeSpace found at: '+$EmptySpaceStartBlock_System+' (from start of .hdf file)')
         Write-InformationMessage -Message 'Determining start of free space - Workbench - Completed'              
     
         Write-InformationMessage -Message 'Determining start of free space - Work Partition (this may take some time)'
-        & $Script:FindFreeSpacePath ($LocationofImage+$NameofImage) -begincrop $WorkStartBlock -endcrop $WorkEndBlock -result ($TempFolder+'FindFreeSpaceLog.txt')
+        & $Script:FindFreeSpacePath ($LocationofImage+$NameofImage) -sectorsize $SectorSize -begincrop $WorkStartBlock -endcrop $WorkEndBlock -result ($TempFolder+'FindFreeSpaceLog.txt')
         $EmptySpaceStartBlock_Work = ([decimal](Get-Content -Path ($TempFolder+'FindFreeSpaceLog.txt')))+$WorkStartBlock
         Write-InformationMessage -Message ('FreeSpace found at: '+$EmptySpaceStartBlock_Work+' (from start of .hdf file)')
         Write-InformationMessage -Message 'Determining start of free space - Work Partition - Completed'
@@ -4685,7 +4698,7 @@ If ($Script:WriteImage -eq 'TRUE'){
             foreach ($AdditionalPartition in $AdditionalWorkPartitions){
                 $StartBlock = $AdditionalPartition.StartSector
                 $SectorstoWrite = (10*1024*1024)/$Script:AmigaBlockSize # Write 10meg of blank space
-                Write-InformationMessage -Message ('Writing Empty Space to extra Work partition #'+($_.PartitionNumber-2)+' (device '+$AdditionalPartition.DeviceName+')')
+                Write-InformationMessage -Message ('Writing Empty Space to extra Work partition #'+($AdditionalPartition.PartitionNumber-2)+' (device '+$AdditionalPartition.DeviceName+') for Startblock: '+$StartBlock+' Endblock: '+$StartBlock+$SectorstoWrite)
                 & $Script:DDTCPath ($LocationofImage+$NameofImage) $Script:HSTDiskDeviceID -offset $Offset -sectorsize $SectorSize -begincrop $StartBlock -endcrop $StartBlock+$SectorstoWrite   
             }
         }
