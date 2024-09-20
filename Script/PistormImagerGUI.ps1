@@ -1868,16 +1868,22 @@ function Get-SpaceCheck {
         } 
         return $true # Sufficient Space
     }
+    $Msg_Header_NonEmpty = 'Non Empty Folder'
+    $Msg_Body_NonEmpty = @"
+You have selected a non-empty folder! Please select an empty folder.
+"@
     $Msg_Header ='Error - Insufficient Space!'    
     $Msg_Body = @"
 You do not have sufficient space on your drive to run the tool!
 
-Either select a location with sufficient space or press 'Cancel' to quit the tool
+Either select a location with sufficient space (the folder must be empty) 
+or press 'Cancel' to quit the tool
 "@   
     $Msg_Body_Repeat = @"
 You still do not have sufficient space on your drive to run the tool!
                   
-Either select a location with sufficient space or press cancel to quit the tool
+Either select a location with sufficient space (the folder must be empty) 
+or press cancel to quit the tool
 "@         
 
     $ValueofAction = [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,1,48)
@@ -1885,33 +1891,17 @@ Either select a location with sufficient space or press cancel to quit the tool
         $Script:ExitType =2
         return $false
     }
-    $Script:WorkingPath = Get-FolderPath -Message 'Select location for Working Path' -RootFolder 'MyComputer'-ShowNewFolderButton
+    $Script:WorkingPath = Get-FolderPath -Message 'Select location for Working Path (folder must be empty)' -RootFolder 'MyComputer'-ShowNewFolderButton
     if($Script:WorkingPath){
-        $Script:WorkingPath = $Script:WorkingPath.TrimEnd('\')+'\'
-        $Script:WorkingPathDefault = $false   
-        $Script:Space_WorkingFolderDisk = (Confirm-DiskSpace -PathtoCheck $Script:WorkingPath)/1kb
-        $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk 
-            if ($Script:AvailableSpace_WorkingFolderDisk -gt $Script:SpaceThreshold_WorkingFolderDisk){
-                $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpace_WorkingFolderDisk 
-                $WPF_UI_Start_Button.Background = 'Green'
-                $WPF_UI_Start_Button.Foreground = 'White'
-                $WPF_UI_Start_Button.Content = 'Run Tool'
-                return $true
-            }
-            else {
-                $Script:WorkingPath = $null
-                $Script:WorkingPathDefault = $null
-            }
-    } 
-    do {
-        $ValueofAction = [System.Windows.MessageBox]::Show($Msg_Body_Repeat, $Msg_Header,1,48)
-        if ($ValueofAction -eq 'OK'){
-            $Script:WorkingPath = Get-FolderPath -Message 'Select location for Working Path' -RootFolder 'MyComputer'-ShowNewFolderButton
-            if($Script:WorkingPath){
-                $Script:WorkingPath = $Script:WorkingPath.TrimEnd('\')+'\'
-                $Script:WorkingPathDefault = $false   
-                $Script:Space_WorkingFolderDisk = (Confirm-DiskSpace -PathtoCheck $Script:WorkingPath)/1kb
-                $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk 
+        $items = Get-ChildItem -Path $Script:WorkingPath -Recurse -Force
+        if ($items.Count -ne 0) {
+            $ValueofAction = [System.Windows.MessageBox]::Show($Msg_Body_NonEmpty, $Msg_Header_NonEmpty,0,48)
+        }
+        else{
+            $Script:WorkingPath = $Script:WorkingPath.TrimEnd('\')+'\'
+            $Script:WorkingPathDefault = $false   
+            $Script:Space_WorkingFolderDisk = (Confirm-DiskSpace -PathtoCheck $Script:WorkingPath)/1kb
+            $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk 
                 if ($Script:AvailableSpace_WorkingFolderDisk -gt $Script:SpaceThreshold_WorkingFolderDisk){
                     $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpace_WorkingFolderDisk 
                     $WPF_UI_Start_Button.Background = 'Green'
@@ -1922,7 +1912,35 @@ Either select a location with sufficient space or press cancel to quit the tool
                 else {
                     $Script:WorkingPath = $null
                     $Script:WorkingPathDefault = $null
-                }        
+                }
+        }
+    } 
+    do {
+        $ValueofAction = [System.Windows.MessageBox]::Show($Msg_Body_Repeat, $Msg_Header,1,48)
+        if ($ValueofAction -eq 'OK'){
+            $Script:WorkingPath = Get-FolderPath -Message 'Select location for Working Path (folder must be empty)' -RootFolder 'MyComputer'-ShowNewFolderButton
+            if($Script:WorkingPath){
+                $items = Get-ChildItem -Path $Script:WorkingPath -Recurse -Force
+                if ($items.Count -ne 0) {
+                    $ValueofAction = [System.Windows.MessageBox]::Show($Msg_Body_NonEmpty, $Msg_Header_NonEmpty,0,48)
+                }
+                else{
+                    $Script:WorkingPath = $Script:WorkingPath.TrimEnd('\')+'\'
+                    $Script:WorkingPathDefault = $false   
+                    $Script:Space_WorkingFolderDisk = (Confirm-DiskSpace -PathtoCheck $Script:WorkingPath)/1kb
+                    $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk 
+                    if ($Script:AvailableSpace_WorkingFolderDisk -gt $Script:SpaceThreshold_WorkingFolderDisk){
+                        $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpace_WorkingFolderDisk 
+                        $WPF_UI_Start_Button.Background = 'Green'
+                        $WPF_UI_Start_Button.Foreground = 'White'
+                        $WPF_UI_Start_Button.Content = 'Run Tool'
+                        return $true
+                    }
+                    else {
+                        $Script:WorkingPath = $null
+                        $Script:WorkingPathDefault = $null
+                    }        
+                }
             }
         }
         else {
