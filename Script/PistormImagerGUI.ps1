@@ -2035,7 +2035,7 @@ function Repair-SDDisk {
         } until (
             $Counter -gt 5 -or $IsSuccess -eq $true
         )
-        (if $IsSuccess -eq $false){
+        if ($IsSuccess -eq $false){
             return $false
         }
         else{
