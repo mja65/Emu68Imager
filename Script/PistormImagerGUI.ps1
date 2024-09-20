@@ -2029,16 +2029,21 @@ function Repair-SDDisk {
             else {
                 Write-InformationMessage 'Diskpart did not clean disk! '
                 $IsSuccess = $false
-                return $false
+
             }
             $Counter ++
         } until (
             $Counter -gt 5 -or $IsSuccess -eq $true
         )
-        Write-InformationMessage 'Setting disk to MBR'
-        $ConvertMBRDiskOutput = (DISKPART.exe /S ($TempFoldertoUse+'DiskPartScriptConvertMBR..txt'))
-        Write-InformationMessage 'Disk set to MBR'   
-        return $true
+        (if $IsSuccess -eq $false){
+            return $false
+        }
+        else{
+            Write-InformationMessage 'Setting disk to MBR'
+            $ConvertMBRDiskOutput = (DISKPART.exe /S ($TempFoldertoUse+'DiskPartScriptConvertMBR..txt'))
+            Write-InformationMessage 'Disk set to MBR'   
+            return $true
+        }
 }
 
 function Get-Cylinders {
