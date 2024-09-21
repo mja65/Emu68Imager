@@ -78,12 +78,15 @@ Powershell version used is: $PowershellVersion
 Parameters used: 
 
 Script:HSTDiskName =  [$Script:HSTDiskName]
+Script:DiskFriendlyName = [$Script:DiskFriendlyName]
 Script:ScreenModetoUse = [$Script:ScreenModetoUse]
+Script:ScreenModetoUseFriendlyName = [$Script:ScreenModetoUseFriendlyName]
 Script:KickstartVersiontoUse = [$Script:KickstartVersiontoUse]
 Script:SSID = [$Script:SSID]
 Script:WifiPassword = [$Script:WifiPassword] 
 Script:SizeofFAT32 = [$Script:SizeofFAT32]
 Script:SizeofImage = [$Script:SizeofImage]
+Script:SizeofDisk = [$Script:SizeofDisk]
 Script:SizeofPartition_System = [$Script:SizeofPartition_System]
 Script:SizeofPartition_Other = [$Script:SizeofPartition_Other]
 Script:WriteImage = [$Script:WriteImage]
@@ -276,10 +279,15 @@ if ($RunMode -eq 0){
     $Script:Scriptpath = 'E:\Emu68Imager\'    
 }
 
-$Script:LogFolder = ($Script:Scriptpath+'Logs\')  
+$Script:LogFolder = ($Script:Scriptpath+'Logs\')
+$Script:SettingsFolder = ($Script:Scriptpath+'Settings\')  
 
 if (-not (Test-Path ($Script:LogFolder))){
     $null = New-Item ($Script:LogFolder) -ItemType Directory
+}
+
+if (-not (Test-Path ($Script:SettingsFolder))){
+    $null = New-Item ($Script:SettingsFolder) -ItemType Directory
 }
 
 $Script:LogDateTime = (Get-Date -Format yyyyMMddHHmmss).tostring()
@@ -298,7 +306,9 @@ $Script:HSTDiskName = $null
 $Script:HSTDiskNumber = $null
 $Script:HSTDiskDeviceID = $null
 $Script:ScreenModetoUse = $null
+$Script:ScreenModetoUseFriendlyName = $null
 $Script:KickstartVersiontoUse = $null
+$Script:KickstartVersiontoUseFriendlyName = $null 
 $Script:SSID = $null
 $Script:WifiPassword = $null
 $Script:SizeofFAT32 = $null
@@ -362,6 +372,9 @@ $Script:RemovableMedia = $null
 $Script:WorkOverhead = $null
 $Script:AmigaRDBSectors = $null
 $Script:WriteMethod = $null
+$Script:LoadedSettings = $null
+$Script:UserLocation_Kickstarts = $null
+$Script:UserLocation_ADFs = $null
 
 ####################################################################### End Null out Global Variables ###############################################################################################
 
@@ -370,6 +383,9 @@ $Script:WriteMethod = $null
 $SourceProgramPath = ($Scriptpath+'Programs\')
 $InputFolder = ($Scriptpath+'InputFiles\')
 $LocationofAmigaFiles = ($Scriptpath+'AmigaFiles\')
+$Script:UserLocation_ADFs = ($Scriptpath+'UserFiles\ADFs\')
+$Script:UserLocation_Kickstarts = ($Scriptpath+'UserFiles\Kickstarts\')
+
 ## Amiga Variables
 
 $DeviceName_Prefix = 'SDH'
@@ -433,11 +449,11 @@ function Set-GUISizeofPartitions {
     param (
     
     )
-    $Script:SizeofFAT32_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value
-    $Script:SizeofPartition_System_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value
-    $Script:SizeofPartition_Other_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value
-    $Script:SizeofFreeSpace_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value
-    $Script:SizeofUnallocated_Pixels = $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width.Value 
+    $Script:SizeofFAT32_Pixels = [decimal]$WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width.Value
+    $Script:SizeofPartition_System_Pixels = [decimal]$WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width.Value
+    $Script:SizeofPartition_Other_Pixels = [decimal]$WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width.Value
+    $Script:SizeofFreeSpace_Pixels = [decimal]$WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width.Value
+    $Script:SizeofUnallocated_Pixels = [decimal]$WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width.Value 
     
     $Overhead_FAT32 = (($Script:SizeofFAT32_Pixels*$Script:PartitionBarKBperPixel)-[math]::floor($Script:SizeofFAT32_Pixels*$Script:PartitionBarKBperPixel))
     $Overhead_System = (($Script:SizeofPartition_System_Pixels*$Script:PartitionBarKBperPixel)-[math]::floor($Script:SizeofPartition_System_Pixels*$Script:PartitionBarKBperPixel))
@@ -568,24 +584,24 @@ function Set-PartitionMaximums {
     else{
         $Script:SizeofFat32_Maximum = $Script:Fat32Maximum
     }
-    $Script:SizeofFat32_Pixels_Maximum = $Script:PartitionBarPixelperKB * $Script:SizeofFat32_Maximum
+    $Script:SizeofFat32_Pixels_Maximum = [decimal]($Script:PartitionBarPixelperKB * $Script:SizeofFat32_Maximum)
     
     if (($Script:SizeofDisk-$Script:SizeofFAT32-$Script:SizeofPartition_Other) -le $Script:WorkbenchMaximum) {
-        $Script:SizeofPartition_System_Maximum = ($Script:SizeofDisk-$Script:SizeofFAT32-$Script:SizeofPartition_Other)
+        $Script:SizeofPartition_System_Maximum = [decimal](($Script:SizeofDisk-$Script:SizeofFAT32-$Script:SizeofPartition_Other))
     }
     else {
         $Script:SizeofPartition_System_Maximum = $Script:WorkbenchMaximum
     }
-    $Script:SizeofPartition_System_Pixels_Maximum = $Script:PartitionBarPixelperKB * $Script:SizeofPartition_System_Maximum
+    $Script:SizeofPartition_System_Pixels_Maximum = [decimal]($Script:PartitionBarPixelperKB * $Script:SizeofPartition_System_Maximum)
     
     $Script:SizeofPartition_Other_Maximum = $Script:SizeofDisk-$Script:SizeofFAT32-$Script:SizeofPartition_System
-    $Script:SizeofPartition_Other_Pixels_Maximum = $Script:PartitionBarPixelperKB * $Script:SizeofPartition_Other_Maximum
+    $Script:SizeofPartition_Other_Pixels_Maximum = [decimal]($Script:PartitionBarPixelperKB * $Script:SizeofPartition_Other_Maximum)
 
     $Script:SizeofFreeSpace_Maximum = $Script:SizeofDisk-$Script:SizeofFAT32-$Script:SizeofPartition_System-$Script:SizeofPartition_Other
-    $Script:SizeofFreeSpace_Pixels_Maximum = ($Script:SizeofDisk * $Script:PartitionBarPixelperKB) - (($Script:SizeofFAT32 + $Script:SizeofPartition_System + $Script:SizeofPartition_Other)* $Script:PartitionBarPixelperKB) 
+    $Script:SizeofFreeSpace_Pixels_Maximum = [decimal](($Script:SizeofDisk * $Script:PartitionBarPixelperKB) - (($Script:SizeofFAT32 + $Script:SizeofPartition_System + $Script:SizeofPartition_Other)* $Script:PartitionBarPixelperKB)) 
  
-    $Script:SizeofUnallocated_Pixels_Maximum = $Script:PartitionBarWidth - (($Script:SizeofFreeSpace + $Script:SizeofPartition_Other_Pixels + $Script:SizeofPartition_System_Pixels + $Script:SizeofFat32_Pixels) * $Script:PartitionBarPixelperKB)
-    $Script:SizeofUnallocated_Maximum =  $Script:SizeofDisk - $Script:SizeofFreeSpace - $Script:SizeofPartition_Other - $Script:SizeofPartition_System - $Script:SizeofFAT32
+    $Script:SizeofUnallocated_Pixels_Maximum = [decimal]($Script:PartitionBarWidth - (($Script:SizeofFreeSpace + $Script:SizeofPartition_Other_Pixels + $Script:SizeofPartition_System_Pixels + $Script:SizeofFat32_Pixels) * $Script:PartitionBarPixelperKB))
+    $Script:SizeofUnallocated_Maximum =  [decimal]($Script:SizeofDisk - $Script:SizeofFreeSpace - $Script:SizeofPartition_Other - $Script:SizeofPartition_System - $Script:SizeofFAT32)
 }
 
 function Get-FormattedPathforGUI {
@@ -917,7 +933,7 @@ function Confirm-UIFields {
         $NumberofErrors += 1
     }
     if (-not($Script:ROMPath )) {
-        $ErrorMessage += 'You have not populated a Rom Path'+"`n"
+        $ErrorMessage += 'You have not populated a Kickstart Path'+"`n"
         $NumberofErrors += 1
     }
     if ($Script:SetDiskupOnly -ne 'TRUE'){
@@ -951,40 +967,227 @@ Function Get-FormVariables{
 #    write-host "Found the following interactable elements from our form" -ForegroundColor Cyan
     get-variable WPF*
 }
-function Get-FolderPath {
-    [CmdletBinding()]
+
+function Read-SettingsFile {
     param (
-        [Parameter(Mandatory=$false, ValueFromPipeline=$true, ValueFromPipelineByPropertyName=$true, Position=0)]
-        [string]$Message = "Please select a directory.",
+        $SettingsFile
+    )
+    
+    $LoadedSettings = Import-Csv $Script:SettingsFile -Delimiter ';' -Header @("Setting", "Value") | Select-Object -Skip 2
+    $Script:LoadedSettings = $true
+    foreach ($Setting in $LoadedSettings){
+        if (Test-Path ('variable:Script:'+($Setting.Setting))){
+#            Write-host ('Removing variable '+$Setting.Setting)
+            Remove-Variable -Scope Script -Name $Setting.Setting
+        }
+    #    Write-host ('Setting variable '+$Setting.Setting)
+        New-Variable -Scope Script -Name $Setting.Setting -Value $Setting.Value
+    }
+    
+    # Convert Numeric Variables to Numeric
+    
+    $Script:SizeofFAT32 = [int]$Script:SizeofFAT32
+    $Script:SizeofImage = [int]$Script:SizeofImage
+    $Script:SizeofDisk = [int]$Script:SizeofDisk
+    $Script:SizeofPartition_System = [int]$Script:SizeofPartition_System
+    $Script:SizeofPartition_Other = [int]$Script:SizeofPartition_Other
+    $Script:SizeofUnallocated = [int]$Script:SizeofUnallocated 
+    $Script:SizeofFreeSpace = [int]$Script:SizeofFreeSpace 
 
-        [Parameter(Mandatory=$false, Position=1)]
-        [string]$InitialDirectory,
+    $DiskFound = $false
+    $DiskstoCheck = Get-RemovableMedia
+    foreach ($Disk in $DiskstoCheck){
+        if ($Disk.HSTDiskName -eq $Script:HSTDiskName -and $Disk.SizeofDisk -eq $Script:SizeofDisk){
+            $DiskFound = $true
+            break
+        }   
+    }                
+    if ($DiskFound -eq $false){
+        Remove-Variable -Scope Script -Name HSTDiskName
+        Remove-Variable -Scope Script -Name HSTDiskDeviceID
+        Remove-Variable -Scope Script -Name HSTDiskNumber
+    }
+}
 
-        [Parameter(Mandatory=$false)]
-        [System.Environment+SpecialFolder]$RootFolder = [System.Environment+SpecialFolder]::Desktop,
+function Write-SettingsFile {
+    param (
+        $SettingsFile
+    )
+    'Do not edit this file! It will break Emu68 Imager! You have been warned!' | Out-File $SettingsFile
+    'Setting;Value' | Out-File $SettingsFile   
+    ('HSTDiskName;'+$Script:HSTDiskName) | Out-File $SettingsFile -Append
+    ('ScreenModetoUse;'+$Script:ScreenModetoUse) | Out-File $SettingsFile -Append
+    ('ScreenModetoUseFriendlyName;'+$Script:ScreenModetoUseFriendlyName) | Out-File $SettingsFile -Append
+    ('KickstartVersiontoUse;'+$Script:KickstartVersiontoUse) | Out-File $SettingsFile -Append
+    ('KickstartVersiontoUseFriendlyName;'+$Script:KickstartVersiontoUseFriendlyName) | Out-File $SettingsFile -Append
+    ('SSID;'+$Script:SSID) | Out-File $SettingsFile -Append
+    ('WifiPassword;'+$Script:WifiPassword) | Out-File $SettingsFile -Append
+    ('SizeofFAT32;'+$Script:SizeofFAT32) | Out-File $SettingsFile -Append
+    ('SizeofImage;'+$Script:SizeofImage) | Out-File $SettingsFile -Append
+    ('SizeofDisk;'+$Script:SizeofDisk) | Out-File $SettingsFile -Append
+    ('SizeofPartition_System;'+$Script:SizeofPartition_System) | Out-File $SettingsFile -Append
+    ('SizeofPartition_Other;'+$Script:SizeofPartition_Other) | Out-File $SettingsFile -Append
+    ('WriteImage;'+$Script:WriteImage) | Out-File $SettingsFile -Append
+    ('SetDiskupOnly;'+$Script:SetDiskupOnly) | Out-File $SettingsFile -Append
+    ('WorkingPath;'+$Script:WorkingPath) | Out-File $SettingsFile -Append
+    ('WorkingPathDefault;'+$Script:WorkingPathDefault) | Out-File $SettingsFile -Append
+    ('HSTDiskNumber;'+$Script:HSTDiskNumber) | Out-File $SettingsFile -Append
+    ('HSTDiskDeviceID;'+$Script:HSTDiskDeviceID) | Out-File $SettingsFile -Append
+    ('SizeofUnallocated;'+$Script:SizeofUnallocated) | Out-File $SettingsFile -Append
+    ('SizeofFreeSpace;'+$Script:SizeofFreeSpace) | Out-File $SettingsFile -Append
+    ('ROMPath;'+$Script:ROMPath) | Out-File $SettingsFile -Append
+    ('ADFPath;'+$Script:ADFPath) | Out-File $SettingsFile -Append
+    ('TransferLocation;'+$Script:TransferLocation) | Out-File $SettingsFile -Append
+    ('WriteMethod;'+$Script:WriteMethod) | Out-File $SettingsFile -Append
+    ('DiskFriendlyName;'+$Script:DiskFriendlyName) | Out-File $SettingsFile -Append
+    
+}
 
+function Get-SettingsLoadPath {
+    Add-Type -AssemblyName System.Windows.Forms
+    $dialog = New-Object System.Windows.Forms.OpenFileDialog -Property @{ 
+        InitialDirectory = $Script:SettingsFolder 
+        DefaultExt = '.ini'
+        Filter = "Emu68 Imager Settings Files (.e68)|*.e68" # Filter files by extension
+        Title = 'Load your Settings File'
+        FileName =''
+    }
+    #[Environment]::GetFolderPath('Desktop') 
+    $result = $dialog.ShowDialog((New-Object System.Windows.Forms.Form -Property @{TopMost = $true }))
+    if ($result -eq 'OK'){
+        return $dialog.FileName
+    }
+    else {
+        return
+    }
+}
+
+function Get-SettingsSavePath {
+    Add-Type -AssemblyName System.Windows.Forms
+    $dialog = New-Object System.Windows.Forms.SaveFileDialog -Property @{ 
+        InitialDirectory = $Script:SettingsFolder 
+        DefaultExt = '.ini'
+        Filter = "Emu68 Imager Settings Files (.e68)|*.e68" # Filter files by extension
+        Title = 'Save your Settings File'
+        FileName =''
+    }
+    #[Environment]::GetFolderPath('Desktop') 
+    $result = $dialog.ShowDialog((New-Object System.Windows.Forms.Form -Property @{TopMost = $true }))
+    if ($result -eq 'OK'){
+        return $dialog.FileName
+    }
+    else {
+        return
+    }
+}
+
+function Get-FolderPath {
+    param (
+        $InitialDirectory,
+        $RootFolder,
+        $Message,
         [switch]$ShowNewFolderButton
     )
-    Add-Type -AssemblyName System.Windows.Forms
-    $dialog = New-Object System.Windows.Forms.FolderBrowserDialog
-    $dialog.Description  = $Message
-    $dialog.SelectedPath = $InitialDirectory
-    $dialog.RootFolder   = $RootFolder
-    $dialog.ShowNewFolderButton = if ($ShowNewFolderButton) { $true } else { $false }
-    $selected = $null
 
-    # force the dialog TopMost
-    # Since the owning window will not be used after the dialog has been 
-    # closed we can just create a new form on the fly within the method call
-    $result = $dialog.ShowDialog((New-Object System.Windows.Forms.Form -Property @{TopMost = $true }))
-    if ($result -eq [Windows.Forms.DialogResult]::OK){
-        $selected = $dialog.SelectedPath
+    if ($PowershellVersion -gt 7){
+        Add-Type -AssemblyName System.Windows.Forms
+        $dialog = New-Object System.Windows.Forms.FolderBrowserDialog
+        $dialog.Description = $Message
+        $dialog.ShowNewFolderButton = if ($ShowNewFolderButton) { $true } else { $false }
+        if ($PowershellVersion -gt 7){
+            $dialog.UseDescriptionForTitle = 'TRUE'
+            if ($selectedPath){
+                $dialog.InitialDirectory = $InitialDirectory.TrimEnd('\')
+            }
+            else{
+                if ($selectedPath){
+                    $dialog.SelectedPath = $InitialDirectory.TrimEnd('\')
+                }
+            }
+        }
+        if ($RootFolder){
+            $dialog.RootFolder = $RootFolder
+        }
+        #[Environment]::GetFolderPath('Desktop') 
+        $result = $dialog.ShowDialog((New-Object System.Windows.Forms.Form -Property @{TopMost = $true }))
+        if ($result -eq 'OK'){
+            return $dialog.SelectedPath
+        }
+        else {
+            return
+        }
     }
-    # clear the FolderBrowserDialog from memory
-    $dialog.Dispose()
-    # return the selected folder
-    $selected
-} 
+    else{
+        $AssemblyFullName = 'System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089'
+        $Assembly = [System.Reflection.Assembly]::Load($AssemblyFullName)
+        $OpenFileDialog = New-Object System.Windows.Forms.OpenFileDialog
+        $OpenFileDialog.AddExtension = $false
+        $OpenFileDialog.CheckFileExists = $false
+        $OpenFileDialog.DereferenceLinks = $true
+        $OpenFileDialog.Filter = "Folders|`n"
+        $OpenFileDialog.Multiselect = $false
+        $OpenFileDialog.Title = $Message
+        $OpenFileDialog.InitialDirectory = $InitialDirectory       
+        $OpenFileDialogType = $OpenFileDialog.GetType()
+        $FileDialogInterfaceType = $Assembly.GetType('System.Windows.Forms.FileDialogNative+IFileDialog')
+        $IFileDialog = $OpenFileDialogType.GetMethod('CreateVistaDialog',@('NonPublic','Public','Static','Instance')).Invoke($OpenFileDialog,$null)
+        $null = $OpenFileDialogType.GetMethod('OnBeforeVistaDialog',@('NonPublic','Public','Static','Instance')).Invoke($OpenFileDialog,$IFileDialog)
+        [uint32]$PickFoldersOption = $Assembly.GetType('System.Windows.Forms.FileDialogNative+FOS').GetField('FOS_PICKFOLDERS').GetValue($null)
+        $FolderOptions = $OpenFileDialogType.GetMethod('get_Options',@('NonPublic','Public','Static','Instance')).Invoke($OpenFileDialog,$null) -bor $PickFoldersOption
+        $null = $FileDialogInterfaceType.GetMethod('SetOptions',@('NonPublic','Public','Static','Instance')).Invoke($IFileDialog,$FolderOptions)
+        $VistaDialogEvent = [System.Activator]::CreateInstance($AssemblyFullName,'System.Windows.Forms.FileDialog+VistaDialogEvents',$false,0,$null,$OpenFileDialog,$null,$null).Unwrap()
+        [uint32]$AdviceCookie = 0
+        $AdvisoryParameters = @($VistaDialogEvent,$AdviceCookie)
+        $AdviseResult = $FileDialogInterfaceType.GetMethod('Advise',@('NonPublic','Public','Static','Instance')).Invoke($IFileDialog,$AdvisoryParameters)
+        $AdviceCookie = $AdvisoryParameters[1]
+        $Result = $FileDialogInterfaceType.GetMethod('Show',@('NonPublic','Public','Static','Instance')).Invoke($IFileDialog,[System.IntPtr]::Zero)
+        $null = $FileDialogInterfaceType.GetMethod('Unadvise',@('NonPublic','Public','Static','Instance')).Invoke($IFileDialog,$AdviceCookie)
+        if ($Result -eq [System.Windows.Forms.DialogResult]::OK) {
+            $FileDialogInterfaceType.GetMethod('GetResult',@('NonPublic','Public','Static','Instance')).Invoke($IFileDialog,$null)
+        }
+        if($OpenFileDialog.FileName){
+            return $OpenFileDialog.FileName
+        }
+        else{
+            return
+        }
+    }
+}
+    
+# function Get-FolderPath {
+#     [CmdletBinding()]
+#     param (
+#         [Parameter(Mandatory=$false, ValueFromPipeline=$true, ValueFromPipelineByPropertyName=$true, Position=0)]
+#         [string]$Message = "Please select a directory.",
+
+#         [Parameter(Mandatory=$false, Position=1)]
+#         [string]$InitialDirectory,
+
+#         [Parameter(Mandatory=$false)]
+#         [System.Environment+SpecialFolder]$RootFolder = [System.Environment+SpecialFolder]::Desktop,
+
+#         [switch]$ShowNewFolderButton
+#     )
+#     Add-Type -AssemblyName System.Windows.Forms
+#     $dialog = New-Object System.Windows.Forms.FolderBrowserDialog
+#     $dialog.Description  = $Message
+#     $dialog.SelectedPath = $InitialDirectory
+#     $dialog.RootFolder   = $RootFolder
+#     $dialog.ShowNewFolderButton = if ($ShowNewFolderButton) { $true } else { $false }
+#     $selected = $null
+
+#     # force the dialog TopMost
+#     # Since the owning window will not be used after the dialog has been 
+#     # closed we can just create a new form on the fly within the method call
+#     $result = $dialog.ShowDialog((New-Object System.Windows.Forms.Form -Property @{TopMost = $true }))
+#     if ($result -eq [Windows.Forms.DialogResult]::OK){
+#         $selected = $dialog.SelectedPath
+#     }
+#     # clear the FolderBrowserDialog from memory
+#     $dialog.Dispose()
+#     # return the selected folder
+#     $selected
+# } 
 
 function Get-RemovableMedia {
     param (
@@ -1610,10 +1813,32 @@ function Compare-KickstartHashes {
     $Msg_Body = @"
 Searching folder '$Script:ROMPath' for valid Kickstart file. Depending on the size of the folder you selected this may take some time. 
 "@
+
+    $Msg_Header_ExceedLimit ='Exceeded file limits!'   
+    $Msg_Body_ExceedLimit = @"
+Search is limited to a maximum of 500 files! The current path (with no sub-folders) will be matched.
+
+If this does not find your Kickstart file either select a different path 
+with less files or move the Kickstart into the default 
+'UserFiles\Kickstarts\' folder in your install path for the tool
+and select this path to scan. 
+
+"@
+
     $null = [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,0)
 
     $KickstartHashestoFind =Import-Csv $PathtoKickstartHashes -Delimiter ';' |  Where-Object {$_.Kickstart_Version -eq $KickstartVersion} | Sort-Object -Property 'Sequence'   
-    $ListofKickstartFilestoCheck = Get-ChildItem $PathtoKickstartFiles -force -Recurse | Where-Object { $_.PSIsContainer -eq $false } 
+
+    $ListofKickstartFilestoCheck  = Get-ChildItem $PathtoKickstartFiles -force -Recurse
+
+    if ((($ListofKickstartFilestoCheck | Measure-Object).count) -gt 500){
+        $null = [System.Windows.MessageBox]::Show($Msg_Body_ExceedLimit,$Msg_Header_ExceedLimit,0,48)
+        $ListofKickstartFilestoCheck  = $ListofKickstartFilestoCheck | Where-Object {$_.DirectoryName -eq $PathtoKickstartFiles.TrimEnd('\') } 
+    } 
+
+    $ListofKickstartFilestoCheck  = $ListofKickstartFilestoCheck  | Where-Object { $_.PSIsContainer -eq $false -and $_.Length -eq 524288} | Get-FileHash  -Algorithm MD5
+
+    #$ListofKickstartFilestoCheck = Get-ChildItem $PathtoKickstartFiles -force -Recurse | Where-Object { $_.PSIsContainer -eq $false -and $_.Length -eq 524288} 
     
     $FoundKickstarts = [System.Collections.Generic.List[PSCustomObject]]::New()
     $HashTableforKickstartFilestoCheck = @{} # Clear Hash
@@ -1666,13 +1891,33 @@ function Compare-ADFHashes {
 
     $Msg_Header ='Finding ADFs'    
     $Msg_Body = @"
-Searching folder '$Script:ADFPath' for valid ADFs. Depending on the size of the folder you selected this may take some time. 
+Searching folder '$Script:ADFPath' for valid ADFs. 
+
+"@
+    $Msg_Header_ExceedLimit ='Exceeded file limits!'   
+    $Msg_Body_ExceedLimit = @"
+Search is limited to a maximum of 500 files! The current path (with no sub-folders) will be matched.
+
+If this does not find your ADFs either select a different path 
+with less files or move the ADFs into the default 
+'UserFiles\ADFs\' folder in your install path for the tool
+and select this path to scan. 
+
 "@
     $null = [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,0)
 
-#    Write-InformationMessage -Message ('Calculating hashes of ADFs in location '+$PathtoADFFiles)
-    $ListofADFFilestoCheck = Get-ChildItem $PathtoADFFiles -force -Recurse | Where-Object { $_.PSIsContainer -eq $false } | Get-FileHash  -Algorithm MD5
-#    Write-InformationMessage -Message  ('Hashes calculated!')
+    $ListofADFFilestoCheck = Get-ChildItem $PathtoADFFiles -force -Recurse
+    if ((($ListofADFFilestoCheck | Measure-Object).count) -gt 500){
+        $null = [System.Windows.MessageBox]::Show($Msg_Body_ExceedLimit,$Msg_Header_ExceedLimit,0,48)
+        $ListofADFFilestoCheck = $ListofADFFilestoCheck | Where-Object {$_.DirectoryName -eq $PathtoADFFiles.TrimEnd('\')} 
+    } 
+    $ListofADFFilestoCheck = $ListofADFFilestoCheck | Where-Object { $_.PSIsContainer -eq $false -and $_.Name -match '.adf' -and $_.Length -eq 901120 } | Get-FileHash  -Algorithm MD5
+
+    #Write-InformationMessage -Message ('Calculating hashes of ADFs in location '+$PathtoADFFiles)
+
+    #$ListofADFFilestoCheck = Get-ChildItem $PathtoADFFiles -force -Recurse | Where-Object { $_.PSIsContainer -eq $false -and $_.Name -match '.adf' -and $_.Length -eq 901120 }  | Get-FileHash  -Algorithm MD5
+ 
+    # Write-InformationMessage -Message  ('Hashes calculated!')
     $ADFHashestoFind = Import-Csv $PathtoADFHashes -Delimiter ';' |  Where-Object {$_.Kickstart_Version -eq $KickstartVersion} | Sort-Object -Property 'Sequence'
     $RequiredADFs = Import-Csv $PathtoListofInstallFiles -Delimiter ';' |  Where-Object {$_.Kickstart_Version -eq $KickstartVersion} | Sort-Object -Property 'Sequence'
     $UniqueRequiredADFs = $RequiredADFs | Select-Object FriendlyName -Unique
@@ -1891,7 +2136,7 @@ or press cancel to quit the tool
         $Script:ExitType =2
         return $false
     }
-    $Script:WorkingPath = Get-FolderPath -Message 'Select location for Working Path (folder must be empty)' -RootFolder 'MyComputer'-ShowNewFolderButton
+    $Script:WorkingPath = Get-FolderPath -Message 'Select location for Working Path (folder must be empty)' -RootFolder 'MyComputer' -ShowNewFolderButton
     if($Script:WorkingPath){
         $items = Get-ChildItem -Path $Script:WorkingPath -Recurse -Force
         if ($items.Count -ne 0) {
@@ -1918,7 +2163,7 @@ or press cancel to quit the tool
     do {
         $ValueofAction = [System.Windows.MessageBox]::Show($Msg_Body_Repeat, $Msg_Header,1,48)
         if ($ValueofAction -eq 'OK'){
-            $Script:WorkingPath = Get-FolderPath -Message 'Select location for Working Path (folder must be empty)' -RootFolder 'MyComputer'-ShowNewFolderButton
+            $Script:WorkingPath = Get-FolderPath -Message 'Select location for Working Path (folder must be empty)' -RootFolder 'MyComputer' -ShowNewFolderButton
             if($Script:WorkingPath){
                 $items = Get-ChildItem -Path $Script:WorkingPath -Recurse -Force
                 if ($items.Count -ne 0) {
@@ -2191,8 +2436,7 @@ Tool will now exit.
 ### End Clean up
 
 ####################################################################### End Pre GUI Checks #################################################################################################################
-
-
+#$WPF_UI_DiskPartition_Grid.ColumnDefinitions
 ####################################################################### GUI XML for Main Environment ##################################################################################################
 
 $inputXML_UserInterface = @"
@@ -2203,12 +2447,12 @@ $inputXML_UserInterface = @"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WpfApp14"
         mc:Ignorable="d"
-           Title="Emu68 Imager" Height="600" Width="910" HorizontalAlignment="Left" VerticalAlignment="Top" ResizeMode="NoResize">
+           Title="Emu68 Imager" Height="600" Width="1054" HorizontalAlignment="Left" VerticalAlignment="Top" ResizeMode="NoResize">
     <Grid x:Name="Overall_Grid" Background="Transparent" Visibility="Visible">
         <Grid x:Name="Main_Grid" Background="#FFE5E5E5" Visibility="Visible" >
-            <GroupBox x:Name="DiskSetup_GroupBox" Header="Disk Setup" Margin="0,20,0,0" VerticalAlignment="Top" Height="153" Background="Transparent" HorizontalAlignment="Center">
+            <GroupBox x:Name="DiskSetup_GroupBox" Header="Disk Setup" Margin="0,25,0,0" VerticalAlignment="Top" Height="153" Background="Transparent" HorizontalAlignment="Center">
                 <Grid Background="Transparent">
-                    <Grid x:Name="DiskPartition_Grid" Background="Transparent" Height="30" Width="903" MaxWidth="903" VerticalAlignment="Center">
+                    <Grid x:Name="DiskPartition_Grid" Background="Transparent" Height="30" Width="1028" MaxWidth="1028" VerticalAlignment="Center">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="30"/>
                         </Grid.RowDefinitions>
@@ -2369,7 +2613,9 @@ $inputXML_UserInterface = @"
             </GroupBox>
             <TextBox x:Name="WorkSizeNoteFooter_Label" HorizontalAlignment="Left" Margin="15,485,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="480" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
         <Button x:Name="Documentation_Button" Content="Click for Documentation" HorizontalAlignment="Right" Margin="0,5,10,0" VerticalAlignment="Top" />
-            </Grid>
+                    <Button x:Name="LoadSettings_Button" Content="Load Settings" HorizontalAlignment="Left" Margin="7,5,0,0" VerticalAlignment="Top" Height="20" Width="75" />
+            <Button x:Name="SaveSettings_Button" Content="Save Settings" HorizontalAlignment="Left" Margin="97,5,0,0" VerticalAlignment="Top" Height="20" Width="75"/>
+        </Grid>
         <Grid x:Name="Reporting_Grid" Background="#FFE5E5E5" Visibility="Hidden">
             <Button x:Name="GoBack_Button" Content="Back" HorizontalAlignment="Left" Margin="20,523,0,0" Background="red" VerticalAlignment="Top" Width="199"/>
             <Button x:Name="Process_Button" Content="Run" HorizontalAlignment="Left" Margin="689,523,0,0" Background="green" VerticalAlignment="Top" Width="199"/>
@@ -2463,7 +2709,7 @@ $XAML_UserInterface.SelectNodes("//*[@Name]") | ForEach-Object{
 
 #Width of bar
 
-$Script:PartitionBarWidth =  857
+$Script:PartitionBarWidth =  1000
 $Script:SetDiskupOnly = 'FALSE'
 $DefaultDivisorFat32 = 15
 $DefaultDivisorWorkbench = 15
@@ -2513,55 +2759,69 @@ $WPF_UI_MediaSelect_Dropdown.Add_SelectionChanged({
                 $Script:HSTDiskName = $Disk.HSTDiskName
                 $Script:HSTDiskNumber = $Disk.HSTDiskNumber
                 $Script:HSTDiskDeviceID =$Disk.DeviceID
-                $Script:PartitionBarPixelperKB = ($PartitionBarWidth)/$Disk.SizeofDisk
-                $Script:PartitionBarKBperPixel = $Disk.SizeofDisk/($PartitionBarWidth)
+                $Script:PartitionBarPixelperKB = [decimal](($PartitionBarWidth)/$Disk.SizeofDisk)
+                $Script:PartitionBarKBperPixel = [decimal]($Disk.SizeofDisk/($PartitionBarWidth))
                 break
             }
 
         }
-    
+        $Script:DiskFriendlyName = $WPF_UI_MediaSelect_DropDown.SelectedItem  
         $Script:SizeofDisk = $Disk.SizeofDisk
         $Script:SizeofImage = $Script:SizeofDisk
 
-        $Script:SizeofFat32_Pixels_Minimum = $Script:PartitionBarPixelperKB * $Script:Fat32Minimum 
-        $Script:SizeofPartition_System_Pixels_Minimum = $Script:PartitionBarPixelperKB * $Script:WorkbenchMinimum
-        $Script:SizeofPartition_Other_Pixels_Minimum = $Script:PartitionBarPixelperKB * $Script:WorkMinimum
+        $Script:SizeofFat32_Pixels_Minimum = [decimal]($Script:PartitionBarPixelperKB * $Script:Fat32Minimum) 
+        $Script:SizeofPartition_System_Pixels_Minimum = [decimal]($Script:PartitionBarPixelperKB * $Script:WorkbenchMinimum)
+        $Script:SizeofPartition_Other_Pixels_Minimum = [decimal]($Script:PartitionBarPixelperKB * $Script:WorkMinimum)
 
         $Script:SizeofFreeSpace_Pixels_Minimum = 0
         $Script:SizeofFreeSpace_Minimum = 0
 
         $Script:SizeofUnallocated_Pixels_Minimum = 0
         $Script:SizeofUnallocated_Minimum = 0
-
-        if ($Script:SizeofImage /$DefaultDivisorFat32 -ge $Script:Fat32DefaultMaximum){
-            $Script:SizeofFAT32 = $Script:Fat32DefaultMaximum
-            $Script:SizeofFAT32_Pixels = $Script:PartitionBarPixelperKB * $Script:SizeofFAT32   
+              
+        if ($Script:LoadedSettings -eq $true){
+            $Script:SizeofFAT32_Pixels = [decimal]($Script:PartitionBarPixelperKB * $Script:SizeofFAT32)   
+            $Script:SizeofPartition_System_Pixels = [decimal]($Script:SizeofPartition_System * $Script:PartitionBarPixelperKB)
+            $Script:SizeofPartition_Other_Pixels = [decimal]($Script:SizeofPartition_Other * $Script:PartitionBarPixelperKB)
+            $Script:SizeofUnallocated_Pixels = [decimal]($Script:SizeofUnallocated * $Script:PartitionBarPixelperKB)
+            $Script:SizeofFreeSpace_Pixels = [decimal]($Script:SizeofFreeSpace * $Script:PartitionBarPixelperKB)
+            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width = 1
+            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width = 1
+            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width = 1
+            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = 1
+            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = 1
         }
         else{
-            $Script:SizeofFAT32 = $Script:SizeofImage/$DefaultDivisorFat32
-            $Script:SizeofFAT32_Pixels = $Script:PartitionBarPixelperKB * $Script:SizeofFAT32   
-        }
-
-        if ($Script:SizeofImage/$DefaultDivisorWorkbench -ge $Script:WorkbenchDefaultMaximum){
-            $Script:SizeofPartition_System = $Script:WorkbenchDefaultMaximum 
-            $Script:SizeofPartition_System_Pixels = $Script:SizeofPartition_System * $Script:PartitionBarPixelperKB 
-        }
-        else{
-            $Script:SizeofPartition_System = $Script:SizeofImage/$DefaultDivisorWorkbench
-            $Script:SizeofPartition_System_Pixels = $Script:SizeofPartition_System * $Script:PartitionBarPixelperKB 
-        }
-
-        $Script:SizeofPartition_Other = ($Script:SizeofImage-$Script:SizeofPartition_System-$Script:SizeofFAT32)
-        $Script:SizeofPartition_Other_Pixels = $Script:SizeofPartition_Other * $Script:PartitionBarPixelperKB
-
-        $Script:SizeofUnallocated = $Script:SizeofDisk-$Script:SizeofImage
-        $Script:SizeofUnallocated_Pixels = $Script:SizeofUnallocated * $Script:PartitionBarPixelperKB
-
-        $Script:SizeofFreeSpace = $Script:SizeofImage-$Script:SizeofPartition_System-$Script:SizeofFAT32-$Script:SizeofPartition_Other
-        $Script:SizeofFreeSpace_Pixels = $Script:SizeofFreeSpace * $Script:PartitionBarPixelperKB
-        
+            if ($Script:SizeofImage /$DefaultDivisorFat32 -ge $Script:Fat32DefaultMaximum){
+                $Script:SizeofFAT32 = $Script:Fat32DefaultMaximum
+                $Script:SizeofFAT32_Pixels = [decimal]($Script:PartitionBarPixelperKB * $Script:SizeofFAT32)   
+            }
+            else{
+                $Script:SizeofFAT32 = $Script:SizeofImage/$DefaultDivisorFat32
+                $Script:SizeofFAT32_Pixels = [decimal]($Script:PartitionBarPixelperKB * $Script:SizeofFAT32)   
+            }
+    
+            if ($Script:SizeofImage/$DefaultDivisorWorkbench -ge $Script:WorkbenchDefaultMaximum){
+                $Script:SizeofPartition_System = $Script:WorkbenchDefaultMaximum 
+                $Script:SizeofPartition_System_Pixels = [decimal]($Script:SizeofPartition_System * $Script:PartitionBarPixelperKB) 
+            }
+            else{
+                $Script:SizeofPartition_System = $Script:SizeofImage/$DefaultDivisorWorkbench
+                $Script:SizeofPartition_System_Pixels = [decimal]($Script:SizeofPartition_System * $Script:PartitionBarPixelperKB) 
+            }
+    
+            $Script:SizeofPartition_Other = ($Script:SizeofImage-$Script:SizeofPartition_System-$Script:SizeofFAT32)
+            $Script:SizeofPartition_Other_Pixels = [decimal]($Script:SizeofPartition_Other * $Script:PartitionBarPixelperKB)
+    
+            $Script:SizeofUnallocated = $Script:SizeofDisk-$Script:SizeofImage
+            $Script:SizeofUnallocated_Pixels = [decimal]($Script:SizeofUnallocated * $Script:PartitionBarPixelperKB)
+    
+            $Script:SizeofFreeSpace = $Script:SizeofImage-$Script:SizeofPartition_System-$Script:SizeofFAT32-$Script:SizeofPartition_Other
+            $Script:SizeofFreeSpace_Pixels = [decimal]($Script:SizeofFreeSpace * $Script:PartitionBarPixelperKB)
+        }       
+       
         Set-PartitionMaximums
-        
+       
         $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width = $Script:SizeofFAT32_Pixels
         $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width = $Script:SizeofPartition_System_Pixels
         $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width = $Script:SizeofPartition_Other_Pixels
@@ -2614,9 +2874,9 @@ $WPF_UI_DefaultAllocation_Refresh.add_Click({
         $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = '1'
         $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = '1'
 
-        $Script:SizeofFat32_Pixels_Minimum = $Script:PartitionBarPixelperKB * $Script:Fat32Minimum 
-        $Script:SizeofPartition_System_Pixels_Minimum = $Script:PartitionBarPixelperKB * $Script:WorkbenchMinimum
-        $Script:SizeofPartition_Other_Pixels_Minimum = $Script:PartitionBarPixelperKB * $Script:WorkMinimum
+        $Script:SizeofFat32_Pixels_Minimum = [decimal]($Script:PartitionBarPixelperKB * $Script:Fat32Minimum) 
+        $Script:SizeofPartition_System_Pixels_Minimum = [decimal]($Script:PartitionBarPixelperKB * $Script:WorkbenchMinimum)
+        $Script:SizeofPartition_Other_Pixels_Minimum = [decimal]($Script:PartitionBarPixelperKB * $Script:WorkMinimum)
     
         $Script:SizeofFreeSpace_Pixels_Minimum = 0
         $Script:SizeofFreeSpace_Minimum = 0
@@ -2627,30 +2887,30 @@ $WPF_UI_DefaultAllocation_Refresh.add_Click({
         $Script:SizeofImage=$Script:SizeofDisk
         if ($Script:SizeofImage /$DefaultDivisorFat32 -ge $Fat32DefaultMaximum){
             $Script:SizeofFAT32 = $Fat32DefaultMaximum
-            $Script:SizeofFAT32_Pixels = $Script:PartitionBarPixelperKB * $Script:SizeofFAT32   
+            $Script:SizeofFAT32_Pixels = [decimal]($Script:PartitionBarPixelperKB * $Script:SizeofFAT32)   
         }
         else{
             $Script:SizeofFAT32 = $Script:SizeofImage/$DefaultDivisorFat32
-            $Script:SizeofFAT32_Pixels = $Script:PartitionBarPixelperKB * $Script:SizeofFAT32   
+            $Script:SizeofFAT32_Pixels = [decimal]($Script:PartitionBarPixelperKB * $Script:SizeofFAT32)   
         }
     
         if ($Script:SizeofImage/$DefaultDivisorWorkbench -ge $Script:WorkbenchDefaultMaximum){
             $Script:SizeofPartition_System = $Script:WorkbenchDefaultMaximum 
-            $Script:SizeofPartition_System_Pixels = $Script:SizeofPartition_System * $Script:PartitionBarPixelperKB 
+            $Script:SizeofPartition_System_Pixels = [decimal]($Script:SizeofPartition_System * $Script:PartitionBarPixelperKB) 
         }
         else{
             $Script:SizeofPartition_System = $Script:SizeofImage/$DefaultDivisorWorkbench
-            $Script:SizeofPartition_System_Pixels = $Script:SizeofPartition_System * $Script:PartitionBarPixelperKB 
+            $Script:SizeofPartition_System_Pixels = [decimal]($Script:SizeofPartition_System * $Script:PartitionBarPixelperKB) 
         }
     
         $Script:SizeofPartition_Other = ($Script:SizeofImage-$Script:SizeofPartition_System-$Script:SizeofFAT32)
-        $Script:SizeofPartition_Other_Pixels = $Script:SizeofPartition_Other * $Script:PartitionBarPixelperKB
+        $Script:SizeofPartition_Other_Pixels = [decimal]($Script:SizeofPartition_Other * $Script:PartitionBarPixelperKB)
     
         $Script:SizeofUnallocated = $Script:SizeofDisk-$Script:SizeofImage
-        $Script:SizeofUnallocated_Pixels = $Script:SizeofUnallocated * $Script:PartitionBarPixelperKB
+        $Script:SizeofUnallocated_Pixels = [decimal]($Script:SizeofUnallocated * $Script:PartitionBarPixelperKB)
     
         $Script:SizeofFreeSpace = $Script:SizeofImage-$Script:SizeofPartition_System-$Script:SizeofFAT32-$Script:SizeofPartition_Other
-        $Script:SizeofFreeSpace_Pixels = $Script:SizeofFreeSpace * $Script:PartitionBarPixelperKB
+        $Script:SizeofFreeSpace_Pixels = [decimal]($Script:SizeofFreeSpace * $Script:PartitionBarPixelperKB)
         
         Set-PartitionMaximums
             
@@ -2928,10 +3188,76 @@ $WPF_UI_Unallocated_Listview.add_SizeChanged({
     }
 })
 
+$WPF_UI_LoadSettings_Button.Add_Click({
+    $Script:SettingsFile = Get-SettingsLoadPath
+    if ($Script:SettingsFile){  
+        Read-SettingsFile -SettingsFile $Script:SettingsFile
+        if ($Script:DiskFriendlyName -ne ''){
+            $WPF_UI_MediaSelect_DropDown.SelectedItem = $Script:DiskFriendlyName
+
+        }
+
+        if ($Script:HSTDiskName -ne $null){
+            $SizeofFAT32
+        }
+
+        $WPF_UI_KickstartVersion_DropDown.SelectedItem = ($Script:KickstartVersiontoUseFriendlyName).tostring()
+
+        $WPF_UI_ScreenMode_Dropdown.SelectedItem = $Script:ScreenModetoUseFriendlyName
+        $WPF_UI_ADFPath_Label.Text = Get-FormattedPathforGUI -PathtoTruncate ($Script:ADFPath)   
+        $WPF_UI_ADFPath_Button.Background = 'Green'
+        $WPF_UI_ADFPath_Button.Foreground = 'White'    
+        $WPF_UI_RomPath_Label.Text = Get-FormattedPathforGUI -PathtoTruncate ($Script:ROMPath)
+        $WPF_UI_RomPath_Button.Background = 'Green'
+        $WPF_UI_RomPath_Button.Foreground = 'White'
+        $WPF_UI_MigratedPath_Label.Text = Get-FormattedPathforGUI -PathtoTruncate ($Script:TransferLocation)
+        $WPF_UI_MigratedFiles_Button.Background = 'Green'
+        $WPF_UI_MigratedFiles_Button.Foreground = 'White'
+        if ($Script:SetDiskupOnly -eq 'TRUE'){
+            $WPF_UI_NoFileInstall_CheckBox.IsChecked = 'TRUE'
+        }
+        if ($Script:WriteImage -eq 'TRUE'){
+            $WPF_UI_DiskWrite_CheckBox.IsChecked = 'TRUE'
+        }
+        if ($Script:WriteMethod -eq 'SkipEmptySpace'){
+            $WPF_UI_SkipEmptySpace_CheckBox.IsChecked = 'TRUE'
+        }
+        $WPF_UI_SSID_Textbox.Text=$Script:SSID
+        $WPF_UI_Password_Textbox.Text=$Script:WifiPassword
+
+        # if 
+
+        # if (Confirm-UIFields){
+        #     $WPF_UI_Start_Button.Background = 'Red'
+        #     $WPF_UI_Start_Button.Foreground = 'Black'
+        #     $WPF_UI_Start_Button.Content = 'Missing information! Press to see further details'
+        # }
+        # elseif (-not (Confirm-FreeSpacetoRunTool)){
+        #     $WPF_UI_Start_Button.Background = 'Yellow'
+        #     $WPF_UI_Start_Button.Foreground = 'Black'
+        #     $WPF_UI_Start_Button.Content = 'Run Tool (with prompt for new drive and folder from which to run the tool)'
+        # }
+        # else{
+        #     $WPF_UI_Start_Button.Background = 'Green'
+        #     $WPF_UI_Start_Button.Foreground = 'White'
+        #     $WPF_UI_Start_Button.Content = 'Run Tool'
+        # }
+    }
+})
+
+
+$WPF_UI_SaveSettings_Button.Add_Click({
+    $Script:SettingsFile = Get-SettingsSavePath
+    if ($Script:SettingsFile){
+        Write-SettingsFile -SettingsFile $Script:SettingsFile
+    }
+})
+
 $WPF_UI_MediaSelect_Refresh.Add_Click({
     $Script:WorkingPath = $null
     $Script:WorkingPathDefault = $null
     $Script:HSTDiskName = $null
+    $Script:DiskFriendlyName = $null
     $Script:HSTDiskNumber = $null
     $Script:HSTDiskDeviceID = $null
     $Script:SizeofDisk = $null
@@ -3054,9 +3380,9 @@ $WPF_UI_FAT32Size_Value.add_LostFocus({
 #                Write-host ('Combined difference is '+$CombinedDifference)
                 if ($FreeSpaceDifference -ge 0){
                     $Script:SizeofFreeSpace -= $ValueDifference 
-                    $Script:SizeofFreeSpace_Pixels = $Script:SizeofFreeSpace * $Script:PartitionBarPixelperKB
+                    $Script:SizeofFreeSpace_Pixels = [decimal]($Script:SizeofFreeSpace * $Script:PartitionBarPixelperKB)
                     $Script:SizeofFAT32 = $ValueinKB
-                    $Script:SizeofFAT32_Pixels = $Script:SizeofFAT32 * $Script:PartitionBarPixelperKB
+                    $Script:SizeofFAT32_Pixels = [decimal]($Script:SizeofFAT32 * $Script:PartitionBarPixelperKB)
                     $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Script:SizeofFreeSpace_Pixels 
                     $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width = $Script:SizeofFAT32_Pixels
                     $WPF_UI_FAT32Size_Value.Background = 'White'
@@ -3066,9 +3392,9 @@ $WPF_UI_FAT32Size_Value.add_LostFocus({
                     $Script:SizeofFreeSpace = 0
                     $Script:SizeofFreeSpace_Pixels = 0
                     $Script:SizeofUnallocated -= ($FreeSpaceDifference+$UnallocatedDifference)
-                    $Script:SizeofUnallocated_Pixels = $Script:SizeofUnallocated * $Script:PartitionBarPixelperKB
+                    $Script:SizeofUnallocated_Pixels = [decimal]($Script:SizeofUnallocated * $Script:PartitionBarPixelperKB)
                     $Script:SizeofFAT32 = $ValueinKB
-                    $Script:SizeofFAT32_Pixels = $Script:SizeofFAT32 * $Script:PartitionBarPixelperKB
+                    $Script:SizeofFAT32_Pixels = [decimal]($Script:SizeofFAT32 * $Script:PartitionBarPixelperKB)
                     $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Script:SizeofFreeSpace_Pixels
                     $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = $Script:SizeofUnallocated_Pixels
                     $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width = $Script:SizeofFAT32_Pixels
@@ -3098,9 +3424,9 @@ $WPF_UI_WorkbenchSize_Value.add_LostFocus({
 #                Write-host ('Combined difference is '+$CombinedDifference)
                 if ($FreeSpaceDifference -ge 0){
                     $Script:SizeofFreeSpace -= $ValueDifference 
-                    $Script:SizeofFreeSpace_Pixels = $Script:SizeofFreeSpace * $Script:PartitionBarPixelperKB
+                    $Script:SizeofFreeSpace_Pixels = [decimal]($Script:SizeofFreeSpace * $Script:PartitionBarPixelperKB)
                     $Script:SizeofPartition_System = $ValueinKB
-                    $Script:SizeofPartition_System_Pixels = $Script:SizeofPartition_System * $Script:PartitionBarPixelperKB
+                    $Script:SizeofPartition_System_Pixels = [decimal]($Script:SizeofPartition_System * $Script:PartitionBarPixelperKB)
                     $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Script:SizeofFreeSpace_Pixels 
                     $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width = $Script:SizeofPartition_System_Pixels
                     $WPF_UI_WorkbenchSize_Value.Background = 'White'
@@ -3110,9 +3436,9 @@ $WPF_UI_WorkbenchSize_Value.add_LostFocus({
                     $Script:SizeofFreeSpace = 0
                     $Script:SizeofFreeSpace_Pixels = 0
                     $Script:SizeofUnallocated -= ($FreeSpaceDifference+$UnallocatedDifference)
-                    $Script:SizeofUnallocated_Pixels = $Script:SizeofUnallocated * $Script:PartitionBarPixelperKB
+                    $Script:SizeofUnallocated_Pixels = [decimal]($Script:SizeofUnallocated * $Script:PartitionBarPixelperKB)
                     $Script:SizeofPartition_System = $ValueinKB
-                    $Script:SizeofPartition_System_Pixels = $Script:SizeofPartition_System * $Script:PartitionBarPixelperKB
+                    $Script:SizeofPartition_System_Pixels = [decimal]($Script:SizeofPartition_System * $Script:PartitionBarPixelperKB)
                     $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Script:SizeofFreeSpace_Pixels
                     $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = $Script:SizeofUnallocated_Pixels
                     $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width = $Script:SizeofPartition_System_Pixels
@@ -3142,9 +3468,9 @@ $WPF_UI_WorkSize_Value.add_LostFocus({
 #                Write-host ('Combined difference is '+$CombinedDifference)
                 if ($FreeSpaceDifference -ge 0){
                     $Script:SizeofFreeSpace -= $ValueDifference 
-                    $Script:SizeofFreeSpace_Pixels = $Script:SizeofFreeSpace * $Script:PartitionBarPixelperKB
+                    $Script:SizeofFreeSpace_Pixels = [decimal]($Script:SizeofFreeSpace * $Script:PartitionBarPixelperKB)
                     $Script:SizeofPartition_Other = $ValueinKB
-                    $Script:SizeofPartition_Other_Pixels = $Script:SizeofPartition_Other * $Script:PartitionBarPixelperKB
+                    $Script:SizeofPartition_Other_Pixels = [decimal]($Script:SizeofPartition_Other * $Script:PartitionBarPixelperKB)
                     $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Script:SizeofFreeSpace_Pixels 
                     $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width = $Script:SizeofPartition_Other_Pixels
                     $WPF_UI_WorkSize_Value.Background = 'White'
@@ -3154,9 +3480,9 @@ $WPF_UI_WorkSize_Value.add_LostFocus({
                     $Script:SizeofFreeSpace = 0
                     $Script:SizeofFreeSpace_Pixels = 0
                     $Script:SizeofUnallocated -= ($FreeSpaceDifference+$UnallocatedDifference)
-                    $Script:SizeofUnallocated_Pixels = $Script:SizeofUnallocated * $Script:PartitionBarPixelperKB
+                    $Script:SizeofUnallocated_Pixels = [decimal]($Script:SizeofUnallocated * $Script:PartitionBarPixelperKB)
                     $Script:SizeofPartition_Other = $ValueinKB
-                    $Script:SizeofPartition_Other_Pixels = $Script:SizeofPartition_Other * $Script:PartitionBarPixelperKB
+                    $Script:SizeofPartition_Other_Pixels = [decimal]($Script:SizeofPartition_Other * $Script:PartitionBarPixelperKB)
                     $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Script:SizeofFreeSpace_Pixels
                     $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = $Script:SizeofUnallocated_Pixels
                     $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width = $Script:SizeofPartition_Other_Pixels
@@ -3180,8 +3506,8 @@ $WPF_UI_FreeSpace_Value.add_LostFocus({
             if ($ValueDifference -lt 0){
                 $Script:SizeofFreeSpace += $ValueDifference
                 $Script:SizeofUnallocated -= $ValueDifference
-                $Script:SizeofUnallocated_Pixels = $Script:SizeofUnallocated * $Script:PartitionBarPixelperKB
-                $Script:SizeofFreeSpace_Pixels = $Script:SizeofFreeSpace * $Script:PartitionBarPixelperKB
+                $Script:SizeofUnallocated_Pixels = [decimal]($Script:SizeofUnallocated * $Script:PartitionBarPixelperKB)
+                $Script:SizeofFreeSpace_Pixels = [decimal]($Script:SizeofFreeSpace * $Script:PartitionBarPixelperKB)
                 $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = $Script:SizeofUnallocated_Pixels
                 $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Script:SizeofFreeSpace_Pixels  
                 $Script:UI_FreeSpace_Value= $WPF_UI_FreeSpace_Value.Text
@@ -3192,8 +3518,8 @@ $WPF_UI_FreeSpace_Value.add_LostFocus({
             elseif($ValueDifference -gt 0 -and ($Script:SizeofUnallocated - $ValueDifference) -gt 0){
                 $Script:SizeofFreeSpace += $ValueDifference
                 $Script:SizeofUnallocated -= $ValueDifference
-                $Script:SizeofUnallocated_Pixels = $Script:SizeofUnallocated * $Script:PartitionBarPixelperKB
-                $Script:SizeofFreeSpace_Pixels = $Script:SizeofFreeSpace * $Script:PartitionBarPixelperKB
+                $Script:SizeofUnallocated_Pixels = [decimal]($Script:SizeofUnallocated * $Script:PartitionBarPixelperKB)
+                $Script:SizeofFreeSpace_Pixels = [decimal]($Script:SizeofFreeSpace * $Script:PartitionBarPixelperKB)
                 $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = $Script:SizeofUnallocated_Pixels  
                 $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Script:SizeofFreeSpace_Pixels  
                 $Script:UI_FreeSpace_Value= $WPF_UI_FreeSpace_Value.Text
@@ -3220,8 +3546,8 @@ $WPF_UI_ImageSize_Value.add_LostFocus({
             elseif (($ValueDifference -lt 0) -and ($ValueDifference+$Script:SizeofFreeSpace -gt 0)) {  # We are reducing image and need free space
                 $Script:SizeofFreeSpace += $ValueDifference
                 $Script:SizeofUnallocated -= $ValueDifference
-                $Script:SizeofFreeSpace_Pixels = $Script:SizeofFreeSpace * $Script:PartitionBarPixelperKB
-                $Script:SizeofFreeSpace_Pixels = $Script:SizeofFreeSpace * $Script:PartitionBarPixelperKB
+                $Script:SizeofFreeSpace_Pixels = [decimal]($Script:SizeofFreeSpace * $Script:PartitionBarPixelperKB)
+                $Script:SizeofFreeSpace_Pixels = [decimal]($Script:SizeofFreeSpace * $Script:PartitionBarPixelperKB)
                 $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = $Script:SizeofUnallocated_Pixels  
                 $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Script:SizeofFreeSpace_Pixels  
                 $UI_ImageSize_Value = $WPF_UI_ImageSize_Value.Text       
@@ -3229,8 +3555,8 @@ $WPF_UI_ImageSize_Value.add_LostFocus({
             elseif (($ValueDifference -gt 0) -and ($Script:SizeofUnallocated -$ValueDifference -gt 0)) {  # We are reducing image and need free space    
                 $Script:SizeofFreeSpace += $ValueDifference
                 $Script:SizeofUnallocated -= $ValueDifference
-                $Script:SizeofUnallocated_Pixels = $Script:SizeofUnallocated * $Script:PartitionBarPixelperKB
-                $Script:SizeofFreeSpace_Pixels = $Script:SizeofFreeSpace * $Script:PartitionBarPixelperKB
+                $Script:SizeofUnallocated_Pixels = [decimal]($Script:SizeofUnallocated * $Script:PartitionBarPixelperKB)
+                $Script:SizeofFreeSpace_Pixels = [decimal]($Script:SizeofFreeSpace * $Script:PartitionBarPixelperKB)
                 $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = $Script:SizeofUnallocated_Pixels  
                 $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Script:SizeofFreeSpace_Pixels
                 $UI_ImageSize_Value = $WPF_UI_ImageSize_Value.Text         
@@ -3243,7 +3569,7 @@ $WPF_UI_ImageSize_Value.add_LostFocus({
 })
 
 $WPF_UI_RomPath_Button.Add_Click({
-    $Script:ROMPath = Get-FolderPath -Message 'Select path to Kickstart' -RootFolder 'MyComputer'
+    $Script:ROMPath = Get-FolderPath -Message 'Select path to Kickstart' -InitialDirectory $Script:UserLocation_Kickstarts
     if ($Script:ROMPath){
         $Script:ROMPath = $Script:ROMPath.TrimEnd('\')+'\'
         if (Confirm-UIFields){
@@ -3266,7 +3592,7 @@ $WPF_UI_RomPath_Button.Add_Click({
         $WPF_UI_RomPath_Button.Foreground = 'White'
     }
     else{
-        $WPF_UI_RomPath_Label.Text ='No ROM path selected'
+        $WPF_UI_RomPath_Label.Text ='No Kickstart path selected'
         $WPF_UI_RomPath_Button.Background = '#FFDDDDDD'
 
         if (Confirm-UIFields){
@@ -3288,7 +3614,7 @@ $WPF_UI_RomPath_Button.Add_Click({
 })
 
 $WPF_UI_ADFPath_Button.Add_Click({
-    $Script:ADFPath = Get-FolderPath -Message 'Select path to ADFs' -RootFolder 'MyComputer'
+    $Script:ADFPath = Get-FolderPath -Message 'Select path to ADFs' -InitialDirectory $Script:UserLocation_ADFs
     if ($Script:ADFPath){
         $Script:ADFPath = $Script:ADFPath.TrimEnd('\')+'\'
         if (Confirm-UIFields){
@@ -3378,15 +3704,17 @@ Calculating space requirements. This may take some time if you have selected a l
 $AvailableKickstarts = Import-Csv ($InputFolder+'ListofInstallFiles.csv') -delimiter ';' | Where-Object 'Kickstart_VersionFriendlyName' -ne ""| Select-Object 'Kickstart_Version','Kickstart_VersionFriendlyName' -unique
 
 foreach ($Kickstart in $AvailableKickstarts) {
-    $WPF_UI_KickstartVersion_Dropdown.AddChild($Kickstart.Kickstart_VersionFriendlyName)
+    $WPF_UI_KickstartVersion_Dropdown.AddChild(($Kickstart.Kickstart_VersionFriendlyName).tostring())
 }
 
 $WPF_UI_KickstartVersion_Dropdown.Add_SelectionChanged({
     foreach ($Kickstart in $AvailableKickstarts) {
         if ($Kickstart.Kickstart_VersionFriendlyName -eq $WPF_UI_KickstartVersion_Dropdown.SelectedItem){
-            $Script:KickstartVersiontoUse  = $Kickstart.Kickstart_Version          
+            $Script:KickstartVersiontoUse  = $Kickstart.Kickstart_Version 
+            $Script:KickstartVersiontoUseFriendlyName = $WPF_UI_KickstartVersion_Dropdown.SelectedItem
         }
-    }
+   }
+
     if (Confirm-UIFields){
         $WPF_UI_Start_Button.Background = 'Red'
         $WPF_UI_Start_Button.Foreground = 'Black'
@@ -3413,7 +3741,8 @@ foreach ($ScreenMode in $AvailableScreenModes) {
 $WPF_UI_ScreenMode_Dropdown.Add_SelectionChanged({
     foreach ($ScreenMode in $AvailableScreenModes) {
         if ($ScreenMode.FriendlyName -eq $WPF_UI_ScreenMode_Dropdown.SelectedItem){
-            $Script:ScreenModetoUse = $ScreenMode.Name           
+            $Script:ScreenModetoUse = $ScreenMode.Name
+            $Script:ScreenModetoUseFriendlyName = $WPF_UI_ScreenMode_Dropdown.SelectedItem           
         }
     }
     if (Confirm-UIFields){
@@ -3437,12 +3766,15 @@ $WPF_UI_DiskWrite_CheckBox.Add_Checked({
     If ($WPF_UI_SkipEmptySpace_CheckBox.IsChecked -eq 'TRUE'){
         $WPF_UI_SkipEmptySpace_CheckBox.IsChecked = ''
     }
+    $Script:WriteImage ='FALSE'
+    $Script:WriteMethod = $null
 })
 
 $WPF_UI_SkipEmptySpace_CheckBox.Add_Checked({
     If ($WPF_UI_DiskWrite_CheckBox.IsChecked -eq 'TRUE'){
         $WPF_UI_DiskWrite_CheckBox.IsChecked = ''
     }
+    $Script:WriteMethod = 'SkipEmptySpace'
 })
 
 $WPF_UI_NoFileInstall_CheckBox.Add_Checked({
