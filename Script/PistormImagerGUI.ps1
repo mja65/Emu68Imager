@@ -56,7 +56,7 @@ function Write-Emu68ImagerLog {
 
     If($StartorContinue -eq 'Start'){
         $NetFrameworkrelease = Get-ItemPropertyValue -LiteralPath 'HKLM:SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full' -Name Release
-        $PowershellVersion = ((($PSVersionTable.PSVersion).Major).ToString()+'.'+(($PSVersionTable.PSVersion).Minor))
+        $Script:PowershellVersion = ((($PSVersionTable.PSVersion).Major).ToString()+'.'+(($PSVersionTable.PSVersion).Minor))
         $WindowsLocale = ((((Get-WinSystemLocale).Name).Tostring())+' ('+(((Get-WinSystemLocale).DisplayName).Tostring())+')')
         $WindowsVersion = (Get-WmiObject -class Win32_OperatingSystem).Caption
         $LogEntry =     @"
@@ -375,6 +375,10 @@ $Script:WriteMethod = $null
 $Script:LoadedSettings = $null
 $Script:UserLocation_Kickstarts = $null
 $Script:UserLocation_ADFs = $null
+$Script:FoundKickstarttoUse = $null
+$Script:AvailableADFs = $null
+$Script:DiskFriendlyName = $null
+$Script:IsDisclaimerAccepted = $null
 
 ####################################################################### End Null out Global Variables ###############################################################################################
 
@@ -423,6 +427,19 @@ $Emu68Toolsreleases= 'https://api.github.com/repos/michalsc/Emu68-tools/releases
 
 ####################################################################### End Set Script Variables ###############################################################################################
 
+######################################################################### Create User Files Folders ###############################################################################################
+$Script:UserLocation_ADFs = ($Scriptpath+'UserFiles\ADFs\')
+$Script:UserLocation_Kickstarts = ($Scriptpath+'UserFiles\Kickstarts\')
+
+if (-not (Test-Path $Script:UserLocation_ADFs)){
+    $null= New-Item -Path $Script:UserLocation_ADFs -ItemType Directory -Force
+} 
+
+if (-not (Test-Path $Script:UserLocation_Kickstarts)){
+    $null= New-Item -Path $Script:UserLocation_Kickstarts -ItemType Directory -Force
+} 
+
+######################################################################### End User Files Folders ###############################################################################################
 
 ######################################################################## Functions #################################################################################################################
 function Test-ExistenceofFiles {
@@ -921,25 +938,37 @@ function Confirm-UIFields {
     $NumberofErrors = 0
     $ErrorMessage = $null
     if (-not($Script:HSTDiskName)){
-        $ErrorMessage += 'You have not selected a disk'+"`n"
+        $ErrorMessage += 'You have not selected a disk'+"`n`n"
         $NumberofErrors += 1
     }
     if (-not($WPF_UI_KickstartVersion_Dropdown.SelectedItem)) {
-        $ErrorMessage += 'You have not populated a Kickstart version'+"`n"
+        $ErrorMessage += 'You have not populated a Kickstart version'+"`n`n"
         $NumberofErrors += 1
     }
     if (-not($WPF_UI_ScreenMode_Dropdown.SelectedItem)) {
-        $ErrorMessage += 'You have not populated a sceenmode'+"`n"
+        $ErrorMessage += 'You have not populated a sceenmode'+"`n`n"
         $NumberofErrors += 1
     }
     if (-not($Script:ROMPath )) {
-        $ErrorMessage += 'You have not populated a Kickstart Path'+"`n"
+        $ErrorMessage += 'You have not populated a Kickstart Path'+"`n`n"
         $NumberofErrors += 1
+    }
+    else{
+        if (-not ($Script:FoundKickstarttoUse.KickstartPath)){
+            $ErrorMessage += 'A Kickstart file has not been located'+"`n`n"
+            $NumberofErrors += 1
+        }
     }
     if ($Script:SetDiskupOnly -ne 'TRUE'){
         if (-not($Script:ADFPath )) {
-            $ErrorMessage += 'You have not populated an ADF Path'+"`n"
+            $ErrorMessage += 'You have not populated an ADF Path'+"`n`n"
             $NumberofErrors += 1
+        }
+        else{
+           if (-not ($Script:AvailableADFs | where-object IsMatched -eq 'TRUE') -or ($Script:AvailableADFs | where-object IsMatched -eq 'FALSE')){ 
+                $ErrorMessage += 'All the required ADFs have not been located'+"`n"
+                $NumberofErrors += 1
+            }
         }          
     }
     if ($NumberofErrors -gt 0){
@@ -968,31 +997,79 @@ Function Get-FormVariables{
     get-variable WPF*
 }
 
+
 function Read-SettingsFile {
     param (
         $SettingsFile
     )
+    $Msg_Header ='No SD Card Available'   
+    $Msg_Body = @"
+SD card is not available! Settings relating to partition sizes have not been loaded.
+
+"@    
+
+$Msg_Header_WorkingPath ='Working Path Not Available'   
+$Msg_Body_WorkingPath = @"
+Working path is not available! If you have insufficient space you will need to set 
+the working path again when you run the tool.
+
+"@    
+
+    #$Script:SettingsFolder = 'E:\Emu68Imager\Settings\test.e68'
+
+    $LoadedSettingsFile = Import-Csv $Script:SettingsFile -Delimiter ';' -Header @("Setting", "Value") | Select-Object -Skip 2
     
-    $LoadedSettings = Import-Csv $Script:SettingsFile -Delimiter ';' -Header @("Setting", "Value") | Select-Object -Skip 2
     $Script:LoadedSettings = $true
-    foreach ($Setting in $LoadedSettings){
-        if (Test-Path ('variable:Script:'+($Setting.Setting))){
-#            Write-host ('Removing variable '+$Setting.Setting)
-            Remove-Variable -Scope Script -Name $Setting.Setting
+
+    $Script:FoundKickstarttoUse = [System.Collections.Generic.List[PSCustomObject]]::New()
+
+    $KickstartSettings = $LoadedSettingsFile | Where-Object {$_.Setting -eq 'FoundKickstarttoUse'} | Select-Object -Skip 1
+
+    if ($KickstartSettings){
+        foreach ($Setting in $KickstartSettings){
+            $Values = ($Setting.Value -split ',')
+            $Script:FoundKickstarttoUse += [PSCustomObject]@{
+                KickStart_Version = $Values[0]
+                FriendlyName = $Values[1]
+                Sequence = $Values[2]
+                Fat32Name = $Values[3]
+                KickstartPath = $Values[4]
+            }
         }
-    #    Write-host ('Setting variable '+$Setting.Setting)
-        New-Variable -Scope Script -Name $Setting.Setting -Value $Setting.Value
     }
     
-    # Convert Numeric Variables to Numeric
+    $Script:AvailableADFs = [System.Collections.Generic.List[PSCustomObject]]::New()
     
-    $Script:SizeofFAT32 = [int]$Script:SizeofFAT32
-    $Script:SizeofImage = [int]$Script:SizeofImage
-    $Script:SizeofDisk = [int]$Script:SizeofDisk
-    $Script:SizeofPartition_System = [int]$Script:SizeofPartition_System
-    $Script:SizeofPartition_Other = [int]$Script:SizeofPartition_Other
-    $Script:SizeofUnallocated = [int]$Script:SizeofUnallocated 
-    $Script:SizeofFreeSpace = [int]$Script:SizeofFreeSpace 
+    $ADFSettings = $LoadedSettingsFile | Where-Object {$_.Setting -eq 'AvailableADFs'} | Select-Object -Skip 1
+
+    if ($ADFSettings){
+        foreach ($Setting in $ADFSettings){
+            $Values = ($Setting.Value -split ',')
+            $Script:AvailableADFs += [PSCustomObject]@{
+                IsMatched = $Values[0]
+                PathtoADF = $Values[1]
+                Hash = $Values[2]
+                ADF_Name = $Values[3]
+                FriendlyName = $Values[4]
+            }
+        }
+    }
+    
+    $OtherSettings =  $LoadedSettingsFile | Where-Object {$_.Setting -ne 'AvailableADFs' -and $_.Setting -ne 'FoundKickstarttoUse' } 
+    foreach ($Setting in $OtherSettings){
+        if (Test-Path ('variable:Script:'+($Setting.Setting))){
+            Remove-Variable -Scope Script -Name $Setting.Setting
+        }
+        New-Variable -Scope Script -Name $Setting.Setting -Value $Setting.Value
+    } 
+    
+    if ($Script:WorkingPath){
+        if (-not (Test-Path ($Script:WorkingPath))){
+            $null = [System.Windows.MessageBox]::Show($Msg_Body_WorkingPath, $Msg_Header_WorkingPath,0,48)
+            $Script:WorkingPath = $null
+            $Script:WorkingPathDefault = $null
+        }
+    }
 
     $DiskFound = $false
     $DiskstoCheck = Get-RemovableMedia
@@ -1003,18 +1080,41 @@ function Read-SettingsFile {
         }   
     }                
     if ($DiskFound -eq $false){
+        $null = [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,48)
         Remove-Variable -Scope Script -Name HSTDiskName
         Remove-Variable -Scope Script -Name HSTDiskDeviceID
         Remove-Variable -Scope Script -Name HSTDiskNumber
+        Remove-Variable -Scope Script -Name SizeofFAT32
+        Remove-Variable -Scope Script -Name SizeofImage
+        Remove-Variable -Scope Script -Name SizeofDisk
+        Remove-Variable -Scope Script -Name SizeofPartition_System
+        Remove-Variable -Scope Script -Name SizeofPartition_Other
+        Remove-Variable -Scope Script -Name SizeofUnallocated
+        Remove-Variable -Scope Script -Name SizeofFreeSpace
     }
-}
+    
+        # Convert Numeric Variables to Numeric
+    
+        $Script:SizeofFAT32 = [int]$Script:SizeofFAT32
+        $Script:SizeofImage = [int]$Script:SizeofImage
+        $Script:SizeofDisk = [int]$Script:SizeofDisk
+        $Script:SizeofPartition_System = [int]$Script:SizeofPartition_System
+        $Script:SizeofPartition_Other = [int]$Script:SizeofPartition_Other
+        $Script:SizeofUnallocated = [int]$Script:SizeofUnallocated 
+        $Script:SizeofFreeSpace = [int]$Script:SizeofFreeSpace 
+
+
+ }
+
+
 
 function Write-SettingsFile {
     param (
         $SettingsFile
     )
+
     'Do not edit this file! It will break Emu68 Imager! You have been warned!' | Out-File $SettingsFile
-    'Setting;Value' | Out-File $SettingsFile   
+    'Setting;Value' | Out-File $SettingsFile -Append  
     ('HSTDiskName;'+$Script:HSTDiskName) | Out-File $SettingsFile -Append
     ('ScreenModetoUse;'+$Script:ScreenModetoUse) | Out-File $SettingsFile -Append
     ('ScreenModetoUseFriendlyName;'+$Script:ScreenModetoUseFriendlyName) | Out-File $SettingsFile -Append
@@ -1040,7 +1140,24 @@ function Write-SettingsFile {
     ('TransferLocation;'+$Script:TransferLocation) | Out-File $SettingsFile -Append
     ('WriteMethod;'+$Script:WriteMethod) | Out-File $SettingsFile -Append
     ('DiskFriendlyName;'+$Script:DiskFriendlyName) | Out-File $SettingsFile -Append
-    
+    if ($Script:FoundKickstarttoUse){
+        ('FoundKickstarttoUse;Kickstart_Version,FriendlyName,Sequence,Fat32Name,KickstartPath') | Out-File $SettingsFile -Append
+        foreach ($Line in $Script:FoundKickstarttoUse){
+            ('FoundKickstarttoUse;'+$Line.Kickstart_Version+','+$Line.FriendlyName+','+$Line.Sequence+','+$Line.Fat32Name+','+$Line.KickstartPath) | Out-File $SettingsFile -Append
+        }
+    }
+    else {
+        ('FoundKickstarttoUse;') | Out-File $SettingsFile -Append
+    }
+    if ($Script:AvailableADFs){
+        ('AvailableADFs;IsMatched,PathtoADF,Hash,ADF_Name,FriendlyName') | Out-File $SettingsFile -Append
+        foreach ($Line in $Script:AvailableADFs){
+            ('AvailableADFs;'+$Line.IsMatched+','+$Line.PathtoADF+','+$Line.Hash+','+$Line.ADF_Name+','+$Line.FriendlyName) | Out-File $SettingsFile -Append
+        }
+    }
+    else {
+        ('AvailableADFs;') | Out-File $SettingsFile -Append
+    }
 }
 
 function Get-SettingsLoadPath {
@@ -1089,12 +1206,12 @@ function Get-FolderPath {
         [switch]$ShowNewFolderButton
     )
 
-    if ($PowershellVersion -gt 7){
+    if ($Script:PowershellVersion -gt 7){
         Add-Type -AssemblyName System.Windows.Forms
         $dialog = New-Object System.Windows.Forms.FolderBrowserDialog
         $dialog.Description = $Message
         $dialog.ShowNewFolderButton = if ($ShowNewFolderButton) { $true } else { $false }
-        if ($PowershellVersion -gt 7){
+        if ($Script:PowershellVersion -gt 7){
             $dialog.UseDescriptionForTitle = 'TRUE'
             if ($selectedPath){
                 $dialog.InitialDirectory = $InitialDirectory.TrimEnd('\')
@@ -1836,10 +1953,8 @@ and select this path to scan.
         $ListofKickstartFilestoCheck  = $ListofKickstartFilestoCheck | Where-Object {$_.DirectoryName -eq $PathtoKickstartFiles.TrimEnd('\') } 
     } 
 
-    $ListofKickstartFilestoCheck  = $ListofKickstartFilestoCheck  | Where-Object { $_.PSIsContainer -eq $false -and $_.Length -eq 524288} | Get-FileHash  -Algorithm MD5
-
-    #$ListofKickstartFilestoCheck = Get-ChildItem $PathtoKickstartFiles -force -Recurse | Where-Object { $_.PSIsContainer -eq $false -and $_.Length -eq 524288} 
-    
+    $ListofKickstartFilestoCheck  = $ListofKickstartFilestoCheck  | Where-Object { $_.PSIsContainer -eq $false -and $_.Length -eq 524288}
+   
     $FoundKickstarts = [System.Collections.Generic.List[PSCustomObject]]::New()
     $HashTableforKickstartFilestoCheck = @{} # Clear Hash
    
@@ -1906,6 +2021,11 @@ and select this path to scan.
 "@
     $null = [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,0)
 
+    # $PathtoADFFiles = 'E:\Emulators\Amiga Files\Shared\adf\OS32\'
+    # $PathtoADFHashes = 'E:\Emu68Imager\InputFiles\ADFHashes.csv'
+    # $KickstartVersion = 3.2
+    # $PathtoListofInstallFiles = 'E:\Emu68Imager\InputFiles\ListofInstallFiles.csv'
+
     $ListofADFFilestoCheck = Get-ChildItem $PathtoADFFiles -force -Recurse
     if ((($ListofADFFilestoCheck | Measure-Object).count) -gt 500){
         $null = [System.Windows.MessageBox]::Show($Msg_Body_ExceedLimit,$Msg_Header_ExceedLimit,0,48)
@@ -1913,69 +2033,72 @@ and select this path to scan.
     } 
     $ListofADFFilestoCheck = $ListofADFFilestoCheck | Where-Object { $_.PSIsContainer -eq $false -and $_.Name -match '.adf' -and $_.Length -eq 901120 } | Get-FileHash  -Algorithm MD5
 
-    #Write-InformationMessage -Message ('Calculating hashes of ADFs in location '+$PathtoADFFiles)
+    $ADFHashes = Import-Csv $PathtoADFHashes -Delimiter ';' |  Where-Object {$_.Kickstart_Version -eq $KickstartVersion} | Sort-Object -Property 'Sequence'
+   
+    $RequiredADFsforInstall = Import-Csv $PathtoListofInstallFiles -Delimiter ';' |  Where-Object {$_.Kickstart_Version -eq $KickstartVersion} | Select-Object ADF_Name, FriendlyName -Unique # Unique ADFs Required
+    
+    $RequiredADFandHashes = [System.Collections.Generic.List[PSCustomObject]]::New() # Allowing for if there are multiple hashes for the same ADF
+    
+    foreach ($ADFHash in $ADFHashes){
+        foreach ($RequiredADF in $RequiredADFsforInstall){
+            if ($ADFHash.ADF_Name -eq $RequiredADF.ADF_Name){
+                $RequiredADFandHashes += [PSCustomObject]@{
+                    ADF_Name = $ADFHash.ADF_Name
+                    FriendlyName = $ADFHash.FriendlyName
+                    Hash = $ADFHash.Hash 
+                }
+            }
+        }
+    }
+    
+    $HashTableforADFHashestoFind = @{} # Clear Hash
+    $RequiredADFandHashes | ForEach-Object {
+        $HashTableforADFHashestoFind[$_.Hash] = @($_.ADF_Name,$_.FriendlyName)
+    }
 
-    #$ListofADFFilestoCheck = Get-ChildItem $PathtoADFFiles -force -Recurse | Where-Object { $_.PSIsContainer -eq $false -and $_.Name -match '.adf' -and $_.Length -eq 901120 }  | Get-FileHash  -Algorithm MD5
- 
-    # Write-InformationMessage -Message  ('Hashes calculated!')
-    $ADFHashestoFind = Import-Csv $PathtoADFHashes -Delimiter ';' |  Where-Object {$_.Kickstart_Version -eq $KickstartVersion} | Sort-Object -Property 'Sequence'
-    $RequiredADFs = Import-Csv $PathtoListofInstallFiles -Delimiter ';' |  Where-Object {$_.Kickstart_Version -eq $KickstartVersion} | Sort-Object -Property 'Sequence'
-    $UniqueRequiredADFs = $RequiredADFs | Select-Object FriendlyName -Unique
-    
-    $HashTableforADFFilestoCheck = @{} # Clear Hash
-    
+    $PathofFoundADFS = [System.Collections.Generic.List[PSCustomObject]]::New()
+    $ListofADFFilestoCheck | ForEach-Object {
+        if ($HashTableforADFHashestoFind.ContainsKey($_.Hash)){
+            $PathofFoundADFS += [PSCustomObject]@{
+                Hash = $_.Hash
+                Path = $_.Path
+                ADF_Name = $HashTableforADFHashestoFind.($_.Hash)[0]
+                FriendlyName = $HashTableforADFHashestoFind.($_.Hash)[1]
+            
+            }                  
+        }
+    }
+
     $MatchedADFs = [System.Collections.Generic.List[PSCustomObject]]::New()
-    $MissingADFs = [System.Collections.Generic.List[PSCustomObject]]::New()
-    
-    foreach ($ADFDetailLine in $ADFHashestoFind){
-        $HashTableforADFFilestoCheck += @{
-            $ADFDetailLine.Hash=$ADFDetailLine.ADF_Name,$ADFDetailLine.FriendlyName    
+
+    $RequiredADFsforInstall | ForEach-Object {
+        $IsFoundADF = $false
+        foreach ($FoundADF in $PathofFoundADFS){
+            If ($_.ADF_Name -eq $FoundADF.ADF_Name){
+                $MatchedADFs += [PSCustomObject]@{
+                    Hash = $FoundADF.Hash
+                    Path = $FoundADF.Path
+                    ADF_Name = $FoundADF.ADF_Name
+                    FriendlyName = $FoundADF.FriendlyName
+                    IsMatched = 'TRUE'
+                }
+                $IsFoundADF = $true
+                break
+            }
         }
-    }
-    
-    foreach ($ADFLine in $ListofADFFilestoCheck){
-        if ($HashTableforADFFilestoCheck[$ADFLine.Hash]){
+        if ($IsFoundADF -eq $false){
             $MatchedADFs += [PSCustomObject]@{
-                IsMatched = 'TRUE'
-                PathtoADF= $ADFLine.Path
-                Hash = $ADFLine.Hash
-                ADF_Name = $HashTableforADFFilestoCheck[$ADFLine.Hash][0]
-                FriendlyName = $HashTableforADFFilestoCheck[$ADFLine.Hash][1]
+                Hash = ''
+                Path = ''
+                ADF_Name = $_.ADF_Name
+                FriendlyName = $_.FriendlyName
+                IsMatched = 'False'                
             }
-        }
+        }            
     }
-    
-    $UniqueAvailableADFs = $MatchedADFs.FriendlyName | Get-Unique 
-    
-    $ErrorCount=0
-          
-    foreach ($RequiredADF in $UniqueRequiredADFs){
-        $ADFFound=$false
-        foreach ($AvailableADF in $UniqueAvailableADFs){
-            if ($RequiredADF.FriendlyName -eq $AvailableADF){              
-                $ADFFound=$true
-            }
-        }
-        if ($ADFFound -eq  $true){
-#            Write-InformationMessage -Message ('Found ADF file: '+$RequiredADF.FriendlyName)
-        }
-        if ($ADFFound -eq  $false){
-#            Write-ErrorMessage -Message ('ADF file: '+$RequiredADF.FriendlyName+' is missing from directory and/or hash is invalid Please check file!')
-            $MissingADFs += [PSCustomObject]@{
-                IsMatched = 'FALSE'
-                MissingADFName = $RequiredADF.FriendlyName
-            }
-            $ErrorCount +=1
-        }
-    } 
-    
-    if ($ErrorCount -gt 0){
-        return $MissingADFs
-     }
-    else{
-        return $MatchedADFs 
-    }
-}    
+
+    return $MatchedADFs
+}  
 
 function Get-StartupSequenceVersion {
     param (
@@ -2199,6 +2322,34 @@ or press cancel to quit the tool
     return $false
 }
 
+
+function Write-GUINoOSChosen {
+    param (
+        $Type
+    )
+    $Msg_Header ='Error - No OS Chosen!'    
+    $Msg_Body = @"  
+Cannot check $Type as you have not yet chosen the OS!    
+"@     
+[System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,48)  
+}
+
+
+function Write-GUIMissingADFs {
+    param (
+        $MissingADFstoReport 
+    )
+    
+    $Msg_Header ='Error - ADFs Missing!'    
+    $Msg_Body = @"  
+The following ADFs are missing:  
+
+$MissingADFstoReport 
+Select a location with valid ADF files.    
+"@     
+    [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,48) 
+
+}
 
 function Write-GUINoKickstart {
     param (
@@ -2447,14 +2598,14 @@ $inputXML_UserInterface = @"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WpfApp14"
         mc:Ignorable="d"
-           Title="Emu68 Imager" Height="600" Width="1054" HorizontalAlignment="Left" VerticalAlignment="Top" ResizeMode="NoResize">
+           Title="Emu68 Imager" Height="700" Width="1054" HorizontalAlignment="Left" VerticalAlignment="Top" ResizeMode="NoResize">
     <Grid x:Name="Overall_Grid" Background="Transparent" Visibility="Visible">
         <Grid x:Name="Main_Grid" Background="#FFE5E5E5" Visibility="Visible" >
-            <GroupBox x:Name="DiskSetup_GroupBox" Header="Disk Setup" Margin="0,25,0,0" VerticalAlignment="Top" Height="153" Background="Transparent" HorizontalAlignment="Center">
+            <GroupBox x:Name="DiskSetup_GroupBox" Header="Disk Setup" Margin="0,60,0,0" VerticalAlignment="Top" Height="173" Background="Transparent" HorizontalAlignment="Center">
                 <Grid Background="Transparent">
-                    <Grid x:Name="DiskPartition_Grid" Background="Transparent" Height="30" Width="1028" MaxWidth="1028" VerticalAlignment="Center">
+                    <Grid x:Name="DiskPartition_Grid" Background="Transparent" Height="50" Width="1028" MaxWidth="1028" VerticalAlignment="Center">
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="30"/>
+                            <RowDefinition Height="50"/>
                         </Grid.RowDefinitions>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
@@ -2473,7 +2624,7 @@ $inputXML_UserInterface = @"
                   ScrollViewer.VerticalScrollBarVisibility="Disabled"  
                   ScrollViewer.HorizontalScrollBarVisibility="Disabled" IsTabStop="True"
               >
-                            <ListViewItem x:Name="FAT32Size_ListViewItem" Content="FAT32" Height="30" Width="Auto" HorizontalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <ListViewItem x:Name="FAT32Size_ListViewItem" Content="FAT32" Height="50" Width="Auto" HorizontalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </ListView>
                         <GridSplitter x:Name="FAT32_Splitter" Grid.Row="0" Grid.Column="1" Margin="2,0,2,0"
                Width="3" Background="Purple" 
@@ -2488,7 +2639,7 @@ $inputXML_UserInterface = @"
                   ScrollViewer.HorizontalScrollBarVisibility="Disabled" IsTabStop="True"
            
                   >
-                            <ListViewItem x:Name="WorkbenchSize_ListViewItem" Content="Workbench" Height="30" HorizontalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <ListViewItem x:Name="WorkbenchSize_ListViewItem" Content="Workbench" Height="50" HorizontalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </ListView>
                         <GridSplitter x:Name="Workbench_Splitter" Grid.Row="0" Grid.Column="3" Margin="2,0,2,0"
                Width="3" Background="Purple" 
@@ -2502,7 +2653,7 @@ $inputXML_UserInterface = @"
                   ScrollViewer.VerticalScrollBarVisibility="Disabled"  
                   ScrollViewer.HorizontalScrollBarVisibility="Disabled" IsTabStop="True"
               >
-                            <ListViewItem x:Name="WorkSize_ListViewItem" Content="Work" Height="30" HorizontalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <ListViewItem x:Name="WorkSize_ListViewItem" Content="Work" Height="50" HorizontalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </ListView>
                         <GridSplitter x:Name="Work_Splitter" Grid.Row="0" Grid.Column="5" Margin="2,0,2,0"
                Width="3" Background="Purple" 
@@ -2516,7 +2667,7 @@ $inputXML_UserInterface = @"
                   ScrollViewer.VerticalScrollBarVisibility="Disabled"  
                   ScrollViewer.HorizontalScrollBarVisibility="Disabled" IsTabStop="True"
               >
-                            <ListViewItem x:Name="FreeSpace_ListViewItem" Content="Free Space" Height="30" HorizontalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <ListViewItem x:Name="FreeSpace_ListViewItem" Content="Free Space" Height="50" HorizontalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </ListView>
                         <GridSplitter x:Name="Image_Splitter" Grid.Row="0" Grid.Column="7" Margin="2,0,2,0"
                Width="3" Background="Purple" 
@@ -2530,51 +2681,57 @@ $inputXML_UserInterface = @"
                     ScrollViewer.VerticalScrollBarVisibility="Disabled"  
                     ScrollViewer.HorizontalScrollBarVisibility="Disabled" IsTabStop="True"
                 >
-                            <ListViewItem x:Name="Unallocated_ListViewItem" Content="Not Used" Height="30" HorizontalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <ListViewItem x:Name="Unallocated_ListViewItem" Content="Not Used" Height="50" HorizontalContentAlignment="Center" HorizontalAlignment="Center" Focusable="False" VerticalAlignment="Center"/>
                         </ListView>
                     </Grid>
 
-                    <TextBox x:Name="Fat32Size_Label" HorizontalAlignment="Left" Margin="36,84,0,0" TextWrapping="Wrap" Text="FAT32 (GiB)" VerticalAlignment="Top" Width="82" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-                    <TextBox x:Name="WorkbenchSize_Label" HorizontalAlignment="Left" Margin="167,84,0,0" TextWrapping="Wrap" Text="Workbench (GiB)" VerticalAlignment="Top" Width="113" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-                    <TextBox x:Name="WorkSize_Label" HorizontalAlignment="Left" Margin="309,84,0,0" TextWrapping="Wrap" Text="Work (GiB)" VerticalAlignment="Top" Width="63" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-                    <TextBox x:Name="WorkSizeNote_Label" HorizontalAlignment="Left" Margin="279,85,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="16" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" FontSize="17" />
-                    <TextBox x:Name="Unallocated_Label" HorizontalAlignment="Left" Margin="771,84,0,0" TextWrapping="Wrap" Text="Not Used (GiB)" VerticalAlignment="Top" Width="105" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-                    <TextBox x:Name="ImageSize_Label" HorizontalAlignment="Left" Margin="540,84,0,0" TextWrapping="Wrap" Text="Total Image Size (GiB)" VerticalAlignment="Top" Width="144" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-                    <TextBox x:Name="FreeSpace_Label" HorizontalAlignment="Left" Margin="424,84,0,0" TextWrapping="Wrap" Text="Free Space (GiB)" VerticalAlignment="Top" Width="108" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
 
-                    <TextBox x:Name="FAT32Size_Value" Text="" HorizontalAlignment="Left" Margin="20,106,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" IsEnabled="False"/>
-                    <TextBox x:Name="WorkbenchSize_Value" Text="" HorizontalAlignment="Left" Margin="162,106,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" IsEnabled="False"/>
-                    <TextBox x:Name="WorkSize_Value" Text="" HorizontalAlignment="Left" Margin="278,106,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" IsEnabled="False"/>
-                    <TextBox x:Name="Unallocated_Value" Text="0" HorizontalAlignment="Left" Margin="780,106,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" BorderBrush="Transparent"/>
-                    <TextBox x:Name="ImageSize_Value" Text="" HorizontalAlignment="Left" Margin="551,106,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" IsEnabled="False"/>
-                    <TextBox x:Name="FreeSpace_Value" Text="" HorizontalAlignment="Left" Margin="416,106,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" IsEnabled="False"/>
+                    <TextBox x:Name="Fat32Size_Label" HorizontalAlignment="Left" Margin="36,104,0,0" TextWrapping="Wrap" Text="FAT32 (GiB)" VerticalAlignment="Top" Width="82" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+                    <TextBox x:Name="WorkbenchSize_Label" HorizontalAlignment="Left" Margin="178,104,0,0" TextWrapping="Wrap" Text="Workbench (GiB)" VerticalAlignment="Top" Width="113" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+                    <TextBox x:Name="WorkSize_Label" HorizontalAlignment="Left" Margin="347,104,0,0" TextWrapping="Wrap" Text="Work (GiB)" VerticalAlignment="Top" Width="63" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+                    <TextBox x:Name="WorkSizeNote_Label" HorizontalAlignment="Left" Margin="410,104,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="16" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" FontSize="17" />
+                    <TextBox x:Name="Unallocated_Label" HorizontalAlignment="Left" Margin="875,104,0,0" TextWrapping="Wrap" Text="Not Used (GiB)" VerticalAlignment="Top" Width="105" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+                    <TextBox x:Name="ImageSize_Label" HorizontalAlignment="Left" Margin="653,104,0,0" TextWrapping="Wrap" Text="Total Image Size (GiB)" VerticalAlignment="Top" Width="144" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+                    <TextBox x:Name="FreeSpace_Label" HorizontalAlignment="Left" Margin="510,104,0,0" TextWrapping="Wrap" Text="Free Space (GiB)" VerticalAlignment="Top" Width="108" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
 
-                    <Rectangle x:Name="Fat32_Key" HorizontalAlignment="Left" Height="10" Margin="22,90,0,0" VerticalAlignment="Top" Width="10" Fill="#FF3B67A2" />
-                    <Rectangle x:Name="Workbench_Key" HorizontalAlignment="Left" Height="10" Margin="154,90,0,0" VerticalAlignment="Top" Width="10" Fill="#FFFFA997"  />
-                    <Rectangle x:Name="Work_Key" HorizontalAlignment="Left" Height="10" Margin="295,90,0,0" VerticalAlignment="Top" Width="10" Fill="#FFAA907C"  />
-                    <Rectangle x:Name="FreeSpace_Key" HorizontalAlignment="Left" Height="10" Margin="409,90,0,0" VerticalAlignment="Top" Width="10" Fill="#FF7B7B7B" />
-                    <Rectangle x:Name="Unallocated_Key" HorizontalAlignment="Left" Height="10" Margin="756,90,0,0" VerticalAlignment="Top" Width="10" Fill="#FFAFAFAF"  />
+                    <TextBox x:Name="FAT32Size_Value" Text="" HorizontalAlignment="Left" Margin="20,126,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" IsEnabled="False"/>
+                    <TextBox x:Name="WorkbenchSize_Value" Text="" HorizontalAlignment="Left" Margin="173,126,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" IsEnabled="False"/>
+                    <TextBox x:Name="WorkSize_Value" Text="" HorizontalAlignment="Left" Margin="317,126,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" IsEnabled="False"/>
+                    <TextBox x:Name="Unallocated_Value" Text="0" HorizontalAlignment="Left" Margin="884,126,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" BorderBrush="Transparent"/>
+                    <TextBox x:Name="ImageSize_Value" Text="" HorizontalAlignment="Left" Margin="664,126,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" IsEnabled="False"/>
+                    <TextBox x:Name="FreeSpace_Value" Text="" HorizontalAlignment="Left" Margin="493,126,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="100" IsEnabled="False"/>
+
+                    <Rectangle x:Name="Fat32_Key" HorizontalAlignment="Left" Height="10" Margin="22,110,0,0" VerticalAlignment="Top" Width="10" Fill="#FF3B67A2" />
+                    <Rectangle x:Name="Workbench_Key" HorizontalAlignment="Left" Height="10" Margin="165,110,0,0" VerticalAlignment="Top" Width="10" Fill="#FFFFA997"  />
+                    <Rectangle x:Name="Work_Key" HorizontalAlignment="Left" Height="10" Margin="328,110,0,0" VerticalAlignment="Top" Width="10" Fill="#FFAA907C"  />
+                    <Rectangle x:Name="FreeSpace_Key" HorizontalAlignment="Left" Height="10" Margin="489,110,0,0" VerticalAlignment="Top" Width="10" Fill="#FF7B7B7B" />
+                    <Rectangle x:Name="Unallocated_Key" HorizontalAlignment="Left" Height="10" Margin="860,110,0,0" VerticalAlignment="Top" Width="10" Fill="#FFAFAFAF"  />
 
                     <TextBox x:Name="MediaSelect_Label" HorizontalAlignment="Left" Margin="10,10,0,0" TextWrapping="Wrap" Text="Select Media to Use" VerticalAlignment="Top" Width="120" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
                     <ComboBox x:Name="MediaSelect_DropDown" HorizontalAlignment="Left" Margin="130,8,0,0" VerticalAlignment="Top" Width="340"/>
                     <Button x:Name="MediaSelect_Refresh" Content="Refresh Available Media" HorizontalAlignment="Left" Margin="482,0,0,0" VerticalAlignment="Top" Width="150" Height="40" Background="#FF6688BB" Foreground="White" FontWeight="Bold" BorderBrush="Transparent"/>
-                    <Button x:Name="DefaultAllocation_Refresh" Content="Reset Partitions to Default" HorizontalAlignment="Left" Margin="725,0,0,0" VerticalAlignment="Top" Width="157" Height="40" Background="#FF6688BB" Foreground="White" FontWeight="Bold" BorderBrush="Transparent"/>
+                    <Button x:Name="DefaultAllocation_Refresh" Content="Reset Partitions to Default" HorizontalAlignment="Right" Margin="0,0,10,0" VerticalAlignment="Top" Width="160" Height="40" Background="#FF6688BB" Foreground="White" FontWeight="Bold" BorderBrush="Transparent"/>
                 </Grid>
             </GroupBox>
-            <GroupBox x:Name="SourceFiles_GroupBox" Header="Source Files" Height="200" Background="Transparent" Margin="7,180,0,128" Width="400" VerticalAlignment="Top" HorizontalAlignment="Left">
+            <GroupBox x:Name="SourceFiles_GroupBox" Header="Source Files" Height="200" Background="Transparent" Margin="7,280,0,128" Width="440" VerticalAlignment="Top" HorizontalAlignment="Left">
                 <Grid Background="Transparent" HorizontalAlignment="Left" VerticalAlignment="Top">
-                    <ComboBox x:Name="KickstartVersion_DropDown" HorizontalAlignment="Left" Margin="10,32,0,0" VerticalAlignment="Top" Width="200"/>
-                    <Button x:Name="ADFpath_Button" Content="Click to set ADF path" HorizontalAlignment="Left" Margin="10,94,0,0" VerticalAlignment="Top"  Width="200" Height="30"/>
-                    <TextBox x:Name="ADFPath_Label" HorizontalAlignment="Left" Margin="223,100,0,0" TextWrapping="Wrap" Text="No ADF path selected" VerticalAlignment="Top" Width="200" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-                    <TextBox x:Name="ROMPath_Label" HorizontalAlignment="Left" Margin="223,65,0,0" TextWrapping="Wrap" Text="No Kickstart path selected" VerticalAlignment="Top" Width="200" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-                    <Button x:Name="Rompath_Button" Content="Click to set Kickstart path" HorizontalAlignment="Left" Margin="10,59,0,0" VerticalAlignment="Top"  Width="200" Height="30"/>
-                    <Button x:Name="MigratedFiles_Button" Content="Click to set Transfer path" HorizontalAlignment="Left" Margin="10,129,0,0" VerticalAlignment="Top"  Width="200" Height="30"/>
-                    <TextBox x:Name="MigratedPath_Label" HorizontalAlignment="Left" Margin="223,139,0,0" TextWrapping="Wrap" Text="No transfer path selected" VerticalAlignment="Top" Width="200" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-                    <TextBox x:Name="KickstartVersion_Label" HorizontalAlignment="Left" Margin="10,10,0,0" TextWrapping="Wrap" Text="Select OS Version" VerticalAlignment="Top" Width="200" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Center" FontWeight="Bold"/>
+                <TextBox x:Name="KickstartVersion_Label" HorizontalAlignment="Left" Margin="10,10,0,0" TextWrapping="Wrap" Text="Select OS Version" VerticalAlignment="Top" Width="200" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Center" FontWeight="Bold"/>
+                    <ComboBox x:Name="KickstartVersion_DropDown" HorizontalAlignment="Left" Margin="10,32,0,0" VerticalAlignment="Top" Width="245"/>
+
+                    <Button x:Name="ADFpath_Button" Content="Click to set custom ADF folder" HorizontalAlignment="Left" Margin="10,94,0,0" VerticalAlignment="Top"  Width="200" Height="30"/>
+                    <Button x:Name="ADFpath_Button_Check" Content="Check" HorizontalAlignment="Left" Margin="215,94,0,0" VerticalAlignment="Top"  Width="40" Height="30" FontSize="10"/>
+                    <TextBox x:Name="ADFPath_Label" HorizontalAlignment="Left" Margin="263,100,0,0" TextWrapping="Wrap" Text="Using default ADF folder" VerticalAlignment="Top" Width="200" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+
+                    <Button x:Name="Rompath_Button" Content="Click to set custom Kickstart folder" HorizontalAlignment="Left" Margin="10,59,0,0" VerticalAlignment="Top"  Width="200" Height="30"/>
+                    <Button x:Name="Rompath_Button_Check" Content="Check" HorizontalAlignment="Left" Margin="215,59,0,0" VerticalAlignment="Top"  Width="40" Height="30" FontSize="10"/>
+                    <TextBox x:Name="ROMPath_Label" HorizontalAlignment="Left" Margin="263,65,0,0" TextWrapping="Wrap" Text="Using default Kickstart folder" VerticalAlignment="Top" Width="200" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+
+                    <Button x:Name="MigratedFiles_Button" Content="Click to set Transfer folder" HorizontalAlignment="Left" Margin="10,129,0,0" VerticalAlignment="Top"  Width="200" Height="30"/>
+                    <TextBox x:Name="MigratedPath_Label" HorizontalAlignment="Left" Margin="263,139,0,0" TextWrapping="Wrap" Text="No transfer path selected" VerticalAlignment="Top" Width="200" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
 
                 </Grid>
             </GroupBox>
-            <GroupBox x:Name="Settings_GroupBox" Header="Settings" Height="150" Background="Transparent" Margin="0,180,10,128" Width="400" VerticalAlignment="Top" HorizontalAlignment="Right">
+            <GroupBox x:Name="Settings_GroupBox" Header="Settings" Height="150" Background="Transparent" Margin="0,280,10,128" Width="400" VerticalAlignment="Top" HorizontalAlignment="Right">
                 <Grid>
                     <ComboBox x:Name="ScreenMode_Dropdown" HorizontalAlignment="Left" Margin="10,26,0,0" VerticalAlignment="Top" Width="375"/>
                     <TextBox x:Name="ScreenMode_Label" HorizontalAlignment="Center" Margin="10,0,0,0" TextWrapping="Wrap" Text="Select ScreenMode for Raspberry Pi to Output" VerticalAlignment="Top" Width="280" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Center" FontWeight="Bold"/>
@@ -2588,15 +2745,15 @@ $inputXML_UserInterface = @"
                 </Grid>
 
             </GroupBox>
-            <GroupBox x:Name="RunOptions_GroupBox" Header="Run Options" Margin="7,385,0,0" Background="Transparent" HorizontalAlignment="Left" Width="400" VerticalAlignment="Top" >
+            <GroupBox x:Name="RunOptions_GroupBox" Header="Run Options" Margin="7,485,0,0" Background="Transparent" HorizontalAlignment="Left" Width="400" VerticalAlignment="Top" >
                 <Grid Background="Transparent" >
                     <CheckBox x:Name="NoFileInstall_CheckBox" Content="Set disk up only. Do not install packages." HorizontalAlignment="Left" Margin="2,5,0,0" Height="15" VerticalAlignment="Top"/>
                     <CheckBox x:Name="DiskWrite_CheckBox" Content="Do not write to disk. Produce .img file only for later writing to disk." HorizontalAlignment="Left" Margin="2,25,0,0" Height="15" VerticalAlignment="Top"/>
                     <CheckBox x:Name="SkipEmptySpace_CheckBox" Content="Skip empty space when writing to disk. Experimental!" HorizontalAlignment="Left" Margin="2,45,0,0" Height="15" VerticalAlignment="Top"/>
                 </Grid>
             </GroupBox>
-            <Button x:Name="Start_Button" Content="Missing information! Press to see further details" HorizontalAlignment="Center" Margin="0,510,0,0" VerticalAlignment="Top" Width="890" Height="40" Background = "Red" Foreground="Black" BorderBrush="Transparent"/>
-            <GroupBox x:Name="Space_GroupBox" Header="Space Requirements" Height="170" Background="Transparent" Margin="0,330,10,0" Width="400" VerticalAlignment="Top" HorizontalAlignment="Right">
+            <Button x:Name="Start_Button" Content="Missing information! Press to see further details" HorizontalAlignment="Center" Margin="0,610,0,0" VerticalAlignment="Top" Width="890" Height="40" Background = "Red" Foreground="Black" BorderBrush="Transparent"/>
+            <GroupBox x:Name="Space_GroupBox" Header="Space Requirements" Height="170" Background="Transparent" Margin="0,430,10,0" Width="400" VerticalAlignment="Top" HorizontalAlignment="Right">
                 <Grid>
 
                     <TextBox x:Name="RequiredSpace_TextBox" HorizontalAlignment="Left" Margin="20,57,0,0" TextWrapping="Wrap" Text="Required space to run tool is:" VerticalAlignment="Top" Width="230" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
@@ -2611,11 +2768,14 @@ $inputXML_UserInterface = @"
                 </Grid>
 
             </GroupBox>
-            <TextBox x:Name="WorkSizeNoteFooter_Label" HorizontalAlignment="Left" Margin="15,485,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="480" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-        <Button x:Name="Documentation_Button" Content="Click for Documentation" HorizontalAlignment="Right" Margin="0,5,10,0" VerticalAlignment="Top" />
-                    <Button x:Name="LoadSettings_Button" Content="Load Settings" HorizontalAlignment="Left" Margin="7,5,0,0" VerticalAlignment="Top" Height="20" Width="75" />
-            <Button x:Name="SaveSettings_Button" Content="Save Settings" HorizontalAlignment="Left" Margin="97,5,0,0" VerticalAlignment="Top" Height="20" Width="75"/>
-        </Grid>
+            <TextBox x:Name="WorkSizeNoteFooter_Label" HorizontalAlignment="Left" Margin="15,585,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="480" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+       <Button x:Name="Documentation_Button" Content="Click for Documentation" HorizontalAlignment="Right" Margin="0,10,7,0" VerticalAlignment="Top" Height="50" Width="275" FontSize="18" BorderBrush="Transparent" Background="#FF6688BB" FontWeight="Bold" Foreground="White"/>
+            
+            <Button x:Name="LoadSettings_Button" Content="Load Settings" HorizontalAlignment="Right" Margin="0,10,290,0" VerticalAlignment="Top" Height="20" Width="110" BorderBrush="Transparent" Foreground="White" Background="#FF6688BB" FontWeight="Bold"/>
+                          <Button x:Name="SaveSettings_Button" Content="Save Settings" HorizontalAlignment="Right" Margin="0,40,290,0" VerticalAlignment="Top" Height="20" Width="110" BorderBrush="Transparent" Foreground="White" Background="#FF6688BB" FontWeight="Bold"/>
+            <TextBox x:Name="ToolTitle" HorizontalAlignment="Left" Height="50" Margin="7,0,0,0" TextWrapping="Wrap" Text="Emu68 Imager " VerticalAlignment="Top" Width="260" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" FontSize="36" FontWeight="Bold"/>
+           
+                  </Grid>
         <Grid x:Name="Reporting_Grid" Background="#FFE5E5E5" Visibility="Hidden">
             <Button x:Name="GoBack_Button" Content="Back" HorizontalAlignment="Left" Margin="20,523,0,0" Background="red" VerticalAlignment="Top" Width="199"/>
             <Button x:Name="Process_Button" Content="Run" HorizontalAlignment="Left" Margin="689,523,0,0" Background="green" VerticalAlignment="Top" Width="199"/>
@@ -2684,6 +2844,7 @@ $inputXML_UserInterface = @"
 $XAML_UserInterface = Format-XMLtoXAML -inputXML $inputXML_UserInterface 
 $Form_UserInterface = Read-XAML -xaml $XAML_UserInterface 
 
+
 #===========================================================================
 # Load XAML Objects In PowerShell
 #===========================================================================
@@ -2706,6 +2867,9 @@ $XAML_UserInterface.SelectNodes("//*[@Name]") | ForEach-Object{
 #===========================================================================
 # Use this space to add code to the various form elements in your GUI
 #===========================================================================
+
+$Script:ROMPath = $Script:UserLocation_Kickstarts 
+$Script:ADFPath = $Script:UserLocation_ADFs 
 
 #Width of bar
 
@@ -3196,13 +3360,7 @@ $WPF_UI_LoadSettings_Button.Add_Click({
             $WPF_UI_MediaSelect_DropDown.SelectedItem = $Script:DiskFriendlyName
 
         }
-
-        if ($Script:HSTDiskName -ne $null){
-            $SizeofFAT32
-        }
-
         $WPF_UI_KickstartVersion_DropDown.SelectedItem = ($Script:KickstartVersiontoUseFriendlyName).tostring()
-
         $WPF_UI_ScreenMode_Dropdown.SelectedItem = $Script:ScreenModetoUseFriendlyName
         $WPF_UI_ADFPath_Label.Text = Get-FormattedPathforGUI -PathtoTruncate ($Script:ADFPath)   
         $WPF_UI_ADFPath_Button.Background = 'Green'
@@ -3319,6 +3477,19 @@ $WPF_UI_MediaSelect_Refresh.Add_Click({
 
 $WPF_UI_RequiredSpaceValueTransferredFiles_TextBox.Add_TextChanged({
     $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpaceFilestoTransfer
+})
+
+
+$WPF_UI_Password_Textbox.add_LostFocus({
+    if ($WPF_UI_Password_Textbox.Text){
+        $Script:WifiPassword = $WPF_UI_Password_Textbox.Text
+    }
+})
+
+$WPF_UI_SSID_Textbox.add_LostFocus({
+    if ($WPF_UI_SSID_Textbox.Text){
+        $Script:SSID = $WPF_UI_SSID_Textbox.Text    
+    }    
 })
 
 
@@ -3569,8 +3740,8 @@ $WPF_UI_ImageSize_Value.add_LostFocus({
 })
 
 $WPF_UI_RomPath_Button.Add_Click({
-    $Script:ROMPath = Get-FolderPath -Message 'Select path to Kickstart' -InitialDirectory $Script:UserLocation_Kickstarts
-    if ($Script:ROMPath){
+    $Script:ROMPath = Get-FolderPath -Message 'Select path to Kickstart' -InitialDirectory $Script:ROMPath
+    if ($Script:ROMPath -ne $Script:UserLocation_Kickstart -and ($Script:ROMPath)){
         $Script:ROMPath = $Script:ROMPath.TrimEnd('\')+'\'
         if (Confirm-UIFields){
             $WPF_UI_Start_Button.Background = 'Red'
@@ -3592,8 +3763,13 @@ $WPF_UI_RomPath_Button.Add_Click({
         $WPF_UI_RomPath_Button.Foreground = 'White'
     }
     else{
-        $WPF_UI_RomPath_Label.Text ='No Kickstart path selected'
+        $Script:ROMPath = $Script:UserLocation_Kickstart
+        $Script:FoundKickstarttoUse = $null
+        $WPF_UI_RomPath_Label.Text ='Using default Kickstart folder'
+        $WPF_UI_RomPath_Button.Foreground = 'Black'
         $WPF_UI_RomPath_Button.Background = '#FFDDDDDD'
+        $WPF_UI_Rompath_Button_Check.Background = '#FFDDDDDD'
+        $WPF_UI_Rompath_Button_Check.Foreground = 'Black'
 
         if (Confirm-UIFields){
             $WPF_UI_Start_Button.Background = 'Red'
@@ -3613,9 +3789,43 @@ $WPF_UI_RomPath_Button.Add_Click({
     }
 })
 
+$WPF_UI_ROMpath_Button_Check.Add_Click({
+    if ($Script:KickstartVersiontoUse){
+        $Script:FoundKickstarttoUse = Compare-KickstartHashes -PathtoKickstartHashes ($InputFolder+'RomHashes.csv') -PathtoKickstartFiles $Script:ROMPath -KickstartVersion $Script:KickstartVersiontoUse
+        if (-not ($Script:FoundKickstarttoUse)){
+            Write-GUINoKickstart
+        }
+        else{
+            $WPF_UI_ROMpath_Button_Check.Background = 'Green'
+            $WPF_UI_ROMpath_Button_Check.Foreground = 'White'
+        }
+
+        if (Confirm-UIFields){
+            $WPF_UI_Start_Button.Background = 'Red'
+            $WPF_UI_Start_Button.Foreground = 'Black'
+            $WPF_UI_Start_Button.Content = 'Missing information! Press to see further details'
+        }
+        elseif (-not (Confirm-FreeSpacetoRunTool)){
+            $WPF_UI_Start_Button.Background = 'Yellow'
+            $WPF_UI_Start_Button.Foreground = 'Black'
+            $WPF_UI_Start_Button.Content = 'Run Tool (with prompt for new drive and folder from which to run the tool)'
+        }
+        else{
+            $WPF_UI_Start_Button.Background = 'Green'
+            $WPF_UI_Start_Button.Foreground = 'White'
+            $WPF_UI_Start_Button.Content = 'Run Tool'
+        }
+
+    }
+    else{
+        Write-GUINoOSChosen -Type 'Kickstarts'
+    }
+})
+
+
 $WPF_UI_ADFPath_Button.Add_Click({
-    $Script:ADFPath = Get-FolderPath -Message 'Select path to ADFs' -InitialDirectory $Script:UserLocation_ADFs
-    if ($Script:ADFPath){
+    $Script:ADFPath = Get-FolderPath -Message 'Select path to ADFs' -InitialDirectory $Script:ADFPath
+    if ($Script:ADFPath -ne $Script:UserLocation_ADFs -and ($Script:ADFPath))   {
         $Script:ADFPath = $Script:ADFPath.TrimEnd('\')+'\'
         if (Confirm-UIFields){
             $WPF_UI_Start_Button.Background = 'Red'
@@ -3637,9 +3847,13 @@ $WPF_UI_ADFPath_Button.Add_Click({
         $WPF_UI_ADFPath_Button.Foreground = 'White'
     } 
     else{
-        $WPF_UI_ADFPath_Label.Text = 'No ADF path selected'
-        $WPF_UI_ADFPath_Button.Background = '#FFDDDDDD'
+        $Script:AvailableADFs = $null
+        $Script:ADFPath = $Script:UserLocation_ADFs
+        $WPF_UI_ADFPath_Label.Text = 'Using default ADF folder'
         $WPF_UI_ADFPath_Button.Foreground = 'Black'
+        $WPF_UI_ADFPath_Button.Background = '#FFDDDDDD'       
+        $WPF_UI_ADFpath_Button_Check.Background = '#FFDDDDDD'
+        $WPF_UI_ADFpath_Button_Check.Foreground = 'Black'
 
         if (Confirm-UIFields){
             $WPF_UI_Start_Button.Background = 'Red'
@@ -3657,6 +3871,77 @@ $WPF_UI_ADFPath_Button.Add_Click({
             $WPF_UI_Start_Button.Content = 'Run Tool'
         }
     }
+})
+
+$WPF_UI_ADFpath_Button_Check.Add_Click({
+    if ($Script:KickstartVersiontoUse){
+        $Script:AvailableADFs = Compare-ADFHashes -PathtoADFFiles $Script:ADFPath -PathtoADFHashes ($InputFolder+'ADFHashes.csv') -KickstartVersion $Script:KickstartVersiontoUse -PathtoListofInstallFiles ($InputFolder+'ListofInstallFiles.csv')            
+        if (($Script:AvailableADFs | Select-Object 'IsMatched' -unique).IsMatched -eq 'FALSE'){
+            $MissingADFstoReport = $null
+            $AvailableADFs | Where-Object {$_.IsMatched -eq 'False'} | ForEach-Object {
+                $MissingADFstoReport += ($_.FriendlyName+"`n")
+            }
+            Write-GUIMissingADFs -MissingADFstoReport $MissingADFstoReport    
+        }
+        else {
+
+            $Script:ListofInstallFiles = Import-Csv ($Script:InputFolder+'ListofInstallFiles.csv') -Delimiter ';' |  Where-Object {$_.Kickstart_Version -eq $Script:KickstartVersiontoUse} | Sort-Object -Property 'InstallSequence'    
+            $Script:ListofInstallFiles | Add-Member -NotePropertyName Path -NotePropertyValue $null
+            $Script:ListofInstallFiles | Add-Member -NotePropertyName DrivetoInstall_VolumeName -NotePropertyValue $null    
+            foreach ($InstallFileLine in $Script:ListofInstallFiles) {
+                if ($InstallFileLine.DrivetoInstall -eq 'System'){
+                    $InstallFileLine.DrivetoInstall_VolumeName = $Script:VolumeName_System
+                }
+                foreach ($MatchedADF in $AvailableADFs ) {
+                    if ($InstallFileLine.ADF_Name -eq $MatchedADF.ADF_Name){
+                        $InstallFileLine.Path=$MatchedADF.Path
+                    }
+                    if ($MatchedADF.ADF_Name -match "GlowIcons"){
+                        $Script:GlowIconsADF=$MatchedADF.Path
+                    }
+                    if ($MatchedADF.ADF_Name -match "Storage"){
+                        $Script:StorageADF=$MatchedADF.PathF
+                    }
+                    if ($MatchedADF.ADF_Name -match "Install"){
+                        $Script:InstallADF=$MatchedADF.PathF
+                    }
+                }          
+            }               
+            $AvailableADFstoReport = $null
+            $Script:ListofInstallFiles |  Select-Object Path,FriendlyName -Unique | ForEach-Object {
+                $AvailableADFstoReport += (($_.FriendlyName+' ('+$_.Path+')')+"`n")
+            }                
+            $Msg_Header ='ADFs to Use'    
+            $Msg_Body = @"  
+The following ADFs will be used:  
+
+$AvailableADFstoReport  
+"@     
+            [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,0) 
+            $WPF_UI_ADFpath_Button_Check.Background = 'Green'
+            $WPF_UI_ADFpath_Button_Check.Foreground = 'White'
+        }
+
+        if (Confirm-UIFields){
+            $WPF_UI_Start_Button.Background = 'Red'
+            $WPF_UI_Start_Button.Foreground = 'Black'
+            $WPF_UI_Start_Button.Content = 'Missing information! Press to see further details'
+        }
+        elseif (-not (Confirm-FreeSpacetoRunTool)){
+            $WPF_UI_Start_Button.Background = 'Yellow'
+            $WPF_UI_Start_Button.Foreground = 'Black'
+            $WPF_UI_Start_Button.Content = 'Run Tool (with prompt for new drive and folder from which to run the tool)'
+        }
+        else{
+            $WPF_UI_Start_Button.Background = 'Green'
+            $WPF_UI_Start_Button.Foreground = 'White'
+            $WPF_UI_Start_Button.Content = 'Run Tool'
+        }
+
+    }
+    else {
+        Write-GUINoOSChosen -Type 'ADFs'
+    } 
 })
 
 $WPF_UI_MigratedFiles_Button.Add_Click({
@@ -3694,7 +3979,7 @@ Calculating space requirements. This may take some time if you have selected a l
         $WPF_UI_RequiredSpaceValueTransferredFiles_TextBox.Text = ''
         $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = ''
         $Script:TransferLocation = $null
-        $WPF_UI_MigratedFiles_Button.Content = 'Click to set Transfer Folder'
+        $WPF_UI_MigratedFiles_Button.Content = 'Click to set Transfer folder'
         $WPF_UI_MigratedFiles_Button.Background = '#FFDDDDDD'
         $WPF_UI_MigratedFiles_Button.Foreground = 'Black'
         $WPF_UI_MigratedPath_Label.Text='No transfer path selected'
@@ -3737,6 +4022,10 @@ $AvailableScreenModes = Import-Csv ($InputFolder+'ScreenModes.csv') -delimiter '
 foreach ($ScreenMode in $AvailableScreenModes) {
     $WPF_UI_ScreenMode_Dropdown.AddChild($ScreenMode.FriendlyName)
 }
+
+$Script:ScreenModetoUseFriendlyName = 'Automatic'
+$WPF_UI_ScreenMode_Dropdown.SelectedItem = $Script:ScreenModetoUseFriendlyName 
+$Script:ScreenModetoUse = 'Auto'
 
 $WPF_UI_ScreenMode_Dropdown.Add_SelectionChanged({
     foreach ($ScreenMode in $AvailableScreenModes) {
@@ -3782,18 +4071,23 @@ $WPF_UI_NoFileInstall_CheckBox.Add_Checked({
     $Script:TransferLocation = $null
     $WPF_UI_MigratedFiles_Button.Visibility = 'Hidden'
     $WPF_UI_MigratedPath_Label.Visibility = 'Hidden'
-    $WPF_UI_MigratedFiles_Button.Content = 'Click to set Transfer Path'
+    $WPF_UI_MigratedFiles_Button.Content = 'Click to set transfer folder'
     $WPF_UI_MigratedFiles_Button.Background = '#FFDDDDDD'
     $WPF_UI_MigratedFiles_Button.Foreground = 'Black'
     $WPF_UI_MigratedPath_Label.Text='No transfer path selected'
     $WPF_UI_MigratedFiles_Button.IsEnabled = ""
+    $Script:AvailableADFs = $null
     $Script:ADFPath = $null
     $WPF_UI_ADFpath_Button.Visibility = 'Hidden'
     $WPF_UI_ADFPath_Label.Visibility = 'Hidden'
-    $WPF_UI_ADFPath_Label.Text = 'No ADF path selected'
+    $WPF_UI_ADFPath_Label.Text = 'Using default ADF folder'
     $WPF_UI_ADFPath_Button.Background = '#FFDDDDDD'
     $WPF_UI_ADFPath_Button.Foreground = 'Black'
     $WPF_UI_ADFPath_Button.IsEnabled = ""
+    $WPF_UI_ADFpath_Button_Check.IsEnabled = ""
+    $WPF_UI_ADFpath_Button_Check.Visibility = 'Hidden'
+    $WPF_UI_ADFpath_Button_Check.Background = '#FFDDDDDD'
+    $WPF_UI_ADFpath_Button_Check.Foreground = 'Black'
     $WPF_UI_RequiredSpaceTransferredFiles_TextBox.Visibility = 'Hidden'
     $WPF_UI_RequiredSpaceValueTransferredFiles_TextBox.Visibility = 'Hidden'
     $WPF_UI_AvailableSpaceTransferredFiles_TextBox.Visibility = 'Hidden'
@@ -3831,6 +4125,8 @@ $WPF_UI_NoFileInstall_CheckBox.Add_UnChecked({
     $WPF_UI_ADFPath_Button.IsEnabled = "TRUE"
     $WPF_UI_ADFPath_Button.Visibility = 'Visible'
     $WPF_UI_ADFPath_Label.Visibility = 'Visible'
+    $WPF_UI_ADFpath_Button_Check.IsEnabled = "TRUE"
+    $WPF_UI_ADFpath_Button_Check.Visibility = 'Visible'
     $WPF_UI_RequiredSpaceTransferredFiles_TextBox.Visibility = 'Visible'
     $WPF_UI_RequiredSpaceValueTransferredFiles_TextBox.Visibility = 'Visible'
     $WPF_UI_AvailableSpaceTransferredFiles_TextBox.Visibility = 'Visible'
@@ -3898,73 +4194,8 @@ $WPF_UI_Start_Button.Add_Click({
         [System.Windows.MessageBox]::Show($ErrorCheck, 'Error! Go back and correct')
         $ErrorCount += 1  
     } 
-    else{
-        $Script:FoundKickstarttoUse = Compare-KickstartHashes -PathtoKickstartHashes ($InputFolder+'RomHashes.csv') -PathtoKickstartFiles $Script:ROMPath -KickstartVersion $Script:KickstartVersiontoUse
-        if (-not ($Script:FoundKickstarttoUse)){
-            Write-GUINoKickstart
-            $ErrorCount += 1  
-        }
-        else{
-            $Script:KickstartPath = $Script:FoundKickstarttoUse.KickstartPath
-            $Script:KickstartNameFAT32=$Script:FoundKickstarttoUse.Fat32Name
-        }
-        if ($Script:SetDiskupOnly -eq 'FALSE'){           
-            $AvailableADFs = Compare-ADFHashes -PathtoADFFiles $Script:ADFPath -PathtoADFHashes ($InputFolder+'ADFHashes.csv') -KickstartVersion $Script:KickstartVersiontoUse -PathtoListofInstallFiles ($InputFolder+'ListofInstallFiles.csv') 
-            if (($AvailableADFs | Select-Object 'IsMatched' -unique).IsMatched -eq 'FALSE'){
-                $MissingADFstoReport = $null
-                foreach ($MissingADF in $AvailableADFs ){
-                    $MissingADFstoReport += ($MissingADF.MissingADFName+"`n")
-                } 
-                $Msg_Header ='Error - ADFs Missing!'    
-                $Msg_Body = @"  
-The following ADFs are missing:  
-        
-$MissingADFstoReport 
-Select a location with valid ADF files.    
-"@     
-            [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,48) 
-            $ErrorCount += 1  
-            }
-            else{
-                $Script:ListofInstallFiles = Import-Csv ($Script:InputFolder+'ListofInstallFiles.csv') -Delimiter ';' |  Where-Object {$_.Kickstart_Version -eq $Script:KickstartVersiontoUse} | Sort-Object -Property 'InstallSequence'    
-                $Script:ListofInstallFiles | Add-Member -NotePropertyName Path -NotePropertyValue $null
-                $Script:ListofInstallFiles | Add-Member -NotePropertyName DrivetoInstall_VolumeName -NotePropertyValue $null    
-                foreach ($InstallFileLine in $Script:ListofInstallFiles) {
-                    if ($InstallFileLine.DrivetoInstall -eq 'System'){
-                        $InstallFileLine.DrivetoInstall_VolumeName = $Script:VolumeName_System
-                    }
-                    foreach ($MatchedADF in $AvailableADFs ) {
-                        if ($InstallFileLine.ADF_Name -eq $MatchedADF.ADF_Name){
-                            $InstallFileLine.Path=$MatchedADF.PathtoADF
-                        }
-                        if ($MatchedADF.ADF_Name -match "GlowIcons"){
-                            $Script:GlowIconsADF=$MatchedADF.PathtoADF
-                        }
-                        if ($MatchedADF.ADF_Name -match "Storage"){
-                            $Script:StorageADF=$MatchedADF.PathtoADF
-                        }
-                        if ($MatchedADF.ADF_Name -match "Install"){
-                            $Script:InstallADF=$MatchedADF.PathtoADF
-                        }
-                    }          
-                }               
-                $AvailableADFstoReport = $null
-                $Script:ListofInstallFiles |  Select-Object Path,FriendlyName -Unique | ForEach-Object {
-                    $AvailableADFstoReport += (($_.FriendlyName+' ('+$_.Path+')')+"`n")
-                }                
-                $Msg_Header ='ADFs to Use'    
-                $Msg_Body = @"  
-The following ADFs will be used:  
     
-$AvailableADFstoReport  
-"@     
-            [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,0) 
-
-            }    
-        }      
-    } 
-    if ($ErrorCount -eq 0) {
-
+    if ($ErrorCount -eq 0){
         if ((Get-SpaceCheck -AvailableSpace $Script:AvailableSpace_WorkingFolderDisk -SpaceThreshold $Script:SpaceThreshold_WorkingFolderDisk) -eq $true){
             $ErrorCount = $ErrorCount
 
@@ -3978,16 +4209,19 @@ $AvailableADFstoReport
                 exit
             }
         }
-    }
-    if ($ErrorCount -eq 0) {      
+        $Script:KickstartPath = $Script:FoundKickstarttoUse.KickstartPath
+        $Script:KickstartNameFAT32=$Script:FoundKickstarttoUse.Fat32Name
         $Script:SizeofImage_HST = (($Script:SizeofImage-($Script:SizeofFAT32)).ToString()+'kb')
         $Script:SizeofImage_Powershell=($Script:SizeofImage-$Script:SizeofFAT32)
         $Script:SizeofFAT32_hdf2emu68 = $Script:SizeofFAT32/1024
         $Script:LocationofImage = $Script:WorkingPath+'OutputImage\'
+        Write-SettingsFile -SettingsFile ($Script:SettingsFolder+$Script:LogDateTime+'_AutomatedSettingsSave.e68')
         $WPF_UI_Main_Grid.Visibility="Hidden"
         Write-GUIReporttoUseronOptions
         $WPF_UI_Reporting_Grid.Visibility="Visible"
-    }
+        
+
+    }  
 })
 
 $WPF_UI_GoBack_Button.add_Click({
@@ -4074,17 +4308,18 @@ $InputXML_DisclaimerWindow = @"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WpfApp14"
         mc:Ignorable="d"
-        Title="Disclaimer and Acknowledgements" Height="600" Width="910" HorizontalAlignment="Center" HorizontalContentAlignment="Center" ScrollViewer.VerticalScrollBarVisibility="Disabled" ResizeMode="NoResize" WindowStyle="ToolWindow">
+        Title="Disclaimer and Acknowledgements" Height="400" Width="1054" HorizontalAlignment="Center" HorizontalContentAlignment="Center" ScrollViewer.VerticalScrollBarVisibility="Disabled" ResizeMode="NoResize" WindowStyle="ToolWindow">
     <Grid Background="#FFAAAAAA" >
-        <Button x:Name="Button_Acknowledge" Content="Acknowledge and Continue" HorizontalAlignment="Left" Height="40" Margin="259,500,0,0" VerticalAlignment="Top" Width="320" BorderBrush="Black" UseLayoutRounding="False" Background="#FF6688BB"/>
-        <TextBox x:Name="TextBox_Message" HorizontalAlignment="Center" Margin="0,40,0,0" TextWrapping="Wrap" Background="Transparent" BorderBrush="Transparent"
-                 Text="[Add authors and contributors]&#xA;&#xA;&#xA;&#xA;&#xA;This software is used at your own risk! While efforts have been made to test the software, it should be used with caution.  Data will be written to physical media attached to your computer and all data on that media will be erased. If the incorrect media is chosen, data on that media will also be erased!&#xA;&#xA;If you do not accept this risk, then do not use this software!&#xA;&#xA;This software uses the following software to generate images:&#xA;&#xA;&#xA;&#8226; DDTC Copyright &#169;2024 Tom-Cat&#xA;&#8226; HST-Imager Copyright &#169;2022 Henrik N&#xf8;rfjand Stengaard&#xA;&#8226; HST-Amiga Copyright &#169;2024 Henrik N&#xf8;rfjand Stengaard&#xA;&#8226; HDF2emu68 Copyright &#169;2023 PiStorm&#xA;&#8226; 7zip (developed by Igor Pavlov)&#xA;&#8226; UnLZX" 
-                 VerticalAlignment="Top" Width="875" IsReadOnly="True" Height="475" VerticalScrollBarVisibility="Disabled" FontSize="14" BorderThickness="0,0,0,0" SelectionOpacity="0"
+        <Button x:Name="Button_Acknowledge" Content="Acknowledge and Continue" HorizontalAlignment="Center" Height="40" VerticalAlignment="Bottom" Width="320" BorderBrush="Black" UseLayoutRounding="False" Background="#FF6688BB" Margin="0,0,0,15"/>
+        <TextBox x:Name="TextBox_Message" HorizontalAlignment="Center" Margin="0,50,0,0" TextWrapping="Wrap" Background="Transparent" BorderBrush="Transparent"
+                 Text="This software is used at your own risk! While efforts have been made to test the software, it should be used with caution.  Data will be written to physical media attached to your computer and all data on that media will be erased. If the incorrect media is chosen, data on that media will also be erased!&#xA;&#xA;If you do not accept this risk, then do not use this software! No one likes reading manuals! However, you are strongly encouraged to read at least the Quick Start section of the documentation! This can be accessed through the link below along links to the other section. &#xA;&#xA;A link to the documentation is also available in the tool should you wish to access from there." 
+                 VerticalAlignment="Top" Width="874" IsReadOnly="True" Height="160" VerticalScrollBarVisibility="Disabled" FontSize="14" BorderThickness="0,0,0,0" SelectionOpacity="0"
                  />
         <TextBox x:Name="TextBox_Header" HorizontalAlignment="Center" Margin="0,20,0,0" TextWrapping="Wrap" Background="Transparent" BorderBrush="Transparent"
             Text="Emu68 Imager" FontSize="14" BorderThickness="0,0,0,0" SelectionOpacity="0"
             VerticalAlignment="Top" Width="772" IsReadOnly="True" Height="20" VerticalScrollBarVisibility="Disabled" HorizontalContentAlignment="Center" FontWeight="Bold"
                  />
+        <Button x:Name="LinktoQuickstart_Button" Content="Link to Quick Start Guide" HorizontalAlignment="Center" Margin="0,210,0,0" VerticalAlignment="Top" Height="80" Width="400"/>
     </Grid>
 </Window>
 "@
@@ -4115,6 +4350,9 @@ $WPF_Disclaimer_Button_Acknowledge.Add_Click({
     $Script:IsDisclaimerAccepted = $True
 })
 
+$WPF_Disclaimer_LinktoQuickstart_Button.Add_Click({
+    Start-Process "https://mja65.github.io/Emu68-Imager/quickstart.html"
+})
 
 $Form_Disclaimer.ShowDialog() | out-null
 
@@ -4148,8 +4386,9 @@ elseif (-not ($Script:ExitType-eq 1)){
 #[System.Windows.Window].GetEvents() | select Name, *Method, EventHandlerType
 
 #[System.Windows.Controls.GridSplitter].GetEvents() | Select-Object Name, *Method, EventHandlerType
-#[System.Windows.Controls.ListView].GetEvents() | Select-Object Name, *Method, EventHandlerType
+#[System.Windows.Controls.TextBox].GetEvents() | Select-Object Name, *Method, EventHandlerType
 
+Get-FormVariables
 $Script:RDBWorkbenchStartSector = 2016
 $Script:RDBWorkStartSector =
 
@@ -4453,6 +4692,11 @@ if ($Script:SetDiskupOnly -eq 'FALSE'){
 
 
     ### Begin Basic Drive Setup
+
+    if (Test-path $AmigaDrivetoCopy){
+        $null=Remove-Item -Path ($AmigaDrivetoCopy+'*') -Recurse -Force
+    }
+
     Add-AmigaFolder -AmigaFolderPath ($VolumeName_System+'\Programs\') -TempFoldertouse $TempFolder -AmigaDrivetoCopytouse $AmigaDrivetoCopy
     Add-AmigaFolder -AmigaFolderPath ($VolumeName_System+'\Storage\DataTypes\') -TempFoldertouse $TempFolder -AmigaDrivetoCopytouse $AmigaDrivetoCopy
     
