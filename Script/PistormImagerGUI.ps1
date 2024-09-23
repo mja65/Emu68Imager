@@ -1001,6 +1001,40 @@ the working path again when you run the tool.
 
     $LoadedSettingsFile = Import-Csv $Script:SettingsFile -Delimiter ';' -Header @("Setting", "Value") | Select-Object -Skip 2
     
+    $Script:HSTDiskName = $null 
+    $Script:ScreenModetoUse = $null 
+    $Script:ScreenModetoUseFriendlyName = $null
+    $Script:KickstartVersiontoUse = $null 
+    $Script:KickstartVersiontoUseFriendlyName = $null
+    $Script:SSID = $null
+    $Script:WifiPassword = $null 
+    $Script:SizeofFAT32 = $null
+    $Script:SizeofImage = $null
+    $Script:SizeofDisk = $null 
+    $Script:SizeofPartition_System = $null
+    $Script:SizeofPartition_Other = $null 
+    $Script:WriteImage = $null 
+    $Script:SetDiskupOnly = $null
+    $Script:WorkingPath = $null 
+    $Script:WorkingPathDefault = $null 
+    $Script:HSTDiskNumber = $null 
+    $Script:HSTDiskDeviceID = $null 
+    $Script:SizeofUnallocated = $null
+    $Script:SizeofFreeSpace = $null
+    $Script:ROMPath = $null 
+    $Script:ADFPath = $null 
+    $Script:TransferLocation = $null
+    $Script:WriteMethod = $null
+    $Script:DiskFriendlyName = $null        
+    $Script:WorkbenchMaximum = $null               
+    $Script:SpaceThreshold_FilestoTransfer = $null 
+    $Script:Fat32Maximum = $null                     
+    $Script:FoundKickstarttoUse = $null
+    $Script:AvailableADFs = $null 
+    
+    $Script:Space_FilestoTransfer = $null            
+    $Script:Space_WorkingFolderDisk = $null        
+
     $Script:LoadedSettings = $true
 
     $Script:FoundKickstarttoUse = [System.Collections.Generic.List[PSCustomObject]]::New()
@@ -1143,7 +1177,11 @@ function Write-SettingsFile {
     ('ADFPath;'+$Script:ADFPath) | Out-File $SettingsFile -Append
     ('TransferLocation;'+$Script:TransferLocation) | Out-File $SettingsFile -Append
     ('WriteMethod;'+$Script:WriteMethod) | Out-File $SettingsFile -Append
-    ('DiskFriendlyName;'+$Script:DiskFriendlyName) | Out-File $SettingsFile -Append
+    ('DiskFriendlyName;'+$Script:DiskFriendlyName) | Out-File $SettingsFile -Append        
+    ('WorkbenchMaximum;'+$Script:WorkbenchMaximum) | Out-File $SettingsFile -Append                
+    ('SpaceThreshold_FilestoTransfer;'+$Script:SpaceThreshold_FilestoTransfer) | Out-File $SettingsFile -Append
+    ('Fat32Maximum;'+$Script:Fat32Maximum) | Out-File $SettingsFile -Append                
+
     if ($Script:FoundKickstarttoUse){
         ('FoundKickstarttoUse;Kickstart_Version,FriendlyName,Sequence,Fat32Name,KickstartPath') | Out-File $SettingsFile -Append
         foreach ($Line in $Script:FoundKickstarttoUse){
@@ -3930,10 +3968,10 @@ $WPF_UI_ADFpath_Button_Check.Add_Click({
                         $Script:GlowIconsADF=$MatchedADF.Path
                     }
                     if ($MatchedADF.ADF_Name -match "Storage"){
-                        $Script:StorageADF=$MatchedADF.PathF
+                        $Script:StorageADF=$MatchedADF.Path
                     }
                     if ($MatchedADF.ADF_Name -match "Install"){
-                        $Script:InstallADF=$MatchedADF.PathF
+                        $Script:InstallADF=$MatchedADF.Path
                     }
                 }          
             }               
