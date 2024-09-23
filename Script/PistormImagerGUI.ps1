@@ -1,41 +1,23 @@
 <#PSScriptInfo
-
 .VERSION 0.01
-
 .GUID 73d9401c-ab81-4be5-a2e5-9fc0834be0fc
-
 .AUTHOR SupremeTurnip
-
 .COMPANYNAME
-
 .COPYRIGHT
-
 .TAGS
-
 .LICENSEURI https://github.com/mja65/Emu68-Imager/blob/main/LICENSE
-
 .PROJECTURI https://github.com/mja65/Emu68-Imager
-
 .ICONURI
-
 .EXTERNALMODULEDEPENDENCIES 
-
 .REQUIREDSCRIPTS
-
 .EXTERNALSCRIPTDEPENDENCIES
-
 .RELEASENOTES
-
-
 .PRIVATEDATA
-
 #>
 
 <# 
-
 .DESCRIPTION 
  Script for Emu68Imager 
-
 #> 
 
 ####################################################################### Add GUI Types ################################################################################################################
@@ -625,7 +607,7 @@ function Get-FormattedPathforGUI {
     param (
         $PathtoTruncate
     )
-    $LengthofString = 26 #Maximum supported by label less three for the ...
+    $LengthofString = 37 #Maximum supported by label less three for the ...
     if ($PathtoTruncate.Length -gt $LengthofString){
         $Output = ('...'+($PathtoTruncate.Substring($PathtoTruncate.Length -$LengthofString,$LengthofString)))
     }
@@ -1066,9 +1048,31 @@ the working path again when you run the tool.
     if ($Script:WorkingPath){
         if (-not (Test-Path ($Script:WorkingPath))){
             $null = [System.Windows.MessageBox]::Show($Msg_Body_WorkingPath, $Msg_Header_WorkingPath,0,48)
-            $Script:WorkingPath = $null
-            $Script:WorkingPathDefault = $null
+            $Script:WorkingPath = ($Scriptpath+'Working Folder\')
+            $Script:WorkingPathDefault = $true 
+            $WPF_UI_Workingpath_Label.Text = 'Using default Working folder'
+            $WPF_UI_Workingpath_Button.Foreground = 'Black'
+            $WPF_UI_Workingpath_Button.Background = '#FFDDDDDD'        
         }
+        elseif ($Script:WorkingPath -ne ($Scriptpath+'Working Folder\')){
+            $WPF_UI_Workingpath_Label.Text = Get-FormattedPathforGUI -PathtoTruncate ($Script:WorkingPath)   
+            $WPF_UI_Workingpath_Button.Foreground = 'White'
+            $WPF_UI_Workingpath_Button.Background = 'Green'
+            $Script:Space_WorkingFolderDisk = (Confirm-DiskSpace -PathtoCheck $Script:WorkingPath)/1kb                     
+            if ($Script:SizeofImage){
+                $Script:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Script:SizeofImage
+                $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:RequiredSpace_WorkingFolderDisk        
+            }
+            $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk
+            $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpace_WorkingFolderDisk      
+        }
+    }
+    else{
+        $Script:WorkingPath = ($Scriptpath+'Working Folder\')
+        $Script:WorkingPathDefault = $true 
+        $WPF_UI_Workingpath_Label.Text = 'Using default Working folder'
+        $WPF_UI_Workingpath_Button.Foreground = 'Black'
+        $WPF_UI_Workingpath_Button.Background = '#FFDDDDDD'    
     }
 
     $DiskFound = $false
@@ -2226,20 +2230,6 @@ function Get-SpaceCheck {
       $AvailableSpace,
       $SpaceThreshold
     )
-    if ($AvailableSpace -gt $SpaceThreshold){
-       if ($Script:WorkingPathDefault -ne $false){ #Means we've already defined a custom work folder
-           if (-not (Test-Path ($Scriptpath+'Working Folder\'))){
-               $null = New-Item -Path ($Scriptpath+'Working Folder\') -ItemType Directory
-           }
-           $Script:WorkingPath = ($Scriptpath+'Working Folder\')
-           $Script:WorkingPathDefault = $true          
-        } 
-        return $true # Sufficient Space
-    }
-    $Msg_Header_NonEmpty = 'Non Empty Folder'
-    $Msg_Body_NonEmpty = @"
-You have selected a non-empty folder! Please select an empty folder.
-"@
     $Msg_Header ='Error - Insufficient Space!'    
     $Msg_Body = @"
 You do not have sufficient space on your drive to run the tool!
@@ -2252,76 +2242,45 @@ You still do not have sufficient space on your drive to run the tool!
                   
 Either select a location with sufficient space (the folder must be empty) 
 or press cancel to quit the tool
-"@         
-
-    $ValueofAction = [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,1,48)
-    if ($ValueofAction -eq 'Cancel'){
-        $Script:ExitType =2
-        return $false
+"@            
+    if ($AvailableSpace -gt $SpaceThreshold){
+        return $true
     }
-    $Script:WorkingPath = Get-FolderPath -Message 'Select location for Working Path (folder must be empty)' -RootFolder 'MyComputer' -ShowNewFolderButton
-    if($Script:WorkingPath){
-        $items = Get-ChildItem -Path $Script:WorkingPath -Recurse -Force
-        if ($items.Count -ne 0) {
-            $ValueofAction = [System.Windows.MessageBox]::Show($Msg_Body_NonEmpty, $Msg_Header_NonEmpty,0,48)
+    else {
+        $ValueofAction = [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,1,48)
+        if ($ValueofAction -eq 'Cancel'){
+            $Script:ExitType =2
+            return $false
         }
-        else{
+        do {
+            $Script:WorkingPath = Get-WorkingPath -CheckforEmptyFolder 'TRUE'
             $Script:WorkingPath = $Script:WorkingPath.TrimEnd('\')+'\'
             $Script:WorkingPathDefault = $false   
             $Script:Space_WorkingFolderDisk = (Confirm-DiskSpace -PathtoCheck $Script:WorkingPath)/1kb
             $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk 
-                if ($Script:AvailableSpace_WorkingFolderDisk -gt $Script:SpaceThreshold_WorkingFolderDisk){
-                    $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpace_WorkingFolderDisk 
-                    $WPF_UI_Start_Button.Background = 'Green'
-                    $WPF_UI_Start_Button.Foreground = 'White'
-                    $WPF_UI_Start_Button.Content = 'Run Tool'
-                    return $true
-                }
-                else {
-                    $Script:WorkingPath = $null
-                    $Script:WorkingPathDefault = $null
-                }
-        }
-    } 
-    do {
-        $ValueofAction = [System.Windows.MessageBox]::Show($Msg_Body_Repeat, $Msg_Header,1,48)
-        if ($ValueofAction -eq 'OK'){
-            $Script:WorkingPath = Get-FolderPath -Message 'Select location for Working Path (folder must be empty)' -RootFolder 'MyComputer' -ShowNewFolderButton
-            if($Script:WorkingPath){
-                $items = Get-ChildItem -Path $Script:WorkingPath -Recurse -Force
-                if ($items.Count -ne 0) {
-                    $ValueofAction = [System.Windows.MessageBox]::Show($Msg_Body_NonEmpty, $Msg_Header_NonEmpty,0,48)
-                }
-                else{
-                    $Script:WorkingPath = $Script:WorkingPath.TrimEnd('\')+'\'
-                    $Script:WorkingPathDefault = $false   
-                    $Script:Space_WorkingFolderDisk = (Confirm-DiskSpace -PathtoCheck $Script:WorkingPath)/1kb
-                    $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk 
-                    if ($Script:AvailableSpace_WorkingFolderDisk -gt $Script:SpaceThreshold_WorkingFolderDisk){
-                        $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpace_WorkingFolderDisk 
-                        $WPF_UI_Start_Button.Background = 'Green'
-                        $WPF_UI_Start_Button.Foreground = 'White'
-                        $WPF_UI_Start_Button.Content = 'Run Tool'
-                        return $true
-                    }
-                    else {
-                        $Script:WorkingPath = $null
-                        $Script:WorkingPathDefault = $null
-                    }        
+            if ($Script:AvailableSpace_WorkingFolderDisk -gt $Script:SpaceThreshold_WorkingFolderDisk){
+                $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpace_WorkingFolderDisk 
+                $WPF_UI_Start_Button.Background = 'Green'
+                $WPF_UI_Start_Button.Foreground = 'White'
+                $WPF_UI_Start_Button.Content = 'Run Tool'
+                $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpace_WorkingFolderDisk 
+                $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:RequiredSpace_WorkingFolderDisk
+                $Success='TRUE'
+                return $true # Sufficient Space
+            }
+            else{
+                $ValueofAction = [System.Windows.MessageBox]::Show($Msg_Body_Repeat, $Msg_Header,1,48)
+                if ($ValueofAction -eq 'Cancel'){
+                    $Script:ExitType = 2
+                    return $false
                 }
             }
-        }
-        else {
-            $Script:ExitType =2
-            return $false
-        }
-    } until (
-        $ValueofAction -eq 'Cancel'
-    )
-    $Script:ExitType =2
-    return $false
-}
 
+        } until (
+            ($Script:ExitType -eq 2) -or $Success -eq 'TRUE'
+        )
+    }
+}
 
 function Write-GUINoOSChosen {
     param (
@@ -2385,10 +2344,10 @@ function Write-GUIReporttoUseronOptions {
     $WPF_UI_WorkSizeValue_Reporting_Detail_TextBox.Text = Get-FormattedSize -Size $Script:SizeofPartition_Other
     $WPF_UI_WriteImagetoDiskValue_Reporting_Detail_TextBox.Text =  $Script:WriteImage
     if ($Script:WriteMethod -eq 'Normal'){
-        $WPF_UI_WriteMethodValue_Reporting_Detail_TextBox.Text = 'Normal'
+        $WPF_UI_WriteMethodValue_Reporting_Detail_TextBox.Text = 'All sectors on disk will be written'
     } 
     elseif ($Script:WriteMethod -eq 'SkipEmptySpace'){
-        $WPF_UI_WriteMethodValue_Reporting_Detail_TextBox.Text = 'Experimental Mode! Empty space on disk will be skipped'
+        $WPF_UI_WriteMethodValue_Reporting_Detail_TextBox.Text = 'Empty space on disk will be skipped'
     }
     else{
         $WPF_UI_WriteMethodValue_Reporting_Detail_TextBox.Text = ''
@@ -2492,6 +2451,41 @@ function Get-StartEmptySpace {
     $Length = $OutputMessage.Length
     return [decimal]$OutputMessage.Substring($EmptySpaceStart,$Length-$EmptySpaceStart)
   }
+
+  function Get-WorkingPath {
+    param (
+        $CheckforEmptyFolder
+    )
+    $Msg_Header_NonEmpty = 'Non Empty Folder'
+    $Msg_Body_NonEmpty = @"
+You have selected a non-empty folder! Please select an empty folder.
+"@  
+    do {
+        $WorkingPathtoReturn = Get-FolderPath -Message 'Select location for Working Path (folder must be empty)' -RootFolder 'MyComputer' -ShowNewFolderButton
+        if ($WorkingPathtoReturn){
+            if ($CheckforEmptyFolder -eq 'TRUE'){
+                $items = Get-ChildItem -Path $WorkingPathtoReturn -Recurse -Force
+                if ($items.Count -ne 0){
+                    $null= [System.Windows.MessageBox]::Show($Msg_Body_NonEmpty, $Msg_Header_NonEmpty,0,48)
+                    $IsDefinedWorkingPath = $false
+                }
+                else{
+                    $IsDefinedWorkingPath = $true 
+                }
+            }
+            else{
+                $IsDefinedWorkingPath = $true
+            }
+        }
+    } until (
+        ($IsDefinedWorkingPath -eq $true) -or (-not $WorkingPathtoReturn) 
+    )
+    if ($IsDefinedWorkingPath -eq $true){
+        $WorkingPathtoReturn = $WorkingPathtoReturn.TrimEnd('\')+'\' 
+    } 
+    return $WorkingPathtoReturn
+}
+
 
 ### End Functions
 
@@ -2713,25 +2707,25 @@ $inputXML_UserInterface = @"
                     <Button x:Name="DefaultAllocation_Refresh" Content="Reset Partitions to Default" HorizontalAlignment="Right" Margin="0,0,10,0" VerticalAlignment="Top" Width="160" Height="40" Background="#FF6688BB" Foreground="White" FontWeight="Bold" BorderBrush="Transparent"/>
                 </Grid>
             </GroupBox>
-            <GroupBox x:Name="SourceFiles_GroupBox" Header="Source Files" Height="200" Background="Transparent" Margin="7,280,0,128" Width="440" VerticalAlignment="Top" HorizontalAlignment="Left">
+            <GroupBox x:Name="SourceFiles_GroupBox" Header="Source Files" Height="200" Background="Transparent" Margin="7,235,0,128" Width="500" VerticalAlignment="Top" HorizontalAlignment="Left">
                 <Grid Background="Transparent" HorizontalAlignment="Left" VerticalAlignment="Top">
                 <TextBox x:Name="KickstartVersion_Label" HorizontalAlignment="Left" Margin="10,10,0,0" TextWrapping="Wrap" Text="Select OS Version" VerticalAlignment="Top" Width="200" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Center" FontWeight="Bold"/>
                     <ComboBox x:Name="KickstartVersion_DropDown" HorizontalAlignment="Left" Margin="10,32,0,0" VerticalAlignment="Top" Width="245"/>
 
                     <Button x:Name="ADFpath_Button" Content="Click to set custom ADF folder" HorizontalAlignment="Left" Margin="10,94,0,0" VerticalAlignment="Top"  Width="200" Height="30"/>
                     <Button x:Name="ADFpath_Button_Check" Content="Check" HorizontalAlignment="Left" Margin="215,94,0,0" VerticalAlignment="Top"  Width="40" Height="30" FontSize="10"/>
-                    <TextBox x:Name="ADFPath_Label" HorizontalAlignment="Left" Margin="263,100,0,0" TextWrapping="Wrap" Text="Using default ADF folder" VerticalAlignment="Top" Width="200" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+                    <TextBox x:Name="ADFPath_Label" HorizontalAlignment="Left" Margin="263,100,0,0" TextWrapping="Wrap" Text="Using default ADF folder" VerticalAlignment="Top" Width="260" Height="20"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
 
                     <Button x:Name="Rompath_Button" Content="Click to set custom Kickstart folder" HorizontalAlignment="Left" Margin="10,59,0,0" VerticalAlignment="Top"  Width="200" Height="30"/>
                     <Button x:Name="Rompath_Button_Check" Content="Check" HorizontalAlignment="Left" Margin="215,59,0,0" VerticalAlignment="Top"  Width="40" Height="30" FontSize="10"/>
-                    <TextBox x:Name="ROMPath_Label" HorizontalAlignment="Left" Margin="263,65,0,0" TextWrapping="Wrap" Text="Using default Kickstart folder" VerticalAlignment="Top" Width="200" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+                    <TextBox x:Name="ROMPath_Label" HorizontalAlignment="Left" Margin="263,65,0,0" TextWrapping="Wrap" Text="Using default Kickstart folder" VerticalAlignment="Top" Width="260" Height="20"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
 
                     <Button x:Name="MigratedFiles_Button" Content="Click to set Transfer folder" HorizontalAlignment="Left" Margin="10,129,0,0" VerticalAlignment="Top"  Width="200" Height="30"/>
-                    <TextBox x:Name="MigratedPath_Label" HorizontalAlignment="Left" Margin="263,139,0,0" TextWrapping="Wrap" Text="No transfer path selected" VerticalAlignment="Top" Width="200" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+                    <TextBox x:Name="MigratedPath_Label" HorizontalAlignment="Left" Margin="263,139,0,0" TextWrapping="Wrap" Text="No transfer path selected" VerticalAlignment="Top" Width="260" Height="20"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
 
                 </Grid>
             </GroupBox>
-            <GroupBox x:Name="Settings_GroupBox" Header="Settings" Height="150" Background="Transparent" Margin="0,280,10,128" Width="400" VerticalAlignment="Top" HorizontalAlignment="Right">
+            <GroupBox x:Name="Settings_GroupBox" Header="Settings" Height="150" Background="Transparent" Margin="0,235,10,128" Width="500" VerticalAlignment="Top" HorizontalAlignment="Right">
                 <Grid>
                     <ComboBox x:Name="ScreenMode_Dropdown" HorizontalAlignment="Left" Margin="10,26,0,0" VerticalAlignment="Top" Width="375"/>
                     <TextBox x:Name="ScreenMode_Label" HorizontalAlignment="Center" Margin="10,0,0,0" TextWrapping="Wrap" Text="Select ScreenMode for Raspberry Pi to Output" VerticalAlignment="Top" Width="280" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Center" FontWeight="Bold"/>
@@ -2745,23 +2739,26 @@ $inputXML_UserInterface = @"
                 </Grid>
 
             </GroupBox>
-            <GroupBox x:Name="RunOptions_GroupBox" Header="Run Options" Margin="7,485,0,0" Background="Transparent" HorizontalAlignment="Left" Width="400" VerticalAlignment="Top" >
+            <GroupBox x:Name="RunOptions_GroupBox" Header="Run Options" Margin="7,435,0,0" Background="Transparent" HorizontalAlignment="Left" Width="500" VerticalAlignment="Top" >
                 <Grid Background="Transparent" >
-                    <CheckBox x:Name="NoFileInstall_CheckBox" Content="Set disk up only. Do not install packages." HorizontalAlignment="Left" Margin="2,5,0,0" Height="15" VerticalAlignment="Top"/>
-                    <CheckBox x:Name="DiskWrite_CheckBox" Content="Do not write to disk. Produce .img file only for later writing to disk." HorizontalAlignment="Left" Margin="2,25,0,0" Height="15" VerticalAlignment="Top"/>
-                    <CheckBox x:Name="SkipEmptySpace_CheckBox" Content="Skip empty space when writing to disk. Experimental!" HorizontalAlignment="Left" Margin="2,45,0,0" Height="15" VerticalAlignment="Top"/>
-                </Grid>
+                    <CheckBox x:Name="NoFileInstall_CheckBox" Content="Set disk up only. Do not install packages." HorizontalAlignment="Left" Margin="7,5,0,0" Height="15" VerticalAlignment="Top"/>
+                    <CheckBox x:Name="DiskWrite_CheckBox" Content="Do not write to disk. Produce .img file only for later writing to disk." HorizontalAlignment="Left" Margin="7,25,0,0" Height="15" VerticalAlignment="Top"/>
+                    <CheckBox x:Name="SkipEmptySpace_CheckBox" Content="Skip empty space when writing to disk." IsChecked = "TRUE" HorizontalAlignment="Left" Margin="7,45,0,0" Height="15" VerticalAlignment="Top"/>
+                  <Button x:Name="Workingpath_Button" Content="Click to set custom Working folder" HorizontalAlignment="Left" Margin="7,65,0,0" VerticalAlignment="Top"  Width="200" Height="30"/>
+                 <TextBox x:Name="Workingpath_Label" HorizontalAlignment="Left" Margin="212,70,0,0" TextWrapping="Wrap" Text="Using default Working folder" VerticalAlignment="Top" Width="260" Height="20" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+
+                    </Grid>
             </GroupBox>
             <Button x:Name="Start_Button" Content="Missing information! Press to see further details" HorizontalAlignment="Center" Margin="0,610,0,0" VerticalAlignment="Top" Width="890" Height="40" Background = "Red" Foreground="Black" BorderBrush="Transparent"/>
-            <GroupBox x:Name="Space_GroupBox" Header="Space Requirements" Height="170" Background="Transparent" Margin="0,430,10,0" Width="400" VerticalAlignment="Top" HorizontalAlignment="Right">
+            <GroupBox x:Name="Space_GroupBox" Header="Space Requirements" Height="170" Background="Transparent" Margin="0,385,10,0" Width="500" VerticalAlignment="Top" HorizontalAlignment="Right">
                 <Grid>
 
                     <TextBox x:Name="RequiredSpace_TextBox" HorizontalAlignment="Left" Margin="20,57,0,0" TextWrapping="Wrap" Text="Required space to run tool is:" VerticalAlignment="Top" Width="230" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-                    <TextBox x:Name="RequiredSpaceValue_TextBox" HorizontalAlignment="Left" Margin="288,57,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Right"/>
+                    <TextBox x:Name="RequiredSpaceValue_TextBox" HorizontalAlignment="Right" Margin="0,57,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Right"/>
                     <TextBox x:Name="AvailableSpace_TextBox" HorizontalAlignment="Left" Margin="20,77,0,0" TextWrapping="Wrap" Text="Free space after tool is run:" VerticalAlignment="Top" Width="230" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" FontWeight="Bold"/>
                     <TextBox x:Name="AvailableSpaceValue_TextBox" HorizontalAlignment="Right" Margin="0,77,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Green" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Right"/>
                     <TextBox x:Name="RequiredSpaceTransferredFiles_TextBox" HorizontalAlignment="Left" Margin="20,10,0,0" TextWrapping="Wrap" Text="Required space for transferred files:" VerticalAlignment="Top" Width="230" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-                    <TextBox x:Name="RequiredSpaceValueTransferredFiles_TextBox" HorizontalAlignment="Left" Margin="288,10,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Right"/>
+                    <TextBox x:Name="RequiredSpaceValueTransferredFiles_TextBox" HorizontalAlignment="Right" Margin="0,10,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Right"/>
                     <TextBox x:Name="AvailableSpaceTransferredFiles_TextBox" HorizontalAlignment="Left" Margin="20,31,0,0" TextWrapping="Wrap" Text="Free space after files transferred is:" VerticalAlignment="Top" Width="230" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" FontWeight="Bold"/>
                     <TextBox x:Name="AvailableSpaceValueTransferredFiles_TextBox" HorizontalAlignment="Right" Margin="0,31,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Right"/>
                     <TextBox x:Name="RequiredSpaceMessage_TextBox" HorizontalAlignment="Left" Margin="20,107,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="358" BorderBrush="Transparent" Foreground="Red" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" Focusable="False" Height="35" IsHitTestVisible="False"/>
@@ -2843,7 +2840,6 @@ $inputXML_UserInterface = @"
 
 $XAML_UserInterface = Format-XMLtoXAML -inputXML $inputXML_UserInterface 
 $Form_UserInterface = Read-XAML -xaml $XAML_UserInterface 
-
 
 #===========================================================================
 # Load XAML Objects In PowerShell
@@ -3739,6 +3735,40 @@ $WPF_UI_ImageSize_Value.add_LostFocus({
     }
 })
 
+$WPF_UI_Workingpath_Button.Add_Click({
+     $WorkingPathtoPopulate = Get-WorkingPath -CheckforEmptyFolder 'TRUE'
+     if ($WorkingPathtoPopulate){
+         $Script:WorkingPath = $WorkingPathtoPopulate
+         $Script:WorkingPathDefault = $false
+         $WPF_UI_Workingpath_Label.Text = Get-FormattedPathforGUI -PathtoTruncate ($Script:WorkingPath)   
+         $WPF_UI_Workingpath_Button.Foreground = 'White'
+         $WPF_UI_Workingpath_Button.Background = 'Green'       
+         $Script:Space_WorkingFolderDisk = (Confirm-DiskSpace -PathtoCheck $Script:WorkingPath)/1kb
+         if ($Script:SizeofImage){
+             $Script:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Script:SizeofImage
+             $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:RequiredSpace_WorkingFolderDisk        
+         }
+         $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk
+         $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpace_WorkingFolderDisk 
+     }
+     elseif ((-not $WorkingPathtoPopulate)  -and ($Script:WorkingPath -ne ($Scriptpath+'Working Folder\'))){
+        $Script:WorkingPath = ($Scriptpath+'Working Folder\')
+        $Script:WorkingPathDefault = $true        
+        $WPF_UI_Workingpath_Label.Text = 'Using default Working folder'
+        $WPF_UI_Workingpath_Button.Foreground = 'Black'
+        $WPF_UI_Workingpath_Button.Background = '#FFDDDDDD'    
+        $Script:Space_WorkingFolderDisk = (Confirm-DiskSpace -PathtoCheck $Script:WorkingPath)/1kb
+        if ($Script:SizeofImage){
+            $Script:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Script:SizeofImage
+            $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:RequiredSpace_WorkingFolderDisk        
+        }
+        $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk
+        $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpace_WorkingFolderDisk      
+     }
+
+})
+
+
 $WPF_UI_RomPath_Button.Add_Click({
     $Script:ROMPath = Get-FolderPath -Message 'Select path to Kickstart' -InitialDirectory $Script:ROMPath
     if ($Script:ROMPath -ne $Script:UserLocation_Kickstart -and ($Script:ROMPath)){
@@ -4163,8 +4193,6 @@ $WPF_UI_Documentation_Button.Add_Click({
 
 $WPF_UI_Start_Button.Add_Click({
     $ErrorCount = 0
-    $Script:SSID = $WPF_UI_SSID_Textbox.Text
-    $Script:WifiPassword = $WPF_UI_Password_Textbox.Text
     if ($WPF_UI_DiskWrite_CheckBox.IsChecked){
         $Script:WriteImage ='FALSE'
     }
@@ -4196,6 +4224,28 @@ $WPF_UI_Start_Button.Add_Click({
     } 
     
     if ($ErrorCount -eq 0){
+        if ($Script:AvailableSpace_WorkingFolderDisk -le -$Script:SpaceThreshold_WorkingFolderDisk){
+            $Msg_Header ='Error - Insufficient Space!'    
+            $Msg_Body = @"
+You do not have sufficient space on your drive to run the tool!
+        
+Either select a location with sufficient space (the folder must be empty) 
+or press 'Cancel' to quit the tool
+"@   
+$ValueofAction = [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,1,48)
+if ($ValueofAction -eq 'Cancel'){
+    $Script:ExitType =2
+        }
+    }
+
+
+
+
+
+
+
+
+
         if ((Get-SpaceCheck -AvailableSpace $Script:AvailableSpace_WorkingFolderDisk -SpaceThreshold $Script:SpaceThreshold_WorkingFolderDisk) -eq $true){
             $ErrorCount = $ErrorCount
 
@@ -4363,9 +4413,15 @@ if (-not ($Script:IsDisclaimerAccepted -eq $true)){
 
 ####################################################################### End GUI XML for Disclaimer ##################################################################################################
 
+################################# Set Working Folder Default #########################################################################################
+
+$Script:WorkingPath = ($Scriptpath+'Working Folder\')
+$Script:WorkingPathDefault = $true    
+$Script:WriteMethod = 'SkipEmptySpace'
+
+################################ End Set Working Folder Default #########################################################################################
 
 ####################################################################### Show Main Gui     ##################################################################################################################
-
 $Form_UserInterface.ShowDialog() | out-null
 
 ######################################################################## Command line portion of Script ################################################################################################
