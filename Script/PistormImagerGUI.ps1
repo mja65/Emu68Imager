@@ -360,6 +360,7 @@ $Script:FoundKickstarttoUse = $null
 $Script:AvailableADFs = $null
 $Script:DiskFriendlyName = $null
 $Script:IsDisclaimerAccepted = $null
+$Script:IsLoadedSettings = $null
 
 ####################################################################### End Null out Global Variables ###############################################################################################
 
@@ -919,6 +920,7 @@ function Confirm-UIFields {
     )
     $NumberofErrors = 0
     $ErrorMessage = $null
+     
     if (-not($Script:HSTDiskName)){
         $ErrorMessage += 'You have not selected a disk'+"`n`n"
         $NumberofErrors += 1
@@ -957,38 +959,34 @@ function Confirm-UIFields {
         $ErrorMessage += 'You have not populated a sceenmode'+"`n`n"
         $NumberofErrors += 1
     }
-
-    if ($Script:SetDiskupOnly -ne 'TRUE'){
-        if (-not($Script:ADFPath )) {
-            $ErrorMessage += 'You have not populated an ADF Path'+"`n`n"
+    if ((-not($Script:ADFPath)) -and ($Script:SetDiskupOnly -ne 'TRUE')) {
+        $ErrorMessage += 'You have not populated an ADF Path'+"`n`n"
+        $NumberofErrors += 1
+    }
+    if ($Script:ADFPath -eq  $Script:UserLocation_ADFs){
+        $WPF_UI_ADFPath_Label.Text = 'Using default ADF folder'
+        $WPF_UI_ADFPath_Button.Foreground = 'Black'
+        $WPF_UI_ADFPath_Button.Background = '#FFDDDDDD'       
+        $WPF_UI_ADFpath_Button_Check.Background = '#FFDDDDDD'
+        $WPF_UI_ADFpath_Button_Check.Foreground = 'Black'
+    }
+    else{
+        $WPF_UI_ADFPath_Label.Text = Get-FormattedPathforGUI -PathtoTruncate ($Script:ADFPath)
+        $WPF_UI_ADFPath_Button.Background = 'Green'
+        $WPF_UI_ADFPath_Button.Foreground = 'White'
+    }
+    if (-not ($Script:AvailableADFs | where-object IsMatched -eq 'TRUE') -or ($Script:AvailableADFs | where-object IsMatched -eq 'FALSE')){ 
+        $WPF_UI_ADFpath_Button_Check.Background = '#FFDDDDDD'
+        $WPF_UI_ADFpath_Button_Check.Foreground = 'Black'
+        if ($Script:SetDiskupOnly -ne 'TRUE'){
+            $ErrorMessage += 'All the required ADFs have not been located'+"`n"
             $NumberofErrors += 1
         }
-        else{
-            if ($Script:ADFPath -eq  $Script:UserLocation_ADFs){
-                $WPF_UI_ADFPath_Label.Text = 'Using default ADF folder'
-                $WPF_UI_ADFPath_Button.Foreground = 'Black'
-                $WPF_UI_ADFPath_Button.Background = '#FFDDDDDD'       
-                $WPF_UI_ADFpath_Button_Check.Background = '#FFDDDDDD'
-                $WPF_UI_ADFpath_Button_Check.Foreground = 'Black'
-            }
-            else{
-                $WPF_UI_ADFPath_Label.Text = Get-FormattedPathforGUI -PathtoTruncate ($Script:ADFPath)
-                $WPF_UI_ADFPath_Button.Background = 'Green'
-                $WPF_UI_ADFPath_Button.Foreground = 'White'
-            }
-            if (-not ($Script:AvailableADFs | where-object IsMatched -eq 'TRUE') -or ($Script:AvailableADFs | where-object IsMatched -eq 'FALSE')){ 
-                $ErrorMessage += 'All the required ADFs have not been located'+"`n"
-                $WPF_UI_ADFpath_Button_Check.Background = '#FFDDDDDD'
-                $WPF_UI_ADFpath_Button_Check.Foreground = 'Black'
-                $NumberofErrors += 1
-            }
-            else {
-                $WPF_UI_ADFpath_Button_Check.Background = 'Green'
-                $WPF_UI_ADFpath_Button_Check.Foreground = 'White'
-            }
-        }          
     }
-
+    else {
+        $WPF_UI_ADFpath_Button_Check.Background = 'Green'
+        $WPF_UI_ADFpath_Button_Check.Foreground = 'White'
+    }
     If ($Script:WorkingPathDefault -eq $True){
         $WPF_UI_Workingpath_Label.Text = 'Using default Working folder'
         $WPF_UI_Workingpath_Button.Background = '#FFDDDDDD'
@@ -1028,9 +1026,9 @@ function Confirm-UIFields {
         $WPF_UI_RequiredSpaceValueTransferredFiles_TextBox.Text = '' 
         $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Background = "Transparent"
     }
-
+    
     $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpace_WorkingFolderDisk 
-
+    
     if($Script:HSTDiskName){
         $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:RequiredSpace_WorkingFolderDisk
         if ($Script:AvailableSpace_WorkingFolderDisk -le $Script:SpaceThreshold_WorkingFolderDisk){
@@ -1053,7 +1051,7 @@ function Confirm-UIFields {
             }
         }
     }
-
+    
     if ($NumberofErrors -gt 0){
         $WPF_UI_Start_Button.Background = 'Red'
         $WPF_UI_Start_Button.Foreground = 'Black'
@@ -1074,7 +1072,7 @@ function Confirm-UIFields {
         return
     }    
 }
-
+       
 function Confirm-FreeSpacetoRunTool {
     param (
         
@@ -1117,6 +1115,7 @@ You have selected a non-empty folder! Please select an empty folder.
     #$Script:SettingsFolder = 'E:\Emu68Imager\Settings\test.e68'
 
     $LoadedSettingsFile = Import-Csv $Script:SettingsFile -Delimiter ';' -Header @("Setting", "Value") | Select-Object -Skip 2
+    
     $WPF_UI_MediaSelect_DropDown.SelectedItem = $null
     $Script:Disk = $null 
     $Script:SizeofFat32_Pixels = $null     
@@ -1202,7 +1201,7 @@ You have selected a non-empty folder! Please select an empty folder.
     } 
 
     # Convert Numeric Variables to Numeric
-
+    
     $Script:SizeofFAT32 = [int]$Script:SizeofFAT32
     $Script:SizeofImage = [int]$Script:SizeofImage
     $Script:SizeofDisk = [decimal]$Script:SizeofDisk
@@ -1216,6 +1215,7 @@ You have selected a non-empty folder! Please select an empty folder.
     foreach ($Disk in $DiskstoCheck){
         if (($Disk.HSTDiskName -eq $Script:HSTDiskName) -and (([decimal]($Disk.SizeofDisk)) -eq $Script:SizeofDisk)) {
             $DiskFound = $true
+            $Script:IsLoadedSettings = $true
             break
         }   
     }       
@@ -1248,45 +1248,48 @@ You have selected a non-empty folder! Please select an empty folder.
         $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = 1    
     }
  #   -and [decimal]$Disk.SizeofDisk -eq $Script:SizeofDisk
-
- if ($Script:WorkingPath){
-    if (-not (Test-Path ($Script:WorkingPath))){
-        $null = [System.Windows.MessageBox]::Show($Msg_Body_WorkingPath, $Msg_Header_WorkingPath,0,48)
-        $Script:WorkingPath = ($Scriptpath+'Working Folder\')
-        $Script:WorkingPathDefault = $true   
-    }       
-    elseif ($Script:WorkingPath -ne ($Scriptpath+'Working Folder\')){
-        $items = Get-ChildItem -Path $WorkingPathtoReturn -Recurse -Force
-        if ($items.Count -ne 0){
-            $null= [System.Windows.MessageBox]::Show($Msg_Body_NonEmpty, $Msg_Header_NonEmpty,0,48)
+ 
+    if ($Script:WorkingPath){
+        if (-not (Test-Path ($Script:WorkingPath))){
+            $null = [System.Windows.MessageBox]::Show($Msg_Body_WorkingPath, $Msg_Header_WorkingPath,0,48)
             $Script:WorkingPath = ($Scriptpath+'Working Folder\')
             $Script:WorkingPathDefault = $true   
+        }       
+        elseif ($Script:WorkingPath -ne ($Scriptpath+'Working Folder\')){
+            $items = Get-ChildItem -Path $WorkingPath -Recurse -Force | Where-Object {$_.Name -ne 'Temp' -and $_.Name -ne 'OutputImage' -and $_.Name -ne 'AmigaImageFiles' -and $_.Name -ne 'FAT32Partition'}
+            if ($items.Count -ne 0){
+                $null= [System.Windows.MessageBox]::Show($Msg_Body_NonEmpty, $Msg_Header_NonEmpty,0,48)
+                $Script:WorkingPath = ($Scriptpath+'Working Folder\')
+                $Script:WorkingPathDefault = $true   
+            }
         }
-    }
-    $Script:Space_WorkingFolderDisk = (Confirm-DiskSpace -PathtoCheck $Script:WorkingPath)/1Kb 
-    $Script:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Script:SizeofImage
-    $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk
-}
-else{
-    $Script:WorkingPath = ($Scriptpath+'Working Folder\')
-    $Script:WorkingPathDefault = $true 
-}
-
-if ($Script:TransferLocation){
-    $Script:SizeofFilestoTransfer = Get-TransferredFilesSpaceRequired -FoldertoCheck $Script:TransferLocation
-    if ($Script:HSTDiskName){
-        $Script:Space_FilestoTransfer = ($Script:SizeofPartition_Other/([math]::ceiling($Script:SizeofPartition_Other/$Script:PFSLimit)))  - $Script:WorkOverhead
-        $Script:SpaceThreshold_FilestoTransfer = ($Script:Space_FilestoTransfer*0.2)      
+        else {
+            $Script:WorkingPathDefault = $false
+        }
+        $Script:Space_WorkingFolderDisk = (Confirm-DiskSpace -PathtoCheck $Script:WorkingPath)/1Kb 
+        $Script:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Script:SizeofImage
+        $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk
     }
     else{
-        $Script:Space_FilestoTransfer = 0
-        $Script:SpaceThreshold_FilestoTransfer = 0
+        $Script:WorkingPath = ($Scriptpath+'Working Folder\')
+        $Script:WorkingPathDefault = $true 
     }
-    $Script:AvailableSpaceFilestoTransfer =  $Script:Space_FilestoTransfer - $Script:SizeofFilestoTransfer
-}
-else{
-    $Script:SizeofFilestoTransfer = 0
-}
+
+    if ($Script:TransferLocation){
+        $Script:SizeofFilestoTransfer = Get-TransferredFilesSpaceRequired -FoldertoCheck $Script:TransferLocation
+        if ($Script:HSTDiskName){
+            $Script:Space_FilestoTransfer = ($Script:SizeofPartition_Other/([math]::ceiling($Script:SizeofPartition_Other/$Script:PFSLimit)))  - $Script:WorkOverhead
+            $Script:SpaceThreshold_FilestoTransfer = ($Script:Space_FilestoTransfer*0.2)      
+        }
+        else{
+            $Script:Space_FilestoTransfer = 0
+            $Script:SpaceThreshold_FilestoTransfer = 0
+        }
+        $Script:AvailableSpaceFilestoTransfer =  $Script:Space_FilestoTransfer - $Script:SizeofFilestoTransfer
+    }
+    else{
+        $Script:SizeofFilestoTransfer = 0
+    }
 
  }
 
@@ -1327,24 +1330,24 @@ function Write-SettingsFile {
     ('WorkbenchMaximum;'+$Script:WorkbenchMaximum) | Out-File $SettingsFile -Append                
     ('Fat32Maximum;'+$Script:Fat32Maximum) | Out-File $SettingsFile -Append                
 
-    if ($Script:FoundKickstarttoUse){
-        ('FoundKickstarttoUse;Kickstart_Version,FriendlyName,Sequence,Fat32Name,KickstartPath') | Out-File $SettingsFile -Append
-        foreach ($Line in $Script:FoundKickstarttoUse){
-            ('FoundKickstarttoUse;'+$Line.Kickstart_Version+','+$Line.FriendlyName+','+$Line.Sequence+','+$Line.Fat32Name+','+$Line.KickstartPath) | Out-File $SettingsFile -Append
-        }
-    }
-    else {
-        ('FoundKickstarttoUse;') | Out-File $SettingsFile -Append
-    }
-    if ($Script:AvailableADFs){
-        ('AvailableADFs;IsMatched,PathtoADF,Hash,ADF_Name,FriendlyName') | Out-File $SettingsFile -Append
-        foreach ($Line in $Script:AvailableADFs){
-            ('AvailableADFs;'+$Line.IsMatched+','+$Line.PathtoADF+','+$Line.Hash+','+$Line.ADF_Name+','+$Line.FriendlyName) | Out-File $SettingsFile -Append
-        }
-    }
-    else {
-        ('AvailableADFs;') | Out-File $SettingsFile -Append
-    }
+    # if ($Script:FoundKickstarttoUse){
+    #     ('FoundKickstarttoUse;Kickstart_Version,FriendlyName,Sequence,Fat32Name,KickstartPath') | Out-File $SettingsFile -Append
+    #     foreach ($Line in $Script:FoundKickstarttoUse){
+    #         ('FoundKickstarttoUse;'+$Line.Kickstart_Version+','+$Line.FriendlyName+','+$Line.Sequence+','+$Line.Fat32Name+','+$Line.KickstartPath) | Out-File $SettingsFile -Append
+    #     }
+    # }
+    # else {
+    #     ('FoundKickstarttoUse;') | Out-File $SettingsFile -Append
+    # }
+    # if ($Script:AvailableADFs){
+    #     ('AvailableADFs;IsMatched,PathtoADF,Hash,ADF_Name,FriendlyName') | Out-File $SettingsFile -Append
+    #     foreach ($Line in $Script:AvailableADFs){
+    #         ('AvailableADFs;'+$Line.IsMatched+','+$Line.PathtoADF+','+$Line.Hash+','+$Line.ADF_Name+','+$Line.FriendlyName) | Out-File $SettingsFile -Append
+    #     }
+    # }
+    # else {
+    #     ('AvailableADFs;') | Out-File $SettingsFile -Append
+    # }
 }
 
 function Get-SettingsLoadPath {
@@ -2642,7 +2645,7 @@ You have selected a non-empty folder! Please select an empty folder.
         $WorkingPathtoReturn = Get-FolderPath -Message 'Select location for Working Path (folder must be empty)' -RootFolder 'MyComputer' -ShowNewFolderButton
         if ($WorkingPathtoReturn){
             if ($CheckforEmptyFolder -eq 'TRUE'){
-                $items = Get-ChildItem -Path $WorkingPathtoReturn -Recurse -Force
+                $items = Get-ChildItem -Path $WorkingPathtoReturn -Recurse -Force | Where-Object {$_.Name -ne 'Temp' -and $_.Name -ne 'OutputImage' -and $_.Name -ne 'AmigaImageFiles' -and $_.Name -ne 'FAT32Partition'}
                 if ($items.Count -ne 0){
                     $null= [System.Windows.MessageBox]::Show($Msg_Body_NonEmpty, $Msg_Header_NonEmpty,0,48)
                     $IsDefinedWorkingPath = $false
@@ -2679,7 +2682,7 @@ function Update-ListofInstallFiles {
                 $InstallFileLine.Path=$MatchedADF.Path
             }
             if ($MatchedADF.ADF_Name -match "GlowIcons"){
-                $Script:GlowIconsADF=$MatchedADF.Path
+                $Script:GlowIconsADF = $MatchedADF.Path
             }
             if ($MatchedADF.ADF_Name -match "Storage"){
                 $Script:StorageADF=$MatchedADF.Path
@@ -3118,6 +3121,8 @@ $WPF_UI_MediaSelect_Dropdown.Add_SelectionChanged({
         $WPF_UI_FAT32Size_Value.IsEnabled = "True"
         $WPF_UI_FreeSpace_Value.IsEnabled = "True"
 
+       
+
         foreach ($Disk in $Script:RemovableMedia){        
             if ($Disk.FriendlyName -eq $WPF_UI_MediaSelect_DropDown.SelectedItem){
                 $Script:HSTDiskName = $Disk.HSTDiskName
@@ -3143,6 +3148,7 @@ $WPF_UI_MediaSelect_Dropdown.Add_SelectionChanged({
         $Script:SizeofUnallocated_Pixels_Minimum = 0
         $Script:SizeofUnallocated_Minimum = 0
               
+        if ($Script:IsLoadedSettings -ne $true){
             if ($Script:SizeofImage /$DefaultDivisorFat32 -ge $Script:Fat32DefaultMaximum){
                 $Script:SizeofFAT32 = $Script:Fat32DefaultMaximum
                 $Script:SizeofFAT32_Pixels = [decimal]($Script:PartitionBarPixelperKB * $Script:SizeofFAT32)   
@@ -3169,7 +3175,8 @@ $WPF_UI_MediaSelect_Dropdown.Add_SelectionChanged({
     
             $Script:SizeofFreeSpace = $Script:SizeofImage-$Script:SizeofPartition_System-$Script:SizeofFAT32-$Script:SizeofPartition_Other
             $Script:SizeofFreeSpace_Pixels = [decimal]($Script:SizeofFreeSpace * $Script:PartitionBarPixelperKB)
-
+        }
+        $Script:IsLoadedSettings = $null
         Set-PartitionMaximums
 
         $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width = $Script:SizeofFAT32_Pixels
@@ -3202,13 +3209,15 @@ $WPF_UI_MediaSelect_Dropdown.Add_SelectionChanged({
     }
 })
    
+
+
 $WPF_UI_DefaultAllocation_Refresh.add_Click({
         if (($null -ne $Script:HSTDiskName)  -and ($Script:HSTDiskName -eq ('\'+(($WPF_UI_MediaSelect_DropDown.SelectedItem).Split(' ',3)[0])+(($WPF_UI_MediaSelect_DropDown.SelectedItem).Split(' ',3)[1])))){
-        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width = '1'
-        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width = '1'
-        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width = '1'
-        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = '1'
-        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = '1'
+        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width = 1
+        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width = 1
+        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width = 1
+        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = 1
+        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = 1
 
         $Script:SizeofFat32_Pixels_Minimum = [decimal]($Script:PartitionBarPixelperKB * $Script:Fat32Minimum) 
         $Script:SizeofPartition_System_Pixels_Minimum = [decimal]($Script:PartitionBarPixelperKB * $Script:WorkbenchMinimum)
@@ -3560,8 +3569,6 @@ $WPF_UI_SaveSettings_Button.Add_Click({
 })
 
 $WPF_UI_MediaSelect_Refresh.Add_Click({
-    $Script:WorkingPath = $null
-    $Script:WorkingPathDefault = $null
     $Script:HSTDiskName = $null
     $Script:DiskFriendlyName = $null
     $Script:HSTDiskNumber = $null
@@ -3881,13 +3888,17 @@ $WPF_UI_Workingpath_Button.Add_Click({
 
 $WPF_UI_RomPath_Button.Add_Click({
     $PathtoPopulate = Get-FolderPath -Message 'Select path to Kickstart' -InitialDirectory $Script:ROMPath
-    if ((-not $PathtoPopulate) -and ($Script:ROMPath -ne $Script:UserLocation_Kickstarts)){
+    if ($PathtoPopulate){
+        if ($PathtoPopulate -ne $Script:ROMPath) {
+            $Script:ROMPath = $PathtoPopulate.TrimEnd('\')+'\'
+            $Script:FoundKickstarttoUse = $null    
+        }
+    }
+    else{
+        if ($Script:ROMPath -ne $Script:UserLocation_Kickstarts){
         $Script:ROMPath = $Script:UserLocation_Kickstarts
         $Script:FoundKickstarttoUse = $null        
-    }
-    elseif ($PathtoPopulate -ne $Script:ROMPath) {
-        $Script:ROMPath = $PathtoPopulate.TrimEnd('\')+'\'
-        $Script:FoundKickstarttoUse = $null    
+        }
     }
     $null = Confirm-UIFields
 })
@@ -3908,13 +3919,17 @@ $WPF_UI_ROMpath_Button_Check.Add_Click({
 
 $WPF_UI_ADFPath_Button.Add_Click({
     $PathtoPopulate = Get-FolderPath -Message 'Select path to ADFs' -InitialDirectory $Script:ADFPath
-    if ((-not $PathtoPopulate) -and ($Script:ADFPath -ne $Script:UserLocation_ADFs)){
-        $Script:ADFPath = $Script:UserLocation_ADFs   
-        $Script:AvailableADFs = $null
+    if ($PathtoPopulate){
+        if ($PathtoPopulate -ne $Script:ADFPath) {
+            $Script:ADFPath = $PathtoPopulate.TrimEnd('\')+'\'
+            $Script:AvailableADFs= $null    
+        }
     }
-    elseif ($PathtoPopulate -ne $Script:ADFPath) {
-        $Script:ADFPath = $PathtoPopulate.TrimEnd('\')+'\'
-        $Script:AvailableADFs= $null    
+    else {
+        if ($Script:ADFPath -ne $Script:UserLocation_ADFs){
+            $Script:ADFPath = $Script:UserLocation_ADFs   
+            $Script:AvailableADFs = $null
+        }
     }
     $null = Confirm-UIFields
 })
@@ -4049,7 +4064,7 @@ $WPF_UI_NoFileInstall_CheckBox.Add_Checked({
     $WPF_UI_MigratedPath_Label.Visibility = 'Hidden'
     $WPF_UI_MigratedFiles_Button.IsEnabled = ""
     $Script:AvailableADFs = $null
-    $Script:ADFPath = $null
+    $Script:ADFPath = $Script:UserLocation_ADFs
     $WPF_UI_ADFpath_Button.Visibility = 'Hidden'
     $WPF_UI_ADFPath_Label.Visibility = 'Hidden'
     $WPF_UI_ADFPath_Button.IsEnabled = ""
@@ -4152,6 +4167,15 @@ $WPF_UI_Start_Button.Add_Click({
 
         if (-not $Script:ListofInstallFiles){
             Update-ListofInstallFiles 
+        }
+
+        If ($Script:WorkingPath -ne ($Scriptpath+'Working Folder\')){
+            $NewFolders = ('Temp\'),('OutputImage\'),('AmigaImageFiles\'),('FAT32Partition\')
+            foreach ($NewFolder in $NewFolders) {
+                if (Test-Path ($Script:WorkingPath+$NewFolder)){
+                    $null = Remove-Item ( $Script:WorkingPath+$NewFolder) -Recurse
+                }
+            }
         }
 
         Write-SettingsFile -SettingsFile ($Script:SettingsFolder+$Script:LogDateTime+'_AutomatedSettingsSave.e68')
@@ -4304,7 +4328,6 @@ if (-not ($Script:IsDisclaimerAccepted -eq $true)){
 ################################# Set Working Folder Default #########################################################################################
 
 $Script:WorkingPath = ($Scriptpath+'Working Folder\')
-
 $Script:WorkingPathDefault = $true    
 $Script:WriteMethod = 'SkipEmptySpace'
 
@@ -4314,6 +4337,7 @@ $Script:WriteMethod = 'SkipEmptySpace'
 $Form_UserInterface.ShowDialog() | out-null
 
 ######################################################################## Command line portion of Script ################################################################################################
+
 
 if  ($RunMode -eq 1){
     get-process -id $Pid | set-windowstate -State SHOWDEFAULT
