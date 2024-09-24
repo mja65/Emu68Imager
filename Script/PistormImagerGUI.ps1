@@ -909,8 +909,9 @@ function Confirm-DiskSpace {
     param (
         $PathtoCheck
     )
-    return ((Get-Volume -DriveLetter (Split-Path -Qualifier $PathtoCheck).Replace(':','')).SizeRemaining)
-    #return 100000000000
+    if ($PathtoCheck){
+        return (Get-Volume -DriveLetter ((Split-Path -Qualifier $PathtoCheck).Replace(':',''))).SizeRemaining
+    }
 }
 
 function Confirm-UIFields {
@@ -927,38 +928,140 @@ function Confirm-UIFields {
         $ErrorMessage += 'You have not populated a Kickstart version'+"`n`n"
         $NumberofErrors += 1
     }
+    If ($Script:ROMPath){
+        if ($Script:ROMPath -eq $Script:UserLocation_Kickstarts){
+            $WPF_UI_RomPath_Label.Text = 'Using default Kickstart folder'
+            $WPF_UI_RomPath_Button.Foreground = 'Black'
+            $WPF_UI_RomPath_Button.Background = '#FFDDDDDD'
+        }
+        else{
+            $WPF_UI_RomPath_Label.Text = Get-FormattedPathforGUI -PathtoTruncate ($Script:ROMPath)
+            $WPF_UI_RomPath_Button.Background = 'Green'
+            $WPF_UI_RomPath_Button.Foreground = 'White'
+        }
+        if (-not ($Script:FoundKickstarttoUse.KickstartPath)){
+            $ErrorMessage += 'A Kickstart file has not been located'+"`n`n"
+            $WPF_UI_Rompath_Button_Check.Background = '#FFDDDDDD'
+            $WPF_UI_Rompath_Button_Check.Foreground = 'Black'
+            $NumberofErrors += 1
+        }
+        else{
+            $WPF_UI_ROMpath_Button_Check.Background = 'Green'
+            $WPF_UI_ROMpath_Button_Check.Foreground = 'White'
+        }
+    }
+    else{
+        $ErrorMessage += 'You have not populated a Kickstart Path'+"`n`n"
+        $NumberofErrors += 1
+    }
     if (-not($WPF_UI_ScreenMode_Dropdown.SelectedItem)) {
         $ErrorMessage += 'You have not populated a sceenmode'+"`n`n"
         $NumberofErrors += 1
     }
-    if (-not($Script:ROMPath )) {
-        $ErrorMessage += 'You have not populated a Kickstart Path'+"`n`n"
-        $NumberofErrors += 1
-    }
-    else{
-        if (-not ($Script:FoundKickstarttoUse.KickstartPath)){
-            $ErrorMessage += 'A Kickstart file has not been located'+"`n`n"
-            $NumberofErrors += 1
-        }
-    }
+
     if ($Script:SetDiskupOnly -ne 'TRUE'){
         if (-not($Script:ADFPath )) {
             $ErrorMessage += 'You have not populated an ADF Path'+"`n`n"
             $NumberofErrors += 1
         }
         else{
-           if (-not ($Script:AvailableADFs | where-object IsMatched -eq 'TRUE') -or ($Script:AvailableADFs | where-object IsMatched -eq 'FALSE')){ 
+            if ($Script:ADFPath -eq  $Script:UserLocation_ADFs){
+                $WPF_UI_ADFPath_Label.Text = 'Using default ADF folder'
+                $WPF_UI_ADFPath_Button.Foreground = 'Black'
+                $WPF_UI_ADFPath_Button.Background = '#FFDDDDDD'       
+                $WPF_UI_ADFpath_Button_Check.Background = '#FFDDDDDD'
+                $WPF_UI_ADFpath_Button_Check.Foreground = 'Black'
+            }
+            else{
+                $WPF_UI_ADFPath_Label.Text = Get-FormattedPathforGUI -PathtoTruncate ($Script:ADFPath)
+                $WPF_UI_ADFPath_Button.Background = 'Green'
+                $WPF_UI_ADFPath_Button.Foreground = 'White'
+            }
+            if (-not ($Script:AvailableADFs | where-object IsMatched -eq 'TRUE') -or ($Script:AvailableADFs | where-object IsMatched -eq 'FALSE')){ 
                 $ErrorMessage += 'All the required ADFs have not been located'+"`n"
+                $WPF_UI_ADFpath_Button_Check.Background = '#FFDDDDDD'
+                $WPF_UI_ADFpath_Button_Check.Foreground = 'Black'
                 $NumberofErrors += 1
+            }
+            else {
+                $WPF_UI_ADFpath_Button_Check.Background = 'Green'
+                $WPF_UI_ADFpath_Button_Check.Foreground = 'White'
             }
         }          
     }
+
+    if ($Script:TransferLocation){
+        $WPF_UI_MigratedFiles_Button.Content = 'Click to remove Transfer Folder'
+        $WPF_UI_MigratedFiles_Button.Background = 'Green'
+        $WPF_UI_MigratedFiles_Button.Foreground = 'White'
+        $WPF_UI_MigratedPath_Label.Text = Get-FormattedPathforGUI -PathtoTruncate ($Script:TransferLocation) 
+        $WPF_UI_RequiredSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Script:SizeofFilestoTransfer
+        $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpaceFilestoTransfer 
+        if (($Script:AvailableSpaceFilestoTransfer) -lt $Script:SpaceThreshold_FilestoTransfer){
+            $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Background = "Red"
+            $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Foreground = "Black"
+        }
+        elseif (($Script:AvailableSpaceFilestoTransfer) -lt ($Script:SpaceThreshold_FilestoTransfer*2)){
+        $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Background = "Yellow"
+        $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Foreground = "Black"
+        }
+        else{
+            $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Background = "Green"
+            $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Foreground = "White"
+        }
+    }
+    else{
+        $WPF_UI_MigratedFiles_Button.Content = 'Click to set Transfer folder'    
+        $WPF_UI_MigratedFiles_Button.Background = '#FFDDDDDD'
+        $WPF_UI_MigratedFiles_Button.Foreground = 'Black'
+        $WPF_UI_MigratedPath_Label.Text='No transfer path selected'       
+        $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = '' 
+        $WPF_UI_RequiredSpaceValueTransferredFiles_TextBox.Text = '' 
+        $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Background = "Transparent"
+    }
+
+    $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpace_WorkingFolderDisk 
+
+    $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:RequiredSpace_WorkingFolderDisk
+    if ($Script:AvailableSpace_WorkingFolderDisk -le $Script:SpaceThreshold_WorkingFolderDisk){
+        $WPF_UI_AvailableSpaceValue_TextBox.Background = "Red"
+        $WPF_UI_AvailableSpaceValue_TextBox.Foreground = "Black"
+        $WPF_UI_RequiredSpaceMessage_TextBox.Text = "Insufficient space to run tool! You will be prompted to select a new drive and folder from which to run the tool."
+        $WPF_UI_RequiredSpaceMessage_TextBox.Foreground = "Red"
+    }
+    else{
+        if ($Script:AvailableSpace_WorkingFolderDisk -le ($Script:SpaceThreshold_WorkingFolderDisk*2)){
+            $WPF_UI_AvailableSpaceValue_TextBox.Background = "Yellow"
+            $WPF_UI_AvailableSpaceValue_TextBox.Foreground = "Black"
+            $WPF_UI_RequiredSpaceMessage_TextBox.Text = ""
+    
+        }
+        else{
+            $WPF_UI_AvailableSpaceValue_TextBox.Background = "Green"
+            $WPF_UI_AvailableSpaceValue_TextBox.Foreground = "White"
+            $WPF_UI_RequiredSpaceMessage_TextBox.Text = ""
+        }
+    }
+
     if ($NumberofErrors -gt 0){
+        $WPF_UI_Start_Button.Background = 'Red'
+        $WPF_UI_Start_Button.Foreground = 'Black'
+        $WPF_UI_Start_Button.Content = 'Missing information! Press to see further details'
         return $ErrorMessage
     }
     else{
+        if (-not (Confirm-FreeSpacetoRunTool)){
+            $WPF_UI_Start_Button.Background = 'Yellow'
+            $WPF_UI_Start_Button.Foreground = 'Black'
+            $WPF_UI_Start_Button.Content = 'Run Tool (with prompt for new drive and folder from which to run the tool)'
+        }
+        else{
+            $WPF_UI_Start_Button.Background = 'Green'
+            $WPF_UI_Start_Button.Foreground = 'White'
+            $WPF_UI_Start_Button.Content = 'Run Tool'
+        }
         return
-    }
+    }    
 }
 
 function Confirm-FreeSpacetoRunTool {
@@ -1078,69 +1181,71 @@ the working path again when you run the tool.
         }
         New-Variable -Scope Script -Name $Setting.Setting -Value $Setting.Value
     } 
-    
-    if ($Script:WorkingPath){
-        if (-not (Test-Path ($Script:WorkingPath))){
-            $null = [System.Windows.MessageBox]::Show($Msg_Body_WorkingPath, $Msg_Header_WorkingPath,0,48)
-            $Script:WorkingPath = ($Scriptpath+'Working Folder\')
-            $Script:WorkingPathDefault = $true 
-            $WPF_UI_Workingpath_Label.Text = 'Using default Working folder'
-            $WPF_UI_Workingpath_Button.Foreground = 'Black'
-            $WPF_UI_Workingpath_Button.Background = '#FFDDDDDD'        
-        }
-        elseif ($Script:WorkingPath -ne ($Scriptpath+'Working Folder\')){
-            $WPF_UI_Workingpath_Label.Text = Get-FormattedPathforGUI -PathtoTruncate ($Script:WorkingPath)   
-            $WPF_UI_Workingpath_Button.Foreground = 'White'
-            $WPF_UI_Workingpath_Button.Background = 'Green'
-            $Script:Space_WorkingFolderDisk = (Confirm-DiskSpace -PathtoCheck $Script:WorkingPath)/1kb                     
-            if ($Script:SizeofImage){
-                $Script:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Script:SizeofImage
-                $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:RequiredSpace_WorkingFolderDisk        
-            }
-            $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk
-            $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpace_WorkingFolderDisk      
-        }
-    }
-    else{
-        $Script:WorkingPath = ($Scriptpath+'Working Folder\')
-        $Script:WorkingPathDefault = $true 
-        $WPF_UI_Workingpath_Label.Text = 'Using default Working folder'
-        $WPF_UI_Workingpath_Button.Foreground = 'Black'
-        $WPF_UI_Workingpath_Button.Background = '#FFDDDDDD'    
-    }
+
+    # Convert Numeric Variables to Numeric
+
+    $Script:SizeofFAT32 = [int]$Script:SizeofFAT32
+    $Script:SizeofImage = [int]$Script:SizeofImage
+    $Script:SizeofDisk = [decimal]$Script:SizeofDisk
+    $Script:SizeofPartition_System = [int]$Script:SizeofPartition_System
+    $Script:SizeofPartition_Other = [int]$Script:SizeofPartition_Other
+    $Script:SizeofUnallocated = [int]$Script:SizeofUnallocated 
+    $Script:SizeofFreeSpace = [int]$Script:SizeofFreeSpace 
 
     $DiskFound = $false
     $DiskstoCheck = Get-RemovableMedia
     foreach ($Disk in $DiskstoCheck){
-        if ($Disk.HSTDiskName -eq $Script:HSTDiskName -and $Disk.SizeofDisk -eq $Script:SizeofDisk){
+        if (($Disk.HSTDiskName -eq $Script:HSTDiskName) -and (([decimal]($Disk.SizeofDisk)) -eq $Script:SizeofDisk)) {
             $DiskFound = $true
             break
         }   
     }                
     if ($DiskFound -eq $false){
         $null = [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,48)
-        Remove-Variable -Scope Script -Name HSTDiskName
-        Remove-Variable -Scope Script -Name HSTDiskDeviceID
-        Remove-Variable -Scope Script -Name HSTDiskNumber
-        Remove-Variable -Scope Script -Name SizeofFAT32
-        Remove-Variable -Scope Script -Name SizeofImage
-        Remove-Variable -Scope Script -Name SizeofDisk
-        Remove-Variable -Scope Script -Name SizeofPartition_System
-        Remove-Variable -Scope Script -Name SizeofPartition_Other
-        Remove-Variable -Scope Script -Name SizeofUnallocated
-        Remove-Variable -Scope Script -Name SizeofFreeSpace
+        $Script:HSTDiskName = $null
+        $Script:HSTDiskDeviceID = $null
+        $Script:HSTDiskNumber = $null
+        $Script:SizeofFAT32 = 0
+        $Script:SizeofImage = 0
+        $Script:SizeofDisk = 0
+        $Script:SizeofPartition_System = 0
+        $Script:SizeofPartition_Other = 0
+        $Script:SizeofUnallocated = 0
+        $Script:SizeofFreeSpace = 0
+        $Script:LoadedSettings = $false
     }
-    
-        # Convert Numeric Variables to Numeric
-    
-        $Script:SizeofFAT32 = [int]$Script:SizeofFAT32
-        $Script:SizeofImage = [int]$Script:SizeofImage
-        $Script:SizeofDisk = [int]$Script:SizeofDisk
-        $Script:SizeofPartition_System = [int]$Script:SizeofPartition_System
-        $Script:SizeofPartition_Other = [int]$Script:SizeofPartition_Other
-        $Script:SizeofUnallocated = [int]$Script:SizeofUnallocated 
-        $Script:SizeofFreeSpace = [int]$Script:SizeofFreeSpace 
+ #   -and [decimal]$Disk.SizeofDisk -eq $Script:SizeofDisk
 
+ if ($Script:WorkingPath){
+    if (-not (Test-Path ($Script:WorkingPath))){
+        $null = [System.Windows.MessageBox]::Show($Msg_Body_WorkingPath, $Msg_Header_WorkingPath,0,48)
+        $Script:WorkingPath = ($Scriptpath+'Working Folder\')
+        $Script:WorkingPathDefault = $true 
+    }       
+    $Script:Space_WorkingFolderDisk = (Confirm-DiskSpace -PathtoCheck $Script:WorkingPath)/1Kb 
+    $Script:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Script:SizeofImage
+    $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk
+}
+else{
+    $Script:WorkingPath = ($Scriptpath+'Working Folder\')
+    $Script:WorkingPathDefault = $true 
+}
+
+if ($Script:TransferLocation){
+    $Script:SizeofFilestoTransfer = Get-TransferredFilesSpaceRequired -FoldertoCheck $Script:TransferLocation
+    if ($Script:HSTDiskName){
+        $Script:Space_FilestoTransfer = ($Script:SizeofPartition_Other/([math]::ceiling($Script:SizeofPartition_Other/$Script:PFSLimit)))  - $Script:WorkOverhead
+        $Script:SpaceThreshold_FilestoTransfer = ($Script:Space_FilestoTransfer*0.2)      
+    }
+    else{
+        $Script:Space_FilestoTransfer = 0
+        $Script:SpaceThreshold_FilestoTransfer = 0
+    }
+    $Script:AvailableSpaceFilestoTransfer =  $Script:Space_FilestoTransfer - $Script:SizeofFilestoTransfer
+}
+else{
+    $Script:SizeofFilestoTransfer = 0
+}
 
  }
 
@@ -1179,7 +1284,6 @@ function Write-SettingsFile {
     ('WriteMethod;'+$Script:WriteMethod) | Out-File $SettingsFile -Append
     ('DiskFriendlyName;'+$Script:DiskFriendlyName) | Out-File $SettingsFile -Append        
     ('WorkbenchMaximum;'+$Script:WorkbenchMaximum) | Out-File $SettingsFile -Append                
-    ('SpaceThreshold_FilestoTransfer;'+$Script:SpaceThreshold_FilestoTransfer) | Out-File $SettingsFile -Append
     ('Fat32Maximum;'+$Script:Fat32Maximum) | Out-File $SettingsFile -Append                
 
     if ($Script:FoundKickstarttoUse){
@@ -2296,13 +2400,7 @@ or press cancel to quit the tool
             $Script:WorkingPathDefault = $false   
             $Script:Space_WorkingFolderDisk = (Confirm-DiskSpace -PathtoCheck $Script:WorkingPath)/1kb
             $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk 
-            if ($Script:AvailableSpace_WorkingFolderDisk -gt $Script:SpaceThreshold_WorkingFolderDisk){
-                $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpace_WorkingFolderDisk 
-                $WPF_UI_Start_Button.Background = 'Green'
-                $WPF_UI_Start_Button.Foreground = 'White'
-                $WPF_UI_Start_Button.Content = 'Run Tool'
-                $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpace_WorkingFolderDisk 
-                $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:RequiredSpace_WorkingFolderDisk
+            if ($Script:AvailableSpace_WorkingFolderDisk -gt $Script:SpaceThreshold_WorkingFolderDisk){                
                 $Success='TRUE'
                 return $true # Sufficient Space
             }
@@ -2794,7 +2892,7 @@ $inputXML_UserInterface = @"
                     <TextBox x:Name="RequiredSpace_TextBox" HorizontalAlignment="Left" Margin="20,57,0,0" TextWrapping="Wrap" Text="Required space to run tool is:" VerticalAlignment="Top" Width="230" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
                     <TextBox x:Name="RequiredSpaceValue_TextBox" HorizontalAlignment="Right" Margin="0,57,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Right"/>
                     <TextBox x:Name="AvailableSpace_TextBox" HorizontalAlignment="Left" Margin="20,77,0,0" TextWrapping="Wrap" Text="Free space after tool is run:" VerticalAlignment="Top" Width="230" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" FontWeight="Bold"/>
-                    <TextBox x:Name="AvailableSpaceValue_TextBox" HorizontalAlignment="Right" Margin="0,77,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Green" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Right"/>
+                    <TextBox x:Name="AvailableSpaceValue_TextBox" HorizontalAlignment="Right" Margin="0,77,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Green" Foreground="White" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Right"/>
                     <TextBox x:Name="RequiredSpaceTransferredFiles_TextBox" HorizontalAlignment="Left" Margin="20,10,0,0" TextWrapping="Wrap" Text="Required space for transferred files:" VerticalAlignment="Top" Width="230" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
                     <TextBox x:Name="RequiredSpaceValueTransferredFiles_TextBox" HorizontalAlignment="Right" Margin="0,10,0,0" TextWrapping="Wrap" Text="XXX GiB" VerticalAlignment="Top" Width="100" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Right"/>
                     <TextBox x:Name="AvailableSpaceTransferredFiles_TextBox" HorizontalAlignment="Left" Margin="20,31,0,0" TextWrapping="Wrap" Text="Free space after files transferred is:" VerticalAlignment="Top" Width="230" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" FontWeight="Bold"/>
@@ -2913,7 +3011,7 @@ $DefaultDivisorFat32 = 15
 $DefaultDivisorWorkbench = 15
 
 
-$Script:Space_WorkingFolderDisk = (Confirm-DiskSpace -PathtoCheck $Scriptpath)/1Kb # Available Space on Drive where script is running (Kilobytes)
+$Script:Space_WorkingFolderDisk = (Confirm-DiskSpace -PathtoCheck $Script:WorkingPath)/1Kb # Available Space on Drive where script is running (Kilobytes)
 $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk
 $Script:RequiredSpace_WorkingFolderDisk = 0 #In Kilobytes
 
@@ -2987,7 +3085,7 @@ $WPF_UI_MediaSelect_Dropdown.Add_SelectionChanged({
             $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width = 1
             $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width = 1
             $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = 1
-            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = 1
+            $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = 1            
         }
         else{
             if ($Script:SizeofImage /$DefaultDivisorFat32 -ge $Script:Fat32DefaultMaximum){
@@ -3018,6 +3116,7 @@ $WPF_UI_MediaSelect_Dropdown.Add_SelectionChanged({
             $Script:SizeofFreeSpace_Pixels = [decimal]($Script:SizeofFreeSpace * $Script:PartitionBarPixelperKB)
         }       
        
+        $Script:LoadedSettings = $false
         Set-PartitionMaximums
        
         $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width = $Script:SizeofFAT32_Pixels
@@ -3026,40 +3125,26 @@ $WPF_UI_MediaSelect_Dropdown.Add_SelectionChanged({
         $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Script:SizeofFreeSpace_Pixels
         $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = $Script:SizeofUnallocated_Pixels
         
-        $Script:Space_WorkingFolderDisk = (Confirm-DiskSpace -PathtoCheck $Scriptpath)/1Kb 
-
+        $Script:Space_WorkingFolderDisk = (Confirm-DiskSpace -PathtoCheck  $Script:WorkingPath)/1Kb 
         $Script:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Script:SizeofImage
         $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk 
     
         $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:RequiredSpace_WorkingFolderDisk
         $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpace_WorkingFolderDisk
 
-        $Script:Space_FilestoTransfer = ($Script:SizeofPartition_Other/([math]::ceiling($Script:SizeofPartition_Other/$Script:PFSLimit)))  - $Script:WorkOverhead
-        
-        $Script:AvailableSpaceFilestoTransfer =  $Script:Space_FilestoTransfer - $Script:SizeofFilestoTransfer    
-        $Script:SpaceThreshold_FilestoTransfer = ($Script:Space_FilestoTransfer*0.2)
-        
-        if ($Script:TransferLocation){
-            $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpaceFilestoTransfer 
-        }
-        
-        Set-GUIPartitionValues
-
-        if (Confirm-UIFields){
-            $WPF_UI_Start_Button.Background = 'Red'
-            $WPF_UI_Start_Button.Foreground = 'Black'
-            $WPF_UI_Start_Button.Content = 'Missing information! Press to see further details'
-        }
-        elseif (-not (Confirm-FreeSpacetoRunTool)){
-            $WPF_UI_Start_Button.Background = 'Yellow'
-            $WPF_UI_Start_Button.Foreground = 'Black'
-            $WPF_UI_Start_Button.Content = 'Run Tool (with prompt for new drive and folder from which to run the tool)'
+        if ($Script:SizeofPartition_Other){
+            $Script:Space_FilestoTransfer = ($Script:SizeofPartition_Other/([math]::ceiling($Script:SizeofPartition_Other/$Script:PFSLimit)))  - $Script:WorkOverhead
         }
         else{
-            $WPF_UI_Start_Button.Background = 'Green'
-            $WPF_UI_Start_Button.Foreground = 'White'
-            $WPF_UI_Start_Button.Content = 'Run Tool'
+            $Script:Space_FilestoTransfer = 0
         }
+
+        $Script:AvailableSpaceFilestoTransfer =  $Script:Space_FilestoTransfer - $Script:SizeofFilestoTransfer    
+        $Script:SpaceThreshold_FilestoTransfer = ($Script:Space_FilestoTransfer*0.2)
+              
+        Set-GUIPartitionValues
+
+        $null = Confirm-UIFields
 
     }
 })
@@ -3129,7 +3214,8 @@ $WPF_UI_DefaultAllocation_Refresh.add_Click({
         }
 
         Set-GUIPartitionValues
-                
+
+               
         $WPF_UI_Unallocated_Value.Text = Get-RoundedDiskSize -Size $Script:SizeofUnallocated -Scale 'GiB'
         
         if ($WPF_UI_Unallocated_Value.Text -eq 0){
@@ -3141,22 +3227,22 @@ $WPF_UI_DefaultAllocation_Refresh.add_Click({
         
         $Script:WorkingPath = $null
         $Script:WorkingPathDefault = $null
-        $Script:Space_WorkingFolderDisk = (Confirm-DiskSpace -PathtoCheck $Scriptpath)/1Kb 
+        $Script:Space_WorkingFolderDisk = (Confirm-DiskSpace -PathtoCheck  $Script:WorkingPath)/1Kb 
 
         $Script:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Script:SizeofImage
         $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk 
     
-        $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:RequiredSpace_WorkingFolderDisk
-        $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpace_WorkingFolderDisk
-
-        $Script:Space_FilestoTransfer = ($Script:SizeofPartition_Other/([math]::ceiling($Script:SizeofPartition_Other/$Script:PFSLimit)))  - $Script:WorkOverhead
+        if ($Script:SizeofPartition_Other){
+            $Script:Space_FilestoTransfer = ($Script:SizeofPartition_Other/([math]::ceiling($Script:SizeofPartition_Other/$Script:PFSLimit)))  - $Script:WorkOverhead
+        }
+        else{
+            $Script:Space_FilestoTransfer = 0
+        }
 
         $Script:AvailableSpaceFilestoTransfer =  $Script:Space_FilestoTransfer - $Script:SizeofFilestoTransfer    
         $Script:SpaceThreshold_FilestoTransfer = ($Script:Space_FilestoTransfer*0.2)
         
-        if ($Script:TransferLocation){
-            $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpaceFilestoTransfer
-        }
+        $null = Confirm-UIFields
     }
 })
 
@@ -3197,18 +3283,19 @@ $WPF_UI_Fat32Size_Listview.add_SizeChanged({
                 
         $Script:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Script:SizeofImage
         $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk 
-    
-        $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:RequiredSpace_WorkingFolderDisk
-        $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpace_WorkingFolderDisk
-
-        $Script:Space_FilestoTransfer = ($Script:SizeofPartition_Other/([math]::ceiling($Script:SizeofPartition_Other/$Script:PFSLimit)))  - $Script:WorkOverhead
-
+   
+        if ($Script:SizeofPartition_Other){
+            $Script:Space_FilestoTransfer = ($Script:SizeofPartition_Other/([math]::ceiling($Script:SizeofPartition_Other/$Script:PFSLimit)))  - $Script:WorkOverhead
+        }
+        else{
+            $Script:Space_FilestoTransfer = 0
+        }
+        
         $Script:AvailableSpaceFilestoTransfer =  $Script:Space_FilestoTransfer - $Script:SizeofFilestoTransfer    
         $Script:SpaceThreshold_FilestoTransfer = ($Script:Space_FilestoTransfer*0.2)
         
-        if ($Script:TransferLocation){
-            $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpaceFilestoTransfer
-        }        
+        $null = Confirm-UIFields
+      
     }
 })   
 
@@ -3250,17 +3337,17 @@ $WPF_UI_WorkbenchSize_Listview.add_SizeChanged({
         $Script:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Script:SizeofImage
         $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk 
     
-        $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:RequiredSpace_WorkingFolderDisk
-        $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpace_WorkingFolderDisk
-
-        $Script:Space_FilestoTransfer = ($Script:SizeofPartition_Other/([math]::ceiling($Script:SizeofPartition_Other/$Script:PFSLimit)))  - $Script:WorkOverhead
-
+        if ($Script:SizeofPartition_Other){
+            $Script:Space_FilestoTransfer = ($Script:SizeofPartition_Other/([math]::ceiling($Script:SizeofPartition_Other/$Script:PFSLimit)))  - $Script:WorkOverhead
+        }
+        else{
+            $Script:Space_FilestoTransfer = 0
+        }
+      
         $Script:AvailableSpaceFilestoTransfer =  $Script:Space_FilestoTransfer - $Script:SizeofFilestoTransfer    
         $Script:SpaceThreshold_FilestoTransfer = ($Script:Space_FilestoTransfer*0.2)
-
-        if ($Script:TransferLocation){
-            $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpaceFilestoTransfer
-        }        
+       
+        $null = Confirm-UIFields
     }   
 })
 
@@ -3302,17 +3389,17 @@ $WPF_UI_WorkSize_Listview.add_SizeChanged({
         $Script:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Script:SizeofImage
         $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk 
     
-        $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:RequiredSpace_WorkingFolderDisk
-        $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpace_WorkingFolderDisk
-
-        $Script:Space_FilestoTransfer = ($Script:SizeofPartition_Other/([math]::ceiling($Script:SizeofPartition_Other/$Script:PFSLimit)))  - $Script:WorkOverhead
-
+        if ($Script:SizeofPartition_Other){
+            $Script:Space_FilestoTransfer = ($Script:SizeofPartition_Other/([math]::ceiling($Script:SizeofPartition_Other/$Script:PFSLimit)))  - $Script:WorkOverhead
+        }
+        else{
+            $Script:Space_FilestoTransfer = 0
+        }
+       
         $Script:AvailableSpaceFilestoTransfer =  $Script:Space_FilestoTransfer - $Script:SizeofFilestoTransfer    
         $Script:SpaceThreshold_FilestoTransfer = ($Script:Space_FilestoTransfer*0.2)
         
-        if ($Script:TransferLocation){
-            $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpaceFilestoTransfer
-        }        
+        $null = Confirm-UIFields
     }   
 })
 
@@ -3339,17 +3426,17 @@ $WPF_UI_FreeSpace_Listview.add_SizeChanged({
         $Script:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Script:SizeofImage
         $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk 
     
-        $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:RequiredSpace_WorkingFolderDisk
-        $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpace_WorkingFolderDisk
-
-        $Script:Space_FilestoTransfer = ($Script:SizeofPartition_Other/([math]::ceiling($Script:SizeofPartition_Other/$Script:PFSLimit)))  - $Script:WorkOverhead
-
+        if ($Script:SizeofPartition_Other){
+            $Script:Space_FilestoTransfer = ($Script:SizeofPartition_Other/([math]::ceiling($Script:SizeofPartition_Other/$Script:PFSLimit)))  - $Script:WorkOverhead
+        }
+        else{
+            $Script:Space_FilestoTransfer = 0
+        }
+      
         $Script:AvailableSpaceFilestoTransfer =  $Script:Space_FilestoTransfer - $Script:SizeofFilestoTransfer    
         $Script:SpaceThreshold_FilestoTransfer = ($Script:Space_FilestoTransfer*0.2)
         
-        if ($Script:TransferLocation){
-            $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpaceFilestoTransfer
-        }        
+        $null = Confirm-UIFields    
 
     }    
 })
@@ -3371,18 +3458,19 @@ $WPF_UI_Unallocated_Listview.add_SizeChanged({
         
         $Script:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Script:SizeofImage
         $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk 
-    
-        $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:RequiredSpace_WorkingFolderDisk
-        $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpace_WorkingFolderDisk
-
-        $Script:Space_FilestoTransfer = ($Script:SizeofPartition_Other/([math]::ceiling($Script:SizeofPartition_Other/$Script:PFSLimit)))  - $Script:WorkOverhead
-
+  
+        if ($Script:SizeofPartition_Other){
+            $Script:Space_FilestoTransfer = ($Script:SizeofPartition_Other/([math]::ceiling($Script:SizeofPartition_Other/$Script:PFSLimit)))  - $Script:WorkOverhead
+        }
+        else{
+            $Script:Space_FilestoTransfer = 0
+        }
+  
         $Script:AvailableSpaceFilestoTransfer =  $Script:Space_FilestoTransfer - $Script:SizeofFilestoTransfer          
         $Script:SpaceThreshold_FilestoTransfer = ($Script:Space_FilestoTransfer*0.2)
 
-        if ($Script:TransferLocation){
-            $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpaceFilestoTransfer 
-        }        
+        $null = Confirm-UIFields
+    
     }
 })
 
@@ -3396,15 +3484,6 @@ $WPF_UI_LoadSettings_Button.Add_Click({
         }
         $WPF_UI_KickstartVersion_DropDown.SelectedItem = ($Script:KickstartVersiontoUseFriendlyName).tostring()
         $WPF_UI_ScreenMode_Dropdown.SelectedItem = $Script:ScreenModetoUseFriendlyName
-        $WPF_UI_ADFPath_Label.Text = Get-FormattedPathforGUI -PathtoTruncate ($Script:ADFPath)   
-        $WPF_UI_ADFPath_Button.Background = 'Green'
-        $WPF_UI_ADFPath_Button.Foreground = 'White'    
-        $WPF_UI_RomPath_Label.Text = Get-FormattedPathforGUI -PathtoTruncate ($Script:ROMPath)
-        $WPF_UI_RomPath_Button.Background = 'Green'
-        $WPF_UI_RomPath_Button.Foreground = 'White'
-        $WPF_UI_MigratedPath_Label.Text = Get-FormattedPathforGUI -PathtoTruncate ($Script:TransferLocation)
-        $WPF_UI_MigratedFiles_Button.Background = 'Green'
-        $WPF_UI_MigratedFiles_Button.Foreground = 'White'
         if ($Script:SetDiskupOnly -eq 'TRUE'){
             $WPF_UI_NoFileInstall_CheckBox.IsChecked = 'TRUE'
         }
@@ -3416,24 +3495,8 @@ $WPF_UI_LoadSettings_Button.Add_Click({
         }
         $WPF_UI_SSID_Textbox.Text=$Script:SSID
         $WPF_UI_Password_Textbox.Text=$Script:WifiPassword
-
-        # if 
-
-        # if (Confirm-UIFields){
-        #     $WPF_UI_Start_Button.Background = 'Red'
-        #     $WPF_UI_Start_Button.Foreground = 'Black'
-        #     $WPF_UI_Start_Button.Content = 'Missing information! Press to see further details'
-        # }
-        # elseif (-not (Confirm-FreeSpacetoRunTool)){
-        #     $WPF_UI_Start_Button.Background = 'Yellow'
-        #     $WPF_UI_Start_Button.Foreground = 'Black'
-        #     $WPF_UI_Start_Button.Content = 'Run Tool (with prompt for new drive and folder from which to run the tool)'
-        # }
-        # else{
-        #     $WPF_UI_Start_Button.Background = 'Green'
-        #     $WPF_UI_Start_Button.Foreground = 'White'
-        #     $WPF_UI_Start_Button.Content = 'Run Tool'
-        # }
+        
+        Confirm-UIFields
     }
 })
 
@@ -3477,7 +3540,7 @@ $WPF_UI_MediaSelect_Refresh.Add_Click({
     $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = '*'
     $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = '*'
     $Script:RequiredSpace_WorkingFolderDisk = 0 #In Kilobytes
-    $Script:Space_WorkingFolderDisk = (Confirm-DiskSpace -PathtoCheck $Scriptpath)/1Kb 
+    $Script:Space_WorkingFolderDisk = (Confirm-DiskSpace -PathtoCheck  $Script:WorkingPath)/1Kb 
     $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:RequiredSpace_WorkingFolderDisk
     $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk
     $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpace_WorkingFolderDisk 
@@ -3528,46 +3591,14 @@ $WPF_UI_SSID_Textbox.add_LostFocus({
 
 
 $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Add_TextChanged({
-    if ($WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.text -eq ''){
-        $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Background = "Transparent"
-    }
-    elseif (($Script:AvailableSpaceFilestoTransfer) -lt $Script:SpaceThreshold_FilestoTransfer){
-        $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Background = "Red"
-        $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Foreground = "Black"
-    }
-    elseif (($Script:AvailableSpaceFilestoTransfer) -lt ($Script:SpaceThreshold_FilestoTransfer*2)){
-    $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Background = "Yellow"
-    $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Foreground = "Black"
-    }
-    else{
-        $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Background = "Green"
-        $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Foreground = "White"
-    }
+    $null = Confirm-UIFields    
     
 })
 
 
 $WPF_UI_AvailableSpaceValue_TextBox.Add_TextChanged({
-    if ($Script:AvailableSpace_WorkingFolderDisk -le $Script:SpaceThreshold_WorkingFolderDisk){
-        $WPF_UI_AvailableSpaceValue_TextBox.Background = "Red"
-        $WPF_UI_AvailableSpaceValue_TextBox.Foreground = "Black"
-        $WPF_UI_RequiredSpaceMessage_TextBox.Text = "Insufficient space to run tool! You will be prompted to select a new drive and folder from which to run the tool."
-        $WPF_UI_RequiredSpaceMessage_TextBox.Foreground = "Red"
-        
-    }
-    else{
-        if ($Script:AvailableSpace_WorkingFolderDisk -le ($Script:SpaceThreshold_WorkingFolderDisk*2)){
-            $WPF_UI_AvailableSpaceValue_TextBox.Background = "Yellow"
-            $WPF_UI_AvailableSpaceValue_TextBox.Foreground = "Black"
-            $WPF_UI_RequiredSpaceMessage_TextBox.Text = ""
+    $null = Confirm-UIFields
     
-        }
-        else{
-            $WPF_UI_AvailableSpaceValue_TextBox.Background = "Green"
-            $WPF_UI_AvailableSpaceValue_TextBox.Foreground = "White"
-            $WPF_UI_RequiredSpaceMessage_TextBox.Text = ""
-        }
-    }  
 })
 
 $WPF_UI_FAT32Size_Value.add_LostFocus({
@@ -3778,83 +3809,36 @@ $WPF_UI_Workingpath_Button.Add_Click({
      if ($WorkingPathtoPopulate){
          $Script:WorkingPath = $WorkingPathtoPopulate
          $Script:WorkingPathDefault = $false
-         $WPF_UI_Workingpath_Label.Text = Get-FormattedPathforGUI -PathtoTruncate ($Script:WorkingPath)   
-         $WPF_UI_Workingpath_Button.Foreground = 'White'
-         $WPF_UI_Workingpath_Button.Background = 'Green'       
          $Script:Space_WorkingFolderDisk = (Confirm-DiskSpace -PathtoCheck $Script:WorkingPath)/1kb
          if ($Script:SizeofImage){
-             $Script:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Script:SizeofImage
-             $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:RequiredSpace_WorkingFolderDisk        
+             $Script:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Script:SizeofImage 
          }
          $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk
-         $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpace_WorkingFolderDisk 
      }
      elseif ((-not $WorkingPathtoPopulate)  -and ($Script:WorkingPath -ne ($Scriptpath+'Working Folder\'))){
         $Script:WorkingPath = ($Scriptpath+'Working Folder\')
         $Script:WorkingPathDefault = $true        
-        $WPF_UI_Workingpath_Label.Text = 'Using default Working folder'
-        $WPF_UI_Workingpath_Button.Foreground = 'Black'
-        $WPF_UI_Workingpath_Button.Background = '#FFDDDDDD'    
         $Script:Space_WorkingFolderDisk = (Confirm-DiskSpace -PathtoCheck $Script:WorkingPath)/1kb
         if ($Script:SizeofImage){
-            $Script:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Script:SizeofImage
-            $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:RequiredSpace_WorkingFolderDisk        
+            $Script:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Script:SizeofImage    
         }
-        $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk
-        $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpace_WorkingFolderDisk      
+        $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk   
      }
-
+     $null = Confirm-UIFields
 })
 
 
 $WPF_UI_RomPath_Button.Add_Click({
-    $Script:ROMPath = Get-FolderPath -Message 'Select path to Kickstart' -InitialDirectory $Script:ROMPath
-    if ($Script:ROMPath -ne $Script:UserLocation_Kickstart -and ($Script:ROMPath)){
-        $Script:ROMPath = $Script:ROMPath.TrimEnd('\')+'\'
-        if (Confirm-UIFields){
-            $WPF_UI_Start_Button.Background = 'Red'
-            $WPF_UI_Start_Button.Foreground = 'Black'
-            $WPF_UI_Start_Button.Content = 'Missing information! Press to see further details'
-        }
-        elseif (-not (Confirm-FreeSpacetoRunTool)){
-            $WPF_UI_Start_Button.Background = 'Yellow'
-            $WPF_UI_Start_Button.Foreground = 'Black'
-            $WPF_UI_Start_Button.Content = 'Run Tool (with prompt for new drive and folder from which to run the tool)'
-        }
-        else{
-            $WPF_UI_Start_Button.Background = 'Green'
-            $WPF_UI_Start_Button.Foreground = 'White'
-            $WPF_UI_Start_Button.Content = 'Run Tool'
-        }
-        $WPF_UI_RomPath_Label.Text = Get-FormattedPathforGUI -PathtoTruncate ($Script:ROMPath)
-        $WPF_UI_RomPath_Button.Background = 'Green'
-        $WPF_UI_RomPath_Button.Foreground = 'White'
+    $PathtoPopulate = Get-FolderPath -Message 'Select path to Kickstart' -InitialDirectory $Script:ROMPath
+    if ((-not $PathtoPopulate) -and ($Script:ROMPath -ne $Script:UserLocation_Kickstarts)){
+        $Script:ROMPath = $Script:UserLocation_Kickstarts
+        $Script:FoundKickstarttoUse = $null        
     }
-    else{
-        $Script:ROMPath = $Script:UserLocation_Kickstart
-        $Script:FoundKickstarttoUse = $null
-        $WPF_UI_RomPath_Label.Text ='Using default Kickstart folder'
-        $WPF_UI_RomPath_Button.Foreground = 'Black'
-        $WPF_UI_RomPath_Button.Background = '#FFDDDDDD'
-        $WPF_UI_Rompath_Button_Check.Background = '#FFDDDDDD'
-        $WPF_UI_Rompath_Button_Check.Foreground = 'Black'
-
-        if (Confirm-UIFields){
-            $WPF_UI_Start_Button.Background = 'Red'
-            $WPF_UI_Start_Button.Foreground = 'Black'
-            $WPF_UI_Start_Button.Content = 'Missing information! Press to see further details'
-        }
-        elseif (-not (Confirm-FreeSpacetoRunTool)){
-            $WPF_UI_Start_Button.Background = 'Yellow'
-            $WPF_UI_Start_Button.Foreground = 'Black'
-            $WPF_UI_Start_Button.Content = 'Run Tool (with prompt for new drive and folder from which to run the tool)'
-        }
-        else{
-            $WPF_UI_Start_Button.Background = 'Green'
-            $WPF_UI_Start_Button.Foreground = 'White'
-            $WPF_UI_Start_Button.Content = 'Run Tool'
-        }
+    elseif ($PathtoPopulate -ne $Script:ROMPath) {
+        $Script:ROMPath = $PathtoPopulate.TrimEnd('\')+'\'
+        $Script:FoundKickstarttoUse = $null    
     }
+    $null = Confirm-UIFields
 })
 
 $WPF_UI_ROMpath_Button_Check.Add_Click({
@@ -3863,82 +3847,25 @@ $WPF_UI_ROMpath_Button_Check.Add_Click({
         if (-not ($Script:FoundKickstarttoUse)){
             Write-GUINoKickstart
         }
-        else{
-            $WPF_UI_ROMpath_Button_Check.Background = 'Green'
-            $WPF_UI_ROMpath_Button_Check.Foreground = 'White'
-        }
-
-        if (Confirm-UIFields){
-            $WPF_UI_Start_Button.Background = 'Red'
-            $WPF_UI_Start_Button.Foreground = 'Black'
-            $WPF_UI_Start_Button.Content = 'Missing information! Press to see further details'
-        }
-        elseif (-not (Confirm-FreeSpacetoRunTool)){
-            $WPF_UI_Start_Button.Background = 'Yellow'
-            $WPF_UI_Start_Button.Foreground = 'Black'
-            $WPF_UI_Start_Button.Content = 'Run Tool (with prompt for new drive and folder from which to run the tool)'
-        }
-        else{
-            $WPF_UI_Start_Button.Background = 'Green'
-            $WPF_UI_Start_Button.Foreground = 'White'
-            $WPF_UI_Start_Button.Content = 'Run Tool'
-        }
-
     }
     else{
         Write-GUINoOSChosen -Type 'Kickstarts'
     }
+    $null = Confirm-UIFields
 })
 
 
 $WPF_UI_ADFPath_Button.Add_Click({
-    $Script:ADFPath = Get-FolderPath -Message 'Select path to ADFs' -InitialDirectory $Script:ADFPath
-    if ($Script:ADFPath -ne $Script:UserLocation_ADFs -and ($Script:ADFPath))   {
-        $Script:ADFPath = $Script:ADFPath.TrimEnd('\')+'\'
-        if (Confirm-UIFields){
-            $WPF_UI_Start_Button.Background = 'Red'
-            $WPF_UI_Start_Button.Foreground = 'Black'
-            $WPF_UI_Start_Button.Content = 'Missing information! Press to see further details'
-        }
-        elseif (-not (Confirm-FreeSpacetoRunTool)){
-            $WPF_UI_Start_Button.Background = 'Yellow'
-            $WPF_UI_Start_Button.Foreground = 'Black'
-            $WPF_UI_Start_Button.Content = 'Run Tool (with prompt for new drive and folder from which to run the tool)'
-        }
-        else{
-            $WPF_UI_Start_Button.Background = 'Green'
-            $WPF_UI_Start_Button.Foreground = 'White'
-            $WPF_UI_Start_Button.Content = 'Run Tool'
-        }
-        $WPF_UI_ADFPath_Label.Text = Get-FormattedPathforGUI -PathtoTruncate ($Script:ADFPath)
-        $WPF_UI_ADFPath_Button.Background = 'Green'
-        $WPF_UI_ADFPath_Button.Foreground = 'White'
-    } 
-    else{
+    $PathtoPopulate = Get-FolderPath -Message 'Select path to ADFs' -InitialDirectory $Script:ADFPath
+    if ((-not $PathtoPopulate) -and ($Script:ADFPath -ne $Script:UserLocation_ADFs)){
+        $Script:ADFPath = $Script:UserLocation_ADFs   
         $Script:AvailableADFs = $null
-        $Script:ADFPath = $Script:UserLocation_ADFs
-        $WPF_UI_ADFPath_Label.Text = 'Using default ADF folder'
-        $WPF_UI_ADFPath_Button.Foreground = 'Black'
-        $WPF_UI_ADFPath_Button.Background = '#FFDDDDDD'       
-        $WPF_UI_ADFpath_Button_Check.Background = '#FFDDDDDD'
-        $WPF_UI_ADFpath_Button_Check.Foreground = 'Black'
-
-        if (Confirm-UIFields){
-            $WPF_UI_Start_Button.Background = 'Red'
-            $WPF_UI_Start_Button.Foreground = 'Black'
-            $WPF_UI_Start_Button.Content = 'Missing information! Press to see further details'
-        }
-        elseif (-not (Confirm-FreeSpacetoRunTool)){
-            $WPF_UI_Start_Button.Background = 'Yellow'
-            $WPF_UI_Start_Button.Foreground = 'Black'
-            $WPF_UI_Start_Button.Content = 'Run Tool (with prompt for new drive and folder from which to run the tool)'
-        }
-        else{
-            $WPF_UI_Start_Button.Background = 'Green'
-            $WPF_UI_Start_Button.Foreground = 'White'
-            $WPF_UI_Start_Button.Content = 'Run Tool'
-        }
     }
+    elseif ($PathtoPopulate -ne $Script:ADFPath) {
+        $Script:ADFPath = $PathtoPopulate.TrimEnd('\')+'\'
+        $Script:AvailableADFs= $null    
+    }
+    $null = Confirm-UIFields
 })
 
 $WPF_UI_ADFpath_Button_Check.Add_Click({
@@ -3986,35 +3913,17 @@ The following ADFs will be used:
 $AvailableADFstoReport  
 "@     
             [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,0) 
-            $WPF_UI_ADFpath_Button_Check.Background = 'Green'
-            $WPF_UI_ADFpath_Button_Check.Foreground = 'White'
         }
-
-        if (Confirm-UIFields){
-            $WPF_UI_Start_Button.Background = 'Red'
-            $WPF_UI_Start_Button.Foreground = 'Black'
-            $WPF_UI_Start_Button.Content = 'Missing information! Press to see further details'
-        }
-        elseif (-not (Confirm-FreeSpacetoRunTool)){
-            $WPF_UI_Start_Button.Background = 'Yellow'
-            $WPF_UI_Start_Button.Foreground = 'Black'
-            $WPF_UI_Start_Button.Content = 'Run Tool (with prompt for new drive and folder from which to run the tool)'
-        }
-        else{
-            $WPF_UI_Start_Button.Background = 'Green'
-            $WPF_UI_Start_Button.Foreground = 'White'
-            $WPF_UI_Start_Button.Content = 'Run Tool'
-        }
-
     }
     else {
         Write-GUINoOSChosen -Type 'ADFs'
-    } 
+    }
+    $null = Confirm-UIFields 
 })
 
 $WPF_UI_MigratedFiles_Button.Add_Click({
     If (-not ($Script:TransferLocation)) {
-        $Script:TransferLocation = Get-FolderPath -Message 'Select transfer folder' -RootFolder 'MyComputer'
+        $Script:TransferLocation = Get-FolderPath -Message 'Select Transfer folder' -RootFolder 'MyComputer'
         if ($Script:TransferLocation){            
             $Script:TransferLocation = $Script:TransferLocation.TrimEnd('\')+'\'
             $Msg = @'
@@ -4024,34 +3933,16 @@ Calculating space requirements. This may take some time if you have selected a l
             $Script:SizeofFilestoTransfer = Get-TransferredFilesSpaceRequired -FoldertoCheck $Script:TransferLocation
             $Script:AvailableSpaceFilestoTransfer =  $Script:Space_FilestoTransfer - $Script:SizeofFilestoTransfer
             $Script:SpaceThreshold_FilestoTransfer = ($Script:Space_FilestoTransfer*0.2)      
-            
-            $WPF_UI_RequiredSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Script:SizeofFilestoTransfer
-            $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpaceFilestoTransfer 
-
-            $WPF_UI_MigratedPath_Label.Text = Get-FormattedPathforGUI -PathtoTruncate ($Script:TransferLocation)
-            $WPF_UI_MigratedFiles_Button.Content = 'Click to remove Transfer Folder'
-            $WPF_UI_MigratedFiles_Button.Background = 'Green'
-            $WPF_UI_MigratedFiles_Button.Foreground = 'White' 
 
         }
         else{
             $Script:SizeofFilestoTransfer = 0
-            $WPF_UI_RequiredSpaceValueTransferredFiles_TextBox.Text = ''
-            $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = ''
-            $WPF_UI_MigratedFiles_Button.Background = '#FFDDDDDD'
-            $WPF_UI_MigratedFiles_Button.Foreground = 'Black'
         }
     }
     else{
         $Script:SizeofFilestoTransfer= 0
-        $WPF_UI_RequiredSpaceValueTransferredFiles_TextBox.Text = ''
-        $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Text = ''
-        $Script:TransferLocation = $null
-        $WPF_UI_MigratedFiles_Button.Content = 'Click to set Transfer folder'
-        $WPF_UI_MigratedFiles_Button.Background = '#FFDDDDDD'
-        $WPF_UI_MigratedFiles_Button.Foreground = 'Black'
-        $WPF_UI_MigratedPath_Label.Text='No transfer path selected'
     }
+    $null = Confirm-UIFields
 })
 
 $AvailableKickstarts = Import-Csv ($InputFolder+'ListofInstallFiles.csv') -delimiter ';' | Where-Object 'Kickstart_VersionFriendlyName' -ne ""| Select-Object 'Kickstart_Version','Kickstart_VersionFriendlyName' -unique
@@ -4068,21 +3959,8 @@ $WPF_UI_KickstartVersion_Dropdown.Add_SelectionChanged({
         }
    }
 
-    if (Confirm-UIFields){
-        $WPF_UI_Start_Button.Background = 'Red'
-        $WPF_UI_Start_Button.Foreground = 'Black'
-        $WPF_UI_Start_Button.Content = 'Missing information! Press to see further details'
-    }
-    elseif (-not (Confirm-FreeSpacetoRunTool)){
-        $WPF_UI_Start_Button.Background = 'Yellow'
-        $WPF_UI_Start_Button.Foreground = 'Black'
-        $WPF_UI_Start_Button.Content = 'Run Tool (with prompt for new drive and folder from which to run the tool)'
-    }
-    else{
-        $WPF_UI_Start_Button.Background = 'Green'
-        $WPF_UI_Start_Button.Foreground = 'White'
-        $WPF_UI_Start_Button.Content = 'Run Tool'
-    }
+   $null = Confirm-UIFields
+   
 })
 
 $AvailableScreenModes = Import-Csv ($InputFolder+'ScreenModes.csv') -delimiter ';' | Where-Object 'Include' -eq 'TRUE'
@@ -4102,21 +3980,9 @@ $WPF_UI_ScreenMode_Dropdown.Add_SelectionChanged({
             $Script:ScreenModetoUseFriendlyName = $WPF_UI_ScreenMode_Dropdown.SelectedItem           
         }
     }
-    if (Confirm-UIFields){
-        $WPF_UI_Start_Button.Background = 'Red'
-        $WPF_UI_Start_Button.Foreground = 'Black'
-        $WPF_UI_Start_Button.Content = 'Missing information! Press to see further details'
-    }
-    elseif (-not (Confirm-FreeSpacetoRunTool)){
-        $WPF_UI_Start_Button.Background = 'Yellow'
-        $WPF_UI_Start_Button.Foreground = 'Black'
-        $WPF_UI_Start_Button.Content = 'Run Tool (with prompt for new drive and folder from which to run the tool)'
-    }
-    else{
-        $WPF_UI_Start_Button.Background = 'Green'
-        $WPF_UI_Start_Button.Foreground = 'White'
-        $WPF_UI_Start_Button.Content = 'Run Tool'
-    }
+
+    $null = Confirm-UIFields
+    
 })
 
 $WPF_UI_DiskWrite_CheckBox.Add_Checked({
@@ -4139,50 +4005,23 @@ $WPF_UI_NoFileInstall_CheckBox.Add_Checked({
     $Script:TransferLocation = $null
     $WPF_UI_MigratedFiles_Button.Visibility = 'Hidden'
     $WPF_UI_MigratedPath_Label.Visibility = 'Hidden'
-    $WPF_UI_MigratedFiles_Button.Content = 'Click to set transfer folder'
-    $WPF_UI_MigratedFiles_Button.Background = '#FFDDDDDD'
-    $WPF_UI_MigratedFiles_Button.Foreground = 'Black'
-    $WPF_UI_MigratedPath_Label.Text='No transfer path selected'
     $WPF_UI_MigratedFiles_Button.IsEnabled = ""
     $Script:AvailableADFs = $null
     $Script:ADFPath = $null
     $WPF_UI_ADFpath_Button.Visibility = 'Hidden'
     $WPF_UI_ADFPath_Label.Visibility = 'Hidden'
-    $WPF_UI_ADFPath_Label.Text = 'Using default ADF folder'
-    $WPF_UI_ADFPath_Button.Background = '#FFDDDDDD'
-    $WPF_UI_ADFPath_Button.Foreground = 'Black'
     $WPF_UI_ADFPath_Button.IsEnabled = ""
     $WPF_UI_ADFpath_Button_Check.IsEnabled = ""
     $WPF_UI_ADFpath_Button_Check.Visibility = 'Hidden'
-    $WPF_UI_ADFpath_Button_Check.Background = '#FFDDDDDD'
-    $WPF_UI_ADFpath_Button_Check.Foreground = 'Black'
     $WPF_UI_RequiredSpaceTransferredFiles_TextBox.Visibility = 'Hidden'
     $WPF_UI_RequiredSpaceValueTransferredFiles_TextBox.Visibility = 'Hidden'
     $WPF_UI_AvailableSpaceTransferredFiles_TextBox.Visibility = 'Hidden'
     $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Visibility = 'Hidden'
-
-    if (Confirm-UIFields){
-        $WPF_UI_Start_Button.Background = 'Red'
-        $WPF_UI_Start_Button.Foreground = 'Black'
-        $WPF_UI_Start_Button.Content = 'Missing information! Press to see further details'
-    }
-    elseif (-not (Confirm-FreeSpacetoRunTool)){
-        $WPF_UI_Start_Button.Background = 'Yellow'
-        $WPF_UI_Start_Button.Foreground = 'Black'
-        $WPF_UI_Start_Button.Content = 'Run Tool (with prompt for new drive and folder from which to run the tool)'
-    }
-    else{
-        $WPF_UI_Start_Button.Background = 'Green'
-        $WPF_UI_Start_Button.Foreground = 'White'
-        $WPF_UI_Start_Button.Content = 'Run Tool'
-    }
     If ($Script:HSTDiskName){
         $Script:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Script:SizeofImage
-        $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk 
-    
-        $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:RequiredSpace_WorkingFolderDisk
-        $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpace_WorkingFolderDisk
+        $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk    
     } 
+    $null = Confirm-UIFields    
 })
 
 $WPF_UI_NoFileInstall_CheckBox.Add_UnChecked({
@@ -4199,29 +4038,14 @@ $WPF_UI_NoFileInstall_CheckBox.Add_UnChecked({
     $WPF_UI_RequiredSpaceValueTransferredFiles_TextBox.Visibility = 'Visible'
     $WPF_UI_AvailableSpaceTransferredFiles_TextBox.Visibility = 'Visible'
     $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Visibility = 'Visible'
-
-    if (Confirm-UIFields){
-        $WPF_UI_Start_Button.Background = 'Red'
-        $WPF_UI_Start_Button.Foreground = 'Black'
-        $WPF_UI_Start_Button.Content = 'Missing information! Press to see further details'
-    }
-    elseif (-not (Confirm-FreeSpacetoRunTool)){
-        $WPF_UI_Start_Button.Background = 'Yellow'
-        $WPF_UI_Start_Button.Foreground = 'Black'
-        $WPF_UI_Start_Button.Content = 'Run Tool (with prompt for new drive and folder from which to run the tool)'
-    }
-    else{
-        $WPF_UI_Start_Button.Background = 'Green'
-        $WPF_UI_Start_Button.Foreground = 'White'
-        $WPF_UI_Start_Button.Content = 'Run Tool'
-    }
+    
     If ($Script:HSTDiskName){
         $Script:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Script:SizeofImage
         $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk 
-    
-        $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:RequiredSpace_WorkingFolderDisk
-        $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpace_WorkingFolderDisk
     }
+   
+    $null = Confirm-UIFields   
+
 })
 
 $WPF_UI_Documentation_Button.Add_Click({
@@ -4243,7 +4067,7 @@ $WPF_UI_Start_Button.Add_Click({
             $Script:WriteMethod = 'Normal'
         }
     }
-    if (Get-TransferFileCheck -TransferLocationtocheck $Script:TransferLocation -TransferSpaceThreshold $Script:SpaceThreshold_FilestoTransfer -TransferAvailableSpace $Script:AvailableSpaceFilestoTransfer){
+    if (Get-TransferFileCheck -TransferLocationtocheck $Script:TransferLocation -TransferSpaceThreshold $Script:SpaceThreshold_FilestoTransfer -TransferAvailableSpace $Script:AvailableSpaceFilestoTransfer -eq $true){
         $ErrorCount = $ErrorCount
     }
     else{
@@ -4263,38 +4087,18 @@ $WPF_UI_Start_Button.Add_Click({
     
     if ($ErrorCount -eq 0){
         if ($Script:AvailableSpace_WorkingFolderDisk -le -$Script:SpaceThreshold_WorkingFolderDisk){
-            $Msg_Header ='Error - Insufficient Space!'    
-            $Msg_Body = @"
-You do not have sufficient space on your drive to run the tool!
-        
-Either select a location with sufficient space (the folder must be empty) 
-or press 'Cancel' to quit the tool
-"@   
-$ValueofAction = [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,1,48)
-if ($ValueofAction -eq 'Cancel'){
-    $Script:ExitType =2
-        }
-    }
-
-
-
-
-
-
-
-
-
-        if ((Get-SpaceCheck -AvailableSpace $Script:AvailableSpace_WorkingFolderDisk -SpaceThreshold $Script:SpaceThreshold_WorkingFolderDisk) -eq $true){
-            $ErrorCount = $ErrorCount
-
-        }
-        else{
-            $ErrorCount += 1  
-            $Script:ExitType = 2
-            if ($Script:ExitType -eq 2){
-                Write-ErrorMessage -Message 'Exiting - User has insufficient space' -NoLog
-                $Form_UserInterface.Close() | out-null
-                exit
+            if ((Get-SpaceCheck -AvailableSpace $Script:AvailableSpace_WorkingFolderDisk -SpaceThreshold $Script:SpaceThreshold_WorkingFolderDisk) -eq $true){
+                $ErrorCount = $ErrorCount
+    
+            }
+            else{
+                $ErrorCount += 1  
+                $Script:ExitType = 2
+                if ($Script:ExitType -eq 2){
+                    Write-ErrorMessage -Message 'Exiting - User has insufficient space' -NoLog
+                    $Form_UserInterface.Close() | out-null
+                    exit
+                }
             }
         }
         $Script:KickstartPath = $Script:FoundKickstarttoUse.KickstartPath
@@ -4306,13 +4110,12 @@ if ($ValueofAction -eq 'Cancel'){
         Write-SettingsFile -SettingsFile ($Script:SettingsFolder+$Script:LogDateTime+'_AutomatedSettingsSave.e68')
         $WPF_UI_Main_Grid.Visibility="Hidden"
         Write-GUIReporttoUseronOptions
-        $WPF_UI_Reporting_Grid.Visibility="Visible"
-        
-
+        $WPF_UI_Reporting_Grid.Visibility="Visible"        
     }  
 })
 
 $WPF_UI_GoBack_Button.add_Click({
+        $null = Remove-Item ($Script:SettingsFolder+$Script:LogDateTime+'_AutomatedSettingsSave.e68')
         $WPF_UI_Reporting_Grid.Visibility="Hidden"
         $WPF_UI_Main_Grid.Visibility="Visible"
 })
