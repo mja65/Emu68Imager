@@ -1417,40 +1417,40 @@ function Get-FolderPath {
     }
 }
     
-# function Get-FolderPath {
-#     [CmdletBinding()]
-#     param (
-#         [Parameter(Mandatory=$false, ValueFromPipeline=$true, ValueFromPipelineByPropertyName=$true, Position=0)]
-#         [string]$Message = "Please select a directory.",
+function Get-FolderPathWorkingPath {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory=$false, ValueFromPipeline=$true, ValueFromPipelineByPropertyName=$true, Position=0)]
+        [string]$Message = "Please select a directory.",
 
-#         [Parameter(Mandatory=$false, Position=1)]
-#         [string]$InitialDirectory,
+        [Parameter(Mandatory=$false, Position=1)]
+        [string]$InitialDirectory,
 
-#         [Parameter(Mandatory=$false)]
-#         [System.Environment+SpecialFolder]$RootFolder = [System.Environment+SpecialFolder]::Desktop,
+        [Parameter(Mandatory=$false)]
+        [System.Environment+SpecialFolder]$RootFolder = [System.Environment+SpecialFolder]::Desktop,
 
-#         [switch]$ShowNewFolderButton
-#     )
-#     Add-Type -AssemblyName System.Windows.Forms
-#     $dialog = New-Object System.Windows.Forms.FolderBrowserDialog
-#     $dialog.Description  = $Message
-#     $dialog.SelectedPath = $InitialDirectory
-#     $dialog.RootFolder   = $RootFolder
-#     $dialog.ShowNewFolderButton = if ($ShowNewFolderButton) { $true } else { $false }
-#     $selected = $null
+        [switch]$ShowNewFolderButton
+    )
+    Add-Type -AssemblyName System.Windows.Forms
+    $dialog = New-Object System.Windows.Forms.FolderBrowserDialog
+    $dialog.Description  = $Message
+    $dialog.SelectedPath = $InitialDirectory
+    $dialog.RootFolder   = $RootFolder
+    $dialog.ShowNewFolderButton = if ($ShowNewFolderButton) { $true } else { $false }
+    $selected = $null
 
-#     # force the dialog TopMost
-#     # Since the owning window will not be used after the dialog has been 
-#     # closed we can just create a new form on the fly within the method call
-#     $result = $dialog.ShowDialog((New-Object System.Windows.Forms.Form -Property @{TopMost = $true }))
-#     if ($result -eq [Windows.Forms.DialogResult]::OK){
-#         $selected = $dialog.SelectedPath
-#     }
-#     # clear the FolderBrowserDialog from memory
-#     $dialog.Dispose()
-#     # return the selected folder
-#     $selected
-# } 
+    # force the dialog TopMost
+    # Since the owning window will not be used after the dialog has been 
+    # closed we can just create a new form on the fly within the method call
+    $result = $dialog.ShowDialog((New-Object System.Windows.Forms.Form -Property @{TopMost = $true }))
+    if ($result -eq [Windows.Forms.DialogResult]::OK){
+        $selected = $dialog.SelectedPath
+    }
+    # clear the FolderBrowserDialog from memory
+    $dialog.Dispose()
+    # return the selected folder
+    $selected
+} 
 
 function Get-RemovableMedia {
     param (
@@ -2597,7 +2597,7 @@ function Get-StartEmptySpace {
 You have selected a non-empty folder! Please select an empty folder.
 "@  
     do {
-        $WorkingPathtoReturn = Get-FolderPath -Message 'Select location for Working Path (folder must be empty)' -RootFolder 'MyComputer' -ShowNewFolderButton
+        $WorkingPathtoReturn = Get-FolderPathWorkingPath -Message 'Select location for Working Path (folder must be empty)' -RootFolder 'MyComputer' -ShowNewFolderButton
         if ($WorkingPathtoReturn){
             if ($CheckforEmptyFolder -eq 'TRUE'){
                 $items = Get-ChildItem -Path $WorkingPathtoReturn -Recurse -Force
