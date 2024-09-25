@@ -1,3 +1,6 @@
 SearchforEmptySpace.ps1
 Logs/*
+UserFiles/*
+.vscode/
+Settings/*
 .DS_Store
