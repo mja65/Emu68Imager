@@ -661,24 +661,6 @@ function Get-FormattedSize {
     return $ReportedSize
 }
 
-function Get-SizeofPartitionNearestCylinder {
-    param (
-        $Heads,
-        $Sectors,
-        $BlockSize,
-        $PartitionSizeKiB
-    )
-    $SizeperCylinder = $Heads * $Sectors * $BlockSize
-    $PartitionSizeB = $PartitionSizeKiB*1024
-#    Write-host $PartitionSizeB
-    $NumberofCylindersforPartition = ([math]::floor($PartitionSizeB/$SizeperCylinder))
-#    Write-host $NumberofCylindersforPartition
-    $NewSize = $NumberofCylindersforPartition*$SizeperCylinder
-    $NewSizeKiB = $NewSize/1024 
-    return $NewSizeKiB
-     
-}
-
 function Get-AmigaPartitionList {
     param (
         $SizeofPartition_System_param,
@@ -1007,6 +989,7 @@ function Confirm-UIFields {
         if (($Script:AvailableSpaceFilestoTransfer) -lt $Script:SpaceThreshold_FilestoTransfer){
             $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Background = "Red"
             $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Foreground = "Black"
+            $NumberofErrors += 1
         }
         elseif (($Script:AvailableSpaceFilestoTransfer) -lt ($Script:SpaceThreshold_FilestoTransfer*2)){
         $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Background = "Yellow"
@@ -1052,10 +1035,56 @@ function Confirm-UIFields {
         }
     }
     
+    if ($Script:SetDiskupOnly -eq 'TRUE'){
+        $WPF_UI_MigratedFiles_Button.Visibility = 'Hidden'
+        $WPF_UI_MigratedPath_Label.Visibility = 'Hidden'
+        $WPF_UI_MigratedFiles_Button.IsEnabled = ""
+        $WPF_UI_ADFpath_Button.Visibility = 'Hidden'
+        $WPF_UI_ADFPath_Label.Visibility = 'Hidden'
+        $WPF_UI_ADFPath_Button.IsEnabled = ""
+        $WPF_UI_ADFpath_Button_Check.IsEnabled = ""
+        $WPF_UI_ADFpath_Button_Check.Visibility = 'Hidden'
+        $WPF_UI_RequiredSpaceTransferredFiles_TextBox.Visibility = 'Hidden'
+        $WPF_UI_RequiredSpaceValueTransferredFiles_TextBox.Visibility = 'Hidden'
+        $WPF_UI_AvailableSpaceTransferredFiles_TextBox.Visibility = 'Hidden'
+        $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Visibility = 'Hidden'
+    }
+    elseif ($Script:SetDiskupOnly -eq 'FALSE'){
+        $WPF_UI_MigratedFiles_Button.IsEnabled = "TRUE"
+        $WPF_UI_MigratedFiles_Button.Visibility = 'Visible'
+        $WPF_UI_MigratedPath_Label.Visibility = 'Visible'
+        $WPF_UI_ADFPath_Button.IsEnabled = "TRUE"
+        $WPF_UI_ADFPath_Button.Visibility = 'Visible'
+        $WPF_UI_ADFPath_Label.Visibility = 'Visible'
+        $WPF_UI_ADFpath_Button_Check.IsEnabled = "TRUE"
+        $WPF_UI_ADFpath_Button_Check.Visibility = 'Visible'
+        $WPF_UI_RequiredSpaceTransferredFiles_TextBox.Visibility = 'Visible'
+        $WPF_UI_RequiredSpaceValueTransferredFiles_TextBox.Visibility = 'Visible'
+        $WPF_UI_AvailableSpaceTransferredFiles_TextBox.Visibility = 'Visible'
+        $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Visibility = 'Visible'
+    }
+    if ($Script:WriteImage -eq 'TRUE'){
+        $WPF_UI_DiskWrite_CheckBox.IsChecked = 'TRUE'
+    }
+    else{
+        $WPF_UI_DiskWrite_CheckBox.IsChecked = ''
+    }
+    if ($Script:WriteMethod -eq 'SkipEmptySpace'){
+        $WPF_UI_SkipEmptySpace_CheckBox.IsChecked = 'TRUE'
+    }
+    elseif ($Script:WriteMethod -eq 'Normal'){
+        $WPF_UI_SkipEmptySpace_CheckBox.IsChecked = ''
+    }
+    if ($Script:SetDiskupOnly -eq 'TRUE'){
+        $WPF_UI_NoFileInstall_CheckBox.IsChecked = 'TRUE'        
+    }
+    else{
+        $WPF_UI_NoFileInstall_CheckBox.IsChecked = ''        
+    }
     if ($NumberofErrors -gt 0){
         $WPF_UI_Start_Button.Background = 'Red'
         $WPF_UI_Start_Button.Foreground = 'Black'
-        $WPF_UI_Start_Button.Content = 'Missing information! Press to see further details'
+        $WPF_UI_Start_Button.Content = 'Missing information and/or insufficient space on Work partition for transferred files! Press to see further details'
         return $ErrorMessage
     }
     else{
@@ -1110,7 +1139,7 @@ the working path again when you run the tool.
 "@    
     $Msg_Header_NonEmpty = 'Non Empty Folder'
     $Msg_Body_NonEmpty = @"
-You have selected a non-empty folder! Please select an empty folder.
+The Working path is not empty! Working path will revert to the default.
 "@  
     
 $SettingstoRead = (
@@ -1220,7 +1249,7 @@ $SettingstoRead = (
     $Script:SizeofPartition_Other = [int]$Script:SizeofPartition_Other
     $Script:SizeofUnallocated = [int]$Script:SizeofUnallocated 
     $Script:SizeofFreeSpace = [int]$Script:SizeofFreeSpace 
-  
+        
     $DiskFound = $false
     $DiskstoCheck = Get-RemovableMedia
     foreach ($Disk in $DiskstoCheck){
@@ -1230,7 +1259,7 @@ $SettingstoRead = (
             break
         }   
     }       
-        
+    
     if ($DiskFound -eq $false){
         $null = [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,48)
         $Script:HSTDiskName = $null
@@ -1257,9 +1286,44 @@ $SettingstoRead = (
         $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width = 1
         $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = 1
         $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = 1    
+        ## New Start
+        $WPF_UI_FAT32_Splitter.IsEnabled = "True"
+        $WPF_UI_Workbench_Splitter.IsEnabled = "True"
+        $WPF_UI_Work_Splitter.IsEnabled = "True"
+        $WPF_UI_Image_Splitter.IsEnabled = "True"
+        $WPF_UI_WorkbenchSize_Value.IsEnabled = "True"
+        $WPF_UI_WorkSize_Value.IsEnabled = "True"
+        $WPF_UI_ImageSize_Value.IsEnabled = "True"
+        $WPF_UI_FAT32Size_Value.IsEnabled = "True"
+        $WPF_UI_FreeSpace_Value.IsEnabled = "True"
+        Set-PartitionMaximums
+        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width = $Script:SizeofFAT32_Pixels
+        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width = $Script:SizeofPartition_System_Pixels
+        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width = $Script:SizeofPartition_Other_Pixels
+        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Script:SizeofFreeSpace_Pixels
+        $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = $Script:SizeofUnallocated_Pixels
+        $Script:Space_WorkingFolderDisk = (Confirm-DiskSpace -PathtoCheck  $Script:WorkingPath)/1Kb 
+        $Script:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Script:SizeofImage
+        $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk 
+    
+        $WPF_UI_RequiredSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:RequiredSpace_WorkingFolderDisk
+        $WPF_UI_AvailableSpaceValue_TextBox.Text = Get-FormattedSize -Size $Script:AvailableSpace_WorkingFolderDisk
+        if ($Script:SizeofPartition_Other){
+            $Script:Space_FilestoTransfer = ($Script:SizeofPartition_Other/([math]::ceiling($Script:SizeofPartition_Other/$Script:PFSLimit)))  - $Script:WorkOverhead
+        }
+        else{
+            $Script:Space_FilestoTransfer = 0
+        }
+
+        $Script:AvailableSpaceFilestoTransfer =  $Script:Space_FilestoTransfer - $Script:SizeofFilestoTransfer    
+        $Script:SpaceThreshold_FilestoTransfer = ($Script:Space_FilestoTransfer*0.2)
+              
+        Set-GUIPartitionValues
+    
+        $null = Confirm-UIFields
+        ## New End
     }
- #   -and [decimal]$Disk.SizeofDisk -eq $Script:SizeofDisk
- 
+
     if ($Script:WorkingPath){
         if (-not (Test-Path ($Script:WorkingPath))){
             $null = [System.Windows.MessageBox]::Show($Msg_Body_WorkingPath, $Msg_Header_WorkingPath,0,48)
@@ -1286,7 +1350,7 @@ $SettingstoRead = (
         $Script:WorkingPath = ($Scriptpath+'Working Folder\')
         $Script:WorkingPathDefault = $true 
     }
-    
+
     $Script:Space_WorkingFolderDisk = (Confirm-DiskSpace -PathtoCheck $Script:WorkingPath)/1Kb 
     $Script:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Script:SizeofImage
     $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk
@@ -1306,7 +1370,6 @@ $SettingstoRead = (
     else{
         $Script:SizeofFilestoTransfer = 0
     }
-
  }
 
 function Write-SettingsFile {
@@ -1343,25 +1406,6 @@ function Write-SettingsFile {
     ('DiskFriendlyName;'+$Script:DiskFriendlyName) | Out-File $SettingsFile -Append        
     ('WorkbenchMaximum;'+$Script:WorkbenchMaximum) | Out-File $SettingsFile -Append                
     ('Fat32Maximum;'+$Script:Fat32Maximum) | Out-File $SettingsFile -Append                
-
-    # if ($Script:FoundKickstarttoUse){
-    #     ('FoundKickstarttoUse;Kickstart_Version,FriendlyName,Sequence,Fat32Name,KickstartPath') | Out-File $SettingsFile -Append
-    #     foreach ($Line in $Script:FoundKickstarttoUse){
-    #         ('FoundKickstarttoUse;'+$Line.Kickstart_Version+','+$Line.FriendlyName+','+$Line.Sequence+','+$Line.Fat32Name+','+$Line.KickstartPath) | Out-File $SettingsFile -Append
-    #     }
-    # }
-    # else {
-    #     ('FoundKickstarttoUse;') | Out-File $SettingsFile -Append
-    # }
-    # if ($Script:AvailableADFs){
-    #     ('AvailableADFs;IsMatched,PathtoADF,Hash,ADF_Name,FriendlyName') | Out-File $SettingsFile -Append
-    #     foreach ($Line in $Script:AvailableADFs){
-    #         ('AvailableADFs;'+$Line.IsMatched+','+$Line.PathtoADF+','+$Line.Hash+','+$Line.ADF_Name+','+$Line.FriendlyName) | Out-File $SettingsFile -Append
-    #     }
-    # }
-    # else {
-    #     ('AvailableADFs;') | Out-File $SettingsFile -Append
-    # }
 }
 
 function Get-SettingsLoadPath {
@@ -1475,41 +1519,6 @@ function Get-FolderPath {
     }
 }
     
-function Get-FolderPathWorkingPath {
-    [CmdletBinding()]
-    param (
-        [Parameter(Mandatory=$false, ValueFromPipeline=$true, ValueFromPipelineByPropertyName=$true, Position=0)]
-        [string]$Message = "Please select a directory.",
-
-        [Parameter(Mandatory=$false, Position=1)]
-        [string]$InitialDirectory,
-
-        [Parameter(Mandatory=$false)]
-        [System.Environment+SpecialFolder]$RootFolder = [System.Environment+SpecialFolder]::Desktop,
-
-        [switch]$ShowNewFolderButton
-    )
-    Add-Type -AssemblyName System.Windows.Forms
-    $dialog = New-Object System.Windows.Forms.FolderBrowserDialog
-    $dialog.Description  = $Message
-    $dialog.SelectedPath = $InitialDirectory
-    $dialog.RootFolder   = $RootFolder
-    $dialog.ShowNewFolderButton = if ($ShowNewFolderButton) { $true } else { $false }
-    $selected = $null
-
-    # force the dialog TopMost
-    # Since the owning window will not be used after the dialog has been 
-    # closed we can just create a new form on the fly within the method call
-    $result = $dialog.ShowDialog((New-Object System.Windows.Forms.Form -Property @{TopMost = $true }))
-    if ($result -eq [Windows.Forms.DialogResult]::OK){
-        $selected = $dialog.SelectedPath
-    }
-    # clear the FolderBrowserDialog from memory
-    $dialog.Dispose()
-    # return the selected folder
-    $selected
-} 
-
 function Get-RemovableMedia {
     param (
     )
@@ -2225,9 +2234,9 @@ and select this path to scan.
 "@
     $null = [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,0)
 
-    # $PathtoADFFiles = 'E:\Emulators\Amiga Files\Shared\adf\OS32\'
+    # $PathtoADFFiles = 'E:\Emulators\Amiga Files\Shared\adf\commodore-amiga-operating-systems-workbench\'
     # $PathtoADFHashes = 'E:\Emu68Imager\InputFiles\ADFHashes.csv'
-    # $KickstartVersion = 3.2
+    # $KickstartVersion = 3.1
     # $PathtoListofInstallFiles = 'E:\Emu68Imager\InputFiles\ListofInstallFiles.csv'
 
     $ListofADFFilestoCheck = Get-ChildItem $PathtoADFFiles -force -Recurse
@@ -2414,7 +2423,7 @@ Select a location with less space, increase the space on Work, or remove the tra
 "@    
     if ($TransferLocationtocheck){
         if ($TransferAvailableSpace -lt $TransferSpaceThreshold){
-            [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,48)
+            $null = [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,48)
             return $false
         }
         else{
@@ -2712,96 +2721,7 @@ function Update-ListofInstallFiles {
 
 ######################################################################### End Functions #############################################################################################################
 
-##################################################################### Peform Pre-GUI Checks ##############################################################################################################
 
-$ErrorMessage = $null
-$ErrorMessage += Test-ExistenceofFiles -PathtoTest $SourceProgramPath -PathType 'Folder'
-$ErrorMessage += Test-ExistenceofFiles -PathtoTest $InputFolder -PathType 'Folder'
-$ErrorMessage += Test-ExistenceofFiles -PathtoTest $LocationofAmigaFiles -PathType 'Folder'
-$ErrorMessage += Test-ExistenceofFiles -PathtoTest ($SourceProgramPath+'hdf2emu68.exe') -PathType 'File'
-$ErrorMessage += Test-ExistenceofFiles -PathtoTest ($SourceProgramPath+'7z.exe') -PathType 'File'
-$ErrorMessage += Test-ExistenceofFiles -PathtoTest ($SourceProgramPath+'7z.dll') -PathType 'File'
-
-if (-not (Test-ExistenceofFiles -PathtoTest $InputFolder -PathType 'Folder')){
-    $ListofPackagestoInstall = Import-Csv ($InputFolder+'ListofPackagestoInstall.csv') -Delimiter ';' | Where-Object {$_.Source -eq 'Local'} | Where-Object {$_.InstallType -ne 'StartupSequenceOnly'} |Where-Object {$_.InstallFlag -eq 'TRUE'}
-    $ListofPackagestoInstall |  Select-Object SourceLocation -Unique | Where-Object SourceLocation -NotMatch 'Onetime' | ForEach-Object {
-        $ErrorMessage += Test-ExistenceofFiles -PathtoTest ($LocationofAmigaFiles+$_.SourceLocation) -PathType 'File'
-    }
-}
-
-if ($ErrorMessage){
-        $Msg_Header ='Missing Files'    
-        $Msg_Body = @"  
-One or more Programs and/or files is missing and/or has been altered! Cannot Continue! Re-download file and try again. Tool will now exit. 
-
-The following files are affected:
-
-$ErrorMessage
-"@  
-    $null = [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,16) 
-    exit
-}
-
-#Generate CSV MD5 Hashes - Begin (To be disabled or removed for production version)
-$CSVHashes = Get-FileHash ($InputFolder+'*.CSV') -Algorithm MD5
-
-'Name;Hash' | Out-File -FilePath ($InputFolder+'CSVHASH')
-Foreach ($CSVHash in $CSVHashes){
-    ((Split-Path $CSVHash.Path -Leaf)+';'+$CSVHash.Hash) | Out-File -FilePath ($InputFolder+'CSVHASH') -Append
-}
-
-#Generate CSV MD5 Hashes - End
-
-# Check Integrity of CSVs
-
-$CSVHashestoCheck = Import-Csv -Path ($InputFolder+'CSVHASH') -Delimiter ';'
-foreach ($CSVHashtoCheck in $CSVHashestoCheck){
-    foreach ($CSVHash in $CSVHashes){
-        if (($CSVHashtoCheck.Name+$CSVHashtoCheck.Hash) -eq ((split-path $CSVHash.Path -leaf)+($CSVHash.Hash))){
-            $HashMatch=$true
-        }
-    }
-    if ($HashMatch -eq $false) {
-        $Msg_Header ='Integrity Issue with Files'    
-        $Msg_Body = @"  
-One or more of input files is missing and/or has been altered!' 
-
-Re-download file and try again. Tool will now exit.
-"@     
-    [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,16) 
-    exit
-    }
-}
-
-
-### Clean up
-
-if (Test-Path ($Scriptpath+'Working Folder\')){
-    $NewFolders = ($Scriptpath+'Working Folder\Temp\'),($Scriptpath+'Working Folder\OutputImage\'),($Scriptpath+'Working Folder\AmigaImageFiles\'+$VolumeName_System),($Scriptpath+'Working Folder\AmigaImageFiles\'+$VolumeName_Other),($Scriptpath+'Working Folder\FAT32Partition\')
-    try {
-        foreach ($NewFolder in $NewFolders) {
-            if (Test-Path ( $Script:WorkingPath+$NewFolder)){
-                $null = Remove-Item ( $Script:WorkingPath+$NewFolder) -Recurse -ErrorAction Stop
-            }
-        }    
-    }
-    catch {
-        $Msg_Header ='Error Deleting Files'    
-        $Msg_Body = @"  
-Error deleting files! 
-    
-Tool will now exit.
-    
-"@  
-        $null = [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,16) 
-        exit    
-    }
-
-} 
-
-### End Clean up
-
-####################################################################### End Pre GUI Checks #################################################################################################################
 #$WPF_UI_DiskPartition_Grid.ColumnDefinitions
 ####################################################################### GUI XML for Main Environment ##################################################################################################
 
@@ -2962,9 +2882,9 @@ $inputXML_UserInterface = @"
             </GroupBox>
             <GroupBox x:Name="RunOptions_GroupBox" Header="Run Options" Margin="7,435,0,0" Background="Transparent" HorizontalAlignment="Left" Width="500" VerticalAlignment="Top" >
                 <Grid Background="Transparent" >
-                    <CheckBox x:Name="NoFileInstall_CheckBox" ToolTip="Partition the disk, copy the Emu68 files and install the Kickstart file only. Amiga partitions will be empty." Content="Set disk up only. Do not install packages." HorizontalAlignment="Left" Margin="7,5,0,0" Height="15" VerticalAlignment="Top"/>
-                    <CheckBox x:Name="DiskWrite_CheckBox" Content="Do not write to disk. Produce .img file only for later writing to disk." HorizontalAlignment="Left" Margin="7,25,0,0" Height="15" VerticalAlignment="Top"/>
-                    <CheckBox x:Name="SkipEmptySpace_CheckBox" ToolTip="Unchecking this option will copy ALL sectors to the SD card which will take a long time for large SD cards" Content="Skip empty space when writing to disk." IsChecked = "TRUE" HorizontalAlignment="Left" Margin="7,45,0,0" Height="15" VerticalAlignment="Top"/>
+                    <CheckBox x:Name="NoFileInstall_CheckBox" ToolTip="Partition the disk, copy the Emu68 files and install the Kickstart file only. Amiga partitions will be empty." Content="Partition disk and install Emu68 only. Do not install packages." HorizontalAlignment="Left" Margin="7,5,0,0" Height="15" VerticalAlignment="Top"/>
+                    <CheckBox x:Name="DiskWrite_CheckBox" Content="Do not write to disk. Produce .img file for later writing to disk." HorizontalAlignment="Left" Margin="7,25,0,0" Height="15" VerticalAlignment="Top"/>
+                    <CheckBox x:Name="SkipEmptySpace_CheckBox" ToolTip="Unchecking this option will copy ALL sectors to the SD card which will take a long time for large SD cards" Content="Skip empty space if writing to disk." IsChecked = "TRUE" HorizontalAlignment="Left" Margin="7,45,0,0" Height="15" VerticalAlignment="Top"/>
                   <Button x:Name="Workingpath_Button" ToolTip="Set this if you wish to use a different folder to run the tool (e.g. you have insufficient space in the default path)" Content="Click to set custom Working folder" HorizontalAlignment="Left" Margin="7,65,0,0" VerticalAlignment="Top"  Width="200" Height="30"/>
                  <TextBox x:Name="Workingpath_Label" HorizontalAlignment="Left" Margin="212,70,0,0" TextWrapping="Wrap" Text="Using default Working folder" VerticalAlignment="Top" Width="260" Height="20" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
 
@@ -3191,6 +3111,7 @@ $WPF_UI_MediaSelect_Dropdown.Add_SelectionChanged({
             $Script:SizeofFreeSpace_Pixels = [decimal]($Script:SizeofFreeSpace * $Script:PartitionBarPixelperKB)
         }
         $Script:IsLoadedSettings = $null
+        
         Set-PartitionMaximums
 
         $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width = $Script:SizeofFAT32_Pixels
@@ -3985,25 +3906,27 @@ $AvailableADFstoReport
 })
 
 $WPF_UI_MigratedFiles_Button.Add_Click({
-    If (-not ($Script:TransferLocation)) {
-        $Script:TransferLocation = Get-FolderPath -Message 'Select Transfer folder' -RootFolder 'MyComputer'
-        if ($Script:TransferLocation){            
-            $Script:TransferLocation = $Script:TransferLocation.TrimEnd('\')+'\'
+    if ($Script:TransferLocation){
+        $Script:TransferLocation =$null
+        $Script:SizeofFilestoTransfer = 0
+    }
+    else{
+        $PathtoPopulate = Get-FolderPath -Message 'Select Transfer folder' -RootFolder 'MyComputer'
+        if ($PathtoPopulate){
+            $PathtoPopulate = $PathtoPopulate.TrimEnd('\')+'\'
             $Msg = @'
 Calculating space requirements. This may take some time if you have selected a large folder for transfer!
-'@
-        [System.Windows.MessageBox]::Show($Msg, 'Calculating Space',0,0)            
+'@            
+            $null=[System.Windows.MessageBox]::Show($Msg, 'Calculating Space',0,0)
+            $Script:TransferLocation = $PathtoPopulate            
             $Script:SizeofFilestoTransfer = Get-TransferredFilesSpaceRequired -FoldertoCheck $Script:TransferLocation
             $Script:AvailableSpaceFilestoTransfer =  $Script:Space_FilestoTransfer - $Script:SizeofFilestoTransfer
             $Script:SpaceThreshold_FilestoTransfer = ($Script:Space_FilestoTransfer*0.2)      
-
         }
         else{
+            $Script:TransferLocation =$null
             $Script:SizeofFilestoTransfer = 0
-        }
-    }
-    else{
-        $Script:SizeofFilestoTransfer= 0
+        }            
     }
     $null = Confirm-UIFields
 })
@@ -4053,44 +3976,33 @@ $WPF_UI_ScreenMode_Dropdown.Add_SelectionChanged({
 })
 
 $WPF_UI_DiskWrite_CheckBox.Add_Checked({
-    If ($WPF_UI_SkipEmptySpace_CheckBox.IsChecked -eq 'TRUE'){
-        $WPF_UI_SkipEmptySpace_CheckBox.IsChecked = ''
-    }
-    $Script:WriteImage ='FALSE'
-    $Script:WriteMethod = $null
+    $Script:WriteImage ='TRUE'
+    $Script:SetDiskupOnly = 'FALSE'  
     $null = Confirm-UIFields
 })
 
 $WPF_UI_DiskWrite_CheckBox.Add_UnChecked({
-    $Script:WriteImage ='TRUE'
+    $Script:WriteImage ='FALSE'
+    $Script:SetDiskupOnly = 'TRUE'  
     $null = Confirm-UIFields
 })
 
 $WPF_UI_SkipEmptySpace_CheckBox.Add_Checked({
-    If ($WPF_UI_DiskWrite_CheckBox.IsChecked -eq 'TRUE'){
-        $WPF_UI_DiskWrite_CheckBox.IsChecked = ''
-    }
     $Script:WriteMethod = 'SkipEmptySpace'
+    $null = Confirm-UIFields
+})
+
+$WPF_UI_SkipEmptySpace_CheckBox.Add_UnChecked({
+    $Script:WriteMethod = 'Normal'
     $null = Confirm-UIFields
 })
 
 $WPF_UI_NoFileInstall_CheckBox.Add_Checked({
     $Script:SetDiskupOnly = 'TRUE'
+    $Script:WriteImage ='FALSE'
     $Script:TransferLocation = $null
-    $WPF_UI_MigratedFiles_Button.Visibility = 'Hidden'
-    $WPF_UI_MigratedPath_Label.Visibility = 'Hidden'
-    $WPF_UI_MigratedFiles_Button.IsEnabled = ""
     $Script:AvailableADFs = $null
     $Script:ADFPath = $Script:UserLocation_ADFs
-    $WPF_UI_ADFpath_Button.Visibility = 'Hidden'
-    $WPF_UI_ADFPath_Label.Visibility = 'Hidden'
-    $WPF_UI_ADFPath_Button.IsEnabled = ""
-    $WPF_UI_ADFpath_Button_Check.IsEnabled = ""
-    $WPF_UI_ADFpath_Button_Check.Visibility = 'Hidden'
-    $WPF_UI_RequiredSpaceTransferredFiles_TextBox.Visibility = 'Hidden'
-    $WPF_UI_RequiredSpaceValueTransferredFiles_TextBox.Visibility = 'Hidden'
-    $WPF_UI_AvailableSpaceTransferredFiles_TextBox.Visibility = 'Hidden'
-    $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Visibility = 'Hidden'
     If ($Script:HSTDiskName){
         $Script:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Script:SizeofImage
         $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk    
@@ -4099,25 +4011,12 @@ $WPF_UI_NoFileInstall_CheckBox.Add_Checked({
 })
 
 $WPF_UI_NoFileInstall_CheckBox.Add_UnChecked({
-    $Script:SetDiskupOnly = 'FALSE'
-    $WPF_UI_MigratedFiles_Button.IsEnabled = "TRUE"
-    $WPF_UI_MigratedFiles_Button.Visibility = 'Visible'
-    $WPF_UI_MigratedPath_Label.Visibility = 'Visible'
-    $WPF_UI_ADFPath_Button.IsEnabled = "TRUE"
-    $WPF_UI_ADFPath_Button.Visibility = 'Visible'
-    $WPF_UI_ADFPath_Label.Visibility = 'Visible'
-    $WPF_UI_ADFpath_Button_Check.IsEnabled = "TRUE"
-    $WPF_UI_ADFpath_Button_Check.Visibility = 'Visible'
-    $WPF_UI_RequiredSpaceTransferredFiles_TextBox.Visibility = 'Visible'
-    $WPF_UI_RequiredSpaceValueTransferredFiles_TextBox.Visibility = 'Visible'
-    $WPF_UI_AvailableSpaceTransferredFiles_TextBox.Visibility = 'Visible'
-    $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Visibility = 'Visible'
-    
+    $Script:SetDiskupOnly = 'FALSE'   
+    $Script:WriteImage ='TRUE'
     If ($Script:HSTDiskName){
         $Script:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Script:SizeofImage
         $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk 
-    }
-   
+    } 
     $null = Confirm-UIFields   
 
 })
@@ -4129,36 +4028,25 @@ $WPF_UI_Documentation_Button.Add_Click({
 
 $WPF_UI_Start_Button.Add_Click({
     $ErrorCount = 0
-    if ($WPF_UI_DiskWrite_CheckBox.IsChecked){
-        $Script:WriteImage ='FALSE'
-    }
-    else{
-        $Script:WriteImage ='TRUE'
-        if ($WPF_UI_SkipEmptySpace_CheckBox.IsChecked){
-            $Script:WriteMethod = 'SkipEmptySpace'
-        }
-        else{
-            $Script:WriteMethod = 'Normal'
-        }
-    }
-    if (Get-TransferFileCheck -TransferLocationtocheck $Script:TransferLocation -TransferSpaceThreshold $Script:SpaceThreshold_FilestoTransfer -TransferAvailableSpace $Script:AvailableSpaceFilestoTransfer -eq $true){
-        $ErrorCount = $ErrorCount
-    }
-    else{
+    if ((Get-TransferFileCheck -TransferLocationtocheck $Script:TransferLocation -TransferSpaceThreshold $Script:SpaceThreshold_FilestoTransfer -TransferAvailableSpace $Script:AvailableSpaceFilestoTransfer) -eq $false) {
         $ErrorCount += 1
     }
-    if (Get-ImageSizevsDiskSize -UnallocatedSpace $Script:SizeofUnallocated -ThresholdtocheckMiB 10 -DiskSizetocheck $Script:SizeofDisk -ImageSizetocheck $Script:SizeofImage){
+    else{
         $ErrorCount = $ErrorCount
     }
-    else{
-        $ErrorCount += 1  
-    }    
     $ErrorCheck = Confirm-UIFields
     if ($ErrorCheck){
         [System.Windows.MessageBox]::Show($ErrorCheck, 'Error! Go back and correct')
         $ErrorCount += 1  
     } 
-    
+    if ($ErrorCount -eq 0){
+        if (Get-ImageSizevsDiskSize -UnallocatedSpace $Script:SizeofUnallocated -ThresholdtocheckMiB 10 -DiskSizetocheck $Script:SizeofDisk -ImageSizetocheck $Script:SizeofImage){
+            $ErrorCount = $ErrorCount
+        }
+        else{
+            $ErrorCount += 1  
+        }   
+    }
     if ($ErrorCount -eq 0){
         if ($Script:AvailableSpace_WorkingFolderDisk -le -$Script:SpaceThreshold_WorkingFolderDisk){
             if ((Get-SpaceCheck -AvailableSpace $Script:AvailableSpace_WorkingFolderDisk -SpaceThreshold $Script:SpaceThreshold_WorkingFolderDisk) -eq $true){
@@ -4204,6 +4092,7 @@ $WPF_UI_Start_Button.Add_Click({
 
 $WPF_UI_GoBack_Button.add_Click({
         $null = Remove-Item ($Script:SettingsFolder+$Script:LogDateTime+'_AutomatedSettingsSave.e68')
+        $null = Confirm-UIFields
         $WPF_UI_Reporting_Grid.Visibility="Hidden"
         $WPF_UI_Main_Grid.Visibility="Visible"
 })
@@ -4256,25 +4145,9 @@ $XAML_AdministratorWindow.SelectNodes("//*[@Name]") | ForEach-Object{
 
 $WPF_Admin_Button_Acknowledge.Add_Click({
     $Form_Administrator.Close() | out-null
-    $IsAdministrator = $false
 })
 
 ####################################################################### End GUI XML for Test Administrator ##################################################################################################
-
-####################################################################### Test for Administrator ############################################################################################################
-
-if (-not (Test-Administrator)){
-    $Form_Administrator.ShowDialog() | out-null
-}
-else {
-    $IsAdministrator = $true 
-}
-
-if (-not ($IsAdministrator)){
-    exit
-
-}
-####################################################################### End Test for Administrator ############################################################################################################
 
 
 ####################################################################### GUI XML for Disclaimer ##################################################################################################
@@ -4333,6 +4206,35 @@ $WPF_Disclaimer_LinktoQuickstart_Button.Add_Click({
     Start-Process "https://mja65.github.io/Emu68-Imager/quickstart.html"
 })
 
+####################################################################### End GUI XML for Disclaimer ##################################################################################################
+
+####################################################################### Test for Administrator ############################################################################################################
+
+if (-not (Test-Administrator)){
+    $Form_Administrator.ShowDialog() | out-null
+}
+else {
+    $IsAdministrator = $true 
+}
+
+if (-not ($IsAdministrator)){
+    exit
+
+}
+####################################################################### End Test for Administrator ############################################################################################################
+
+
+################################# Set Working Folder Default #########################################################################################
+
+$Script:WorkingPath = ($Scriptpath+'Working Folder\')
+if (-not (Test-Path $Script:WorkingPath)){
+    $null = New-Item $Script:WorkingPath -ItemType Directory
+}
+$Script:WorkingPathDefault = $true    
+$Script:WriteMethod = 'SkipEmptySpace'
+$Script:SetDiskupOnly = 'FALSE'
+$Script:WriteImage = 'FALSE'
+
 $Form_Disclaimer.ShowDialog() | out-null
 
 if (-not ($Script:IsDisclaimerAccepted -eq $true)){
@@ -4340,15 +4242,98 @@ if (-not ($Script:IsDisclaimerAccepted -eq $true)){
     exit    
 }
 
-####################################################################### End GUI XML for Disclaimer ##################################################################################################
-
-################################# Set Working Folder Default #########################################################################################
-
-$Script:WorkingPath = ($Scriptpath+'Working Folder\')
-$Script:WorkingPathDefault = $true    
-$Script:WriteMethod = 'SkipEmptySpace'
-
 ################################ End Set Working Folder Default #########################################################################################
+
+##################################################################### Peform Pre-GUI Checks ##############################################################################################################
+
+$ErrorMessage = $null
+$ErrorMessage += Test-ExistenceofFiles -PathtoTest $SourceProgramPath -PathType 'Folder'
+$ErrorMessage += Test-ExistenceofFiles -PathtoTest $InputFolder -PathType 'Folder'
+$ErrorMessage += Test-ExistenceofFiles -PathtoTest $LocationofAmigaFiles -PathType 'Folder'
+$ErrorMessage += Test-ExistenceofFiles -PathtoTest ($SourceProgramPath+'hdf2emu68.exe') -PathType 'File'
+$ErrorMessage += Test-ExistenceofFiles -PathtoTest ($SourceProgramPath+'7z.exe') -PathType 'File'
+$ErrorMessage += Test-ExistenceofFiles -PathtoTest ($SourceProgramPath+'7z.dll') -PathType 'File'
+
+if (-not (Test-ExistenceofFiles -PathtoTest $InputFolder -PathType 'Folder')){
+    $ListofPackagestoInstall = Import-Csv ($InputFolder+'ListofPackagestoInstall.csv') -Delimiter ';' | Where-Object {$_.Source -eq 'Local'} | Where-Object {$_.InstallType -ne 'StartupSequenceOnly'} |Where-Object {$_.InstallFlag -eq 'TRUE'}
+    $ListofPackagestoInstall |  Select-Object SourceLocation -Unique | Where-Object SourceLocation -NotMatch 'Onetime' | ForEach-Object {
+        $ErrorMessage += Test-ExistenceofFiles -PathtoTest ($LocationofAmigaFiles+$_.SourceLocation) -PathType 'File'
+    }
+}
+
+if ($ErrorMessage){
+        $Msg_Header ='Missing Files'    
+        $Msg_Body = @"  
+One or more Programs and/or files is missing and/or has been altered! Cannot Continue! Re-download file and try again. Tool will now exit. 
+
+The following files are affected:
+
+$ErrorMessage
+"@  
+    $null = [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,16) 
+    exit
+}
+
+#Generate CSV MD5 Hashes - Begin (To be disabled or removed for production version)
+$CSVHashes = Get-FileHash ($InputFolder+'*.CSV') -Algorithm MD5
+
+'Name;Hash' | Out-File -FilePath ($InputFolder+'CSVHASH')
+Foreach ($CSVHash in $CSVHashes){
+    ((Split-Path $CSVHash.Path -Leaf)+';'+$CSVHash.Hash) | Out-File -FilePath ($InputFolder+'CSVHASH') -Append
+}
+
+#Generate CSV MD5 Hashes - End
+
+# Check Integrity of CSVs
+
+$CSVHashestoCheck = Import-Csv -Path ($InputFolder+'CSVHASH') -Delimiter ';'
+foreach ($CSVHashtoCheck in $CSVHashestoCheck){
+    foreach ($CSVHash in $CSVHashes){
+        if (($CSVHashtoCheck.Name+$CSVHashtoCheck.Hash) -eq ((split-path $CSVHash.Path -leaf)+($CSVHash.Hash))){
+            $HashMatch=$true
+        }
+    }
+    if ($HashMatch -eq $false) {
+        $Msg_Header ='Integrity Issue with Files'    
+        $Msg_Body = @"  
+One or more of input files is missing and/or has been altered!' 
+
+Re-download file and try again. Tool will now exit.
+"@     
+    [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,16) 
+    exit
+    }
+}
+
+
+### Clean up
+
+if (Test-Path ($Scriptpath+'Working Folder\')){
+    $NewFolders = ($Scriptpath+'Working Folder\Temp\'),($Scriptpath+'Working Folder\OutputImage\'),($Scriptpath+'Working Folder\AmigaImageFiles\'+$VolumeName_System),($Scriptpath+'Working Folder\AmigaImageFiles\'+$VolumeName_Other),($Scriptpath+'Working Folder\FAT32Partition\')
+    try {
+        foreach ($NewFolder in $NewFolders) {
+            if (Test-Path ( $Script:WorkingPath+$NewFolder)){
+                $null = Remove-Item ( $Script:WorkingPath+$NewFolder) -Recurse -ErrorAction Stop
+            }
+        }    
+    }
+    catch {
+        $Msg_Header ='Error Deleting Files'    
+        $Msg_Body = @"  
+Error deleting files! 
+    
+Tool will now exit.
+    
+"@  
+        $null = [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,16) 
+        exit    
+    }
+
+} 
+
+### End Clean up
+
+####################################################################### End Pre GUI Checks #################################################################################################################
 
 ####################################################################### Show Main Gui     ##################################################################################################################
 $Form_UserInterface.ShowDialog() | out-null
@@ -4375,8 +4360,6 @@ elseif (-not ($Script:ExitType-eq 1)){
 #[System.Windows.Controls.CheckBox].GetEvents() | Select-Object Name, *Method, EventHandlerType
 
 #Get-FormVariables
-$Script:RDBWorkbenchStartSector = 2016
-$Script:RDBWorkStartSector =
 
 if (-not (Test-Path $Script:WorkingPath)){
     $null = New-Item -Path $Script:WorkingPath -Force -ItemType Directory
