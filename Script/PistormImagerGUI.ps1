@@ -1102,19 +1102,55 @@ SD card is not available! Settings relating to partition sizes have not been loa
 
 "@    
 
-$Msg_Header_WorkingPath ='Working Path Not Available'   
-$Msg_Body_WorkingPath = @"
+    $Msg_Header_WorkingPath ='Working Path Not Available'   
+    $Msg_Body_WorkingPath = @"
 Working path is not available! If you have insufficient space you will need to set 
 the working path again when you run the tool.
 
 "@    
-$Msg_Header_NonEmpty = 'Non Empty Folder'
-$Msg_Body_NonEmpty = @"
+    $Msg_Header_NonEmpty = 'Non Empty Folder'
+    $Msg_Body_NonEmpty = @"
 You have selected a non-empty folder! Please select an empty folder.
 "@  
-    #$Script:SettingsFolder = 'E:\Emu68Imager\Settings\test.e68'
+    
+$SettingstoRead = (
+'HSTDiskName',
+'ScreenModetoUse',
+'ScreenModetoUseFriendlyName',
+'KickstartVersiontoUse',
+'KickstartVersiontoUseFriendlyName',
+'SSID',
+'WifiPassword',
+'SizeofFAT32',
+'SizeofImage',
+'SizeofDisk',
+'SizeofPartition_System',
+'SizeofPartition_Other',
+'WriteImage',
+'SetDiskupOnly',
+'WorkingPath',
+'WorkingPathDefault',
+'HSTDiskNumber',
+'HSTDiskDeviceID',
+'SizeofUnallocated',
+'SizeofFreeSpace',
+'ROMPath',
+'ADFPath',
+'TransferLocation',
+'WriteMethod',
+'DiskFriendlyName',
+'WorkbenchMaximum',
+'Fat32Maximum')
 
-    $LoadedSettingsFile = Import-Csv $Script:SettingsFile -Delimiter ';' -Header @("Setting", "Value") | Select-Object -Skip 2
+    $HashTableforSettings  = @{} # Clear Hash
+    #$Script:SettingsFile = 'E:\Emu68Imager\Settings\test5.e68'
+
+    Import-Csv $Script:SettingsFile -Delimiter ';' -Header @("Setting", "Value") | Select-Object -Skip 2 | ForEach-Object {
+        $HashTableforSettings[$_.Setting] = @($_.Value)
+
+    }
+
+    #$LoadedSettingsFile = Import-Csv $Script:SettingsFile -Delimiter ';' -Header @("Setting", "Value") | Select-Object -Skip 2
     
     $WPF_UI_MediaSelect_DropDown.SelectedItem = $null
     $Script:Disk = $null 
@@ -1157,41 +1193,16 @@ You have selected a non-empty folder! Please select an empty folder.
     
     $Script:Space_FilestoTransfer = $null            
     $Script:Space_WorkingFolderDisk = $null        
-
-    $Script:FoundKickstarttoUse = [System.Collections.Generic.List[PSCustomObject]]::New()
-
-    $KickstartSettings = $LoadedSettingsFile | Where-Object {$_.Setting -eq 'FoundKickstarttoUse'} | Select-Object -Skip 1
-
-    if ($KickstartSettings){
-        foreach ($Setting in $KickstartSettings){
-            $Values = ($Setting.Value -split ',')
-            $Script:FoundKickstarttoUse += [PSCustomObject]@{
-                KickStart_Version = $Values[0]
-                FriendlyName = $Values[1]
-                Sequence = $Values[2]
-                Fat32Name = $Values[3]
-                KickstartPath = $Values[4]
+   
+    foreach ($Setting in $SettingstoRead){
+        If ($HashTableforSettings.ContainsKey($Setting)){
+            if (Test-Path ('variable:Script:'+($Setting))){
+                Remove-Variable -Scope Script -Name $Setting
             }
+            New-Variable -Scope Script -Name $Setting -Value $HashTableforSettings.($Setting)[0]
         }
     }
-    
-    $Script:AvailableADFs = [System.Collections.Generic.List[PSCustomObject]]::New()
-    
-    $ADFSettings = $LoadedSettingsFile | Where-Object {$_.Setting -eq 'AvailableADFs'} | Select-Object -Skip 1
 
-    if ($ADFSettings){
-        foreach ($Setting in $ADFSettings){
-            $Values = ($Setting.Value -split ',')
-            $Script:AvailableADFs += [PSCustomObject]@{
-                IsMatched = $Values[0]
-                PathtoADF = $Values[1]
-                Hash = $Values[2]
-                ADF_Name = $Values[3]
-                FriendlyName = $Values[4]
-            }
-        }
-    }
-    
     $OtherSettings =  $LoadedSettingsFile | Where-Object {$_.Setting -ne 'AvailableADFs' -and $_.Setting -ne 'FoundKickstarttoUse' } 
     foreach ($Setting in $OtherSettings){
         if (Test-Path ('variable:Script:'+($Setting.Setting))){
@@ -1254,26 +1265,31 @@ You have selected a non-empty folder! Please select an empty folder.
             $null = [System.Windows.MessageBox]::Show($Msg_Body_WorkingPath, $Msg_Header_WorkingPath,0,48)
             $Script:WorkingPath = ($Scriptpath+'Working Folder\')
             $Script:WorkingPathDefault = $true   
-        }       
-        elseif ($Script:WorkingPath -ne ($Scriptpath+'Working Folder\')){
+        }  
+        elseif ($Script:WorkingPath -eq ($Scriptpath+'Working Folder\')){
+            $Script:WorkingPathDefault = $true  
+        }      
+        else{
             $items = Get-ChildItem -Path $WorkingPath -Recurse -Force | Where-Object {$_.Name -ne 'Temp' -and $_.Name -ne 'OutputImage' -and $_.Name -ne 'AmigaImageFiles' -and $_.Name -ne 'FAT32Partition'}
-            if ($items.Count -ne 0){
+            if ($items.Count -eq 0){
+                $Script:WorkingPathDefault = $false
+
+            }
+            else{
                 $null= [System.Windows.MessageBox]::Show($Msg_Body_NonEmpty, $Msg_Header_NonEmpty,0,48)
                 $Script:WorkingPath = ($Scriptpath+'Working Folder\')
                 $Script:WorkingPathDefault = $true   
             }
         }
-        else {
-            $Script:WorkingPathDefault = $false
-        }
-        $Script:Space_WorkingFolderDisk = (Confirm-DiskSpace -PathtoCheck $Script:WorkingPath)/1Kb 
-        $Script:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Script:SizeofImage
-        $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk
     }
     else{
         $Script:WorkingPath = ($Scriptpath+'Working Folder\')
         $Script:WorkingPathDefault = $true 
     }
+    
+    $Script:Space_WorkingFolderDisk = (Confirm-DiskSpace -PathtoCheck $Script:WorkingPath)/1Kb 
+    $Script:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Script:SizeofImage
+    $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk
 
     if ($Script:TransferLocation){
         $Script:SizeofFilestoTransfer = Get-TransferredFilesSpaceRequired -FoldertoCheck $Script:TransferLocation
@@ -1292,8 +1308,6 @@ You have selected a non-empty folder! Please select an empty folder.
     }
 
  }
-
-
 
 function Write-SettingsFile {
     param (
@@ -2804,7 +2818,7 @@ $inputXML_UserInterface = @"
         <Grid x:Name="Main_Grid" Background="#FFE5E5E5" Visibility="Visible" >
             <GroupBox x:Name="DiskSetup_GroupBox" Header="Disk Setup" Margin="0,60,0,0" VerticalAlignment="Top" Height="173" Background="Transparent" HorizontalAlignment="Center">
                 <Grid Background="Transparent">
-                    <Grid x:Name="DiskPartition_Grid" Background="Transparent" Height="50" Width="1028" MaxWidth="1028" VerticalAlignment="Center">
+                    <Grid x:Name="DiskPartition_Grid" ToolTip="Once you have selected a SD card, drag the sliders to resize the partitions" Background="Transparent" Height="50" Width="1028" MaxWidth="1028" VerticalAlignment="Center">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="50"/>
                         </Grid.RowDefinitions>
@@ -2908,23 +2922,23 @@ $inputXML_UserInterface = @"
                     <Rectangle x:Name="FreeSpace_Key" HorizontalAlignment="Left" Height="10" Margin="489,110,0,0" VerticalAlignment="Top" Width="10" Fill="#FF7B7B7B" />
                     <Rectangle x:Name="Unallocated_Key" HorizontalAlignment="Left" Height="10" Margin="860,110,0,0" VerticalAlignment="Top" Width="10" Fill="#FFAFAFAF"  />
 
-                    <TextBox x:Name="MediaSelect_Label" HorizontalAlignment="Left" Margin="10,10,0,0" TextWrapping="Wrap" Text="Select Media to Use" VerticalAlignment="Top" Width="120" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-                    <ComboBox x:Name="MediaSelect_DropDown" HorizontalAlignment="Left" Margin="130,8,0,0" VerticalAlignment="Top" Width="340"/>
-                    <Button x:Name="MediaSelect_Refresh" Content="Refresh Available Media" HorizontalAlignment="Left" Margin="482,0,0,0" VerticalAlignment="Top" Width="150" Height="40" Background="#FF6688BB" Foreground="White" FontWeight="Bold" BorderBrush="Transparent"/>
+                    <TextBox x:Name="MediaSelect_Label" HorizontalAlignment="Left" Margin="10,10,0,0" TextWrapping="Wrap" Text="Select Media to Use" VerticalAlignment="Top" Width="140" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" FontWeight="Bold" FontSize="14"/>
+                    <ComboBox x:Name="MediaSelect_DropDown" ToolTip="Select the SD card you wish to use" HorizontalAlignment="Left" Margin="160,8,0,0" VerticalAlignment="Top" Width="340"/>
+                    <Button x:Name="MediaSelect_Refresh" ToolTip="Refresh available SD cards on your PC" Content="Refresh Available Media" HorizontalAlignment="Left" Margin="510,0,0,0" VerticalAlignment="Top" Width="150" Height="40" Background="#FF6688BB" Foreground="White" FontWeight="Bold" BorderBrush="Transparent"/>
                     <Button x:Name="DefaultAllocation_Refresh" Content="Reset Partitions to Default" HorizontalAlignment="Right" Margin="0,0,10,0" VerticalAlignment="Top" Width="160" Height="40" Background="#FF6688BB" Foreground="White" FontWeight="Bold" BorderBrush="Transparent"/>
                 </Grid>
             </GroupBox>
             <GroupBox x:Name="SourceFiles_GroupBox" Header="Source Files" Height="200" Background="Transparent" Margin="7,235,0,128" Width="500" VerticalAlignment="Top" HorizontalAlignment="Left">
                 <Grid Background="Transparent" HorizontalAlignment="Left" VerticalAlignment="Top">
-                <TextBox x:Name="KickstartVersion_Label" HorizontalAlignment="Left" Margin="10,10,0,0" TextWrapping="Wrap" Text="Select OS Version" VerticalAlignment="Top" Width="200" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Center" FontWeight="Bold"/>
-                    <ComboBox x:Name="KickstartVersion_DropDown" HorizontalAlignment="Left" Margin="10,32,0,0" VerticalAlignment="Top" Width="245"/>
+                <TextBox x:Name="KickstartVersion_Label" HorizontalAlignment="Left" Margin="10,10,0,0" TextWrapping="Wrap" Text="Select OS Version" VerticalAlignment="Top" Width="200" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Center" FontWeight="Bold" FontSize="14"/>
+                    <ComboBox x:Name="KickstartVersion_DropDown" ToolTip="Select the Kickstart version you wish to use (e.g. 3.1 or 3.2)" HorizontalAlignment="Left" Margin="10,32,0,0" VerticalAlignment="Top" Width="245"/>
 
                     <Button x:Name="ADFpath_Button" Content="Click to set custom ADF folder" HorizontalAlignment="Left" Margin="10,94,0,0" VerticalAlignment="Top"  Width="200" Height="30"/>
-                    <Button x:Name="ADFpath_Button_Check" Content="Check" HorizontalAlignment="Left" Margin="215,94,0,0" VerticalAlignment="Top"  Width="40" Height="30" FontSize="10"/>
+                    <Button x:Name="ADFpath_Button_Check" ToolTip="Check availability of ADF files" Content="Check" HorizontalAlignment="Left" Margin="215,94,0,0" VerticalAlignment="Top"  Width="40" Height="30" FontSize="10"/>
                     <TextBox x:Name="ADFPath_Label" HorizontalAlignment="Left" Margin="263,100,0,0" TextWrapping="Wrap" Text="Using default ADF folder" VerticalAlignment="Top" Width="260" Height="20"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
 
                     <Button x:Name="Rompath_Button" Content="Click to set custom Kickstart folder" HorizontalAlignment="Left" Margin="10,59,0,0" VerticalAlignment="Top"  Width="200" Height="30"/>
-                    <Button x:Name="Rompath_Button_Check" Content="Check" HorizontalAlignment="Left" Margin="215,59,0,0" VerticalAlignment="Top"  Width="40" Height="30" FontSize="10"/>
+                    <Button x:Name="Rompath_Button_Check" ToolTip="Check availability of Kickstart file" Content="Check" HorizontalAlignment="Left" Margin="215,59,0,0" VerticalAlignment="Top"  Width="40" Height="30" FontSize="10"/>
                     <TextBox x:Name="ROMPath_Label" HorizontalAlignment="Left" Margin="263,65,0,0" TextWrapping="Wrap" Text="Using default Kickstart folder" VerticalAlignment="Top" Width="260" Height="20"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
 
                     <Button x:Name="MigratedFiles_Button" Content="Click to set Transfer folder" HorizontalAlignment="Left" Margin="10,129,0,0" VerticalAlignment="Top"  Width="200" Height="30"/>
@@ -2934,24 +2948,24 @@ $inputXML_UserInterface = @"
             </GroupBox>
             <GroupBox x:Name="Settings_GroupBox" Header="Settings" Height="150" Background="Transparent" Margin="0,235,10,128" Width="500" VerticalAlignment="Top" HorizontalAlignment="Right">
                 <Grid>
-                    <ComboBox x:Name="ScreenMode_Dropdown" HorizontalAlignment="Left" Margin="10,26,0,0" VerticalAlignment="Top" Width="375"/>
-                    <TextBox x:Name="ScreenMode_Label" HorizontalAlignment="Center" Margin="10,0,0,0" TextWrapping="Wrap" Text="Select ScreenMode for Raspberry Pi to Output" VerticalAlignment="Top" Width="280" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Center" FontWeight="Bold"/>
+                    <ComboBox x:Name="ScreenMode_Dropdown" ToolTip="Select if you wish to use a specific output resolution on your Raspberry Pi" HorizontalAlignment="Left" Margin="10,26,0,0" VerticalAlignment="Top" Width="375"/>
+                    <TextBox x:Name="ScreenMode_Label" HorizontalAlignment="Center" Margin="10,0,0,0" TextWrapping="Wrap" Width="320" Text="Select ScreenMode for Raspberry Pi to Output" VerticalAlignment="Top" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Center" FontWeight="Bold" FontSize="14"/>
    
                     <TextBox x:Name="SSID_Label" HorizontalAlignment="Left" Margin="12,77,0,0" TextWrapping="Wrap" Text="Enter your SSID" VerticalAlignment="Top" Width="150" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
                     <TextBox x:Name="Password_Label" HorizontalAlignment="Left" Margin="6,100,0,0" TextWrapping="Wrap" Text="Enter your Wifi password"  VerticalAlignment="Top" Width="150" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Center"/>
-                    <TextBox x:Name="SSID_Textbox" HorizontalAlignment="Left" Margin="187,77,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="200" />
-                    <TextBox x:Name="Password_Textbox" HorizontalAlignment="Left" Margin="187,100,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="200" />
-                    <TextBox x:Name="WIfiSettings_Label" HorizontalAlignment="Center" TextWrapping="Wrap" Text="WiFi Settings" VerticalAlignment="Center" Width="120" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Center" Margin="0,-4,0,0" Height="20" FontWeight="Bold"/>
+                    <TextBox x:Name="SSID_Textbox" ToolTip="Set your SSID for wifi on the Amiga (leave empty if you wish to configure on the Amiga)" HorizontalAlignment="Left" Margin="187,77,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="200" />
+                    <TextBox x:Name="Password_Textbox" ToolTip="Set your password for wifi on the Amiga (leave empty if you wish to configure on the Amiga)" HorizontalAlignment="Left" Margin="187,100,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="200" />
+                    <TextBox x:Name="WIfiSettings_Label" HorizontalAlignment="Center" TextWrapping="Wrap" Text="WiFi Settings" VerticalAlignment="Center" Width="120" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Center" Margin="0,-4,0,0" Height="20" FontWeight="Bold" FontSize="14"/>
 
                 </Grid>
 
             </GroupBox>
             <GroupBox x:Name="RunOptions_GroupBox" Header="Run Options" Margin="7,435,0,0" Background="Transparent" HorizontalAlignment="Left" Width="500" VerticalAlignment="Top" >
                 <Grid Background="Transparent" >
-                    <CheckBox x:Name="NoFileInstall_CheckBox" Content="Set disk up only. Do not install packages." HorizontalAlignment="Left" Margin="7,5,0,0" Height="15" VerticalAlignment="Top"/>
+                    <CheckBox x:Name="NoFileInstall_CheckBox" ToolTip="Partition the disk, copy the Emu68 files and install the Kickstart file only. Amiga partitions will be empty." Content="Set disk up only. Do not install packages." HorizontalAlignment="Left" Margin="7,5,0,0" Height="15" VerticalAlignment="Top"/>
                     <CheckBox x:Name="DiskWrite_CheckBox" Content="Do not write to disk. Produce .img file only for later writing to disk." HorizontalAlignment="Left" Margin="7,25,0,0" Height="15" VerticalAlignment="Top"/>
-                    <CheckBox x:Name="SkipEmptySpace_CheckBox" Content="Skip empty space when writing to disk." IsChecked = "TRUE" HorizontalAlignment="Left" Margin="7,45,0,0" Height="15" VerticalAlignment="Top"/>
-                  <Button x:Name="Workingpath_Button" Content="Click to set custom Working folder" HorizontalAlignment="Left" Margin="7,65,0,0" VerticalAlignment="Top"  Width="200" Height="30"/>
+                    <CheckBox x:Name="SkipEmptySpace_CheckBox" ToolTip="Unchecking this option will copy ALL sectors to the SD card which will take a long time for large SD cards" Content="Skip empty space when writing to disk." IsChecked = "TRUE" HorizontalAlignment="Left" Margin="7,45,0,0" Height="15" VerticalAlignment="Top"/>
+                  <Button x:Name="Workingpath_Button" ToolTip="Set this if you wish to use a different folder to run the tool (e.g. you have insufficient space in the default path)" Content="Click to set custom Working folder" HorizontalAlignment="Left" Margin="7,65,0,0" VerticalAlignment="Top"  Width="200" Height="30"/>
                  <TextBox x:Name="Workingpath_Label" HorizontalAlignment="Left" Margin="212,70,0,0" TextWrapping="Wrap" Text="Using default Working folder" VerticalAlignment="Top" Width="260" Height="20" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
 
                     </Grid>
@@ -2973,10 +2987,10 @@ $inputXML_UserInterface = @"
 
             </GroupBox>
             <TextBox x:Name="WorkSizeNoteFooter_Label" HorizontalAlignment="Left" Margin="15,585,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="480" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-       <Button x:Name="Documentation_Button" Content="Click for Documentation" HorizontalAlignment="Right" Margin="0,10,7,0" VerticalAlignment="Top" Height="50" Width="275" FontSize="18" BorderBrush="Transparent" Background="#FF6688BB" FontWeight="Bold" Foreground="White"/>
+       <Button x:Name="Documentation_Button" ToolTip="Browser will open and display documentation on how to use the tool" Content="Click for Documentation" HorizontalAlignment="Right" Margin="0,10,7,0" VerticalAlignment="Top" Height="50" Width="275" FontSize="18" BorderBrush="Transparent" Background="#FF6688BB" FontWeight="Bold" Foreground="White"/>
             
-            <Button x:Name="LoadSettings_Button" Content="Load Settings" HorizontalAlignment="Right" Margin="0,10,290,0" VerticalAlignment="Top" Height="20" Width="110" BorderBrush="Transparent" Foreground="White" Background="#FF6688BB" FontWeight="Bold"/>
-                          <Button x:Name="SaveSettings_Button" Content="Save Settings" HorizontalAlignment="Right" Margin="0,40,290,0" VerticalAlignment="Top" Height="20" Width="110" BorderBrush="Transparent" Foreground="White" Background="#FF6688BB" FontWeight="Bold"/>
+            <Button x:Name="LoadSettings_Button" ToolTip="Load settings from a file" Content="Load Settings" HorizontalAlignment="Right" Margin="0,10,290,0" VerticalAlignment="Top" Height="20" Width="110" BorderBrush="Transparent" Foreground="White" Background="#FF6688BB" FontWeight="Bold"/>
+            <Button x:Name="SaveSettings_Button" ToolTip="Save settings to a file" Content="Save Settings" HorizontalAlignment="Right" Margin="0,40,290,0" VerticalAlignment="Top" Height="20" Width="110" BorderBrush="Transparent" Foreground="White" Background="#FF6688BB" FontWeight="Bold"/>
             <TextBox x:Name="ToolTitle" HorizontalAlignment="Left" Height="50" Margin="7,0,0,0" TextWrapping="Wrap" Text="Emu68 Imager " VerticalAlignment="Top" Width="260" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" FontSize="36" FontWeight="Bold"/>
            
                   </Grid>
@@ -3564,6 +3578,9 @@ $WPF_UI_LoadSettings_Button.Add_Click({
 $WPF_UI_SaveSettings_Button.Add_Click({
     $Script:SettingsFile = Get-SettingsSavePath
     if ($Script:SettingsFile){
+        if (-not (Test-path (split-path $Script:SettingsFile -Parent))){
+            $null = New-Item (split-path $Script:SettingsFile -Parent) -ItemType Directory
+        }
         Write-SettingsFile -SettingsFile $Script:SettingsFile
     }
 })
