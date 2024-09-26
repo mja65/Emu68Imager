@@ -71,7 +71,7 @@ Script:SizeofImage = [$Script:SizeofImage]
 Script:SizeofDisk = [$Script:SizeofDisk]
 Script:SizeofPartition_System = [$Script:SizeofPartition_System]
 Script:SizeofPartition_Other = [$Script:SizeofPartition_Other]
-Script:WriteImage = [$Script:WriteImage]
+Script:ImageOnly = [$Script:ImageOnly]
 Script:SetDiskupOnly = [$Script:SetDiskupOnly]
 Script:WorkingPath = [$Script:WorkingPath]
 Script:ROMPath = [$Script:ROMPath]
@@ -312,7 +312,7 @@ $Script:SpaceThreshold_WorkingFolderDisk = $null
 $Script:SpaceThreshold_FilestoTransfer = $null
 $Script:Space_FilestoTransfer = $null
 $Script:PFSLimit =$null
-$Script:WriteImage = $null
+$Script:ImageOnly = $null
 $Script:TotalSections = $null
 $Script:CurrentSection = $null
 $Script:SetDiskupOnly = $null
@@ -605,9 +605,15 @@ function Set-PartitionMaximums {
 
 function Get-FormattedPathforGUI {
     param (
-        $PathtoTruncate
+        $PathtoTruncate,
+        $Length
     )
-    $LengthofString = 37 #Maximum supported by label less three for the ...
+    if ($Length){
+        $LengthofString = $Length
+    }
+    else{
+        $LengthofString = 37 #Maximum supported by label less three for the ...
+    }
     if ($PathtoTruncate.Length -gt $LengthofString){
         $Output = ('...'+($PathtoTruncate.Substring($PathtoTruncate.Length -$LengthofString,$LengthofString)))
     }
@@ -1063,11 +1069,11 @@ function Confirm-UIFields {
         $WPF_UI_AvailableSpaceTransferredFiles_TextBox.Visibility = 'Visible'
         $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Visibility = 'Visible'
     }
-    if ($Script:WriteImage -eq 'TRUE'){
-        $WPF_UI_DiskWrite_CheckBox.IsChecked = 'TRUE'
+    if ($Script:ImageOnly -eq 'TRUE'){
+        $WPF_UI_ImageOnly_CheckBox.IsChecked = 'TRUE'
     }
     else{
-        $WPF_UI_DiskWrite_CheckBox.IsChecked = ''
+        $WPF_UI_ImageOnly_CheckBox.IsChecked = ''
     }
     if ($Script:WriteMethod -eq 'SkipEmptySpace'){
         $WPF_UI_SkipEmptySpace_CheckBox.IsChecked = 'TRUE'
@@ -1076,15 +1082,15 @@ function Confirm-UIFields {
         $WPF_UI_SkipEmptySpace_CheckBox.IsChecked = ''
     }
     if ($Script:SetDiskupOnly -eq 'TRUE'){
-        $WPF_UI_NoFileInstall_CheckBox.IsChecked = 'TRUE'        
+        $WPF_UI_SetUpDiskOnly_CheckBox.IsChecked = 'TRUE'        
     }
     else{
-        $WPF_UI_NoFileInstall_CheckBox.IsChecked = ''        
+        $WPF_UI_SetUpDiskOnly_CheckBox.IsChecked = ''        
     }
     if ($NumberofErrors -gt 0){
         $WPF_UI_Start_Button.Background = 'Red'
         $WPF_UI_Start_Button.Foreground = 'Black'
-        $WPF_UI_Start_Button.Content = 'Missing information and/or insufficient space on Work partition for transferred files! Press to see further details'
+        $WPF_UI_Start_Button.Content = 'Missing information and/or insufficient space on Work partition for transferred files! Press button to see further details'
         return $ErrorMessage
     }
     else{
@@ -1155,7 +1161,7 @@ $SettingstoRead = (
 'SizeofDisk',
 'SizeofPartition_System',
 'SizeofPartition_Other',
-'WriteImage',
+'ImageOnly',
 'SetDiskupOnly',
 'WorkingPath',
 'WorkingPathDefault',
@@ -1201,7 +1207,7 @@ $SettingstoRead = (
     $Script:SizeofDisk = $null 
     $Script:SizeofPartition_System = $null
     $Script:SizeofPartition_Other = $null 
-    $Script:WriteImage = $null 
+    $Script:ImageOnly = $null 
     $Script:SetDiskupOnly = $null
     $Script:WorkingPath = $null 
     $Script:WorkingPathDefault = $null 
@@ -1239,7 +1245,8 @@ $SettingstoRead = (
         }
         New-Variable -Scope Script -Name $Setting.Setting -Value $Setting.Value
     } 
-
+   # Write-Host "SizeofFAT32:  After Load $Script:SizeofFAT32"
+   
     # Convert Numeric Variables to Numeric
     
     $Script:SizeofFAT32 = [int]$Script:SizeofFAT32
@@ -1249,7 +1256,10 @@ $SettingstoRead = (
     $Script:SizeofPartition_Other = [int]$Script:SizeofPartition_Other
     $Script:SizeofUnallocated = [int]$Script:SizeofUnallocated 
     $Script:SizeofFreeSpace = [int]$Script:SizeofFreeSpace 
-        
+    
+   #  Write-Host "SizeofFAT32: After Numeric $Script:SizeofFAT32"
+    # Write-Host "$Script:SizeofImage"
+
     $DiskFound = $false
     $DiskstoCheck = Get-RemovableMedia
     foreach ($Disk in $DiskstoCheck){
@@ -1260,6 +1270,10 @@ $SettingstoRead = (
         }   
     }       
     
+  #   Write-Host "SizeofFAT32:  After Disk $Script:SizeofFAT32"
+   #  Write-Host "$Script:SizeofImage"
+   #  Write-Host "Load Settings: $Script:IsLoadedSettings"
+
     if ($DiskFound -eq $false){
         $null = [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,48)
         $Script:HSTDiskName = $null
@@ -1297,11 +1311,13 @@ $SettingstoRead = (
         $WPF_UI_FAT32Size_Value.IsEnabled = "True"
         $WPF_UI_FreeSpace_Value.IsEnabled = "True"
         Set-PartitionMaximums
+
         $WPF_UI_DiskPartition_Grid.ColumnDefinitions[0].Width = $Script:SizeofFAT32_Pixels
         $WPF_UI_DiskPartition_Grid.ColumnDefinitions[2].Width = $Script:SizeofPartition_System_Pixels
         $WPF_UI_DiskPartition_Grid.ColumnDefinitions[4].Width = $Script:SizeofPartition_Other_Pixels
         $WPF_UI_DiskPartition_Grid.ColumnDefinitions[6].Width = $Script:SizeofFreeSpace_Pixels
         $WPF_UI_DiskPartition_Grid.ColumnDefinitions[8].Width = $Script:SizeofUnallocated_Pixels
+
         $Script:Space_WorkingFolderDisk = (Confirm-DiskSpace -PathtoCheck  $Script:WorkingPath)/1Kb 
         $Script:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Script:SizeofImage
         $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk 
@@ -1323,6 +1339,10 @@ $SettingstoRead = (
         $null = Confirm-UIFields
         ## New End
     }
+
+ #    Write-Host "SizeofFAT32:  After Sizing in GUI  $Script:SizeofFAT32"
+   #   Write-Host "$Script:SizeofImage"
+   #        Write-Host "Load Settings: $Script:IsLoadedSettings"
 
     if ($Script:WorkingPath){
         if (-not (Test-Path ($Script:WorkingPath))){
@@ -1349,8 +1369,12 @@ $SettingstoRead = (
     else{
         $Script:WorkingPath = ($Scriptpath+'Working Folder\')
         $Script:WorkingPathDefault = $true 
+             Write-Host "Load Settings: $Script:IsLoadedSettings"
     }
 
+   #  Write-Host "SizeofFAT32:  After Working Path $Script:SizeofFAT32"
+   #   Write-Host "$Script:SizeofImage"
+     
     $Script:Space_WorkingFolderDisk = (Confirm-DiskSpace -PathtoCheck $Script:WorkingPath)/1Kb 
     $Script:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Script:SizeofImage
     $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk
@@ -1391,7 +1415,7 @@ function Write-SettingsFile {
     ('SizeofDisk;'+$Script:SizeofDisk) | Out-File $SettingsFile -Append
     ('SizeofPartition_System;'+$Script:SizeofPartition_System) | Out-File $SettingsFile -Append
     ('SizeofPartition_Other;'+$Script:SizeofPartition_Other) | Out-File $SettingsFile -Append
-    ('WriteImage;'+$Script:WriteImage) | Out-File $SettingsFile -Append
+    ('ImageOnly;'+$Script:ImageOnly) | Out-File $SettingsFile -Append
     ('SetDiskupOnly;'+$Script:SetDiskupOnly) | Out-File $SettingsFile -Append
     ('WorkingPath;'+$Script:WorkingPath) | Out-File $SettingsFile -Append
     ('WorkingPathDefault;'+$Script:WorkingPathDefault) | Out-File $SettingsFile -Append
@@ -2546,7 +2570,7 @@ function Write-GUIReporttoUseronOptions {
     $WPF_UI_ImageSizeValue_Reporting_Detail_TextBox.Text = Get-FormattedSize -Size $Script:SizeofImage
     $WPF_UI_WorkbenchSizeValue_Reporting_Detail_TextBox.Text = Get-FormattedSize -Size $Script:SizeofPartition_System
     $WPF_UI_WorkSizeValue_Reporting_Detail_TextBox.Text = Get-FormattedSize -Size $Script:SizeofPartition_Other
-    $WPF_UI_WriteImagetoDiskValue_Reporting_Detail_TextBox.Text =  $Script:WriteImage
+    $WPF_UI_WriteImageOnlytoDiskValue_Reporting_Detail_TextBox.Text =  $Script:ImageOnly
     if ($Script:WriteMethod -eq 'Normal'){
         $WPF_UI_WriteMethodValue_Reporting_Detail_TextBox.Text = 'All sectors on disk will be written'
     } 
@@ -2559,8 +2583,8 @@ function Write-GUIReporttoUseronOptions {
     $WPF_UI_SetupDiskOnlyValue_Detail_TextBox.Text = $Script:SetDiskupOnly
     $WPF_UI_WorkingPathValue_Reporting_Detail_TextBox.Text = $Script:WorkingPath
     $WPF_UI_RomPathValue_Reporting_Detail_TextBox.Text = $Script:ROMPath
-    $WPF_UI_ADFPathValue_Detail_TextBox.Text = $Script:ADFPath 
-    if ($Script:WriteImage -eq 'FALSE'){
+    $WPF_UI_ADFPathValue_Detail_TextBox.Text = Get-FormattedPathforGUI -PathtoTruncate $Script:ADFPath -Length 63
+    if ($Script:ImageOnly -eq 'TRUE'){
         $WPF_UI_LocationofImageValue_Detail_TextBox.Text = $Script:LocationofImage
         $WPF_UI_LocationofImage_Detail_TextBox.Visibility = 'Visible'
         $WPF_UI_LocationofImageValue_Detail_TextBox.Visibility = 'Visible'
@@ -2570,7 +2594,7 @@ function Write-GUIReporttoUseronOptions {
         $WPF_UI_LocationofImageValue_Detail_TextBox.Visibility = 'Hidden'
     }
     if ($Script:TransferLocation){
-        $WPF_UI_TransferPathValue_Detail_TextBox.Text = $Script:TransferLocation
+        $WPF_UI_TransferPathValue_Detail_TextBox.Text = Get-FormattedPathforGUI -PathtoTruncate $Script:TransferLocation -Length 63
     }
     else{
         $WPF_UI_TransferPathValue_Detail_TextBox.Text = 'No Transfer Location Set'
@@ -2882,15 +2906,15 @@ $inputXML_UserInterface = @"
             </GroupBox>
             <GroupBox x:Name="RunOptions_GroupBox" Header="Run Options" Margin="7,435,0,0" Background="Transparent" HorizontalAlignment="Left" Width="500" VerticalAlignment="Top" >
                 <Grid Background="Transparent" >
-                    <CheckBox x:Name="NoFileInstall_CheckBox" ToolTip="Partition the disk, copy the Emu68 files and install the Kickstart file only. Amiga partitions will be empty." Content="Partition disk and install Emu68 only. Do not install packages." HorizontalAlignment="Left" Margin="7,5,0,0" Height="15" VerticalAlignment="Top"/>
-                    <CheckBox x:Name="DiskWrite_CheckBox" Content="Do not write to disk. Produce .img file for later writing to disk." HorizontalAlignment="Left" Margin="7,25,0,0" Height="15" VerticalAlignment="Top"/>
-                    <CheckBox x:Name="SkipEmptySpace_CheckBox" ToolTip="Unchecking this option will copy ALL sectors to the SD card which will take a long time for large SD cards" Content="Skip empty space if writing to disk." IsChecked = "TRUE" HorizontalAlignment="Left" Margin="7,45,0,0" Height="15" VerticalAlignment="Top"/>
+                    <CheckBox x:Name="SetUpDiskOnly_CheckBox" ToolTip="Partition the SD card, copy the Emu68 and Kickstart files to the FAT32 partition. Amiga partitions will be empty." Content="Partition disk and install Emu68 only. Do not install packages." HorizontalAlignment="Left" Margin="7,5,0,0" Height="15" VerticalAlignment="Top"/>
+                    <CheckBox x:Name="ImageOnly_CheckBox" Content="Do not write to SD card. A .img file will be created for later writing to disk." HorizontalAlignment="Left" Margin="7,25,0,0" Height="15" VerticalAlignment="Top"/>
+                    <CheckBox x:Name="SkipEmptySpace_CheckBox" Visibility="Hidden" Content="Skip empty space (only applicable if writing to SD Card)." ToolTip="Unchecking this option will copy ALL sectors to the SD card which will take a long time for large SD cards"  IsChecked = "TRUE" HorizontalAlignment="Left" Margin="7,45,0,0" Height="15" VerticalAlignment="Top"/>
                   <Button x:Name="Workingpath_Button" ToolTip="Set this if you wish to use a different folder to run the tool (e.g. you have insufficient space in the default path)" Content="Click to set custom Working folder" HorizontalAlignment="Left" Margin="7,65,0,0" VerticalAlignment="Top"  Width="200" Height="30"/>
                  <TextBox x:Name="Workingpath_Label" HorizontalAlignment="Left" Margin="212,70,0,0" TextWrapping="Wrap" Text="Using default Working folder" VerticalAlignment="Top" Width="260" Height="20" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
 
                     </Grid>
             </GroupBox>
-            <Button x:Name="Start_Button" Content="Missing information! Press to see further details" HorizontalAlignment="Center" Margin="0,610,0,0" VerticalAlignment="Top" Width="890" Height="40" Background = "Red" Foreground="Black" BorderBrush="Transparent"/>
+            <Button x:Name="Start_Button" Content="Missing information and/or insufficient space on Work partition for transferred files! Press button to see further details" HorizontalAlignment="Center" Margin="0,610,0,0" VerticalAlignment="Top" Width="890" Height="40" Background = "Red" Foreground="Black" BorderBrush="Transparent"/>
             <GroupBox x:Name="Space_GroupBox" Header="Space Requirements" Height="170" Background="Transparent" Margin="0,385,10,0" Width="500" VerticalAlignment="Top" HorizontalAlignment="Right">
                 <Grid>
 
@@ -2960,18 +2984,15 @@ $inputXML_UserInterface = @"
             <TextBox x:Name="TransferPathValue_Detail_TextBox" HorizontalAlignment="Left" Margin="360,350,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="450" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
 
 
-            <TextBox x:Name="WriteImagetoDisk_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,370,0,0" TextWrapping="Wrap" Text="Write Image to Disk:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
-            <TextBox x:Name="WriteImagetoDiskValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,370,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="450" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" />
-
-            <TextBox x:Name="WriteMethod_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,390,0,0" TextWrapping="Wrap" Text="Write Method:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
-            <TextBox x:Name="WriteMethodValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,390,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="450" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" />
+            <TextBox x:Name="WriteImageOnly_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,370,0,0" TextWrapping="Wrap" Text="Write Image File Only:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+            <TextBox x:Name="WriteImageOnlytoDiskValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,370,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="450" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" />
 
 
-            <TextBox x:Name="SetupDiskOnly_Detail_TextBox" HorizontalAlignment="Left" Margin="100,410,0,0" TextWrapping="Wrap" Text="Set disk up only:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
-            <TextBox x:Name="SetupDiskOnlyValue_Detail_TextBox" HorizontalAlignment="Left" Margin="360,410,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="450" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+            <TextBox x:Name="SetupDiskOnly_Detail_TextBox" HorizontalAlignment="Left" Margin="100,390,0,0" TextWrapping="Wrap" Text="Set disk up only:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+            <TextBox x:Name="SetupDiskOnlyValue_Detail_TextBox" HorizontalAlignment="Left" Margin="360,390,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="450" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
 
-            <TextBox x:Name="LocationofImage_Detail_TextBox" HorizontalAlignment="Left" Margin="100,450,0,0" TextWrapping="Wrap" Text="Location of Image:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" FontWeight="Bold" />
-            <TextBox x:Name="LocationofImageValue_Detail_TextBox" HorizontalAlignment="Left" Margin="360,450,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="450" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+            <TextBox x:Name="LocationofImage_Detail_TextBox" HorizontalAlignment="Left" Margin="100,430,0,0" TextWrapping="Wrap" Text="Location of Image:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" FontWeight="Bold" />
+            <TextBox x:Name="LocationofImageValue_Detail_TextBox" HorizontalAlignment="Left" Margin="360,430,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="450" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
 
            
         </Grid>
@@ -3070,8 +3091,9 @@ $WPF_UI_MediaSelect_Dropdown.Add_SelectionChanged({
         }
         $Script:DiskFriendlyName = $WPF_UI_MediaSelect_DropDown.SelectedItem  
         $Script:SizeofDisk = $Disk.SizeofDisk
-        $Script:SizeofImage = $Script:SizeofDisk
-
+        if ($Script:IsLoadedSettings -ne $true){
+            $Script:SizeofImage = $Script:SizeofDisk
+        }
         $Script:SizeofFat32_Pixels_Minimum = [decimal]($Script:PartitionBarPixelperKB * $Script:Fat32Minimum) 
         $Script:SizeofPartition_System_Pixels_Minimum = [decimal]($Script:PartitionBarPixelperKB * $Script:WorkbenchMinimum)
         $Script:SizeofPartition_Other_Pixels_Minimum = [decimal]($Script:PartitionBarPixelperKB * $Script:WorkMinimum)
@@ -3163,8 +3185,9 @@ $WPF_UI_DefaultAllocation_Refresh.add_Click({
     
         $Script:SizeofUnallocated_Pixels_Minimum = 0
         $Script:SizeofUnallocated_Minimum = 0
-    
-        $Script:SizeofImage=$Script:SizeofDisk
+        
+      
+        $Script:SizeofImage = $Script:SizeofDisk
         if ($Script:SizeofImage /$DefaultDivisorFat32 -ge $Fat32DefaultMaximum){
             $Script:SizeofFAT32 = $Fat32DefaultMaximum
             $Script:SizeofFAT32_Pixels = [decimal]($Script:PartitionBarPixelperKB * $Script:SizeofFAT32)   
@@ -3480,10 +3503,10 @@ $WPF_UI_LoadSettings_Button.Add_Click({
         $WPF_UI_KickstartVersion_DropDown.SelectedItem = ($Script:KickstartVersiontoUseFriendlyName).tostring()
         $WPF_UI_ScreenMode_Dropdown.SelectedItem = $Script:ScreenModetoUseFriendlyName
         if ($Script:SetDiskupOnly -eq 'TRUE'){
-            $WPF_UI_NoFileInstall_CheckBox.IsChecked = 'TRUE'
+            $WPF_UI_SetUpDiskOnly_CheckBox.IsChecked = 'TRUE'
         }
-        if ($Script:WriteImage -eq 'TRUE'){
-            $WPF_UI_DiskWrite_CheckBox.IsChecked = 'TRUE'
+        if ($Script:ImageOnly -eq 'TRUE'){
+            $WPF_UI_ImageOnly_CheckBox.IsChecked = 'TRUE'
         }
         if ($Script:WriteMethod -eq 'SkipEmptySpace'){
             $WPF_UI_SkipEmptySpace_CheckBox.IsChecked = 'TRUE'
@@ -3975,21 +3998,26 @@ $WPF_UI_ScreenMode_Dropdown.Add_SelectionChanged({
     
 })
 
-$WPF_UI_DiskWrite_CheckBox.Add_Checked({
-    $Script:WriteImage ='TRUE'
-    $Script:SetDiskupOnly = 'FALSE'  
-    $null = Confirm-UIFields
+$WPF_UI_ImageOnly_CheckBox.Add_Checked({
+    if ($Script:ImageOnly -ne 'TRUE'){
+        $Script:ImageOnly ='TRUE'
+        $Script:SetDiskupOnly = 'FALSE'  
+        $null = Confirm-UIFields
+    }
 })
 
-$WPF_UI_DiskWrite_CheckBox.Add_UnChecked({
-    $Script:WriteImage ='FALSE'
-    $Script:SetDiskupOnly = 'TRUE'  
-    $null = Confirm-UIFields
+$WPF_UI_ImageOnly_CheckBox.Add_UnChecked({
+    if ($Script:ImageOnly -eq 'TRUE'){
+        $Script:ImageOnly ='FALSE'
+        $null = Confirm-UIFields
+    }
 })
 
 $WPF_UI_SkipEmptySpace_CheckBox.Add_Checked({
-    $Script:WriteMethod = 'SkipEmptySpace'
-    $null = Confirm-UIFields
+    if ($Script:WriteMethod -ne 'SkipEmptySpace'){
+        $Script:WriteMethod = 'SkipEmptySpace'
+        $null = Confirm-UIFields
+    }
 })
 
 $WPF_UI_SkipEmptySpace_CheckBox.Add_UnChecked({
@@ -3997,27 +4025,30 @@ $WPF_UI_SkipEmptySpace_CheckBox.Add_UnChecked({
     $null = Confirm-UIFields
 })
 
-$WPF_UI_NoFileInstall_CheckBox.Add_Checked({
-    $Script:SetDiskupOnly = 'TRUE'
-    $Script:WriteImage ='FALSE'
-    $Script:TransferLocation = $null
-    $Script:AvailableADFs = $null
-    $Script:ADFPath = $Script:UserLocation_ADFs
-    If ($Script:HSTDiskName){
-        $Script:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Script:SizeofImage
-        $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk    
+$WPF_UI_SetUpDiskOnly_CheckBox.Add_Checked({
+    if ($Script:SetDiskupOnly -ne 'TRUE'){
+        $Script:SetDiskupOnly = 'TRUE'
+        $Script:ImageOnly ='FALSE'
+        $Script:TransferLocation = $null
+        $Script:AvailableADFs = $null
+        $Script:ADFPath = $Script:UserLocation_ADFs
+        If ($Script:HSTDiskName){
+            $Script:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Script:SizeofImage
+            $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk    
+        } 
+        $null = Confirm-UIFields    
     } 
-    $null = Confirm-UIFields    
 })
 
-$WPF_UI_NoFileInstall_CheckBox.Add_UnChecked({
-    $Script:SetDiskupOnly = 'FALSE'   
-    $Script:WriteImage ='TRUE'
-    If ($Script:HSTDiskName){
-        $Script:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Script:SizeofImage
-        $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk 
+$WPF_UI_SetUpDiskOnly_CheckBox.Add_UnChecked({
+    if ($Script:SetDiskupOnly -eq 'TRUE'){
+        $Script:SetDiskupOnly = 'FALSE'   
+        If ($Script:HSTDiskName){
+            $Script:RequiredSpace_WorkingFolderDisk = Get-RequiredSpace -ImageSize $Script:SizeofImage
+            $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk 
+        } 
+        $null = Confirm-UIFields   
     } 
-    $null = Confirm-UIFields   
 
 })
 
@@ -4233,7 +4264,7 @@ if (-not (Test-Path $Script:WorkingPath)){
 $Script:WorkingPathDefault = $true    
 $Script:WriteMethod = 'SkipEmptySpace'
 $Script:SetDiskupOnly = 'FALSE'
-$Script:WriteImage = 'FALSE'
+$Script:ImageOnly = 'FALSE'
 
 $Form_Disclaimer.ShowDialog() | out-null
 
@@ -4413,8 +4444,8 @@ if (-not ($Script:TransferLocation)){
     $TotalSections --
 }
 
-if (-not ($Script:WriteImage)){
-    $TotalSections --
+if (-not ($Script:ImageOnly -eq 'TRUE')){
+    $TotalSections = $TotalSections - 2
 }
 
 Write-Emu68ImagerLog -StartorContinue 'Continue' -LocationforLog $Script:LogLocation
@@ -4423,7 +4454,7 @@ $Script:CurrentSection = 1
 $StartDateandTime = (Get-Date -Format HH:mm:ss)
 Write-InformationMessage -Message "Starting execution at $StartDateandTime"
 
-if ($Script:WriteImage -eq 'TRUE'){
+if ($Script:ImageOnly -eq 'FALSE'){
     Write-StartTaskMessage -Message 'Setting up SD card'
     
     Write-StartSubTaskMessage -Message 'Clearing Contents of SD Card' -SubtaskNumber 1 -TotalSubtasks 3
@@ -5075,7 +5106,7 @@ if ($Script:SetDiskupOnly -eq 'FALSE'){
     Write-TaskCompleteMessage -Message 'Clean up AmigaImageFiles - Complete!'
 }
 
-If ($Script:WriteImage -eq 'TRUE'){
+If ($Script:ImageOnly -eq 'FALSE'){
     Add-PartitionAccessPath -DiskNumber $Script:HSTDiskNumber -PartitionNumber 1 -AssignDriveLetter
     $Script:Fat32DrivePath = ((Get-Partition -DiskNumber $Script:HSTDiskNumber -PartitionNumber 1).DriveLetter)+':\'
 }
@@ -5240,7 +5271,7 @@ if ($Script:SetDiskupOnly -eq 'FALSE'){
     Write-TaskCompleteMessage -Message 'Transferring Amiga Files to Image - Complete!'
 }
 
-If ($Script:WriteImage -eq 'FALSE'){
+If ($Script:ImageOnly -eq 'TRUE'){
     Write-StartTaskMessage -Message 'Creating Image'
     
     Set-Location $LocationofImage
@@ -5251,11 +5282,11 @@ If ($Script:WriteImage -eq 'FALSE'){
     
     $null= Rename-Item ($LocationofImager+'emu68_converted.img') -NewName ('Emu68Kickstart'+$Script:KickstartVersiontoUse+'.img')
     
-    Write-TaskCompleteMessage -Message ('Creating Image - Complete! Your image can be found at the following location: '+$LocationofImage+$NameofImage) 
+    Write-TaskCompleteMessage -Message ('Creating Image - Complete! Your image can be found at the following location: '+$LocationofImage+('Emu68Kickstart'+$Script:KickstartVersiontoUse+'.img')) 
 
 }
 
-If ($Script:WriteImage -eq 'TRUE'){
+If ($Script:ImageOnly -eq 'FALSE'){
     Write-StartTaskMessage -Message 'Writing Image to Disk'
     
     Set-location  $Script:WorkingPath
