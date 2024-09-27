@@ -74,6 +74,7 @@ Script:SizeofPartition_Other = [$Script:SizeofPartition_Other]
 Script:ImageOnly = [$Script:ImageOnly]
 Script:SetDiskupOnly = [$Script:SetDiskupOnly]
 Script:WorkingPath = [$Script:WorkingPath]
+Script:WorkingPathDefault = [$Script:WorkingPathDefault]
 Script:ROMPath = [$Script:ROMPath]
 Script:ADFPath = [$Script:ADFPath]
 Script:LocationofImage = [$Script:LocationofImage]
@@ -86,7 +87,6 @@ Activity Commences:
         $LogEntry| Out-File -FilePath ($LocationforLog) -Append
     }
 }
-
 ####################################################################### End Function for Log     #####################################################################################################
 
 ####################################################################### Begin function for Window State ##############################################################################################
@@ -371,6 +371,8 @@ $InputFolder = ($Scriptpath+'InputFiles\')
 $LocationofAmigaFiles = ($Scriptpath+'AmigaFiles\')
 $Script:UserLocation_ADFs = ($Scriptpath+'UserFiles\ADFs\')
 $Script:UserLocation_Kickstarts = ($Scriptpath+'UserFiles\Kickstarts\')
+$Script:Documentation_URL = "https://mja65.github.io/Emu68-Imager/"
+$Script:QuickStart_URL = "https://mja65.github.io/Emu68-Imager/quickstart.html"
 
 ## Amiga Variables
 
@@ -2571,15 +2573,15 @@ function Write-GUIReporttoUseronOptions {
     $WPF_UI_WorkbenchSizeValue_Reporting_Detail_TextBox.Text = Get-FormattedSize -Size $Script:SizeofPartition_System
     $WPF_UI_WorkSizeValue_Reporting_Detail_TextBox.Text = Get-FormattedSize -Size $Script:SizeofPartition_Other
     $WPF_UI_WriteImageOnlytoDiskValue_Reporting_Detail_TextBox.Text =  $Script:ImageOnly
-    if ($Script:WriteMethod -eq 'Normal'){
-        $WPF_UI_WriteMethodValue_Reporting_Detail_TextBox.Text = 'All sectors on disk will be written'
-    } 
-    elseif ($Script:WriteMethod -eq 'SkipEmptySpace'){
-        $WPF_UI_WriteMethodValue_Reporting_Detail_TextBox.Text = 'Empty space on disk will be skipped'
-    }
-    else{
-        $WPF_UI_WriteMethodValue_Reporting_Detail_TextBox.Text = ''
-    }
+    # if ($Script:WriteMethod -eq 'Normal'){
+    #     $WPF_UI_WriteMethodValue_Reporting_Detail_TextBox.Text = 'All sectors on disk will be written'
+    # } 
+    # elseif ($Script:WriteMethod -eq 'SkipEmptySpace'){
+    #     $WPF_UI_WriteMethodValue_Reporting_Detail_TextBox.Text = 'Empty space on disk will be skipped'
+    # }
+    # else{
+    #     $WPF_UI_WriteMethodValue_Reporting_Detail_TextBox.Text = ''
+    # }
     $WPF_UI_SetupDiskOnlyValue_Detail_TextBox.Text = $Script:SetDiskupOnly
     $WPF_UI_WorkingPathValue_Reporting_Detail_TextBox.Text = $Script:WorkingPath
     $WPF_UI_RomPathValue_Reporting_Detail_TextBox.Text = $Script:ROMPath
@@ -4053,7 +4055,7 @@ $WPF_UI_SetUpDiskOnly_CheckBox.Add_UnChecked({
 })
 
 $WPF_UI_Documentation_Button.Add_Click({
-    Start-Process "https://mja65.github.io/Emu68-Imager/"
+    Start-Process $Script:Documentation_URL
 })
 
 
@@ -4234,7 +4236,7 @@ $WPF_Disclaimer_Button_Acknowledge.Add_Click({
 })
 
 $WPF_Disclaimer_LinktoQuickstart_Button.Add_Click({
-    Start-Process "https://mja65.github.io/Emu68-Imager/quickstart.html"
+    Start-Process $Script:QuickStart_URL
 })
 
 ####################################################################### End GUI XML for Disclaimer ##################################################################################################
