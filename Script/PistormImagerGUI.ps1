@@ -366,11 +366,11 @@ $Script:IsLoadedSettings = $null
 
 ####################################################################### Set Script Path dependent  Variables ########################################################################################
 
-$SourceProgramPath = ($Scriptpath+'Programs\')
-$InputFolder = ($Scriptpath+'InputFiles\')
-$LocationofAmigaFiles = ($Scriptpath+'AmigaFiles\')
-$Script:UserLocation_ADFs = ($Scriptpath+'UserFiles\ADFs\')
-$Script:UserLocation_Kickstarts = ($Scriptpath+'UserFiles\Kickstarts\')
+$SourceProgramPath = ($Script:Scriptpath+'Programs\')
+$InputFolder = ($Script:Scriptpath+'InputFiles\')
+$LocationofAmigaFiles = ($Script:Scriptpath+'AmigaFiles\')
+$Script:UserLocation_ADFs = ($Script:Scriptpath+'UserFiles\ADFs\')
+$Script:UserLocation_Kickstarts = ($Script:Scriptpath+'UserFiles\Kickstarts\')
 $Script:Documentation_URL = "https://mja65.github.io/Emu68-Imager/"
 $Script:QuickStart_URL = "https://mja65.github.io/Emu68-Imager/quickstart.html"
 
@@ -412,8 +412,8 @@ $Emu68Toolsreleases= 'https://api.github.com/repos/michalsc/Emu68-tools/releases
 ####################################################################### End Set Script Variables ###############################################################################################
 
 ######################################################################### Create User Files Folders ###############################################################################################
-$Script:UserLocation_ADFs = ($Scriptpath+'UserFiles\ADFs\')
-$Script:UserLocation_Kickstarts = ($Scriptpath+'UserFiles\Kickstarts\')
+$Script:UserLocation_ADFs = ($Script:Scriptpath+'UserFiles\ADFs\')
+$Script:UserLocation_Kickstarts = ($Script:Scriptpath+'UserFiles\Kickstarts\')
 
 if (-not (Test-Path $Script:UserLocation_ADFs)){
     $null= New-Item -Path $Script:UserLocation_ADFs -ItemType Directory -Force
@@ -1349,10 +1349,10 @@ $SettingstoRead = (
     if ($Script:WorkingPath){
         if (-not (Test-Path ($Script:WorkingPath))){
             $null = [System.Windows.MessageBox]::Show($Msg_Body_WorkingPath, $Msg_Header_WorkingPath,0,48)
-            $Script:WorkingPath = ($Scriptpath+'Working Folder\')
+            $Script:WorkingPath = ($Script:Scriptpath+'Working Folder\')
             $Script:WorkingPathDefault = $true   
         }  
-        elseif ($Script:WorkingPath -eq ($Scriptpath+'Working Folder\')){
+        elseif ($Script:WorkingPath -eq ($Script:Scriptpath+'Working Folder\')){
             $Script:WorkingPathDefault = $true  
         }      
         else{
@@ -1363,13 +1363,13 @@ $SettingstoRead = (
             }
             else{
                 $null= [System.Windows.MessageBox]::Show($Msg_Body_NonEmpty, $Msg_Header_NonEmpty,0,48)
-                $Script:WorkingPath = ($Scriptpath+'Working Folder\')
+                $Script:WorkingPath = ($Script:Scriptpath+'Working Folder\')
                 $Script:WorkingPathDefault = $true   
             }
         }
     }
     else{
-        $Script:WorkingPath = ($Scriptpath+'Working Folder\')
+        $Script:WorkingPath = ($Script:Scriptpath+'Working Folder\')
         $Script:WorkingPathDefault = $true 
              Write-Host "Load Settings: $Script:IsLoadedSettings"
     }
@@ -2743,6 +2743,86 @@ function Update-ListofInstallFiles {
     }             
 }
 
+function Remove-WorkingFolderData {
+    param (
+        $DefaultFolder
+    )
+    
+    if ($DefaultFolder -eq 'TRUE'){
+        $WorkingFoldertouse = ($Script:Scriptpath+'Working Folder\')
+    }
+    else {
+        $WorkingFoldertouse = $Script:WorkingPath 
+    }
+    if (Test-Path ($WorkingFoldertouse)){
+        $NewFolders = ($WorkingFoldertouse+'Temp\'),($WorkingFoldertouse+'OutputImage\'),($WorkingFoldertouse+'AmigaImageFiles\'+$Script:VolumeName_System),($WorkingFoldertouse+'AmigaImageFiles\'+$Script:VolumeName_Other),($WorkingFoldertouse+'\FAT32Partition\')
+        foreach ($NewFolder in $NewFolders) {
+            if (Test-Path $NewFolder){
+                $null = Remove-Item ($NewFolder) -Recurse -force
+            }
+        }                     
+    }
+}
+
+function Get-Emu68ImagerDocumentation {
+    param (
+        $LocationtoDownload
+    )
+
+ #   $LocationtoDownload ='E:\PiStorm\Docs\'
+
+    $DownloadURLs = "https://mja65.github.io/Emu68-Imager/index.html", `
+                    "https://mja65.github.io/Emu68-Imager/requirements.html", `
+                    "https://mja65.github.io/Emu68-Imager/download.html", `
+                    "https://mja65.github.io/Emu68-Imager/installation.html",
+                    "https://mja65.github.io/Emu68-Imager/quickstart.html", `
+                    "https://mja65.github.io/Emu68-Imager/instructions.html", `
+                    "https://mja65.github.io/Emu68-Imager/amigautilities.html", `
+                    "https://mja65.github.io/Emu68-Imager/packages.html", `
+                    "https://mja65.github.io/Emu68-Imager/included.html", `
+                    "https://mja65.github.io/Emu68-Imager/faqs.html", `
+                    "https://mja65.github.io/Emu68-Imager/support.html", `
+                    "https://mja65.github.io/Emu68-Imager/credits.html", `
+                    "https://mja65.github.io/Emu68-Imager/images/screenshot1.png"
+
+    foreach ($URL in $DownloadURLs){
+        If ((Split-Path $URL -Leaf) -eq 'index.html'){
+            $OutfileLocation = $LocationtoDownload 
+        }
+        elseif ((Split-Path $URL -Leaf) -eq 'screenshot1.png') {
+            $OutfileLocation = $LocationtoDownload+'images\'
+        }
+        else {
+            $OutfileLocation = ($LocationtoDownload+'html\')
+        }
+        if (-not (test-path $OutfileLocation)){
+                $null = New-Item $OutfileLocation -ItemType Directory
+        }
+        Invoke-WebRequest $URL -OutFile ($OutfileLocation+(Split-Path $URL -Leaf))
+        if (($OutfileLocation+(Split-Path $URL -Leaf)).IndexOf('.html') -gt 0){
+            Get-Content ($OutfileLocation+(Split-Path $URL -Leaf)) | ForEach-Object {
+                if ($_ -match '<a href="/Emu68-Imager/'){
+                    If ((Split-Path $URL -Leaf) -eq 'index.html'){
+                        $_ -replace '<a href="/Emu68-Imager/', '<a href="./html/'
+                        $_ -replace '<img src="/Emu68-Imager/images' , '<img src="./images'
+                    }
+                    else{
+                        $_ -replace '<a href="/Emu68-Imager/', '<a href="../html/'
+                        $_ -replace '<img src="/Emu68-Imager/images' , '<img src="../images'
+                    }
+    
+                }
+                else{
+                    $_
+                }
+            } | Set-Content ($OutfileLocation+(Split-Path $URL -Leaf)+'v2')
+            $null = remove-item ($OutfileLocation+(Split-Path $URL -Leaf))
+            $null = rename-item ($OutfileLocation+(Split-Path $URL -Leaf)+'v2') ($OutfileLocation+(Split-Path $URL -Leaf)) 
+        }
+    }
+     
+}
+
 ### End Functions
 
 ######################################################################### End Functions #############################################################################################################
@@ -3836,8 +3916,8 @@ $WPF_UI_Workingpath_Button.Add_Click({
          }
          $Script:AvailableSpace_WorkingFolderDisk = $Script:Space_WorkingFolderDisk - $Script:RequiredSpace_WorkingFolderDisk
      }
-     elseif ((-not $WorkingPathtoPopulate)  -and ($Script:WorkingPath -ne ($Scriptpath+'Working Folder\'))){
-        $Script:WorkingPath = ($Scriptpath+'Working Folder\')
+     elseif ((-not $WorkingPathtoPopulate)  -and ($Script:WorkingPath -ne ($Script:Scriptpath+'Working Folder\'))){
+        $Script:WorkingPath = ($Script:Scriptpath+'Working Folder\')
         $Script:WorkingPathDefault = $true        
         $Script:Space_WorkingFolderDisk = (Confirm-DiskSpace -PathtoCheck $Script:WorkingPath)/1kb
         if ($Script:SizeofImage){
@@ -4107,7 +4187,7 @@ $WPF_UI_Start_Button.Add_Click({
             Update-ListofInstallFiles 
         }
 
-        If ($Script:WorkingPath -ne ($Scriptpath+'Working Folder\')){
+        If ($Script:WorkingPath -ne ($Script:Scriptpath+'Working Folder\')){
             $NewFolders = ('Temp\'),('OutputImage\'),('AmigaImageFiles\'),('FAT32Partition\')
             foreach ($NewFolder in $NewFolders) {
                 if (Test-Path ($Script:WorkingPath+$NewFolder)){
@@ -4259,7 +4339,7 @@ if (-not ($IsAdministrator)){
 
 ################################# Set Working Folder Default #########################################################################################
 
-$Script:WorkingPath = ($Scriptpath+'Working Folder\')
+$Script:WorkingPath = ($Script:Scriptpath+'Working Folder\')
 if (-not (Test-Path $Script:WorkingPath)){
     $null = New-Item $Script:WorkingPath -ItemType Directory
 }
@@ -4341,28 +4421,7 @@ Re-download file and try again. Tool will now exit.
 
 ### Clean up
 
-if (Test-Path ($Scriptpath+'Working Folder\')){
-    $NewFolders = ($Scriptpath+'Working Folder\Temp\'),($Scriptpath+'Working Folder\OutputImage\'),($Scriptpath+'Working Folder\AmigaImageFiles\'+$VolumeName_System),($Scriptpath+'Working Folder\AmigaImageFiles\'+$VolumeName_Other),($Scriptpath+'Working Folder\FAT32Partition\')
-    try {
-        foreach ($NewFolder in $NewFolders) {
-            if (Test-Path ( $Script:WorkingPath+$NewFolder)){
-                $null = Remove-Item ( $Script:WorkingPath+$NewFolder) -Recurse -ErrorAction Stop
-            }
-        }    
-    }
-    catch {
-        $Msg_Header ='Error Deleting Files'    
-        $Msg_Body = @"  
-Error deleting files! 
-    
-Tool will now exit.
-    
-"@  
-        $null = [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,16) 
-        exit    
-    }
-
-} 
+Remove-WorkingFolderData -DefaultFolder 'TRUE'
 
 ### End Clean up
 
@@ -4400,11 +4459,13 @@ if (-not (Test-Path $Script:WorkingPath)){
 
 Set-Location  $Script:WorkingPath
 
-if (((split-path  $Script:WorkingPath  -Parent)+'\') -eq $Scriptpath) {
-    if (-not (Test-Path ($Scriptpath+'Working Folder\'))){
-        $null = New-Item ($Scriptpath+'Working Folder\') -ItemType Directory
+if (((split-path  $Script:WorkingPath  -Parent)+'\') -eq $Script:Scriptpath) {
+    if (-not (Test-Path ($Script:Scriptpath+'Working Folder\'))){
+        $null = New-Item ($Script:Scriptpath+'Working Folder\') -ItemType Directory
     }
 }
+
+Remove-WorkingFolderData
 
 if (-not(Test-Path ( $Script:WorkingPath+'FAT32Partition'))){
     $null = New-Item -path ( $Script:WorkingPath) -Name 'FAT32Partition' -ItemType Directory    
@@ -4443,11 +4504,12 @@ else{
 }
 
 if (-not ($Script:TransferLocation)){
-    $TotalSections --
+    $TotalSections = $TotalSections - 1
 }
 
-if (-not ($Script:ImageOnly -eq 'TRUE')){
-    $TotalSections = $TotalSections - 2
+
+if (($Script:ImageOnly -eq 'TRUE')){
+    $TotalSections = $TotalSections - 1
 }
 
 Write-Emu68ImagerLog -StartorContinue 'Continue' -LocationforLog $Script:LogLocation
@@ -5061,6 +5123,14 @@ if ($Script:SetDiskupOnly -eq 'FALSE'){
     #Update-OutputWindow -OutputConsole_Title_Text 'Creating Wireless Prefs file' -ProgressbarValue_Overall 50 -ProgressbarValue_Overall_Text '50%'
     
     Write-StartTaskMessage -Message 'Creating Wireless Prefs file'
+
+    
+    Write-StartTaskMessage -Message 'Creating Documentation files'
+    
+    Add-AmigaFolder -AmigaFolderPath ($VolumeName_System+'\PiStorm\Docs\') -TempFoldertouse $TempFolder -AmigaDrivetoCopytouse $AmigaDrivetoCopy
+    Get-Emu68ImagerDocumentation -LocationtoDownload ($AmigaDrivetoCopy+$VolumeName_System+'\PiStorm\Docs\')
+    
+    Write-TaskCompleteMessage -Message 'Creating Documentation files - Complete!'
     
     if (-not (Test-Path ($AmigaDrivetoCopy+$VolumeName_System+'\Prefs\Env-Archive\Sys\'))){
         $null = New-Item -path ($AmigaDrivetoCopy+$VolumeName_System+'\Prefs\Env-Archive\Sys') -ItemType Directory -Force 
