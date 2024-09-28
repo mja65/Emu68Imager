@@ -2625,7 +2625,7 @@ function Repair-SDDisk {
                 -or ($CleanDiskOutputLinetoCheck -match 'completata') `
                 -or ($CleanDiskOutputLinetoCheck -match 'satisfactoriamente') `
                 -or ($CleanDiskOutputLinetoCheck -match 'nettoyer') `
-                -or ($CleanDiskOutputLinetoCheck -match 'bereingt')){  
+                -or ($CleanDiskOutputLinetoCheck -match 'bereinigt')){  
                 Write-InformationMessage 'DiskPart has Cleaned the Disk'
                 $IsSuccess = $true              
             }
