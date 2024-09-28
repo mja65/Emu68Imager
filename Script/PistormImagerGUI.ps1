@@ -41,6 +41,8 @@ function Write-Emu68ImagerLog {
         $Script:PowershellVersion = ((($PSVersionTable.PSVersion).Major).ToString()+'.'+(($PSVersionTable.PSVersion).Minor))
         $WindowsLocale = ((((Get-WinSystemLocale).Name).Tostring())+' ('+(((Get-WinSystemLocale).DisplayName).Tostring())+')')
         $WindowsVersion = (Get-WmiObject -class Win32_OperatingSystem).Caption
+        #Script:SSID = [$Script:SSID]
+        #Script:WifiPassword = [$Script:WifiPassword] 
         $LogEntry =     @"
 Emu68 Imager Log
         
@@ -64,8 +66,6 @@ Script:DiskFriendlyName = [$Script:DiskFriendlyName]
 Script:ScreenModetoUse = [$Script:ScreenModetoUse]
 Script:ScreenModetoUseFriendlyName = [$Script:ScreenModetoUseFriendlyName]
 Script:KickstartVersiontoUse = [$Script:KickstartVersiontoUse]
-Script:SSID = [$Script:SSID]
-Script:WifiPassword = [$Script:WifiPassword] 
 Script:SizeofFAT32 = [$Script:SizeofFAT32]
 Script:SizeofImage = [$Script:SizeofImage]
 Script:SizeofDisk = [$Script:SizeofDisk]
@@ -2769,7 +2769,7 @@ function Get-Emu68ImagerDocumentation {
         $LocationtoDownload
     )
 
- #   $LocationtoDownload ='E:\PiStorm\Docs\'
+   # $LocationtoDownload ='E:\PiStorm\Docs\'
 
     $DownloadURLs = "https://mja65.github.io/Emu68-Imager/index.html", `
                     "https://mja65.github.io/Emu68-Imager/requirements.html", `
@@ -2799,28 +2799,34 @@ function Get-Emu68ImagerDocumentation {
                 $null = New-Item $OutfileLocation -ItemType Directory
         }
         Invoke-WebRequest $URL -OutFile ($OutfileLocation+(Split-Path $URL -Leaf))
+
         if (($OutfileLocation+(Split-Path $URL -Leaf)).IndexOf('.html') -gt 0){
-            Get-Content ($OutfileLocation+(Split-Path $URL -Leaf)) | ForEach-Object {
-                if ($_ -match '<a href="/Emu68-Imager/'){
-                    If ((Split-Path $URL -Leaf) -eq 'index.html'){
-                        $_ -replace '<a href="/Emu68-Imager/', '<a href="./html/'
-                        $_ -replace '<img src="/Emu68-Imager/images' , '<img src="./images'
-                    }
-                    else{
-                        $_ -replace '<a href="/Emu68-Imager/', '<a href="../html/'
-                        $_ -replace '<img src="/Emu68-Imager/images' , '<img src="../images'
-                    }
-    
+            $URLContent = Get-Content ($OutfileLocation+(Split-Path $URL -Leaf))
+            $RevisedURLContent = $null
+            foreach ($Line in $URLContent){
+                If ((Split-Path $URL -Leaf) -eq 'index.html'){
+                    $Line = $Line -replace '<a href="/Emu68-Imager/', '<a href="./html/'
+                    $Line = $Line -replace '<a href="https://mja65.github.io/Emu68-Imager/', '<a href="./index.html'
+                    $Line = $Line -replace '<img src="/Emu68-Imager/images' , '<img src="./images'
                 }
                 else{
-                    $_
+                    $Line = $Line -replace '<a href="/Emu68-Imager/', '<a href="../html/'
+                    $Line = $Line -replace '<a href="https://mja65.github.io/Emu68-Imager/', '<a href="../index.html'
+                    $Line = $Line -replace '<img src="/Emu68-Imager/images' , '<img src="../images'
                 }
-            } | Set-Content ($OutfileLocation+(Split-Path $URL -Leaf)+'v2')
+                $RevisedURLContent += $Line+"`r`n"
+            }
+            Set-Content -Path ($OutfileLocation+(Split-Path $URL -Leaf)+'NEW') -Value $RevisedURLContent
             $null = remove-item ($OutfileLocation+(Split-Path $URL -Leaf))
-            $null = rename-item ($OutfileLocation+(Split-Path $URL -Leaf)+'v2') ($OutfileLocation+(Split-Path $URL -Leaf)) 
+            $null = rename-item ($OutfileLocation+(Split-Path $URL -Leaf)+'NEW') ($OutfileLocation+(Split-Path $URL -Leaf)) 
+            If ((Split-Path $URL -Leaf) -eq 'index.html'){
+                if (-not (Test-Path ($LocationtoDownload+'html\'))){
+                    $Null = New-Item ($LocationtoDownload+'html\') -ItemType Directory   
+                }
+                $Null = Copy-Item -Path ($OutfileLocation+(Split-Path $URL -Leaf)) -Destination ($LocationtoDownload+'html\Emu68-Imager.html')
+            }
         }
     }
-     
 }
 
 ### End Functions
@@ -4497,13 +4503,13 @@ $FAT32Partition = $Script:WorkingPath+'FAT32Partition\'
 $NameofImage = ('Pistorm'+$Script:KickstartVersiontoUse+'.HDF')
 
 if ($Script:SetDiskupOnly -eq 'FALSE'){
-    $Script:TotalSections = 15
+    $Script:TotalSections = 16
 }
 else{
     $TotalSections = 5
 }
 
-if (-not ($Script:TransferLocation)){
+if (($Script:SetDiskupOnly -eq 'FALSE') -and (-not $Script:TransferLocation)){
     $TotalSections = $TotalSections - 1
 }
 
@@ -5127,7 +5133,10 @@ if ($Script:SetDiskupOnly -eq 'FALSE'){
     
     Write-StartTaskMessage -Message 'Creating Documentation files'
     
-    Add-AmigaFolder -AmigaFolderPath ($VolumeName_System+'\PiStorm\Docs\') -TempFoldertouse $TempFolder -AmigaDrivetoCopytouse $AmigaDrivetoCopy
+    if (-not (Test-path ($AmigaDrivetoCopy+$VolumeName_System+'\PiStorm\Docs\'))){
+        $null = New-Item ($AmigaDrivetoCopy+$VolumeName_System+'\PiStorm\Docs\') -ItemType Directory
+    } 
+
     Get-Emu68ImagerDocumentation -LocationtoDownload ($AmigaDrivetoCopy+$VolumeName_System+'\PiStorm\Docs\')
     
     Write-TaskCompleteMessage -Message 'Creating Documentation files - Complete!'
