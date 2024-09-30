@@ -116,7 +116,9 @@ TRUE;3.1,3.2,3.2.2.1;MUI38;FALSE;;;;Web;Full;http://aminet.net/util/libs/mui38us
 TRUE;3.1,3.2,3.2.2.1;MUI38;FALSE;;;;Web;Full;http://aminet.net/util/libs/mui38usr.lha;mui38usr.lha;TRUE;04DF2D2C444A112C66D1B2CA593CB71A;MUI\Rexx.info;System;Programs\MUI\;FALSE;;TRUE;FALSE;;;FALSE;FALSE
 TRUE;3.1,3.2,3.2.2.1;oc666.library;FALSE;;;;Local;CopyOnly;Libs\oc666.library;;FALSE;;;System;Libs\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1,3.2,3.2.2.1;OneTimeRun;FALSE;;;;Local;CopyOnly;OneTimeRun\*;;FALSE;;;System;S\OneTimeRun\;FALSE;;FALSE;Add;Binddrivers;;FALSE;FALSE
-TRUE;3.1,3.2,3.2.2.1;PFS - setfnsize;FALSE;;;;Web;Full;http://aminet.net/disk/misc/PFS3_53.lha;PFS3_53.lha;TRUE;FEDAA397BDD9C593EF1EA7C2E86BFB33;PFS3\tools\setfnsize;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
+TRUE;3.1,3.2,3.2.2.1;PFS - Additional Tools;FALSE;;;;Web;Full;http://aminet.net/disk/misc/PFS3_53.lha;PFS3_53.lha;TRUE;FEDAA397BDD9C593EF1EA7C2E86BFB33;PFS3\tools\setfnsize;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
+TRUE;3.1,3.2,3.2.2.1;PFS - Additional Tools;FALSE;;;;Web;Full;http://aminet.net/disk/misc/PFS3_53.lha;PFS3_53.lha;TRUE;FEDAA397BDD9C593EF1EA7C2E86BFB33;PFS3\tools\pfsdoctor;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
+TRUE;3.1,3.2,3.2.2.1;PFS - Additional Tools;FALSE;;;;Web;Full;http://aminet.net/disk/misc/PFS3_53.lha;PFS3_53.lha;TRUE;FEDAA397BDD9C593EF1EA7C2E86BFB33;PFS3\classes\*;System;Classes\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1,3.2,3.2.2.1;Picasso96;FALSE;;;;Web;Full;http://aminet.net/driver/video/Picasso96.lha;Picasso96.lha;TRUE;16287F92CE6DDEA23F5456CEB4525189;Picasso96Install\Classes\DataTypes\picture.datatype;System;Classes\DataTypes;FALSE;;TRUE;FALSE;;;FALSE;FALSE
 TRUE;3.1,3.2,3.2.2.1;Picasso96;FALSE;;;;Web;Full;http://aminet.net/driver/video/Picasso96.lha;Picasso96.lha;TRUE;16287F92CE6DDEA23F5456CEB4525189;Picasso96Install\Devs\Monitors\Picasso96.info;System;Devs\Monitors\;FALSE;Videocore.info;TRUE;FALSE;;;Replace;FALSE
 TRUE;3.1,3.2,3.2.2.1;Picasso96;FALSE;;;;Web;Full;http://aminet.net/driver/video/Picasso96.lha;Picasso96.lha;TRUE;16287F92CE6DDEA23F5456CEB4525189;Picasso96Install\Devs\Monitors\Picasso96;System;Devs\Monitors\;FALSE;Videocore;TRUE;FALSE;;;FALSE;FALSE
@@ -152,6 +154,7 @@ TRUE;3.1,3.2,3.2.2.1;Reboot;FALSE;;;;Web;Full;http://aminet.net/util/boot/reboot
 TRUE;3.1,3.2,3.2.2.1;ReqTools;FALSE;;;;Web;Full;http://aminet.net/util/libs/Reqtools-Wide.lha;ReqtoolsWide.lha;TRUE;7b146009ce6b99623d73a244a89b8c2a;reqtools.library;System;Libs\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1,3.2,3.2.2.1;ReqTools Prefs ;FALSE;;;;Local;CopyOnly;Prefs\Env-Archive\ReqTools.prefs;;FALSE;;;System;Prefs\Env-Archive\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1,3.2,3.2.2.1;Roadshow;FALSE;;;;Local;Full;Roadshow-Demo-1.15.lha;Roadshow.lha;FALSE;25471647C76D8EAB98F78D24945B3FC6;Roadshow-Demo-*\Workbench\*;System;;FALSE;;FALSE;FALSE;;;FALSE;FALSE
+TRUE;3.1,3.2,3.2.2.1;Roadshow;FALSE;;;;Local;Full;Roadshow-Demo-1.15.lha;Roadshow.lha;FALSE;25471647C76D8EAB98F78D24945B3FC6;Roadshow-Demo-*\Documentation\*;System;Programs\Roadshow\;TRUE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1,3.2,3.2.2.1;Roadshow;FALSE;;;;Local;Full;Roadshow-Demo-1.15.lha;Roadshow.lha;FALSE;25471647C76D8EAB98F78D24945B3FC6;Roadshow-Demo-*\Workbench\Storage\NetInterfaces\CNet16.info;System;Devs\NetInterfaces\;FALSE;wifipi.info;FALSE;FALSE;;;FALSE;FALSE
 FALSE;3.1,3.2,3.2.2.1;Screentext;FALSE;;;;Web;Full;https://thomas-rapp.hier-im-netz.de/downloads/ScreenText.lha;ScreenText.lha;TRUE;D500457A41A18D73C01DD6B27DCE5A41;Screentext;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1,3.2,3.2.2.1;SD0 Device;FALSE;;;;Local;CopyOnly;Devs\DosDrivers\SD0pi3;;FALSE;;;System;Devs\DosDrivers\;FALSE;;FALSE;FALSE;;;FALSE;TRUE

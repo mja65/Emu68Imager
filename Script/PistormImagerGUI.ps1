@@ -2268,10 +2268,10 @@ and select this path to scan.
 "@
     $null = [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,0)
 
-    # $PathtoADFFiles = 'E:\Emulators\Amiga Files\Shared\adf\commodore-amiga-operating-systems-workbench\'
-    # $PathtoADFHashes = 'E:\Emu68Imager\InputFiles\ADFHashes.csv'
-    # $KickstartVersion = 3.1
-    # $PathtoListofInstallFiles = 'E:\Emu68Imager\InputFiles\ListofInstallFiles.csv'
+    $PathtoADFFiles = 'E:\Emulators\Amiga Files\Shared\adf\OS32\'
+    $PathtoADFHashes = 'E:\Emu68Imager\InputFiles\ADFHashes.csv'
+    $KickstartVersion='3.2.2.1'
+    $PathtoListofInstallFiles = 'E:\Emu68Imager\InputFiles\ListofInstallFiles.csv'
 
     $ListofADFFilestoCheck = Get-ChildItem $PathtoADFFiles -force -Recurse
     if ((($ListofADFFilestoCheck | Measure-Object).count) -gt 500){
@@ -2280,7 +2280,7 @@ and select this path to scan.
     } 
     $ListofADFFilestoCheck = $ListofADFFilestoCheck | Where-Object { $_.PSIsContainer -eq $false -and $_.Name -match '.adf' -and $_.Length -eq 901120 } | Get-FileHash  -Algorithm MD5
 
-    $ADFHashes = Import-Csv $PathtoADFHashes -Delimiter ';' |  Where-Object {$_.Kickstart_Version -eq $KickstartVersion} | Sort-Object -Property 'Sequence'
+    $ADFHashes = Import-Csv $PathtoADFHashes -Delimiter ';' | Sort-Object -Property 'Sequence'
    
     $RequiredADFsforInstall = Get-ListofInstallFiles $PathtoListofInstallFiles |  Where-Object {$_.Kickstart_Version -eq $KickstartVersion} | Select-Object ADF_Name, FriendlyName -Unique # Unique ADFs Required
     
@@ -4224,7 +4224,7 @@ $WPF_UI_ROMpath_Button_Check.Add_Click({
             $Text = 'The following Kickstart will be used:'
             $DatatoPopulate = $Script:FoundKickstarttoUse | Select-Object @{Name='Kickstart';Expression='FriendlyName'},@{Name='Path';Expression='KickstartPath'}
             
-            Get-GUIADFKickstartReport -Title $Title -Text $Text -DatatoPopulate $DatatoPopulate -WindowWidth 700 -WindowHeight 300 -DataGridWidth 570 -DataGridHeight 50 -GridLinesVisibility 'None'    
+            Get-GUIADFKickstartReport -Title $Title -Text $Text -DatatoPopulate $DatatoPopulate -WindowWidth 700 -WindowHeight 300 -DataGridWidth 570 -DataGridHeight 80 -GridLinesVisibility 'None'    
         }
     }
     else{
@@ -4314,7 +4314,7 @@ Calculating space requirements. This may take some time if you have selected a l
     $null = Confirm-UIFields
 })
 
-$AvailableKickstarts =  Get-ListofInstallFiles -ListofInstallFilesCSV ($Script:InputFolder+'ListofInstallFiles.csv') | Where-Object 'Kickstart_VersionFriendlyName' -ne ""| Select-Object 'Kickstart_Version','Kickstart_VersionFriendlyName' -unique 
+$AvailableKickstarts =  Get-ListofInstallFiles -ListofInstallFilesCSV ($Script:InputFolder+'ListofInstallFiles.csv') | Where-Object 'Kickstart_VersionFriendlyName' -ne "" | Select-Object 'Kickstart_Version','Kickstart_VersionFriendlyName' -unique 
 
 foreach ($Kickstart in $AvailableKickstarts) {
     $WPF_UI_KickstartVersion_Dropdown.AddChild(($Kickstart.Kickstart_VersionFriendlyName).tostring())
@@ -4483,8 +4483,6 @@ $WPF_UI_Start_Button.Add_Click({
                 }
             }
         }
-
-        Write-SettingsFile -SettingsFile ($Script:SettingsFolder+$Script:LogDateTime+'_AutomatedSettingsSave.e68')
         $WPF_UI_Main_Grid.Visibility="Hidden"
         Write-GUIReporttoUseronOptions
         $WPF_UI_Reporting_Grid.Visibility="Visible"        
@@ -4499,6 +4497,7 @@ $WPF_UI_GoBack_Button.add_Click({
 })
 
 $WPF_UI_Process_Button.add_Click({
+        Write-SettingsFile -SettingsFile ($Script:SettingsFolder+$Script:LogDateTime+'_AutomatedSettingsSave.e68')
         $Form_UserInterface.Close() | out-null
         $Script:ExitType = 1
 })

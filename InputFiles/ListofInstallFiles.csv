@@ -28,101 +28,101 @@ Kickstart_Version;Kickstart_VersionFriendlyName;InstallSequence;ADF_Name;Friendl
 3.1;Workbench 3.1;2;Install3_1;Install 3.1;Update/Disk.info;System;;;;;FALSE;FALSE;;;;FALSE
 3.1;Workbench 3.1;1;Install3_1;Install 3.1;Update/Startup-HardDrive;System;S;Startup-Sequence;;;FALSE;FALSE;;;;FALSE
 3.1;Workbench 3.1;1;Workbench3_1;Workbench 3.1;System.info;System;;Storage.info;;;FALSE;FALSE;;;;FALSE
-3.2;Workbench 3.2;1;Install3_2;Install 3.2;HDTools/HDToolBox;System;Tools;;;;FALSE;FALSE;;;;FALSE
+3.2,3.2.2.1;Workbench 3.2,Workbench 3.2.2.1;1;Install3_2;Install 3.2;HDTools/HDToolBox;System;Tools;;;;FALSE;FALSE;;;;FALSE
 ;;1;Install3_2;Install 3.2;HDTools/HDToolbox.info;System;Tools;HDToolBoxPi3.info;;;FALSE;FALSE;;;;Modify
 ;;1;Install3_2;Install 3.2;HDTools/HDToolbox.info;System;Tools;HDToolBoxPi4.info;;;FALSE;FALSE;;;;Modify
-3.2;Workbench 3.2;1;Install3_2;Install 3.2;Libs/icon.library;System;Libs;;;;FALSE;FALSE;;;;FALSE
-3.2;Workbench 3.2;1;Install3_2;Install 3.2;Libs/workbench.library;System;Libs;;;;FALSE;FALSE;;;;FALSE
-3.2;Workbench 3.2;1;Install3_2;Install 3.2;Storage.info;System;;;;;FALSE;FALSE;;;;FALSE
-3.2;Workbench 3.2;1;Install3_2;Install 3.2;C/Iconpos;System;C;;;;FALSE;FALSE;;;;FALSE
-3.2;Workbench 3.2;1;Workbench3_2;Workbench 3.2;*;System;;;Locale;Disk.info;FALSE;FALSE;;;;FALSE
-;;;DiskDoctor3_2;DiskDoctor 3.2;C/DAControl;System;C;;;;FALSE;FALSE;;;;FALSE
-;;;DiskDoctor3_2;DiskDoctor 3.2;C/DiskDoctor;System;C;;;;FALSE;FALSE;;;;FALSE
-;;;DiskDoctor3_2;DiskDoctor 3.2;Devs/trackfile.device;System;Devs;;;;FALSE;FALSE;;;;FALSE
-3.2;Workbench 3.2;1;Locale3_2;Locale 3.2;Countries;System;Locale/Countries;;;;FALSE;FALSE;;;;FALSE
-3.2;Workbench 3.2;1;Locale3_2;Locale 3.2;Catalogs;System;Locale/Catalogs;;;;FALSE;FALSE;;;;FALSE
-3.2;Workbench 3.2;1;Locale3_2;Locale 3.2;Support/Fonts;System;Fonts;;;;TRUE;FALSE;;;;FALSE
-3.2;Workbench 3.2;1;LocaleDE3_2;LocaleDE 3.2;*;System;Locale;;;Disk.info;TRUE;FALSE;;;;FALSE
-3.2;Workbench 3.2;1;LocaleDK3_2;LocaleDK 3.2;*;System;Locale;;;Disk.info;TRUE;FALSE;;;;FALSE
-3.2;Workbench 3.2;1;LocaleEN3_2;LocaleEN 3.2;*;System;Locale;;;Disk.info;TRUE;FALSE;;;;FALSE
-3.2;Workbench 3.2;1;LocaleES3_2;LocaleES 3.2;*;System;Locale;;;Disk.info;TRUE;FALSE;;;;FALSE
-3.2;Workbench 3.2;1;LocaleFR3_2;LocaleFR 3.2;*;System;Locale;;;Disk.info;TRUE;FALSE;;;;FALSE
+3.2,3.2.2.1;Workbench 3.2,Workbench 3.2.2.1;1;Install3_2;Install 3.2;Libs/icon.library;System;Libs;;;;FALSE;FALSE;;;;FALSE
+3.2,3.2.2.1;Workbench 3.2,Workbench 3.2.2.1;1;Install3_2;Install 3.2;Libs/workbench.library;System;Libs;;;;FALSE;FALSE;;;;FALSE
+3.2,3.2.2.1;Workbench 3.2,Workbench 3.2.2.1;1;Install3_2;Install 3.2;Storage.info;System;;;;;FALSE;FALSE;;;;FALSE
+3.2,3.2.2.1;Workbench 3.2,Workbench 3.2.2.1;1;Install3_2;Install 3.2;C/Iconpos;System;C;;;;FALSE;FALSE;;;;FALSE
+3.2,3.2.2.1;Workbench 3.2,Workbench 3.2.2.1;1;Workbench3_2;Workbench 3.2;*;System;;;Locale;Disk.info;FALSE;FALSE;;;;FALSE
+3.2;Workbench 3.2;1;DiskDoctor3_2;DiskDoctor 3.2;C/DAControl;System;C;;;;FALSE;FALSE;;;;FALSE
+3.2;Workbench 3.2;1;DiskDoctor3_2;DiskDoctor 3.2;C/DiskDoctor;System;C;;;;FALSE;FALSE;;;;FALSE
+3.2;Workbench 3.2;1;DiskDoctor3_2;DiskDoctor 3.2;Devs/trackfile.device;System;Devs;;;;FALSE;FALSE;;;;FALSE
+3.2,3.2.2.1;Workbench 3.2,Workbench 3.2.2.1;1;Locale3_2;Locale 3.2;Countries;System;Locale/Countries;;;;FALSE;FALSE;;;;FALSE
+3.2,3.2.2.1;Workbench 3.2,Workbench 3.2.2.1;1;Locale3_2;Locale 3.2;Catalogs;System;Locale/Catalogs;;;;FALSE;FALSE;;;;FALSE
+3.2,3.2.2.1;Workbench 3.2,Workbench 3.2.2.1;1;Locale3_2;Locale 3.2;Support/Fonts;System;Fonts;;;;TRUE;FALSE;;;;FALSE
+3.2,3.2.2.1;Workbench 3.2,Workbench 3.2.2.1;1;LocaleDE3_2;LocaleDE 3.2;*;System;Locale;;;Disk.info;TRUE;FALSE;;;;FALSE
+3.2,3.2.2.1;Workbench 3.2,Workbench 3.2.2.1;1;LocaleDK3_2;LocaleDK 3.2;*;System;Locale;;;Disk.info;TRUE;FALSE;;;;FALSE
+3.2,3.2.2.1;Workbench 3.2,Workbench 3.2.2.1;1;LocaleEN3_2;LocaleEN 3.2;*;System;Locale;;;Disk.info;TRUE;FALSE;;;;FALSE
+3.2,3.2.2.1;Workbench 3.2,Workbench 3.2.2.1;1;LocaleES3_2;LocaleES 3.2;*;System;Locale;;;Disk.info;TRUE;FALSE;;;;FALSE
+3.2,3.2.2.1;Workbench 3.2,Workbench 3.2.2.1;1;LocaleFR3_2;LocaleFR 3.2;*;System;Locale;;;Disk.info;TRUE;FALSE;;;;FALSE
 ;;;LocaleGR3_2;LocaleGR 3.2;*;System;Locale;;;Disk.info;TRUE;FALSE;;;;FALSE
-3.2;Workbench 3.2;1;LocaleIT3_2;LocaleIT 3.2;*;System;Locale;;;Disk.info;TRUE;FALSE;;;;FALSE
-3.2;Workbench 3.2;1;LocaleNL3_2;LocaleNL 3.2;*;System;Locale;;;Disk.info;TRUE;FALSE;;;;FALSE
+3.2,3.2.2.1;Workbench 3.2,Workbench 3.2.2.1;1;LocaleIT3_2;LocaleIT 3.2;*;System;Locale;;;Disk.info;TRUE;FALSE;;;;FALSE
+3.2,3.2.2.1;Workbench 3.2,Workbench 3.2.2.1;1;LocaleNL3_2;LocaleNL 3.2;*;System;Locale;;;Disk.info;TRUE;FALSE;;;;FALSE
 ;;;LocaleNO3_2;LocaleNO 3.2;*;System;Locale;;;Disk.info;TRUE;FALSE;;;;FALSE
 ;;;LocalePL3_2;LocalePL 3.2;*;System;Locale;;;Disk.info;TRUE;FALSE;;;;FALSE
 ;;;LocalePT3_2;LocalePT 3.2;*;System;Locale;;;Disk.info;TRUE;FALSE;;;;FALSE
 ;;;LocaleRU3_2;LocaleRU 3.2;*;System;Locale;;;Disk.info;TRUE;FALSE;;;;FALSE
 ;;;LocaleSE3_2;LocaleSE 3.2;*;System;Locale;;;Disk.info;TRUE;FALSE;;;;FALSE
 ;;;LocaleTR3_2;LocaleTR 3.2;*;System;Locale;;;Disk.info;TRUE;FALSE;;;;FALSE
-3.2,3.2.2.1;Workbench 3.2,Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);1;LocaleUK3_2;LocaleUK 3.2;*;System;Locale;;;Disk.info;TRUE;FALSE;;;;FALSE
-3.2,3.2.2.1;Workbench 3.2,Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);1;Extras3_2;Extras 3.2;*;System;;;;Disk.info;FALSE;FALSE;;;;FALSE
-3.2,3.2.2.1;Workbench 3.2,Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);1;Classes3_2;Classes 3.2;*;System;;;;Disk.info;FALSE;FALSE;;;;FALSE
-3.2,3.2.2.1;Workbench 3.2,Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);1;Fonts3_2;Fonts 3.2;*;System;Fonts;;;Disk.info;FALSE;FALSE;;;;FALSE
+3.2,3.2.2.1;Workbench 3.2,Workbench 3.2.2.1;1;LocaleUK3_2;LocaleUK 3.2;*;System;Locale;;;Disk.info;TRUE;FALSE;;;;FALSE
+3.2,3.2.2.1;Workbench 3.2,Workbench 3.2.2.1;1;Extras3_2;Extras 3.2;*;System;;;;Disk.info;FALSE;FALSE;;;;FALSE
+3.2,3.2.2.1;Workbench 3.2,Workbench 3.2.2.1;1;Classes3_2;Classes 3.2;*;System;;;;Disk.info;FALSE;FALSE;;;;FALSE
+3.2,3.2.2.1;Workbench 3.2,Workbench 3.2.2.1;1;Fonts3_2;Fonts 3.2;*;System;Fonts;;;Disk.info;FALSE;FALSE;;;;FALSE
 ;;;Storage3_2;Storage 3.2;DataTypes;System;Storage;;;;FALSE;FALSE;;;;FALSE
-3.2,3.2.2.1;Workbench 3.2,Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);1;Storage3_2;Storage 3.2;DOSDrivers;System;Storage/DosDrivers;;;;FALSE;FALSE;;;;FALSE
-3.2,3.2.2.1;Workbench 3.2,Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);1;Storage3_2;Storage 3.2;KeyMaps;System;Storage/KeyMaps;;;;FALSE;FALSE;;;;FALSE
-3.2,3.2.2.1;Workbench 3.2,Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);1;Storage3_2;Storage 3.2;Monitors;System;Storage/Monitors;;;;FALSE;FALSE;;;;FALSE
-3.2,3.2.2.1;Workbench 3.2,Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);1;Storage3_2;Storage 3.2;Printers;System;Storage/Printers;;;;FALSE;FALSE;;;;FALSE
-3.2,3.2.2.1;Workbench 3.2,Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);1;Storage3_2;Storage 3.2;DOSDrivers.info;System;Storage;;;;FALSE;FALSE;;;;FALSE
-3.2,3.2.2.1;Workbench 3.2,Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);1;Storage3_2;Storage 3.2;KeyMaps.info;System;Storage;;;;FALSE;FALSE;;;;FALSE
-3.2,3.2.2.1;Workbench 3.2,Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);1;Storage3_2;Storage 3.2;Monitors.info;System;Storage;;;;FALSE;FALSE;;;;FALSE
-3.2,3.2.2.1;Workbench 3.2,Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);1;Storage3_2;Storage 3.2;Printers.info;System;Storage;;;;FALSE;FALSE;;;;FALSE
-3.2,3.2.2.1;Workbench 3.2,Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);1;Storage3_2;Storage 3.2;Classes/DataTypes;System;Classes/DataTypes;;;;FALSE;FALSE;;;;FALSE
-3.2,3.2.2.1;Workbench 3.2,Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);1;Storage3_2;Storage 3.2;C;System;C;;;;FALSE;FALSE;;;;FALSE
-3.2,3.2.2.1;Workbench 3.2,Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);1;Storage3_2;Storage 3.2;Presets/Pointers;System;Prefs/Presets/Pointers;;;;FALSE;FALSE;;;;FALSE
-3.2,3.2.2.1;Workbench 3.2,Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);1;Storage3_2;Storage 3.2;Monitors;System;Storage/Monitors;;;;FALSE;FALSE;;;;FALSE
-3.2,3.2.2.1;Workbench 3.2,Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);1;Storage3_2;Storage 3.2;DOSDrivers;System;Storage/DOSDrivers;;;;FALSE;FALSE;;;;FALSE
-3.2,3.2.2.1;Workbench 3.2,Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);1;Storage3_2;Storage 3.2;WBStartup;System;WBStartup;;;;FALSE;FALSE;;;;FALSE
-3.2,3.2.2.1;Workbench 3.2,Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);1;Storage3_2;Storage 3.2;DefIcons;System;Prefs/Env-Archive/Sys;;;;FALSE;FALSE;;;;FALSE
-3.2,3.2.2.1;Workbench 3.2,Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);1;Storage3_2;Storage 3.2;Env-Archive/deficons.prefs;System;Prefs/Env-Archive/Sys;;;;FALSE;FALSE;;;;FALSE
-3.2,3.2.2.1;Workbench 3.2,Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);1;Storage3_2;Storage 3.2;Env-Archive/Pointer.prefs;System;Prefs/Env-Archive/Sys;;;;FALSE;FALSE;;;;FALSE
-3.2,3.2.2.1;Workbench 3.2,Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);1;Storage3_2;Storage 3.2;Printers;System;Devs/Printers;;;;FALSE;FALSE;;;;FALSE
-3.2,3.2.2.1;Workbench 3.2,Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);1;Storage3_2;Storage 3.2;KeyMaps;System;Devs/Keymaps;;;;FALSE;FALSE;;;;FALSE
-3.2,3.2.2.1;Workbench 3.2,Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);1;Storage3_2;Storage 3.2;Libs;System;Libs;;;;FALSE;FALSE;;;;FALSE
-3.2,3.2.2.1;Workbench 3.2,Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);1;Backdrops3_2;Backdrops 3.2;*;System;Prefs/Presets/Backdrops;;;;FALSE;FALSE;;;;FALSE
+3.2,3.2.2.1;Workbench 3.2,Workbench 3.2.2.1;1;Storage3_2;Storage 3.2;DOSDrivers;System;Storage/DosDrivers;;;;FALSE;FALSE;;;;FALSE
+3.2,3.2.2.1;Workbench 3.2,Workbench 3.2.2.1;1;Storage3_2;Storage 3.2;KeyMaps;System;Storage/KeyMaps;;;;FALSE;FALSE;;;;FALSE
+3.2,3.2.2.1;Workbench 3.2,Workbench 3.2.2.1;1;Storage3_2;Storage 3.2;Monitors;System;Storage/Monitors;;;;FALSE;FALSE;;;;FALSE
+3.2,3.2.2.1;Workbench 3.2,Workbench 3.2.2.1;1;Storage3_2;Storage 3.2;Printers;System;Storage/Printers;;;;FALSE;FALSE;;;;FALSE
+3.2,3.2.2.1;Workbench 3.2,Workbench 3.2.2.1;1;Storage3_2;Storage 3.2;DOSDrivers.info;System;Storage;;;;FALSE;FALSE;;;;FALSE
+3.2,3.2.2.1;Workbench 3.2,Workbench 3.2.2.1;1;Storage3_2;Storage 3.2;KeyMaps.info;System;Storage;;;;FALSE;FALSE;;;;FALSE
+3.2,3.2.2.1;Workbench 3.2,Workbench 3.2.2.1;1;Storage3_2;Storage 3.2;Monitors.info;System;Storage;;;;FALSE;FALSE;;;;FALSE
+3.2,3.2.2.1;Workbench 3.2,Workbench 3.2.2.1;1;Storage3_2;Storage 3.2;Printers.info;System;Storage;;;;FALSE;FALSE;;;;FALSE
+3.2,3.2.2.1;Workbench 3.2,Workbench 3.2.2.1;1;Storage3_2;Storage 3.2;Classes/DataTypes;System;Classes/DataTypes;;;;FALSE;FALSE;;;;FALSE
+3.2,3.2.2.1;Workbench 3.2,Workbench 3.2.2.1;1;Storage3_2;Storage 3.2;C;System;C;;;;FALSE;FALSE;;;;FALSE
+3.2,3.2.2.1;Workbench 3.2,Workbench 3.2.2.1;1;Storage3_2;Storage 3.2;Presets/Pointers;System;Prefs/Presets/Pointers;;;;FALSE;FALSE;;;;FALSE
+3.2,3.2.2.1;Workbench 3.2,Workbench 3.2.2.1;1;Storage3_2;Storage 3.2;Monitors;System;Storage/Monitors;;;;FALSE;FALSE;;;;FALSE
+3.2,3.2.2.1;Workbench 3.2,Workbench 3.2.2.1;1;Storage3_2;Storage 3.2;DOSDrivers;System;Storage/DOSDrivers;;;;FALSE;FALSE;;;;FALSE
+3.2,3.2.2.1;Workbench 3.2,Workbench 3.2.2.1;1;Storage3_2;Storage 3.2;WBStartup;System;WBStartup;;;;FALSE;FALSE;;;;FALSE
+3.2,3.2.2.1;Workbench 3.2,Workbench 3.2.2.1;1;Storage3_2;Storage 3.2;DefIcons;System;Prefs/Env-Archive/Sys;;;;FALSE;FALSE;;;;FALSE
+3.2,3.2.2.1;Workbench 3.2,Workbench 3.2.2.1;1;Storage3_2;Storage 3.2;Env-Archive/deficons.prefs;System;Prefs/Env-Archive;;;;FALSE;FALSE;;;;FALSE
+3.2,3.2.2.1;Workbench 3.2,Workbench 3.2.2.1;1;Storage3_2;Storage 3.2;Env-Archive/Pointer.prefs;System;Prefs/Env-Archive/Sys;;;;FALSE;FALSE;;;;FALSE
+3.2,3.2.2.1;Workbench 3.2,Workbench 3.2.2.1;1;Storage3_2;Storage 3.2;Printers;System;Devs/Printers;;;;FALSE;FALSE;;;;FALSE
+3.2,3.2.2.1;Workbench 3.2,Workbench 3.2.2.1;1;Storage3_2;Storage 3.2;KeyMaps;System;Devs/Keymaps;;;;FALSE;FALSE;;;;FALSE
+3.2,3.2.2.1;Workbench 3.2,Workbench 3.2.2.1;1;Storage3_2;Storage 3.2;Libs;System;Libs;;;;FALSE;FALSE;;;;FALSE
+3.2,3.2.2.1;Workbench 3.2,Workbench 3.2.2.1;1;Backdrops3_2;Backdrops 3.2;*;System;Prefs/Presets/Backdrops;;;;FALSE;FALSE;;;;FALSE
 ;;;Install3_2;Install 3.2;Update/disk.info;System;;;;;FALSE;FALSE;;;;FALSE
 3.2;Workbench 3.2;3;Install3_2;Install 3.2;Update/Startup-HardDrive;System;S;Startup-Sequence;;;FALSE;Remove;Remove CPU Libraries;- CPU CheckInstall Section -;- End of CPU CheckInstall Section -;FALSE
-3.2,3.2.2.1;Workbench 3.2,Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);5;GlowIcons3_2;GlowIcons 3.2;*;System;;;;;FALSE;FALSE;;;;FALSE
-3.2,3.2.2.1;Workbench 3.2,Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);6;GlowIcons3_2;GlowIcons 3.2;Disk.Info;System;;;;;FALSE;FALSE;;;;FALSE
-3.2,3.2.2.1;Workbench 3.2,Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);6;GlowIcons3_2;GlowIcons 3.2;Tools/HDToolbox.info;System;Tools;HDToolBoxPi3.info;;;FALSE;FALSE;;;;Modify
-3.2,3.2.2.1;Workbench 3.2,Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);6;GlowIcons3_2;GlowIcons 3.2;Tools/HDToolbox.info;System;Tools;HDToolBoxPi4.info;;;FALSE;FALSE;;;;Modify
-3.2.2.1;Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);3;Update3_2_2;Update 3.2.2;Update/IconEdit.Info;System;Tools;;;;FALSE;FALSE;;;;FALSE
-3.2.2.1;Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);3;Update3_2_2;Update 3.2.2;Installer;System;System;;;;FALSE;FALSE;;;;FALSE
-3.2.2.1;Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);3;Update3_2_2;Update 3.2.2;Update/Release;System;Prefs/Env-Archive/Versions;;;;FALSE;FALSE;;;;FALSE
-3.2.2.1;Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);3;Update3_2_2;Update 3.2.2;Libs/*;System;Libs;;;;TRUE;FALSE;;;;FALSE
-3.2.2.1;Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);3;Update3_2_2;Update 3.2.2;C/*.Z;System;C;;;;TRUE;FALSE;;;;FALSE
-3.2.2.1;Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);3;Update3_2_2;Update 3.2.2;Devs/*;System;Devs;;;;TRUE;FALSE;;;;FALSE
-3.2.2.1;Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);3;Update3_2_2;Update 3.2.2;L/*;System;L;;;;TRUE;FALSE;;;;FALSE
-3.2.2.1;Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);3;Update3_2_2;Update 3.2.2;Locale/Countries/*;System;Locale/Countries;;;;TRUE;FALSE;;;;FALSE
-3.2.2.1;Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);3;Update3_2_2;Update 3.2.2;Prefs/*;System;Prefs;;;;TRUE;FALSE;;;;FALSE
-3.2.2.1;Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);3;Update3_2_2;Update 3.2.2;System/*;System;System;;;;TRUE;FALSE;;;;FALSE
-3.2.2.1;Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);3;Update3_2_2;Update 3.2.2;Tools/*;System;Tools;;;;TRUE;FALSE;;;;FALSE
-3.2.2.1;Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);3;Update3_2_2;Update 3.2.2;Utilities/*;System;Utilities;;;;TRUE;FALSE;;;;FALSE
-3.2.2.1;Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);3;Update3_2_2;Update 3.2.2;WBStartup/*;System;WBStartup;;;;TRUE;FALSE;;;;FALSE
-3.2.2.1;Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);3;Update3_2_2;Update 3.2.2;Update/Startup-HardDrive;System;S;Startup-Sequence;;;FALSE;Remove;Remove CPU Libraries;- CPU CheckInstall Section -;- End of CPU CheckInstall Section -;FALSE
-3.2.2.1;Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);3;Classes3_2_2;Classes 3.2.2;*;System;;;;;TRUE;FALSE;;;;FALSE
-3.2.2.1;Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);3;DiskDoctor3_2_2;DiskDoctor 3.2.2;C/DAControl;System;C;;;;FALSE;FALSE;;;;FALSE
-3.2.2.1;Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);3;DiskDoctor3_2_2;DiskDoctor 3.2.2;C/DiskDoctor;System;C;;;;FALSE;FALSE;;;;FALSE
-3.2.2.1;Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);3;DiskDoctor3_2_2;DiskDoctor 3.2.2;Devs/trackfile.device;System;Devs;;;;FALSE;FALSE;;;;FALSE
-3.2.2.1;Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);3;LocaleDE3_2_2;LocaleDE 3.2.2;*;System;Locale;;;;TRUE;FALSE;;;;FALSE
-3.2.2.1;Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);3;LocaleDK3_2_2;LocaleDK 3.2.2;*;System;Locale;;;;TRUE;FALSE;;;;FALSE
-3.2.2.1;Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);3;LocaleEN3_2_2;LocaleEN 3.2.2;*;System;Locale;;;;TRUE;FALSE;;;;FALSE
-3.2.2.1;Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);3;LocaleES3_2_2;LocaleES 3.2.2;*;System;Locale;;;;TRUE;FALSE;;;;FALSE
-3.2.2.1;Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);3;LocaleFR3_2_2;LocaleFR 3.2.2;*;System;Locale;;;;TRUE;FALSE;;;;FALSE
+3.2,3.2.2.1;Workbench 3.2,Workbench 3.2.2.1;5;GlowIcons3_2;GlowIcons 3.2;*;System;;;;;FALSE;FALSE;;;;FALSE
+3.2,3.2.2.1;Workbench 3.2,Workbench 3.2.2.1;6;GlowIcons3_2;GlowIcons 3.2;Disk.Info;System;;;;;FALSE;FALSE;;;;FALSE
+3.2,3.2.2.1;Workbench 3.2,Workbench 3.2.2.1;6;GlowIcons3_2;GlowIcons 3.2;Tools/HDToolbox.info;System;Tools;HDToolBoxPi3.info;;;FALSE;FALSE;;;;Modify
+3.2,3.2.2.1;Workbench 3.2,Workbench 3.2.2.1;6;GlowIcons3_2;GlowIcons 3.2;Tools/HDToolbox.info;System;Tools;HDToolBoxPi4.info;;;FALSE;FALSE;;;;Modify
+3.2.2.1;Workbench 3.2.2.1;3;Update3_2_2;Update 3.2.2;Update/IconEdit.Info;System;Tools;;;;FALSE;FALSE;;;;FALSE
+3.2.2.1;Workbench 3.2.2.1;3;Update3_2_2;Update 3.2.2;Installer;System;System;;;;FALSE;FALSE;;;;FALSE
+3.2.2.1;Workbench 3.2.2.1;3;Update3_2_2;Update 3.2.2;Update/Release;System;Prefs/Env-Archive/Versions;;;;FALSE;FALSE;;;;FALSE
+3.2.2.1;Workbench 3.2.2.1;3;Update3_2_2;Update 3.2.2;Libs/*;System;Libs;;;;TRUE;FALSE;;;;FALSE
+3.2.2.1;Workbench 3.2.2.1;3;Update3_2_2;Update 3.2.2;C/*.Z;System;C;;;;TRUE;FALSE;;;;FALSE
+3.2.2.1;Workbench 3.2.2.1;3;Update3_2_2;Update 3.2.2;Devs/*;System;Devs;;;;TRUE;FALSE;;;;FALSE
+3.2.2.1;Workbench 3.2.2.1;3;Update3_2_2;Update 3.2.2;L/*;System;L;;;;TRUE;FALSE;;;;FALSE
+3.2.2.1;Workbench 3.2.2.1;3;Update3_2_2;Update 3.2.2;Locale/Countries/*;System;Locale/Countries;;;;TRUE;FALSE;;;;FALSE
+3.2.2.1;Workbench 3.2.2.1;3;Update3_2_2;Update 3.2.2;Prefs/*;System;Prefs;;;;TRUE;FALSE;;;;FALSE
+3.2.2.1;Workbench 3.2.2.1;3;Update3_2_2;Update 3.2.2;System/*;System;System;;;;TRUE;FALSE;;;;FALSE
+3.2.2.1;Workbench 3.2.2.1;3;Update3_2_2;Update 3.2.2;Tools/*;System;Tools;;;;TRUE;FALSE;;;;FALSE
+3.2.2.1;Workbench 3.2.2.1;3;Update3_2_2;Update 3.2.2;Utilities/*;System;Utilities;;;;TRUE;FALSE;;;;FALSE
+3.2.2.1;Workbench 3.2.2.1;3;Update3_2_2;Update 3.2.2;WBStartup/*;System;WBStartup;;;;TRUE;FALSE;;;;FALSE
+3.2.2.1;Workbench 3.2.2.1;3;Update3_2_2;Update 3.2.2;Update/Startup-HardDrive;System;S;Startup-Sequence;;;FALSE;Remove;Remove CPU Libraries;- CPU CheckInstall Section -;- End of CPU CheckInstall Section -;FALSE
+3.2.2.1;Workbench 3.2.2.1;3;Classes3_2_2;Classes 3.2.2;*;System;;;;;TRUE;FALSE;;;;FALSE
+3.2.2.1;Workbench 3.2.2.1;3;DiskDoctor3_2_2;DiskDoctor 3.2.2;C/DAControl;System;C;;;;FALSE;FALSE;;;;FALSE
+3.2.2.1;Workbench 3.2.2.1;3;DiskDoctor3_2_2;DiskDoctor 3.2.2;C/DiskDoctor;System;C;;;;FALSE;FALSE;;;;FALSE
+3.2.2.1;Workbench 3.2.2.1;3;DiskDoctor3_2_2;DiskDoctor 3.2.2;Devs/trackfile.device;System;Devs;;;;FALSE;FALSE;;;;FALSE
+3.2.2.1;Workbench 3.2.2.1;3;LocaleDE3_2_2;LocaleDE 3.2.2;*;System;Locale;;;;TRUE;FALSE;;;;FALSE
+3.2.2.1;Workbench 3.2.2.1;3;LocaleDK3_2_2;LocaleDK 3.2.2;*;System;Locale;;;;TRUE;FALSE;;;;FALSE
+3.2.2.1;Workbench 3.2.2.1;3;LocaleEN3_2_2;LocaleEN 3.2.2;*;System;Locale;;;;TRUE;FALSE;;;;FALSE
+3.2.2.1;Workbench 3.2.2.1;3;LocaleES3_2_2;LocaleES 3.2.2;*;System;Locale;;;;TRUE;FALSE;;;;FALSE
+3.2.2.1;Workbench 3.2.2.1;3;LocaleFR3_2_2;LocaleFR 3.2.2;*;System;Locale;;;;TRUE;FALSE;;;;FALSE
 ;;;LocaleGR3_2;LocaleGR 3.2;*;System;Locale;;;;TRUE;FALSE;;;;FALSE
-3.2.2.1;Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);3;LocaleIT3_2_2;LocaleIT 3.2.2;*;System;Locale;;;;TRUE;FALSE;;;;FALSE
-3.2.2.1;Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);3;LocaleNL3_2_2;LocaleNL 3.2.2;*;System;Locale;;;;TRUE;FALSE;;;;FALSE
+3.2.2.1;Workbench 3.2.2.1;3;LocaleIT3_2_2;LocaleIT 3.2.2;*;System;Locale;;;;TRUE;FALSE;;;;FALSE
+3.2.2.1;Workbench 3.2.2.1;3;LocaleNL3_2_2;LocaleNL 3.2.2;*;System;Locale;;;;TRUE;FALSE;;;;FALSE
 ;;;LocaleNO3_2;LocaleNO 3.2;*;System;Locale;;;;TRUE;FALSE;;;;FALSE
 ;;;LocalePL3_2_2;LocalePL 3.2.2;*;System;Locale;;;;TRUE;FALSE;;;;FALSE
 ;;;LocalePT3_2_2;LocalePT 3.2.2;*;System;Locale;;;;TRUE;FALSE;;;;FALSE
 ;;;LocaleRU3_2_2;LocaleRU 3.2.2;*;System;Locale;;;;TRUE;FALSE;;;;FALSE
 ;;;LocaleSE3_2_2;LocaleSE 3.2.2;*;System;Locale;;;;TRUE;FALSE;;;;FALSE
 ;;;LocaleTR3_2_2;LocaleTR 3.2.2;*;System;Locale;;;;TRUE;FALSE;;;;FALSE
-3.2.2.1;Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);3;LocaleUK3_2_2;LocaleUK 3.2.2;*;System;Locale;;;;TRUE;FALSE;;;;FALSE
-3.2.2.1;Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);4;Update3_2_2_1;Update 3.2.2.1;C;System;C;;;;FALSE;FALSE;;;;FALSE
-3.2.2.1;Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);4;Update3_2_2_1;Update 3.2.2.1;Classes/*;System;Classes;;;;TRUE;FALSE;;;;FALSE
-3.2.2.1;Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);4;Update3_2_2_1;Update 3.2.2.1;System/*;System;System;;;;TRUE;FALSE;;;;FALSE
-3.2.2.1;Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);4;Update3_2_2_1;Update 3.2.2.1;Tools/*;System;Tools;;;;TRUE;FALSE;;;;FALSE
-3.2.2.1;Workbench 3.2 (incl 3.2.2 + 3.2.2.1 hotfix);4;Update3_2_2_1;Update 3.2.2.1;Update/Release;System;Prefs/Env-Archive/Versions;;;;FALSE;FALSE;;;;FALSE
+3.2.2.1;Workbench 3.2.2.1;3;LocaleUK3_2_2;LocaleUK 3.2.2;*;System;Locale;;;;TRUE;FALSE;;;;FALSE
+3.2.2.1;Workbench 3.2.2.1;4;Update3_2_2_1;Update 3.2.2.1;C;System;C;;;;FALSE;FALSE;;;;FALSE
+3.2.2.1;Workbench 3.2.2.1;4;Update3_2_2_1;Update 3.2.2.1;Classes/*;System;Classes;;;;TRUE;FALSE;;;;FALSE
+3.2.2.1;Workbench 3.2.2.1;4;Update3_2_2_1;Update 3.2.2.1;System/*;System;System;;;;TRUE;FALSE;;;;FALSE
+3.2.2.1;Workbench 3.2.2.1;4;Update3_2_2_1;Update 3.2.2.1;Tools/*;System;Tools;;;;TRUE;FALSE;;;;FALSE
+3.2.2.1;Workbench 3.2.2.1;4;Update3_2_2_1;Update 3.2.2.1;Update/Release;System;Prefs/Env-Archive/Versions;;;;FALSE;FALSE;;;;FALSE
