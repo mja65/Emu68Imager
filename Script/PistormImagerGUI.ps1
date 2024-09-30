@@ -80,6 +80,7 @@ Script:ADFPath = [$Script:ADFPath]
 Script:LocationofImage = [$Script:LocationofImage]
 Script:TransferLocation = [$Script:TransferLocation]
 Script:WriteMethod = [$Script:WriteMethod]
+Script:DeleteAllWorkingPathFiles = [$Script:DeleteAllWorkingPathFiles]
 
 Activity Commences:
 
@@ -316,6 +317,7 @@ $Script:ImageOnly = $null
 $Script:TotalSections = $null
 $Script:CurrentSection = $null
 $Script:SetDiskupOnly = $null
+$Script:DeleteAllWorkingPathFiles = $null 
 $Script:PartitionBarPixelperKB = $null
 $Script:SizeofDisk = $null
 $Script:Fat32Maximum = $null
@@ -361,6 +363,7 @@ $Script:AvailableADFs = $null
 $Script:DiskFriendlyName = $null
 $Script:IsDisclaimerAccepted = $null
 $Script:IsLoadedSettings = $null
+$Script:HDFImageLocation = $null
 
 ####################################################################### End Null out Global Variables ###############################################################################################
 
@@ -1139,15 +1142,15 @@ SD card is not available! Settings relating to partition sizes have not been loa
 
 "@    
 
-    $Msg_Header_WorkingPath ='Working Path Not Available'   
+    $Msg_Header_WorkingPath ='Working Folder Not Available'   
     $Msg_Body_WorkingPath = @"
-Working path is not available! If you have insufficient space you will need to set 
-the working path again when you run the tool.
+Working Folder is not available! If you have insufficient space you will need to set 
+the working Folder again when you run the tool.
 
 "@    
     $Msg_Header_NonEmpty = 'Non Empty Folder'
     $Msg_Body_NonEmpty = @"
-The Working path is not empty! Working path will revert to the default.
+The Working Folder is not empty! Working Folder will revert to the default.
 "@  
     
 $SettingstoRead = (
@@ -1356,7 +1359,7 @@ $SettingstoRead = (
             $Script:WorkingPathDefault = $true  
         }      
         else{
-            $items = Get-ChildItem -Path $WorkingPath -Recurse -Force | Where-Object {$_.Name -ne 'Temp' -and $_.Name -ne 'OutputImage' -and $_.Name -ne 'AmigaImageFiles' -and $_.Name -ne 'FAT32Partition'}
+            $items = Get-ChildItem -Path $WorkingPath -Recurse -Force | Where-Object {$_.Name -ne 'AmigaDownloads' -and $_.Name -ne 'AmigaImageFiles' -and $_.Name -ne 'FAT32Partition' -and $_.Name -ne 'HDFImage' -and $_.Name -ne 'OutputImage' -and $_.Name -ne 'Programs' -and $_.Name -ne 'Temp'}
             if ($items.Count -eq 0){
                 $Script:WorkingPathDefault = $false
 
@@ -1419,6 +1422,7 @@ function Write-SettingsFile {
     ('SizeofPartition_Other;'+$Script:SizeofPartition_Other) | Out-File $SettingsFile -Append
     ('ImageOnly;'+$Script:ImageOnly) | Out-File $SettingsFile -Append
     ('SetDiskupOnly;'+$Script:SetDiskupOnly) | Out-File $SettingsFile -Append
+    ('DeleteAllWorkingPathFiles;'+$Script:DeleteAllWorkingPathFiles) | Out-File $SettingsFile -Append
     ('WorkingPath;'+$Script:WorkingPath) | Out-File $SettingsFile -Append
     ('WorkingPathDefault;'+$Script:WorkingPathDefault) | Out-File $SettingsFile -Append
     ('HSTDiskNumber;'+$Script:HSTDiskNumber) | Out-File $SettingsFile -Append
@@ -2181,6 +2185,10 @@ and select this path to scan.
 
 "@
 
+#    $PathtoKickstartHashes = 'E:\Emu68Imager\InputFiles\RomHashes.csv'
+#    $PathtoKickstartFiles = 'E:\Emulators\Amiga Files\Shared\rom\'
+#    $KickstartVersion = 3.2
+    
     $null = [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,0)
 
     $KickstartHashestoFind =Import-Csv $PathtoKickstartHashes -Delimiter ';' |  Where-Object {$_.Kickstart_Version -eq $KickstartVersion} | Sort-Object -Property 'Sequence'   
@@ -2274,7 +2282,7 @@ and select this path to scan.
 
     $ADFHashes = Import-Csv $PathtoADFHashes -Delimiter ';' |  Where-Object {$_.Kickstart_Version -eq $KickstartVersion} | Sort-Object -Property 'Sequence'
    
-    $RequiredADFsforInstall = Import-Csv $PathtoListofInstallFiles -Delimiter ';' |  Where-Object {$_.Kickstart_Version -eq $KickstartVersion} | Select-Object ADF_Name, FriendlyName -Unique # Unique ADFs Required
+    $RequiredADFsforInstall = Get-ListofInstallFiles $PathtoListofInstallFiles |  Where-Object {$_.Kickstart_Version -eq $KickstartVersion} | Select-Object ADF_Name, FriendlyName -Unique # Unique ADFs Required
     
     $RequiredADFandHashes = [System.Collections.Generic.List[PSCustomObject]]::New() # Allowing for if there are multiple hashes for the same ADF
     
@@ -2583,6 +2591,7 @@ function Write-GUIReporttoUseronOptions {
     #     $WPF_UI_WriteMethodValue_Reporting_Detail_TextBox.Text = ''
     # }
     $WPF_UI_SetupDiskOnlyValue_Detail_TextBox.Text = $Script:SetDiskupOnly
+    $WPF_UI_DeleteAllWorkingPathFilesValue_Detail_TextBox.Text = $Script:DeleteAllWorkingPathFiles
     $WPF_UI_WorkingPathValue_Reporting_Detail_TextBox.Text = $Script:WorkingPath
     $WPF_UI_RomPathValue_Reporting_Detail_TextBox.Text = $Script:ROMPath
     $WPF_UI_ADFPathValue_Detail_TextBox.Text = Get-FormattedPathforGUI -PathtoTruncate $Script:ADFPath -Length 63
@@ -2691,10 +2700,10 @@ function Get-StartEmptySpace {
 You have selected a non-empty folder! Please select an empty folder.
 "@  
     do {
-        $WorkingPathtoReturn = Get-FolderPath -Message 'Select location for Working Path (folder must be empty)' -RootFolder 'MyComputer' -ShowNewFolderButton
+        $WorkingPathtoReturn = Get-FolderPath -Message 'Select location for Working Folder (folder must be empty)' -RootFolder 'MyComputer' -ShowNewFolderButton
         if ($WorkingPathtoReturn){
             if ($CheckforEmptyFolder -eq 'TRUE'){
-                $items = Get-ChildItem -Path $WorkingPathtoReturn -Recurse -Force | Where-Object {$_.Name -ne 'Temp' -and $_.Name -ne 'OutputImage' -and $_.Name -ne 'AmigaImageFiles' -and $_.Name -ne 'FAT32Partition'}
+                $items = Get-ChildItem -Path $WorkingPathtoReturn -Recurse -Force | Where-Object {$_.Name -ne 'AmigaDownloads' -and $_.Name -ne 'AmigaImageFiles' -and $_.Name -ne 'FAT32Partition' -and $_.Name -ne 'HDFImage' -and $_.Name -ne 'OutputImage' -and $_.Name -ne 'Programs' -and $_.Name -ne 'Temp'}
                 if ($items.Count -ne 0){
                     $null= [System.Windows.MessageBox]::Show($Msg_Body_NonEmpty, $Msg_Header_NonEmpty,0,48)
                     $IsDefinedWorkingPath = $false
@@ -2719,7 +2728,7 @@ You have selected a non-empty folder! Please select an empty folder.
 function Update-ListofInstallFiles {
     param (              
     )
-    $Script:ListofInstallFiles = Import-Csv ($Script:InputFolder+'ListofInstallFiles.csv') -Delimiter ';' |  Where-Object {$_.Kickstart_Version -eq $Script:KickstartVersiontoUse} | Sort-Object -Property 'InstallSequence'    
+    $Script:ListofInstallFiles = Get-ListofInstallFiles -ListofInstallFilesCSV ($Script:InputFolder+'ListofInstallFiles.csv') |  Where-Object {$_.Kickstart_Version -eq $Script:KickstartVersiontoUse} | Sort-Object -Property 'InstallSequence'    
     $Script:ListofInstallFiles | Add-Member -NotePropertyName Path -NotePropertyValue $null
     $Script:ListofInstallFiles | Add-Member -NotePropertyName DrivetoInstall_VolumeName -NotePropertyValue $null    
     foreach ($InstallFileLine in $Script:ListofInstallFiles) {
@@ -2745,7 +2754,8 @@ function Update-ListofInstallFiles {
 
 function Remove-WorkingFolderData {
     param (
-        $DefaultFolder
+        $DefaultFolder,
+        $AtEnd
     )
     
     if ($DefaultFolder -eq 'TRUE'){
@@ -2755,7 +2765,12 @@ function Remove-WorkingFolderData {
         $WorkingFoldertouse = $Script:WorkingPath 
     }
     if (Test-Path ($WorkingFoldertouse)){
-        $NewFolders = ($WorkingFoldertouse+'Temp\'),($WorkingFoldertouse+'OutputImage\'),($WorkingFoldertouse+'AmigaImageFiles\'+$Script:VolumeName_System),($WorkingFoldertouse+'AmigaImageFiles\'+$Script:VolumeName_Other),($WorkingFoldertouse+'\FAT32Partition\')
+        if ($AtEnd -eq 'TRUE'){
+            $NewFolders = ($WorkingFoldertouse+'Programs\'),($WorkingFoldertouse+'AmigaDownloads\'),($WorkingFoldertouse+'Temp\'),($WorkingFoldertouse+'HDFImage\'),($WorkingFoldertouse+'AmigaImageFiles\'+$Script:VolumeName_System),($WorkingFoldertouse+'AmigaImageFiles\'+$Script:VolumeName_Other),($WorkingFoldertouse+'\FAT32Partition\')
+        }
+        else{
+            $NewFolders = ($WorkingFoldertouse+'Temp\'),($WorkingFoldertouse+'OutputImage\'),($WorkingFoldertouse+'HDFImage\'),($WorkingFoldertouse+'AmigaImageFiles\'+$Script:VolumeName_System),($WorkingFoldertouse+'AmigaImageFiles\'+$Script:VolumeName_Other),($WorkingFoldertouse+'\FAT32Partition\')
+        }
         foreach ($NewFolder in $NewFolders) {
             if (Test-Path $NewFolder){
                 $null = Remove-Item ($NewFolder) -Recurse -force
@@ -2827,6 +2842,246 @@ function Get-Emu68ImagerDocumentation {
             }
         }
     }
+}
+
+function Get-ListofInstallFiles {
+    param (
+        $ListofInstallFilesCSV
+        )       
+
+        #$ListofInstallFilesCSV = ($InputFolder+'ListofInstallFiles.csv')
+
+        $ListofInstallFilesImported = Import-Csv $ListofInstallFilesCSV -delimiter ';'
+
+        $RevisedListofInstallFiles = [System.Collections.Generic.List[PSCustomObject]]::New()
+        foreach ($Line in $ListofInstallFilesImported ) {
+            $CountofVariables = ([regex]::Matches($line.Kickstart_Version, "," )).count
+            if ($CountofVariables -gt 0){
+                $Counter = 0
+                do {
+                    $RevisedListofInstallFiles += [PSCustomObject]@{
+                        Kickstart_Version = ($line.Kickstart_Version -split ',')[$Counter] 
+                        Kickstart_VersionFriendlyName = ($line.Kickstart_VersionFriendlyName -split ',')[$Counter] 
+                        InstallSequence = $line.InstallSequence
+                        ADF_Name = $line.ADF_Name
+                        FriendlyName = $line.FriendlyName
+                        AmigaFiletoInstall = $line.AmigaFiletoInstall
+                        DrivetoInstall = $line.DrivetoInstall
+                        LocationtoInstall = $line.LocationtoInstall
+                        NewFileName = $line.NewFileName
+                        ExcludedFolders = $line.ExcludedFolder
+                        ExcludedFiles = $line.ExcludedFiles 
+                        Uncompress = $line.Uncompress
+                        ModifyScript = $line.ModifyScript
+                        ScriptNameofChange = $line.ScriptNameofChange
+                        ScriptInjectionStartPoint = $line.ScriptInjectionStartPoint
+                        ScriptInjectionEndPoint = $line.ScriptInjectionEndPoint
+                        ModifyInfoFileTooltype = $line.ModifyInfoFileTooltype
+                    }
+                    $counter ++
+                } until (
+                    $Counter -eq ($CountofVariables+1)
+                )
+            }
+            else{
+                $RevisedListofInstallFiles  += [PSCustomObject]@{
+                    Kickstart_Version = $line.Kickstart_Version  
+                    Kickstart_VersionFriendlyName = $line.Kickstart_VersionFriendlyName 
+                    InstallSequence = $line.InstallSequence
+                    ADF_Name = $line.ADF_Name
+                    FriendlyName = $line.FriendlyName
+                    AmigaFiletoInstall = $line.AmigaFiletoInstall
+                    DrivetoInstall = $line.DrivetoInstall
+                    LocationtoInstall = $line.LocationtoInstall
+                    NewFileName = $line.NewFileName
+                    ExcludedFolders = $line.ExcludedFolder
+                    ExcludedFiles = $line.ExcludedFiles 
+                    Uncompress = $line.Uncompress
+                    ModifyScript = $line.ModifyScript
+                    ScriptNameofChange = $line.ScriptNameofChange
+                    ScriptInjectionStartPoint = $line.ScriptInjectionStartPoint
+                    ScriptInjectionEndPoint = $line.ScriptInjectionEndPoint
+                    ModifyInfoFileTooltype = $line.ModifyInfoFileTooltype
+                }
+            }
+        }
+        return $RevisedListofInstallFiles
+}
+
+function Get-ListofPackagestoInstall {
+    param (
+        $ListofPackagestoInstallCSV
+        )       
+
+        #$ListofPackagestoInstallCSV = ($InputFolder+'ListofPackagestoInstall.csv') 
+
+        $ListofPackagestoInstallImported = Import-Csv $ListofPackagestoInstallCSV -delimiter ';'
+
+        $RevisedListofPackagestoInstall = [System.Collections.Generic.List[PSCustomObject]]::New()
+        foreach ($Line in $ListofPackagestoInstallImported) {
+            $CountofVariables = ([regex]::Matches($line.KickstartVersion, "," )).count
+            if ($CountofVariables -gt 0){
+                $Counter = 0
+                do {
+                    $RevisedListofPackagestoInstall += [PSCustomObject]@{
+                        InstallFlag = $line.InstallFlag
+                        KickstartVersion = ($line.KickstartVersion -split ',')[$Counter] 
+                        PackageName = $line.PackageName
+                        SearchforUpdatedPackage = $line.SearchforUpdatedPackage
+                        UpdatePackageSearchTerm = $line.UpdatePackageSearchTerm    
+                        UpdatePackageSearchExclusionTerm  = $line.UpdatePackageSearchExclusionTerm
+                        UpdatePackageSearchMinimumDate  = $line.UpdatePackageSearchMinimumDate  
+                        Source = $line.Source     
+                        InstallType = $line.InstallType       
+                        SourceLocation = $line.SourceLocation          
+                        FileDownloadName = $line.FileDownloadName         
+                        PerformHashCheck = $line.PerformHashCheck    
+                        Hash = $line.Hash        
+                        FilestoInstall = $line.FilestoInstall        
+                        DrivetoInstall = $line. DrivetoInstall    
+                        LocationtoInstall = $line.LocationtoInstall    
+                        CreateFolderInfoFile = $line.CreateFolderInfoFile    
+                        NewFileName = $line.NewFileName       
+                        ModifyUserStartup = $line.ModifyUserStartup  
+                        ModifyStartupSequence = $line.ModifyStartupSequence 
+                        StartupSequenceInjectionStartPoint = $line.StartupSequenceInjectionStartPoint
+                        StartupSequenceInjectionEndPoint  =$line.StartupSequenceInjectionEndPoint
+                        ModifyInfoFileTooltype = $line.ModifyInfoFileTooltype    
+                        PiSpecificStorageDriver = $line.PiSpecificStorageDriver 
+                    }
+                    $counter ++
+                } until (
+                    $Counter -eq ($CountofVariables+1)
+                )
+            }
+            else{
+                $RevisedListofPackagestoInstall   += [PSCustomObject]@{
+                    InstallFlag = $line.InstallFlag
+                    KickstartVersion = $line.KickstartVersion 
+                    PackageName = $line.PackageName
+                    SearchforUpdatedPackage = $line.SearchforUpdatedPackage
+                    UpdatePackageSearchTerm = $line.UpdatePackageSearchTerm    
+                    UpdatePackageSearchExclusionTerm  = $line.UpdatePackageSearchExclusionTerm
+                    UpdatePackageSearchMinimumDate  = $line.UpdatePackageSearchMinimumDate  
+                    Source = $line.Source     
+                    InstallType = $line.InstallType       
+                    SourceLocation = $line.SourceLocation          
+                    FileDownloadName = $line.FileDownloadName         
+                    PerformHashCheck = $line.PerformHashCheck    
+                    Hash = $line.Hash        
+                    FilestoInstall = $line.FilestoInstall        
+                    DrivetoInstall = $line. DrivetoInstall    
+                    LocationtoInstall = $line.LocationtoInstall    
+                    CreateFolderInfoFile = $line.CreateFolderInfoFile    
+                    NewFileName = $line.NewFileName       
+                    ModifyUserStartup = $line.ModifyUserStartup  
+                    ModifyStartupSequence = $line.ModifyStartupSequence 
+                    StartupSequenceInjectionStartPoint = $line.StartupSequenceInjectionStartPoint
+                    StartupSequenceInjectionEndPoint  =$line.StartupSequenceInjectionEndPoint
+                    ModifyInfoFileTooltype = $line.ModifyInfoFileTooltype    
+                }
+            }
+        }
+        return $RevisedListofPackagestoInstall
+}
+
+function Get-GUIADFKickstartReport {
+    param (
+        $Text,
+        $Title,
+        $DatatoPopulate,
+        $WindowWidth,
+        $WindowHeight,
+        $DataGridWidth,
+        $DataGridHeight,
+        $GridLinesVisibility,
+        $FieldsSorted
+    )
+     
+    # $Title = 'ADFs to be used'
+    # $Text = 'The following ADFs will be used:'
+    # $DatatoPopulate = $Script:AvailableADFs 
+    # $WindowWidth =700 
+    # $WindowHeight =350 
+    # $DataGridWidth =570 
+    # $DataGridHeight =200 
+    # $GridLinesVisibility ='None' 
+    # $FieldsSorted = ('Status','ADF Name','Path')
+
+    $inputXML_ADFKickstartReporting = 
+@"
+<Window x:Name="Window" 
+            xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+            xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+            xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+            xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+            xmlns:local="clr-namespace:WpfApp14"
+            mc:Ignorable="d"
+               Title="$Title" Height="$WindowHeight" Width="$WindowWidth" HorizontalAlignment="Center" VerticalAlignment="Center" Topmost="True" WindowStartupLocation="CenterOwner">
+    <Grid Background="#FFE5E5E5">
+        <DataGrid Name="Datagrid" IsReadOnly="True"  HorizontalAlignment="Center" Margin="5,40,0,0" Height="200" VerticalAlignment="Top" HorizontalScrollBarVisibility="Auto" GridLinesVisibility="$GridLinesVisibility" HorizontalGridLinesBrush="#FF505050" VerticalGridLinesBrush="#FF505050" >
+
+        </DataGrid>
+        <Button x:Name="OK_Button" Content="OK" HorizontalAlignment="Center" Margin="5,5,5,5" VerticalAlignment="Bottom" Width="40"/>
+        <TextBox x:Name="TextBox" HorizontalAlignment="Center"  Margin="7,0,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+    </Grid>
+
+</Window>
+"@
+
+    $XAML_ADFKickstartReporting = Format-XMLtoXAML -inputXML $inputXML_ADFKickstartReporting
+    $Form_ADFKickstartReporting = Read-XAML -xaml $XAML_ADFKickstartReporting 
+    Remove-Variable -Scope Script -Name WPF_UI_ADF_*
+    $XAML_ADFKickstartReporting.SelectNodes("//*[@Name]") | ForEach-Object{
+    #    "Trying item $($_.Name)";
+        try {
+            Set-Variable -Scope Script -Name "WPF_UI_ADF_$($_.Name)" -Value $Form_ADFKickstartReporting.FindName($_.Name) -ErrorAction Stop
+        }
+        catch{
+            throw
+        }
+    }
+   
+    $Form_ADFKickstartReporting.Top=300
+    $Form_ADFKickstartReporting.Left=300
+
+    If ($FieldsSorted){
+        $Fields = $FieldsSorted
+    }
+    else{
+        $Fields = (($DatatoPopulate | Get-Member -MemberType NoteProperty).Name)
+    }
+
+
+    $Datatable = New-Object System.Data.DataTable
+    [void]$Datatable.Columns.AddRange($Fields)
+    foreach ($line in $DatatoPopulate)
+    {
+        $Array = @()
+        Foreach ($Field in $Fields)
+        {
+            $array += $line.$Field
+        }
+        [void]$Datatable.Rows.Add($array)
+    }
+     
+    $WPF_UI_ADF_TextBox.Text = $Text
+    
+    $WPF_UI_ADF_Datagrid.ItemsSource = $Datatable.DefaultView
+    if ($DataGridWidth){
+        $WPF_UI_ADF_Datagrid.Width = "$DataGridWidth"
+    }
+    if($DataGridHeight){
+        $WPF_UI_ADF_Datagrid.Height = "$DataGridHeight"
+    }
+   
+
+    $WPF_UI_ADF_OK_Button.Add_Click({
+        $Form_ADFKickstartReporting.Close() | out-null
+    })
+    
+    $Form_ADFKickstartReporting.ShowDialog() | out-null
+
 }
 
 ### End Functions
@@ -2996,6 +3251,7 @@ $inputXML_UserInterface = @"
                 <Grid Background="Transparent" >
                     <CheckBox x:Name="SetUpDiskOnly_CheckBox" ToolTip="Partition the SD card, copy the Emu68 and Kickstart files to the FAT32 partition. Amiga partitions will be empty." Content="Partition disk and install Emu68 only. Do not install packages." HorizontalAlignment="Left" Margin="7,5,0,0" Height="15" VerticalAlignment="Top"/>
                     <CheckBox x:Name="ImageOnly_CheckBox" Content="Do not write to SD card. A .img file will be created for later writing to disk." HorizontalAlignment="Left" Margin="7,25,0,0" Height="15" VerticalAlignment="Top"/>
+                    <CheckBox x:Name="DeleteFiles_CheckBox" Content="Delete ALL files from Working Folder when done" HorizontalAlignment="Left" Margin="7,45,0,0" Height="15" VerticalAlignment="Top"/>
                     <CheckBox x:Name="SkipEmptySpace_CheckBox" Visibility="Hidden" Content="Skip empty space (only applicable if writing to SD Card)." ToolTip="Unchecking this option will copy ALL sectors to the SD card which will take a long time for large SD cards"  IsChecked = "TRUE" HorizontalAlignment="Left" Margin="7,45,0,0" Height="15" VerticalAlignment="Top"/>
                   <Button x:Name="Workingpath_Button" ToolTip="Set this if you wish to use a different folder to run the tool (e.g. you have insufficient space in the default path)" Content="Click to set custom Working folder" HorizontalAlignment="Left" Margin="7,65,0,0" VerticalAlignment="Top"  Width="200" Height="30"/>
                  <TextBox x:Name="Workingpath_Label" HorizontalAlignment="Left" Margin="212,70,0,0" TextWrapping="Wrap" Text="Using default Working folder" VerticalAlignment="Top" Width="260" Height="20" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
@@ -3027,60 +3283,61 @@ $inputXML_UserInterface = @"
            
                   </Grid>
         <Grid x:Name="Reporting_Grid" Background="#FFE5E5E5" Visibility="Hidden">
-            <Button x:Name="GoBack_Button" Content="Back" HorizontalAlignment="Left" Margin="20,523,0,0" Background="red" VerticalAlignment="Top" Width="199"/>
-            <Button x:Name="Process_Button" Content="Run" HorizontalAlignment="Left" Margin="689,523,0,0" Background="green" VerticalAlignment="Top" Width="199"/>
+            <Button x:Name="GoBack_Button" Content="Back" HorizontalAlignment="Left" Margin="20,523,0,0" Background="red" VerticalAlignment="Top" Height="40" Width="200"/>
+            <Button x:Name="Process_Button" Content="Run" HorizontalAlignment="Right" Margin="0,523,20,0" Background="green" VerticalAlignment="Top" Height="40" Width="200"/>
 
               <TextBox x:Name="Reporting_Header_TextBox" HorizontalAlignment="Center" Margin="0,55,0,0" TextWrapping="Wrap" Text="Tool will be run with the following options:  " VerticalAlignment="Top" Width="438" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Center" FontWeight="Bold" FontSize="14"/>
 
-            <TextBox x:Name="DiskName_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,110,0,0" TextWrapping="Wrap" Text="DiskName to Write:" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-            <TextBox x:Name="DiskNameValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,110,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+             <TextBox x:Name="DiskName_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,110,0,0" TextWrapping="Wrap" Text="DiskName to Write:" VerticalAlignment="Top" Width="260" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+            <TextBox x:Name="DiskNameValue_Reporting_Detail_TextBox" HorizontalAlignment="Right" HorizontalContentAlignment="Left" Margin="0,110,100,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="500" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
 
-            <TextBox x:Name="ScreenMode_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,130,0,0" TextWrapping="Wrap" Text="ScreenMode to Use:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
-            <TextBox x:Name="ScreenModeValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,130,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+            <TextBox x:Name="ScreenMode_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,130,0,0" TextWrapping="Wrap" Text="ScreenMode to Use:" VerticalAlignment="Top" Width="260"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+            <TextBox x:Name="ScreenModeValue_Reporting_Detail_TextBox" HorizontalAlignment="Right" HorizontalContentAlignment="Left" Margin="0,130,100,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="500" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
 
-            <TextBox x:Name="Kickstart_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,150,0,0" TextWrapping="Wrap" Text="Kickstart to Use:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-            <TextBox x:Name="KickstartValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,150,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+            <TextBox x:Name="Kickstart_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,150,0,0" TextWrapping="Wrap" Text="Kickstart to Use:" VerticalAlignment="Top" Width="260"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+            <TextBox x:Name="KickstartValue_Reporting_Detail_TextBox" HorizontalAlignment="Right" HorizontalContentAlignment="Left" Margin="0,150,100,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="500" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
 
-            <TextBox x:Name="SSID_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,170,0,0" TextWrapping="Wrap" Text="SSID to configure:" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-            <TextBox x:Name="SSIDValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,170,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+            <TextBox x:Name="SSID_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,170,0,0" TextWrapping="Wrap" Text="SSID to configure:" VerticalAlignment="Top" Width="260" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+            <TextBox x:Name="SSIDValue_Reporting_Detail_TextBox" HorizontalAlignment="Right" HorizontalContentAlignment="Left" Margin="0,170,100,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="500" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
 
-            <TextBox x:Name="Password_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,190,0,0" TextWrapping="Wrap" Text="Password to set:" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
-            <TextBox x:Name="PasswordValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,190,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+            <TextBox x:Name="Password_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,190,0,0" TextWrapping="Wrap" Text="Password to set:" VerticalAlignment="Top" Width="260" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+            <TextBox x:Name="PasswordValue_Reporting_Detail_TextBox" HorizontalAlignment="Right" HorizontalContentAlignment="Left" Margin="0,190,100,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="500" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
 
-            <TextBox x:Name="ImageSize_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,210,0,0" TextWrapping="Wrap" Text="Total Image Size:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
-            <TextBox x:Name="ImageSizeValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,210,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+            <TextBox x:Name="ImageSize_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,210,0,0" TextWrapping="Wrap" Text="Total Image Size:" VerticalAlignment="Top" Width="260"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+            <TextBox x:Name="ImageSizeValue_Reporting_Detail_TextBox" HorizontalAlignment="Right" HorizontalContentAlignment="Left" Margin="0,210,100,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="500" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
 
-            <TextBox x:Name="Fat32Size_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,230,0,0" TextWrapping="Wrap" Text="Fat32 Size:" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
-            <TextBox x:Name="Fat32SizeValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,230,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+            <TextBox x:Name="Fat32Size_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,230,0,0" TextWrapping="Wrap" Text="Fat32 Size:" VerticalAlignment="Top" Width="260" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+            <TextBox x:Name="Fat32SizeValue_Reporting_Detail_TextBox" HorizontalAlignment="Right" HorizontalContentAlignment="Left" Margin="0,230,100,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="500" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
 
-            <TextBox x:Name="WorkbenchSize_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,250,0,0" TextWrapping="Wrap" Text="Workbench Size:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
-            <TextBox x:Name="WorkbenchSizeValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,250,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+            <TextBox x:Name="WorkbenchSize_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,250,0,0" TextWrapping="Wrap" Text="Workbench Size:" VerticalAlignment="Top" Width="260"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+            <TextBox x:Name="WorkbenchSizeValue_Reporting_Detail_TextBox" HorizontalAlignment="Right" HorizontalContentAlignment="Left" Margin="0,250,100,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="500" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
 
-            <TextBox x:Name="WorkSize_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,270,0,0" TextWrapping="Wrap" Text="Work Size:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
-            <TextBox x:Name="WorkSizeValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,270,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="175" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+            <TextBox x:Name="WorkSize_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,270,0,0" TextWrapping="Wrap" Text="Work Size:" VerticalAlignment="Top" Width="260"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+            <TextBox x:Name="WorkSizeValue_Reporting_Detail_TextBox" HorizontalAlignment="Right" HorizontalContentAlignment="Left" Margin="0,270,100,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="500" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
 
-            <TextBox x:Name="WorkingPath_Detail_TextBox" HorizontalAlignment="Left" Margin="100,290,0,0" TextWrapping="Wrap" Text="Working Path:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
-            <TextBox x:Name="WorkingPathValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,290,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="450" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+            <TextBox x:Name="WorkingPath_Detail_TextBox" HorizontalAlignment="Left" Margin="100,290,0,0" TextWrapping="Wrap" Text="Working Folder:" VerticalAlignment="Top" Width="260"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+            <TextBox x:Name="WorkingPathValue_Reporting_Detail_TextBox" HorizontalAlignment="Right" HorizontalContentAlignment="Left" Margin="0,290,100,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="500" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
 
-            <TextBox x:Name="RomPath_Detail_TextBox" HorizontalAlignment="Left" Margin="100,310,0,0" TextWrapping="Wrap" Text="Rom Path:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
-            <TextBox x:Name="RomPathValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,310,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="450" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" />
+            <TextBox x:Name="RomPath_Detail_TextBox" HorizontalAlignment="Left" Margin="100,310,0,0" TextWrapping="Wrap" Text="Rom Path:" VerticalAlignment="Top" Width="260"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+            <TextBox x:Name="RomPathValue_Reporting_Detail_TextBox" HorizontalAlignment="Right" HorizontalContentAlignment="Left" Margin="0,310,100,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="500" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" />
 
-            <TextBox x:Name="ADFPath_Detail_TextBox" HorizontalAlignment="Left" Margin="100,330,0,0" TextWrapping="Wrap" Text="ADF Path:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
-            <TextBox x:Name="ADFPathValue_Detail_TextBox" HorizontalAlignment="Left" Margin="360,330,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="450" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+            <TextBox x:Name="ADFPath_Detail_TextBox" HorizontalAlignment="Left" Margin="100,330,0,0" TextWrapping="Wrap" Text="ADF Path:" VerticalAlignment="Top" Width="260"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+            <TextBox x:Name="ADFPathValue_Detail_TextBox" HorizontalAlignment="Right" HorizontalContentAlignment="Left" Margin="0,330,100,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="500" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
 
-            <TextBox x:Name="TransferPath_Detail_TextBox" HorizontalAlignment="Left" Margin="100,350,0,0" TextWrapping="Wrap" Text="Transfer Path:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
-            <TextBox x:Name="TransferPathValue_Detail_TextBox" HorizontalAlignment="Left" Margin="360,350,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="450" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+            <TextBox x:Name="TransferPath_Detail_TextBox" HorizontalAlignment="Left" Margin="100,350,0,0" TextWrapping="Wrap" Text="Transfer Path:" VerticalAlignment="Top" Width="260"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+            <TextBox x:Name="TransferPathValue_Detail_TextBox" HorizontalAlignment="Right" HorizontalContentAlignment="Left" Margin="0,350,100,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="500" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
 
+            <TextBox x:Name="WriteImageOnly_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,370,0,0" TextWrapping="Wrap" Text="Write Image File Only:" VerticalAlignment="Top" Width="260"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+            <TextBox x:Name="WriteImageOnlytoDiskValue_Reporting_Detail_TextBox" HorizontalAlignment="Right" HorizontalContentAlignment="Left" Margin="0,370,100,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="500" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" />
 
-            <TextBox x:Name="WriteImageOnly_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="100,370,0,0" TextWrapping="Wrap" Text="Write Image File Only:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
-            <TextBox x:Name="WriteImageOnlytoDiskValue_Reporting_Detail_TextBox" HorizontalAlignment="Left" Margin="360,370,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="450" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" />
+            <TextBox x:Name="SetupDiskOnly_Detail_TextBox" HorizontalAlignment="Left" Margin="100,390,0,0" TextWrapping="Wrap" Text="Set disk up only:" VerticalAlignment="Top" Width="260"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+            <TextBox x:Name="SetupDiskOnlyValue_Detail_TextBox" HorizontalAlignment="Right" HorizontalContentAlignment="Left" Margin="0,390,100,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="500" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
 
+            <TextBox x:Name="DeleteAllWorkingPathFiles_Detail_TextBox" HorizontalAlignment="Left" Margin="100,410,0,0" TextWrapping="Wrap" Text="Delete ALL Working Folder files at completion:" VerticalAlignment="Top" Width="260"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+            <TextBox x:Name="DeleteAllWorkingPathFilesValue_Detail_TextBox" HorizontalAlignment="Right" HorizontalContentAlignment="Left" Margin="0,410,100,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="500" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
 
-            <TextBox x:Name="SetupDiskOnly_Detail_TextBox" HorizontalAlignment="Left" Margin="100,390,0,0" TextWrapping="Wrap" Text="Set disk up only:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
-            <TextBox x:Name="SetupDiskOnlyValue_Detail_TextBox" HorizontalAlignment="Left" Margin="360,390,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="450" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
-
-            <TextBox x:Name="LocationofImage_Detail_TextBox" HorizontalAlignment="Left" Margin="100,430,0,0" TextWrapping="Wrap" Text="Location of Image:" VerticalAlignment="Top" Width="175"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" FontWeight="Bold" />
-            <TextBox x:Name="LocationofImageValue_Detail_TextBox" HorizontalAlignment="Left" Margin="360,430,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="450" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
+            <TextBox x:Name="LocationofImage_Detail_TextBox" HorizontalAlignment="Left" Margin="100,430,0,0" TextWrapping="Wrap" Text="Location of Image:" VerticalAlignment="Top" Width="260"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" FontWeight="Bold" />
+            <TextBox x:Name="LocationofImageValue_Detail_TextBox" HorizontalAlignment="Right" HorizontalContentAlignment="Left" Margin="0,430,100,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="500" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" />
 
            
         </Grid>
@@ -3121,6 +3378,7 @@ $Script:ADFPath = $Script:UserLocation_ADFs
 
 $Script:PartitionBarWidth =  1000
 $Script:SetDiskupOnly = 'FALSE'
+$Script:DeleteAllWorkingPathFiles = 'FALSE'
 $DefaultDivisorFat32 = 15
 $DefaultDivisorWorkbench = 15
 
@@ -3590,6 +3848,9 @@ $WPF_UI_LoadSettings_Button.Add_Click({
         }
         $WPF_UI_KickstartVersion_DropDown.SelectedItem = ($Script:KickstartVersiontoUseFriendlyName).tostring()
         $WPF_UI_ScreenMode_Dropdown.SelectedItem = $Script:ScreenModetoUseFriendlyName
+        if ($Script:DeleteAllWorkingPathFiles -eq 'TRUE'){
+            $WPF_UI_DeleteFiles_CheckBox.IsChecked = 'TRUE'
+        }        
         if ($Script:SetDiskupOnly -eq 'TRUE'){
             $WPF_UI_SetUpDiskOnly_CheckBox.IsChecked = 'TRUE'
         }
@@ -3958,6 +4219,13 @@ $WPF_UI_ROMpath_Button_Check.Add_Click({
         if (-not ($Script:FoundKickstarttoUse)){
             Write-GUINoKickstart
         }
+        else{
+            $Title = 'Kickstarts to be used'
+            $Text = 'The following Kickstart will be used:'
+            $DatatoPopulate = $Script:FoundKickstarttoUse | Select-Object @{Name='Kickstart';Expression='FriendlyName'},@{Name='Path';Expression='KickstartPath'}
+            
+            Get-GUIADFKickstartReport -Title $Title -Text $Text -DatatoPopulate $DatatoPopulate -WindowWidth 700 -WindowHeight 300 -DataGridWidth 570 -DataGridHeight 50 -GridLinesVisibility 'None'    
+        }
     }
     else{
         Write-GUINoOSChosen -Type 'Kickstarts'
@@ -3971,7 +4239,7 @@ $WPF_UI_ADFPath_Button.Add_Click({
     if ($PathtoPopulate){
         if ($PathtoPopulate -ne $Script:ADFPath) {
             $Script:ADFPath = $PathtoPopulate.TrimEnd('\')+'\'
-            $Script:AvailableADFs= $null    
+            $Script:AvailableADFs = $null    
         }
     }
     else {
@@ -3990,26 +4258,30 @@ $WPF_UI_ADFpath_Button_Check.Add_Click({
         Update-ListofInstallFiles
 
         if (($Script:AvailableADFs | Select-Object 'IsMatched' -unique).IsMatched -eq 'FALSE'){
-            $MissingADFstoReport = $null
-            $AvailableADFs | Where-Object {$_.IsMatched -eq 'False'} | ForEach-Object {
-                $MissingADFstoReport += ($_.FriendlyName+"`n")
-            }
-            Write-GUIMissingADFs -MissingADFstoReport $MissingADFstoReport    
+            $Title = 'Missing ADFs'
+            $Text = 'You have missing ADFs. You need to correct this before you can run the tool. List of ADFs located and missing is below'
         }
-        else {             
-            $AvailableADFstoReport = $null
-            $Script:ListofInstallFiles |  Select-Object Path,FriendlyName -Unique | ForEach-Object {
-                $AvailableADFstoReport += (($_.FriendlyName+' ('+$_.Path+')')+"`n")
-            }                
-            $Msg_Header ='ADFs to Use'    
-            $Msg_Body = @"  
-The following ADFs will be used:  
+        else {                         
+            $Title = 'ADFs to be used'
+            $Text = 'The following ADFs will be used:'
+        }
+        
+        $DatatoPopulate = $AvailableADFs  | Select-Object @{Name='Status';Expression='IsMatched'},@{Name='ADF Name';Expression='FriendlyName'},@{Name='Path';Expression='Path'} | Sort-Object -Property 'Status'
 
-$AvailableADFstoReport  
-"@     
-            [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,0) 
+        $FieldsSorted = ('Status','ADF Name','Path')
+
+        foreach ($ADF in $DatatoPopulate ){
+            if ($ADF.Status -eq 'TRUE'){
+                $ADF.Status = 'Located'
+            }
+            else{
+                $ADF.Status = 'Missing!'
+            }
         }
+
+        Get-GUIADFKickstartReport -Title $Title -Text $Text -DatatoPopulate $DatatoPopulate -WindowWidth 700 -WindowHeight 350 -DataGridWidth 570 -DataGridHeight 200 -GridLinesVisibility 'None' -FieldsSorted $FieldsSorted                    
     }
+    
     else {
         Write-GUINoOSChosen -Type 'ADFs'
     }
@@ -4042,7 +4314,7 @@ Calculating space requirements. This may take some time if you have selected a l
     $null = Confirm-UIFields
 })
 
-$AvailableKickstarts = Import-Csv ($InputFolder+'ListofInstallFiles.csv') -delimiter ';' | Where-Object 'Kickstart_VersionFriendlyName' -ne ""| Select-Object 'Kickstart_Version','Kickstart_VersionFriendlyName' -unique
+$AvailableKickstarts =  Get-ListofInstallFiles -ListofInstallFilesCSV ($Script:InputFolder+'ListofInstallFiles.csv') | Where-Object 'Kickstart_VersionFriendlyName' -ne ""| Select-Object 'Kickstart_Version','Kickstart_VersionFriendlyName' -unique 
 
 foreach ($Kickstart in $AvailableKickstarts) {
     $WPF_UI_KickstartVersion_Dropdown.AddChild(($Kickstart.Kickstart_VersionFriendlyName).tostring())
@@ -4084,6 +4356,16 @@ $WPF_UI_ScreenMode_Dropdown.Add_SelectionChanged({
 
     $null = Confirm-UIFields
     
+})
+
+$WPF_UI_DeleteFiles_CheckBox.Add_Checked({
+    $Script:DeleteAllWorkingPathFiles = 'TRUE'
+    $null = Confirm-UIFields
+})
+
+$WPF_UI_DeleteFiles_CheckBox.Add_UnChecked({
+    $Script:DeleteAllWorkingPathFiles = 'FALSE'
+    $null = Confirm-UIFields
 })
 
 $WPF_UI_ImageOnly_CheckBox.Add_Checked({
@@ -4194,7 +4476,7 @@ $WPF_UI_Start_Button.Add_Click({
         }
 
         If ($Script:WorkingPath -ne ($Script:Scriptpath+'Working Folder\')){
-            $NewFolders = ('Temp\'),('OutputImage\'),('AmigaImageFiles\'),('FAT32Partition\')
+            $NewFolders = ('Temp\'),('HDFImage\'),('OutputImage\'),('AmigaImageFiles\'),('FAT32Partition\')
             foreach ($NewFolder in $NewFolders) {
                 if (Test-Path ($Script:WorkingPath+$NewFolder)){
                     $null = Remove-Item ( $Script:WorkingPath+$NewFolder) -Recurse
@@ -4352,6 +4634,7 @@ if (-not (Test-Path $Script:WorkingPath)){
 $Script:WorkingPathDefault = $true    
 $Script:WriteMethod = 'SkipEmptySpace'
 $Script:SetDiskupOnly = 'FALSE'
+$Script:DeleteAllWorkingPathFiles = 'FALSE'
 $Script:ImageOnly = 'FALSE'
 
 $Form_Disclaimer.ShowDialog() | out-null
@@ -4374,7 +4657,7 @@ $ErrorMessage += Test-ExistenceofFiles -PathtoTest ($SourceProgramPath+'7z.exe')
 $ErrorMessage += Test-ExistenceofFiles -PathtoTest ($SourceProgramPath+'7z.dll') -PathType 'File'
 
 if (-not (Test-ExistenceofFiles -PathtoTest $InputFolder -PathType 'Folder')){
-    $ListofPackagestoInstall = Import-Csv ($InputFolder+'ListofPackagestoInstall.csv') -Delimiter ';' | Where-Object {$_.Source -eq 'Local'} | Where-Object {$_.InstallType -ne 'StartupSequenceOnly'} |Where-Object {$_.InstallFlag -eq 'TRUE'}
+    $ListofPackagestoInstall = Get-ListofPackagestoInstall -ListofPackagestoInstallCSV ($InputFolder+'ListofPackagestoInstall.csv') | Where-Object {$_.Source -eq 'Local'} | Where-Object {$_.InstallType -ne 'StartupSequenceOnly'} |Where-Object {$_.InstallFlag -eq 'TRUE'}
     $ListofPackagestoInstall |  Select-Object SourceLocation -Unique | Where-Object SourceLocation -NotMatch 'Onetime' | ForEach-Object {
         $ErrorMessage += Test-ExistenceofFiles -PathtoTest ($LocationofAmigaFiles+$_.SourceLocation) -PathType 'File'
     }
@@ -4499,11 +4782,12 @@ $LZXPath = $ProgramsFolder+'unlzx.exe'
 $AmigaDrivetoCopy = $Script:WorkingPath+'AmigaImageFiles\'
 $AmigaDownloads = $Script:WorkingPath+'AmigaDownloads\'
 $FAT32Partition = $Script:WorkingPath+'FAT32Partition\'
+$HDFImageLocation = $Script:WorkingPath+'HDFImage\'
 
 $NameofImage = ('Pistorm'+$Script:KickstartVersiontoUse+'.HDF')
 
 if ($Script:SetDiskupOnly -eq 'FALSE'){
-    $Script:TotalSections = 16
+    $Script:TotalSections = 17
 }
 else{
     $TotalSections = 5
@@ -4513,8 +4797,11 @@ if (($Script:SetDiskupOnly -eq 'FALSE') -and (-not $Script:TransferLocation)){
     $TotalSections = $TotalSections - 1
 }
 
-
 if (($Script:ImageOnly -eq 'TRUE')){
+    $TotalSections = $TotalSections - 1
+}
+
+if (($Script:DeleteAllWorkingPathFiles -eq 'FALSE')){
     $TotalSections = $TotalSections - 1
 }
 
@@ -4682,17 +4969,17 @@ if ($Script:SetDiskupOnly -eq 'FALSE'){
 
 Write-StartTaskMessage -Message 'Preparing Amiga Image'
 
-if (Test-Path ($LocationofImage+$NameofImage)){
-    $null = Remove-Item -Path ($LocationofImage+$NameofImage)
+if (Test-Path ($HDFImageLocation +$NameofImage)){
+    $null = Remove-Item -Path ($HDFImageLocation +$NameofImage)
 }
 
-if (-not (Start-HSTImager -Command "Blank" -DestinationPath ($LocationofImage+$NameofImage) -ImageSize $Script:SizeofImage_HST -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+if (-not (Start-HSTImager -Command "Blank" -DestinationPath ($HDFImageLocation +$NameofImage) -ImageSize $Script:SizeofImage_HST -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
     exit
 } 
-if (-not (Start-HSTImager -Command "rdb init" -DestinationPath ($LocationofImage+$NameofImage) -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+if (-not (Start-HSTImager -Command "rdb init" -DestinationPath ($HDFImageLocation +$NameofImage) -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
     exit
 } 
-if (-not (Start-HSTImager -Command "rdb filesystem add" -DestinationPath ($LocationofImage+$NameofImage) -FileSystemPath ($Script:WorkingPath+'Programs\HST-Imager\pfs3aio') -DosType 'PFS3' -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+if (-not (Start-HSTImager -Command "rdb filesystem add" -DestinationPath ($HDFImageLocation +$NameofImage) -FileSystemPath ($Script:WorkingPath+'Programs\HST-Imager\pfs3aio') -DosType 'PFS3' -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
     exit
 } 
 
@@ -4713,36 +5000,37 @@ foreach ($AmigaPartition in $AmigaPartitionsList) {
     if ($AmigaPartition.PartitionNumber -ne 0){
         Write-InformationMessage -Message ('Preparing Partition Device: '+$AmigaPartition.DeviceName+' VolumeName '+$AmigaPartition.VolumeName)
         if ($AmigaPartition.VolumeName -eq $VolumeName_System){
-            if (-not (Start-HSTImager -Command "rdb part add" -DestinationPath ($LocationofImage+$NameofImage) -DeviceName $AmigaPartition.DeviceName -DosType $AmigaPartition.DosType -SizeofPartition $AmigaPartition.SizeofPartition_HST -Options '--bootable' -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+            if (-not (Start-HSTImager -Command "rdb part add" -DestinationPath ($HDFImageLocation+$NameofImage) -DeviceName $AmigaPartition.DeviceName -DosType $AmigaPartition.DosType -SizeofPartition $AmigaPartition.SizeofPartition_HST -Options '--bootable' -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
                 exit
             } 
         }
         else{
-            if (-not (Start-HSTImager -Command "rdb part add" -DestinationPath ($LocationofImage+$NameofImage) -DeviceName $AmigaPartition.DeviceName -DosType $AmigaPartition.DosType -SizeofPartition $AmigaPartition.SizeofPartition_HST -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+            if (-not (Start-HSTImager -Command "rdb part add" -DestinationPath ($HDFImageLocation +$NameofImage) -DeviceName $AmigaPartition.DeviceName -DosType $AmigaPartition.DosType -SizeofPartition $AmigaPartition.SizeofPartition_HST -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
                 exit
             } 
         }
     }
 }
 
-if (-not (Start-HSTImager -Command "rdb part format" -DestinationPath ($LocationofImage+$NameofImage) -PartitionNumber 1 -VolumeName $VolumeName_System -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+if (-not (Start-HSTImager -Command "rdb part format" -DestinationPath ($HDFImageLocation +$NameofImage) -PartitionNumber 1 -VolumeName $VolumeName_System -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
     exit
 } 
-if (-not (Start-HSTImager -Command "rdb part format" -DestinationPath ($LocationofImage+$NameofImage) -PartitionNumber 2 -VolumeName $VolumeName_Other -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+if (-not (Start-HSTImager -Command "rdb part format" -DestinationPath ($HDFImageLocation +$NameofImage) -PartitionNumber 2 -VolumeName $VolumeName_Other -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
     exit
 } 
 
 # foreach ($AmigaPartition in $AmigaPartitionsList) {
 #     if ($AmigaPartition.PartitionNumber -ne 0){
-#         if (-not (Start-HSTImager -Command "rdb part format" -DestinationPath ($LocationofImage+$NameofImage) -PartitionNumber ($AmigaPartition.PartitionNumber).tostring() -VolumeName $AmigaPartition.VolumeName -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+#         if (-not (Start-HSTImager -Command "rdb part format" -DestinationPath ($HDFImageLocation +$NameofImage) -PartitionNumber ($AmigaPartition.PartitionNumber).tostring() -VolumeName $AmigaPartition.VolumeName -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
 #         exit
 #         } 
 #     }
 # }
 
+
 if ($Script:SetDiskupOnly -eq 'FALSE'){
     #### Begin - Create NewFolder.info file
-    if (($Script:KickstartVersiontoUse -eq 3.1) -or (($Script:KickstartVersiontoUse -eq 3.2) -and ($GlowIcons -eq 'FALSE'))) {
+    if (($Script:KickstartVersiontoUse -eq 3.1) -or (($Script:KickstartVersiontoUse -ge 3.2) -and ($GlowIcons -eq 'FALSE'))) {
         if (-not (Start-HSTImager -Command 'fs extract' -SourcePath ($StorageADF+'\Monitors.info') -DestinationPath ($TempFolder.TrimEnd('\'))  -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
             exit
         }
@@ -4751,7 +5039,7 @@ if ($Script:SetDiskupOnly -eq 'FALSE'){
         }
         $null = Rename-Item ($TempFolder+'Monitors.info') ($TempFolder+'def_drawer.info')
     }
-    elseif(($Script:KickstartVersiontoUse -eq 3.2) -and ($GlowIcons -eq 'TRUE')){
+    elseif(($Script:KickstartVersiontoUse -ge 3.2) -and ($GlowIcons -eq 'TRUE')){
         if (-not (Start-HSTImager -Command 'fs extract' -SourcePath ($GlowIconsADF+'\Prefs\Env-Archive\Sys\def_drawer.info') -DestinationPath ($TempFolder.TrimEnd('\')) -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
             exit
         }
@@ -4799,7 +5087,7 @@ if ($Script:SetDiskupOnly -eq 'FALSE'){
         $SourcePath = ($InstallADF+'\Update\disk.info') 
     }
     
-    elseif ($Script:KickstartVersiontoUse -eq 3.2){
+    elseif ($Script:KickstartVersiontoUse -ge 3.2){
         $SourcePath = ($GlowIconsADF+'\Prefs\Env-Archive\Sys\def_harddisk.info') 
     }   
 
@@ -4809,7 +5097,7 @@ if ($Script:SetDiskupOnly -eq 'FALSE'){
                 exit
     }
 
-    if ($Script:KickstartVersiontoUse -eq 3.2){
+    if ($Script:KickstartVersiontoUse -ge 3.2){
         Rename-Item ($AmigaDrivetoCopy+$VolumeName_Other+'\def_harddisk.info') ($AmigaDrivetoCopy+$VolumeName_Other+'\disk.info') 
         if (-not (Write-AmigaIconPostition -HSTAmigaPathtouse $HSTAmigaPath -TempFoldertouse $TempFolder -IconPath ($AmigaDrivetoCopy+$VolumeName_Other+'\disk.info') -XPos 15 -YPos 65)){
             Write-ErrorMessage -Message 'Unable to reposition icon!'
@@ -4819,7 +5107,7 @@ if ($Script:SetDiskupOnly -eq 'FALSE'){
     # foreach ($AmigaPartition in $AmigaPartitionsList) {
     #     if ($AmigaPartition.PartitionNumber -gt 2){
     #         $SourcePathtoUse = ($AmigaDrivetoCopy+$VolumeName_Other+'\disk.info')  #Using Work disk.info extracted to Windows to copy to RDB for additional Work partitions
-    #         $DestinationPathtoUse = ($LocationofImage+$NameofImage+'\rdb\'+$AmigaPartition.DeviceName+'\disk.info')
+    #         $DestinationPathtoUse = ($HDFImageLocation +$NameofImage+'\rdb\'+$AmigaPartition.DeviceName+'\disk.info')
     #         Write-InformationMessage -Message ('Copying Icons to extra Work Partition(s). Source is: '+$SourcePathtoUse+' Destination is: '+$DestinationPathtoUse) 
     #         if (-not (Start-HSTImager -Command 'fs copy' -SourcePath $SourcePathtoUse -DestinationPath $DestinationPathtoUse -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
     #                  exit
@@ -4910,10 +5198,10 @@ if ($Script:SetDiskupOnly -eq 'FALSE'){
         else {
             Write-InformationMessage -Message 'Extracting files from ADFs to .hdf file'
             if ($InstallFileLine.LocationtoInstall.Length -eq 0){
-               $DestinationPathtoUse = ($LocationofImage+$NameofImage+'\rdb\'+$DeviceName_System)
+               $DestinationPathtoUse = ($HDFImageLocation +$NameofImage+'\rdb\'+$DeviceName_System)
             }
             else{
-               $DestinationPathtoUse = ($LocationofImage+$NameofImage+'\rdb\'+$DeviceName_System+'\'+($InstallFileLine.LocationtoInstall -replace '/','\'))
+               $DestinationPathtoUse = ($HDFImageLocation +$NameofImage+'\rdb\'+$DeviceName_System+'\'+($InstallFileLine.LocationtoInstall -replace '/','\'))
             }
             if (-not (Start-HSTImager -Command 'fs extract' -SourcePath $SourcePathtoUse -DestinationPath $DestinationPathtoUse -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
                 exit
@@ -4928,7 +5216,7 @@ if ($Script:SetDiskupOnly -eq 'FALSE'){
     
     #######################################################################################################################################################################################################################################
     
-    $ListofPackagestoInstall = Import-Csv ($InputFolder+'ListofPackagestoInstall.csv') -Delimiter ';' |  Where-Object {$_.KickstartVersion -match $Script:KickstartVersiontoUse} | Where-Object {$_.InstallFlag -eq 'TRUE'} #| Sort-Object -Property 'InstallSequence','PackageName'
+    $ListofPackagestoInstall = Get-ListofPackagestoInstall -ListofPackagestoInstallCSV ($InputFolder+'ListofPackagestoInstall.csv') |  Where-Object {$_.KickstartVersion -eq $Script:KickstartVersiontoUse} | Where-Object {$_.InstallFlag -eq 'TRUE'} #| Sort-Object -Property 'InstallSequence','PackageName'
     
     $ListofPackagestoInstall | Add-Member -NotePropertyName DrivetoInstall_VolumeName -NotePropertyValue $null
     
@@ -5161,7 +5449,7 @@ if ($Script:SetDiskupOnly -eq 'FALSE'){
     
     Write-StartTaskMessage -Message 'Fix WBStartup'
     
-    If ($Script:KickstartVersiontoUse -eq 3.2){
+    If ($Script:KickstartVersiontoUse -ge 3.2){
         Write-Host 'Fixing Menutools'
         if (-not (Start-HSTImager -Command 'fs extract' -SourcePath ($StorageADF+'\WBStartup\MenuTools') -DestinationPath ($AmigaDrivetoCopy+$VolumeName_System+'\WBStartup') -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
             exit
@@ -5202,7 +5490,7 @@ Write-StartTaskMessage -Message 'Setting up FAT32 files'
 
 Write-InformationMessage -Message 'Copying Emu68Pistorm and Emu68Pistorm32lite files' 
 
-if (($Script:KickstartVersiontoUse -eq 3.2) -and ($Script:SetDiskupOnly -eq 'FALSE')){
+if (($Script:KickstartVersiontoUse -ge 3.2) -and ($Script:SetDiskupOnly -eq 'FALSE')){
     $SourcePath = ($GlowIconsADF+'\Prefs\Env-Archive\Sys\def_harddisk.info')
     $DestinationPathtoUse = ($Script:Fat32DrivePath).TrimEnd('\') 
     if (-not (Start-HSTImager -Command 'fs extract' -SourcePath $SourcePath -DestinationPath $DestinationPathtoUse -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
@@ -5327,7 +5615,7 @@ if ($Script:TransferLocation) {
         Remove-Item ($AmigaDrivetoCopy+$VolumeName_Other+'\'+$MigratedFilesFolder+'.info')
     }
     $null = Copy-Item ($TempFolder+'NewFolder.info') ($AmigaDrivetoCopy+$VolumeName_Other+'\'+$MigratedFilesFolder+'.info')
-    if (-not(Start-HSTImager -Command 'fs copy' -SourcePath $SourcePathtoUse -DestinationPath ($LocationofImage+$NameofImage+'\rdb\'+$DeviceName_Other+'\'+$MigratedFilesFolder) -HSTImagePathtouse $HSTImagePath -TempFoldertouse $TempFolder)){
+    if (-not(Start-HSTImager -Command 'fs copy' -SourcePath $SourcePathtoUse -DestinationPath ($HDFImageLocation +$NameofImage+'\rdb\'+$DeviceName_Other+'\'+$MigratedFilesFolder) -HSTImagePathtouse $HSTImagePath -TempFoldertouse $TempFolder)){
         exit
     }
     Write-TaskCompleteMessage -Message 'Transferring Migrated Files to Work Partition - Complete!'
@@ -5339,13 +5627,13 @@ if ($Script:SetDiskupOnly -eq 'FALSE'){
     
     Write-StartSubTaskMessage -SubtaskNumber 1 -TotalSubtasks 2 -Message 'Transferring files to Workbench Partition'
 
-    if (-not(Start-HSTImager -Command 'fs copy' -SourcePath ($AmigaDrivetoCopy+$VolumeName_System) -DestinationPath ($LocationofImage+$NameofImage+'\rdb\'+$DeviceName_System) -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+    if (-not(Start-HSTImager -Command 'fs copy' -SourcePath ($AmigaDrivetoCopy+$VolumeName_System) -DestinationPath ($HDFImageLocation +$NameofImage+'\rdb\'+$DeviceName_System) -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
         exit
     } 
 
     Write-StartSubTaskMessage -SubtaskNumber 2 -TotalSubtasks 2 -Message 'Transferring files to Work Partition'
 
-    if (-not(Start-HSTImager -Command 'fs copy' -SourcePath ($AmigaDrivetoCopy+$VolumeName_Other) -DestinationPath ($LocationofImage+$NameofImage+'\rdb\'+$DeviceName_Other) -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+    if (-not(Start-HSTImager -Command 'fs copy' -SourcePath ($AmigaDrivetoCopy+$VolumeName_Other) -DestinationPath ($HDFImageLocation +$NameofImage+'\rdb\'+$DeviceName_Other) -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
         exit
     }  
     
@@ -5355,15 +5643,15 @@ if ($Script:SetDiskupOnly -eq 'FALSE'){
 If ($Script:ImageOnly -eq 'TRUE'){
     Write-StartTaskMessage -Message 'Creating Image'
     
-    Set-Location $LocationofImage
+    Set-Location $HDFImageLocation 
     
     #Update-OutputWindow -OutputConsole_Title_Text 'Creating Image' -ProgressbarValue_Overall 83 -ProgressbarValue_Overall_Text '83%'
     
-    & $HDF2emu68Path ($LocationofImage+$NameofImage) $Script:SizeofFAT32_hdf2emu68 ($FAT32Partition).Trim('\')
+    & $HDF2emu68Path ($HDFImageLocation +$NameofImage) $Script:SizeofFAT32_hdf2emu68 ($FAT32Partition).Trim('\')
     
-    $null= Rename-Item ($LocationofImager+'emu68_converted.img') -NewName ('Emu68Kickstart'+$Script:KickstartVersiontoUse+'.img')
+    $null= Rename-Item ($HDFImageLocation+'emu68_converted.img') -NewName ('Emu68Kickstart'+$Script:KickstartVersiontoUse+'.img')
     
-    Write-TaskCompleteMessage -Message ('Creating Image - Complete! Your image can be found at the following location: '+$LocationofImage+('Emu68Kickstart'+$Script:KickstartVersiontoUse+'.img')) 
+    Write-TaskCompleteMessage -Message ('Creating Image - Complete! Your image can be found at the following location: '+$HDFImageLocation +('Emu68Kickstart'+$Script:KickstartVersiontoUse+'.img')) 
 
 }
 
@@ -5388,7 +5676,7 @@ If ($Script:ImageOnly -eq 'FALSE'){
     }
 
     if ($Script:WriteMethod -eq 'Normal'){
-        & $Script:DDTCPath ($LocationofImage+$NameofImage) $Script:HSTDiskDeviceID -offset $Offset -sectorsize $SectorSize
+        & $Script:DDTCPath ($HDFImageLocation +$NameofImage) $Script:HSTDiskDeviceID -offset $Offset -sectorsize $SectorSize
     }
     elseif ($Script:WriteMethod -eq 'SkipEmptySpace'){
         $RDBStartBlock = ($AmigaPartitionsList | Where-Object {$_.PartitionNumber -eq 0} | Select-Object 'StartSector').StartSector
@@ -5401,13 +5689,13 @@ If ($Script:ImageOnly -eq 'FALSE'){
         Write-StartSubTaskMessage -SubtaskNumber 1 -TotalSubtasks 3 -Message 'Determing Free Space locations in partitions'
 
         Write-InformationMessage -Message 'Determining start of free space - Workbench Partition (this may take some time)'
-        & $Script:FindFreeSpacePath ($LocationofImage+$NameofImage) -sectorsize $SectorSize .\InputFiles-begincrop $RDBStartBlock -endcrop $SystemEndBlock -result ($TempFolder+'FindFreeSpaceLog.txt')
+        & $Script:FindFreeSpacePath ($HDFImageLocation +$NameofImage) -sectorsize $SectorSize .\InputFiles-begincrop $RDBStartBlock -endcrop $SystemEndBlock -result ($TempFolder+'FindFreeSpaceLog.txt')
         $EmptySpaceStartBlock_System = ([decimal](Get-Content -Path ($TempFolder+'FindFreeSpaceLog.txt')))+$RDBStartBlock 
         Write-InformationMessage -Message ('FreeSpace found at: '+$EmptySpaceStartBlock_System+' (from start of .hdf file)')
         Write-InformationMessage -Message 'Determining start of free space - Workbench - Completed'              
     
         Write-InformationMessage -Message 'Determining start of free space - Work Partition (this may take some time)'
-        & $Script:FindFreeSpacePath ($LocationofImage+$NameofImage) -sectorsize $SectorSize -begincrop $WorkStartBlock -endcrop $WorkEndBlock -result ($TempFolder+'FindFreeSpaceLog.txt')
+        & $Script:FindFreeSpacePath ($HDFImageLocation +$NameofImage) -sectorsize $SectorSize -begincrop $WorkStartBlock -endcrop $WorkEndBlock -result ($TempFolder+'FindFreeSpaceLog.txt')
         $EmptySpaceStartBlock_Work = ([decimal](Get-Content -Path ($TempFolder+'FindFreeSpaceLog.txt')))+$WorkStartBlock
         Write-InformationMessage -Message ('FreeSpace found at: '+$EmptySpaceStartBlock_Work+' (from start of .hdf file)')
         Write-InformationMessage -Message 'Determining start of free space - Work Partition - Completed'
@@ -5415,9 +5703,9 @@ If ($Script:ImageOnly -eq 'FALSE'){
         Write-StartSubTaskMessage -SubtaskNumber 2 -TotalSubtasks 3 -Message 'Writing .hdf to disk'
         
         Write-InformationMessage -Message ('Writing Workbench to Disk. Begin Crop is: ' + $RDBStartBlock + ' End Crop is: ' + $EmptySpaceStartBlock_System) 
-        & $Script:DDTCPath ($LocationofImage+$NameofImage) $Script:HSTDiskDeviceID -offset $Offset -sectorsize $SectorSize -begincrop $RDBStartBlock -endcrop $EmptySpaceStartBlock_System
+        & $Script:DDTCPath ($HDFImageLocation +$NameofImage) $Script:HSTDiskDeviceID -offset $Offset -sectorsize $SectorSize -begincrop $RDBStartBlock -endcrop $EmptySpaceStartBlock_System
         Write-InformationMessage -Message ('Writing Work to Disk. Begin Crop is: ' + $WorkStartBlock + ' End Crop is: ' + $EmptySpaceStartBlock_Work) 
-        & $Script:DDTCPath ($LocationofImage+$NameofImage) $Script:HSTDiskDeviceID -offset $Offset -sectorsize $SectorSize -begincrop $WorkStartBlock -endcrop $EmptySpaceStartBlock_Work    
+        & $Script:DDTCPath ($HDFImageLocation +$NameofImage) $Script:HSTDiskDeviceID -offset $Offset -sectorsize $SectorSize -begincrop $WorkStartBlock -endcrop $EmptySpaceStartBlock_Work    
         
         # Write blank space over reserved PFS space for unformatted Work partitions
 
@@ -5430,12 +5718,30 @@ If ($Script:ImageOnly -eq 'FALSE'){
                 $SectorstoWrite = (10*1024*1024)/$Script:AmigaBlockSize # Write 10meg of blank space
                 $EndBlock = $StartBlock + $SectorstoWrite
                 Write-InformationMessage -Message ('Writing Empty Space to extra Work partition #'+($AdditionalPartition.PartitionNumber-2)+' (device '+$AdditionalPartition.DeviceName+') for Startblock: '+$StartBlock+' Endblock: '+$EndBlock)
-                & $Script:DDTCPath ($LocationofImage+$NameofImage) $Script:HSTDiskDeviceID -offset $Offset -sectorsize $SectorSize -begincrop $StartBlock -endcrop $EndBlock 
+                & $Script:DDTCPath ($HDFImageLocation +$NameofImage) $Script:HSTDiskDeviceID -offset $Offset -sectorsize $SectorSize -begincrop $StartBlock -endcrop $EndBlock 
             }
         }
     }
 
     Write-TaskCompleteMessage -Message 'Writing Image to Disk - Complete!'
+}
+
+if ($Script:DeleteAllWorkingPathFiles -eq 'TRUE'){
+    if ($Script:ImageOnly -eq 'TRUE'){
+        Write-StartTaskMessage -Message 'Deleting ALL Working Folder files (excluding .img file)'
+    }
+    else {
+        Write-StartTaskMessage -Message 'Deleting ALL Working Folder files - Complete!'
+    }
+
+    Remove-WorkingFolderData -AtEnd 'TRUE'
+
+    if ($Script:ImageOnly -eq 'TRUE'){
+        Write-TaskCompleteMessage -Message 'Deleting ALL Working Folder files (excluding .img file) - Complete!'
+    }
+    else{
+        Write-TaskCompleteMessage -Message 'Deleting ALL Working Folder files - Complete!'
+    }
 }
 
 $EndDateandTime = (Get-Date -Format HH:mm:ss)
