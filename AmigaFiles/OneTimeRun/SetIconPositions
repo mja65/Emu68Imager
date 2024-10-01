@@ -11,7 +11,7 @@ If Warn
 
     iconpos >NIL: "Sys:WBStartup" type=DRAWER 166 35 DXPOS 217 DYPOS 80 DWIDTH 194 DHEIGHT 80
 
-    iconpos >NIL: "Sys:Prefs" type=DRAWER 8 20 DXPOS 18 DYPOS 75 DWIDTH 622 DHEIGHT 160
+    iconpos >NIL: "Sys:Prefs" type=DRAWER 8 20 DXPOS 69 DYPOS 86 DWIDTH 539 DHEIGHT 153
 
     iconpos >NIL: "Sys:System" type=DRAWER 164 4 DXPOS 150 DYPOS 80 DWIDTH 273 DHEIGHT 110
 
@@ -21,7 +21,7 @@ If Warn
 
     iconpos >NIL: "Sys:PiStorm" type=DRAWER 398 18 DXPOS 36 DYPOS 84 DWIDTH 604 DHEIGHT 172
 
-    iconpos >NIL: "Sys:Programs" type=DRAWER 319 4 DXPOS 157 DYPOS 80 DWIDTH 472 DHEIGHT 137
+    iconpos >NIL: "Sys:Programs" type=DRAWER 319 4 DXPOS 125 DYPOS 74 DWIDTH 496 DHEIGHT 141
 
     iconpos >NIL: "Sys:Storage" type=DRAWER 243 35 DXPOS 195 DYPOS 102 DWIDTH 257 DHEIGHT 94
 
@@ -92,9 +92,7 @@ If Warn
     iconpos >NIL: "Sys:PiStorm/Wifi Config" type=PROJECT 199 81
     iconpos >NIL: "Sys:Prefs/WBPattern" type=TOOL 330 4
     iconpos >NIL: "Sys:Prefs/Picasso96Mode" type=TOOL 421 4
-    iconpos >NIL: "Sys:Prefs/PVS.guide" type=PROJECT 526 56
     iconpos >NIL: "Sys:Prefs/PVS" type=TOOL 424 47
-    iconpos >NIL: "Sys:Prefs/ReadMe.mui" type=PROJECT 535 4
     iconpos >NIL: "Sys:Prefs/Presets" type=DRAWER 426 96 DXPOS 210 DYPOS 118 DWIDTH 171 DHEIGHT 84
 
     iconpos >NIL: "Sys:Prefs/Font" type=TOOL 4 4
@@ -113,21 +111,21 @@ If Warn
     iconpos >NIL: "Sys:Prefs/Time" type=TOOL 330 90
     iconpos >NIL: "Sys:Programs/AmiSpeedTest" type=DRAWER 103 82 DXPOS 173 DYPOS 80 DWIDTH 292 DHEIGHT 97
 
-    iconpos >NIL: "Sys:Programs/AMISSL" type=DRAWER 373 81 DXPOS 173 DYPOS 80 DWIDTH 294 DHEIGHT 149
+    iconpos >NIL: "Sys:Programs/AMISSL" type=DRAWER 386 81 DXPOS 173 DYPOS 80 DWIDTH 294 DHEIGHT 149
 
     iconpos >NIL: "Sys:Programs/DOpus" type=DRAWER 5 4 DXPOS 111 DYPOS 37 DWIDTH 256 DHEIGHT 163
 
-    iconpos >NIL: "Sys:Programs/HippoPlayer" type=DRAWER 240 36 DXPOS 173 DYPOS 80 DWIDTH 389 DHEIGHT 147
+    iconpos >NIL: "Sys:Programs/HippoPlayer" type=DRAWER 234 36 DXPOS 173 DYPOS 80 DWIDTH 389 DHEIGHT 147
 
     iconpos >NIL: "Sys:Programs/IBrowse" type=DRAWER 78 4 DXPOS 248 DYPOS 164 DWIDTH 284 DHEIGHT 199
 
     iconpos >NIL: "Sys:Programs/JanoEditor" type=DRAWER 204 81 DXPOS 173 DYPOS 80 DWIDTH 355 DHEIGHT 132
 
-    iconpos >NIL: "Sys:Programs/MUI" type=DRAWER 372 6 DXPOS 78 DYPOS 87 DWIDTH 541 DHEIGHT 200
+    iconpos >NIL: "Sys:Programs/MUI" type=DRAWER 386 11 DXPOS 78 DYPOS 87 DWIDTH 541 DHEIGHT 200
 
-    iconpos >NIL: "Sys:Programs/Picasso96" type=DRAWER 373 45 DXPOS 77 DYPOS 84 DWIDTH 258 DHEIGHT 298
+    iconpos >NIL: "Sys:Programs/Picasso96" type=DRAWER 387 49 DXPOS 104 DYPOS 38 DWIDTH 333 DHEIGHT 151
 
-    iconpos >NIL: "Sys:Programs/Roadshow" type=DRAWER 294 81 DXPOS 357 DYPOS 31 DWIDTH 191 DHEIGHT 167
+    iconpos >NIL: "Sys:Programs/Roadshow" type=DRAWER 297 81 DXPOS 173 DYPOS 80 DWIDTH 306 DHEIGHT 101
 
     iconpos >NIL: "Sys:Programs/SnoopDOS" type=DRAWER 151 36 DXPOS 202 DYPOS 82 DWIDTH 256 DHEIGHT 158
 
@@ -144,14 +142,14 @@ If Warn
     iconpos >NIL: "Sys:Programs/DOpus/DOpus416JRbin.readme" type=PROJECT 40 72
     iconpos >NIL: "Sys:Programs/DOpus/Docs/English" type=DRAWER 3 4 DXPOS 208 DYPOS 203 DWIDTH 225 DHEIGHT 181
 
-    iconpos >NIL: "Sys:Programs/DOpus/Docs/Espa∂ol" type=DRAWER 3 73 DXPOS 209 DYPOS 203 DWIDTH 225 DHEIGHT 181
+    iconpos >NIL: "Sys:Programs/DOpus/Docs/Espa켹l" type=DRAWER 3 73 DXPOS 209 DYPOS 203 DWIDTH 225 DHEIGHT 181
 
     iconpos >NIL: "Sys:Programs/DOpus/Docs/English/DOpus4 Manual" type=PROJECT 25 4
     iconpos >NIL: "Sys:Programs/DOpus/Docs/English/History.txt" type=PROJECT 27 68
     iconpos >NIL: "Sys:Programs/DOpus/Docs/English/License.txt" type=PROJECT 110 4
-    iconpos >NIL: "Sys:Programs/DOpus/Docs/Espa∂ol/Historial.txt" type=PROJECT 36 68
-    iconpos >NIL: "Sys:Programs/DOpus/Docs/Espa∂ol/Licencia.txt" type=PROJECT 130 4
-    iconpos >NIL: "Sys:Programs/DOpus/Docs/Espa∂ol/Manual de DOpus4" type=PROJECT 34 4
+    iconpos >NIL: "Sys:Programs/DOpus/Docs/Espa켹l/Historial.txt" type=PROJECT 36 68
+    iconpos >NIL: "Sys:Programs/DOpus/Docs/Espa켹l/Licencia.txt" type=PROJECT 130 4
+    iconpos >NIL: "Sys:Programs/DOpus/Docs/Espa켹l/Manual de DOpus4" type=PROJECT 34 4
     iconpos >NIL: "Sys:Programs/HippoPlayer/Brushes" type=DRAWER 130 35 DXPOS 17 DYPOS 58 DWIDTH 92 DHEIGHT 78
 
     iconpos >NIL: "Sys:Programs/HippoPlayer/HiP.doc" type=PROJECT 202 4
@@ -260,22 +258,23 @@ If Warn
     iconpos >NIL: "Sys:Programs/MUI/Rexx/MUI-Demo.mrx" type=PROJECT 23 66
     iconpos >NIL: "Sys:Programs/MUI/Rexx/ReadMe" type=PROJECT 83 6
     iconpos >NIL: "Sys:Programs/MUI/Rexx/WbMan.mrx" type=PROJECT 121 66
-    iconpos >NIL: "Sys:Programs/Picasso96/Debug" type=DRAWER 18 83 DXPOS 222 DYPOS 95 DWIDTH 153 DHEIGHT 101
+    iconpos >NIL: "Sys:Programs/Picasso96/Debug" type=DRAWER 185 4 DXPOS 222 DYPOS 95 DWIDTH 153 DHEIGHT 101
 
-    iconpos >NIL: "Sys:Programs/Picasso96/FliP96" type=TOOL 21 118
-    iconpos >NIL: "Sys:Programs/Picasso96/P96_PrinterPatch.doc" type=PROJECT FREEX FREEY
-    iconpos >NIL: "Sys:Programs/Picasso96/P96_PrinterPatch" type=TOOL FREEX FREEY
-    iconpos >NIL: "Sys:Programs/Picasso96/P96Speed" type=DRAWER 18 48 DXPOS 172 DYPOS 157 DWIDTH 138 DHEIGHT 163
+    iconpos >NIL: "Sys:Programs/Picasso96/FliP96" type=TOOL 188 35
+    iconpos >NIL: "Sys:Programs/Picasso96/P96_PrinterPatch.doc" type=PROJECT 187 74
+    iconpos >NIL: "Sys:Programs/Picasso96/P96_PrinterPatch" type=TOOL 36 88
+    iconpos >NIL: "Sys:Programs/Picasso96/P96Speed" type=DRAWER 34 57 DXPOS 172 DYPOS 157 DWIDTH 138 DHEIGHT 163
 
+    iconpos >NIL: "Sys:Programs/Picasso96/PVS.guide" type=PROJECT 35 4
     iconpos >NIL: "Sys:Programs/Picasso96/Debug/CheckBoards" type=TOOL FREEX FREEY
     iconpos >NIL: "Sys:Programs/Picasso96/P96Speed/P96Speed.guide" type=PROJECT 118 67
     iconpos >NIL: "Sys:Programs/Picasso96/P96Speed/P96Speed" type=TOOL FREEX FREEY
-    iconpos >NIL: "Sys:Programs/Roadshow/Installation.guide" type=PROJECT 44 4
-    iconpos >NIL: "Sys:Programs/Roadshow/Printable" type=DRAWER 42 82 DXPOS 147 DYPOS 123 DWIDTH 184 DHEIGHT 224
+    iconpos >NIL: "Sys:Programs/Roadshow/Installation.guide" type=PROJECT 163 4
+    iconpos >NIL: "Sys:Programs/Roadshow/Printable" type=DRAWER 161 43 DXPOS 147 DYPOS 123 DWIDTH 184 DHEIGHT 224
 
-    iconpos >NIL: "Sys:Programs/Roadshow/Reference" type=DRAWER 42 113 DXPOS 50 DYPOS 50 DWIDTH 666 DHEIGHT 478
+    iconpos >NIL: "Sys:Programs/Roadshow/Reference" type=DRAWER 26 43 DXPOS 50 DYPOS 50 DWIDTH 666 DHEIGHT 478
 
-    iconpos >NIL: "Sys:Programs/Roadshow/Roadshow.guide" type=PROJECT 44 43
+    iconpos >NIL: "Sys:Programs/Roadshow/Roadshow.guide" type=PROJECT 28 4
     iconpos >NIL: "Sys:Programs/Roadshow/Printable/Installation.pdf" type=PROJECT 51 4
     iconpos >NIL: "Sys:Programs/Roadshow/Printable/Roadshow.pdf" type=PROJECT 51 85
     iconpos >NIL: "Sys:Programs/Roadshow/Reference/Online.doc" type=PROJECT 70 180
@@ -498,12 +497,10 @@ else
     iconpos >NIL: "Sys:Prefs/Serial" type=TOOL 123 187
     iconpos >NIL: "Sys:Prefs/Sound" type=TOOL 233 187
     iconpos >NIL: "Sys:Prefs/Time" type=TOOL 331 187
-    iconpos >NIL: "Sys:Prefs/WBPattern" type=TOOL 413 187
-    iconpos >NIL: "Sys:Prefs/Workbench" type=TOOL 499 187
+    iconpos >NIL: "Sys:Prefs/WBPattern" type=TOOL 323 126
+    iconpos >NIL: "Sys:Prefs/Workbench" type=TOOL 500 126
     iconpos >NIL: "Sys:Prefs/Picasso96Mode" type=TOOL 222 85
-    iconpos >NIL: "Sys:Prefs/PVS.guide" type=PROJECT 326 136
     iconpos >NIL: "Sys:Prefs/PVS" type=TOOL 225 140
-    iconpos >NIL: "Sys:Prefs/ReadMe.mui" type=PROJECT 503 137
     iconpos >NIL: "Sys:Prefs/Asl" type=TOOL 25 4
     iconpos >NIL: "Sys:Prefs/DefaultIcons" type=TOOL 123 4
     iconpos >NIL: "Sys:Prefs/Font" type=TOOL 233 4
@@ -526,17 +523,17 @@ else
 
     iconpos >NIL: "Sys:Programs/DOpus" type=DRAWER 13 4 DXPOS 111 DYPOS 37 DWIDTH 256 DHEIGHT 163
 
-    iconpos >NIL: "Sys:Programs/HippoPlayer" type=DRAWER 272 4 DXPOS 265 DYPOS 43 DWIDTH 369 DHEIGHT 117
+    iconpos >NIL: "Sys:Programs/HippoPlayer" type=DRAWER 287 4 DXPOS 265 DYPOS 43 DWIDTH 369 DHEIGHT 117
 
     iconpos >NIL: "Sys:Programs/IBrowse" type=DRAWER 102 4 DXPOS 248 DYPOS 164 DWIDTH 284 DHEIGHT 199
 
     iconpos >NIL: "Sys:Programs/JanoEditor" type=DRAWER 308 64 DXPOS 278 DYPOS 50 DWIDTH 358 DHEIGHT 137
 
-    iconpos >NIL: "Sys:Programs/MUI" type=DRAWER 392 29 DXPOS 78 DYPOS 87 DWIDTH 541 DHEIGHT 200
+    iconpos >NIL: "Sys:Programs/MUI" type=DRAWER 391 29 DXPOS 78 DYPOS 87 DWIDTH 541 DHEIGHT 200
 
-    iconpos >NIL: "Sys:Programs/Picasso96" type=DRAWER 392 2 DXPOS 77 DYPOS 84 DWIDTH 258 DHEIGHT 298
+    iconpos >NIL: "Sys:Programs/Picasso96" type=DRAWER 389 3 DXPOS 223 DYPOS 51 DWIDTH 280 DHEIGHT 130
 
-    iconpos >NIL: "Sys:Programs/Roadshow" type=DRAWER 397 64 DXPOS 314 DYPOS 53 DWIDTH 192 DHEIGHT 157
+    iconpos >NIL: "Sys:Programs/Roadshow" type=DRAWER 393 64 DXPOS 169 DYPOS 53 DWIDTH 299 DHEIGHT 91
 
     iconpos >NIL: "Sys:Programs/SnoopDOS" type=DRAWER 189 4 DXPOS 314 DYPOS 53 DWIDTH 265 DHEIGHT 64
 
@@ -705,19 +702,20 @@ else
     iconpos >NIL: "Sys:Programs/MUI/ReadMe" type=PROJECT 17 13
     iconpos >NIL: "Sys:Programs/MUI/Rexx" type=DRAWER 278 81 DXPOS 78 DYPOS 101 DWIDTH 233 DHEIGHT 151
 
-    iconpos >NIL: "Sys:Programs/Picasso96/Debug" type=DRAWER 18 83 DXPOS 222 DYPOS 95 DWIDTH 153 DHEIGHT 101
+    iconpos >NIL: "Sys:Programs/Picasso96/Debug" type=DRAWER 9 84 DXPOS 222 DYPOS 95 DWIDTH 153 DHEIGHT 101
 
-    iconpos >NIL: "Sys:Programs/Picasso96/FliP96" type=TOOL 21 118
-    iconpos >NIL: "Sys:Programs/Picasso96/P96_PrinterPatch.doc" type=PROJECT FREEX FREEY
-    iconpos >NIL: "Sys:Programs/Picasso96/P96_PrinterPatch" type=TOOL FREEX FREEY
-    iconpos >NIL: "Sys:Programs/Picasso96/P96Speed" type=DRAWER 18 48 DXPOS 172 DYPOS 157 DWIDTH 138 DHEIGHT 163
+    iconpos >NIL: "Sys:Programs/Picasso96/FliP96" type=TOOL 135 78
+    iconpos >NIL: "Sys:Programs/Picasso96/P96_PrinterPatch.doc" type=PROJECT 134 4
+    iconpos >NIL: "Sys:Programs/Picasso96/P96_PrinterPatch" type=TOOL 134 41
+    iconpos >NIL: "Sys:Programs/Picasso96/P96Speed" type=DRAWER 9 55 DXPOS 172 DYPOS 157 DWIDTH 138 DHEIGHT 163
 
-    iconpos >NIL: "Sys:Programs/Roadshow/Installation.guide" type=PROJECT 53 4
-    iconpos >NIL: "Sys:Programs/Roadshow/Printable" type=DRAWER 51 41 DXPOS 147 DYPOS 123 DWIDTH 184 DHEIGHT 224
+    iconpos >NIL: "Sys:Programs/Picasso96/PVS.guide" type=PROJECT 10 4
+    iconpos >NIL: "Sys:Programs/Roadshow/Installation.guide" type=PROJECT 166 4
+    iconpos >NIL: "Sys:Programs/Roadshow/Printable" type=DRAWER 29 41 DXPOS 147 DYPOS 123 DWIDTH 184 DHEIGHT 224
 
-    iconpos >NIL: "Sys:Programs/Roadshow/Reference" type=DRAWER 51 70 DXPOS 50 DYPOS 50 DWIDTH 666 DHEIGHT 478
+    iconpos >NIL: "Sys:Programs/Roadshow/Reference" type=DRAWER 164 41 DXPOS 50 DYPOS 50 DWIDTH 666 DHEIGHT 478
 
-    iconpos >NIL: "Sys:Programs/Roadshow/Roadshow.guide" type=PROJECT 53 99
+    iconpos >NIL: "Sys:Programs/Roadshow/Roadshow.guide" type=PROJECT 31 4
     iconpos >NIL: "Sys:Programs/SnoopDOS/Readme_latest" type=PROJECT 316 7
     iconpos >NIL: "Sys:Programs/SnoopDOS/Readme.first" type=PROJECT 21 7
     iconpos >NIL: "Sys:Programs/SnoopDOS/SnoopDos.guide" type=PROJECT 203 7
@@ -886,7 +884,7 @@ else
     iconpos >NIL: "Sys:Prefs/Env-Archive/Sys/def_tool" type=TOOL FREEX FREEY
     iconpos >NIL: "Sys:Programs/DOpus/Docs/English" type=DRAWER 3 4 DXPOS 208 DYPOS 203 DWIDTH 225 DHEIGHT 181
 
-    iconpos >NIL: "Sys:Programs/DOpus/Docs/Espa∂ol" type=DRAWER 3 73 DXPOS 209 DYPOS 203 DWIDTH 225 DHEIGHT 181
+    iconpos >NIL: "Sys:Programs/DOpus/Docs/Espa켹l" type=DRAWER 3 73 DXPOS 209 DYPOS 203 DWIDTH 225 DHEIGHT 181
 
     iconpos >NIL: "Sys:Programs/HippoPlayer/ARexx/hip.HiP" type=PROJECT 469 187
     iconpos >NIL: "Sys:Programs/HippoPlayer/Brushes/HippoPl" type=PROJECT 12 4
@@ -980,9 +978,9 @@ else
     iconpos >NIL: "Sys:Programs/DOpus/Docs/English/DOpus4 Manual" type=PROJECT 25 4
     iconpos >NIL: "Sys:Programs/DOpus/Docs/English/History.txt" type=PROJECT 27 68
     iconpos >NIL: "Sys:Programs/DOpus/Docs/English/License.txt" type=PROJECT 110 4
-    iconpos >NIL: "Sys:Programs/DOpus/Docs/Espa∂ol/Historial.txt" type=PROJECT 36 68
-    iconpos >NIL: "Sys:Programs/DOpus/Docs/Espa∂ol/Licencia.txt" type=PROJECT 130 4
-    iconpos >NIL: "Sys:Programs/DOpus/Docs/Espa∂ol/Manual de DOpus4" type=PROJECT 34 4
+    iconpos >NIL: "Sys:Programs/DOpus/Docs/Espa켹l/Historial.txt" type=PROJECT 36 68
+    iconpos >NIL: "Sys:Programs/DOpus/Docs/Espa켹l/Licencia.txt" type=PROJECT 130 4
+    iconpos >NIL: "Sys:Programs/DOpus/Docs/Espa켹l/Manual de DOpus4" type=PROJECT 34 4
     iconpos >NIL: "Sys:Programs/HippoPlayer/HippoPlayerDocs/Deutsch_v2.38/HiP.guide" type=PROJECT 8 4
     iconpos >NIL: "Sys:Programs/HippoPlayer/HippoPlayerDocs/Italiano_v2.39/HiP.guide" type=PROJECT 8 4
     iconpos >NIL: "Sys:Programs/HippoPlayer/HippoPlayerDocs/Polski_v2.42/HiP.guide" type=PROJECT 8 4

@@ -1168,6 +1168,7 @@ $SettingstoRead = (
 'SizeofPartition_Other',
 'ImageOnly',
 'SetDiskupOnly',
+'DeleteAllWorkingPathFiles',
 'WorkingPath',
 'WorkingPathDefault',
 'HSTDiskNumber',
@@ -2528,7 +2529,7 @@ function Write-GUINoOSChosen {
     $Msg_Body = @"  
 Cannot check $Type as you have not yet chosen the OS!    
 "@     
-[System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,48)  
+    $null = [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,48)  
 }
 
 
@@ -2544,7 +2545,7 @@ The following ADFs are missing:
 $MissingADFstoReport 
 Select a location with valid ADF files.    
 "@     
-    [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,48) 
+    $null = [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,48) 
 
 }
 
@@ -2556,7 +2557,7 @@ function Write-GUINoKickstart {
     $Msg_Body = @"  
 No valid Kickstart file was found at the location you specified. Select a location with a valid Kickstart file.    
 "@     
-[System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,48) 
+    $null = [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,48) 
 }
 
 function Write-GUIReporttoUseronOptions {
@@ -2705,7 +2706,7 @@ You have selected a non-empty folder! Please select an empty folder.
             if ($CheckforEmptyFolder -eq 'TRUE'){
                 $items = Get-ChildItem -Path $WorkingPathtoReturn -Recurse -Force | Where-Object {$_.Name -ne 'AmigaDownloads' -and $_.Name -ne 'AmigaImageFiles' -and $_.Name -ne 'FAT32Partition' -and $_.Name -ne 'HDFImage' -and $_.Name -ne 'OutputImage' -and $_.Name -ne 'Programs' -and $_.Name -ne 'Temp'}
                 if ($items.Count -ne 0){
-                    $null= [System.Windows.MessageBox]::Show($Msg_Body_NonEmpty, $Msg_Header_NonEmpty,0,48)
+                    $null = [System.Windows.MessageBox]::Show($Msg_Body_NonEmpty, $Msg_Header_NonEmpty,0,48)
                     $IsDefinedWorkingPath = $false
                 }
                 else{
@@ -2766,10 +2767,10 @@ function Remove-WorkingFolderData {
     }
     if (Test-Path ($WorkingFoldertouse)){
         if ($AtEnd -eq 'TRUE'){
-            $NewFolders = ($WorkingFoldertouse+'Programs\'),($WorkingFoldertouse+'AmigaDownloads\'),($WorkingFoldertouse+'Temp\'),($WorkingFoldertouse+'HDFImage\'),($WorkingFoldertouse+'AmigaImageFiles\'+$Script:VolumeName_System),($WorkingFoldertouse+'AmigaImageFiles\'+$Script:VolumeName_Other),($WorkingFoldertouse+'\FAT32Partition\')
+            $NewFolders = ($WorkingFoldertouse+'Programs\'),($WorkingFoldertouse+'AmigaDownloads\'),($WorkingFoldertouse+'Temp\'),($WorkingFoldertouse+'HDFImage\'),($WorkingFoldertouse+'AmigaImageFiles\'),($WorkingFoldertouse+'\FAT32Partition\')
         }
         else{
-            $NewFolders = ($WorkingFoldertouse+'Temp\'),($WorkingFoldertouse+'OutputImage\'),($WorkingFoldertouse+'HDFImage\'),($WorkingFoldertouse+'AmigaImageFiles\'+$Script:VolumeName_System),($WorkingFoldertouse+'AmigaImageFiles\'+$Script:VolumeName_Other),($WorkingFoldertouse+'\FAT32Partition\')
+            $NewFolders = ($WorkingFoldertouse+'Temp\'),($WorkingFoldertouse+'OutputImage\'),($WorkingFoldertouse+'HDFImage\'),($WorkingFoldertouse+'AmigaImageFiles\'),($WorkingFoldertouse+'\FAT32Partition\')
         }
         foreach ($NewFolder in $NewFolders) {
             if (Test-Path $NewFolder){
@@ -4300,7 +4301,7 @@ $WPF_UI_MigratedFiles_Button.Add_Click({
             $Msg = @'
 Calculating space requirements. This may take some time if you have selected a large folder for transfer!
 '@            
-            $null=[System.Windows.MessageBox]::Show($Msg, 'Calculating Space',0,0)
+            $null = [System.Windows.MessageBox]::Show($Msg, 'Calculating Space',0,0)
             $Script:TransferLocation = $PathtoPopulate            
             $Script:SizeofFilestoTransfer = Get-TransferredFilesSpaceRequired -FoldertoCheck $Script:TransferLocation
             $Script:AvailableSpaceFilestoTransfer =  $Script:Space_FilestoTransfer - $Script:SizeofFilestoTransfer
@@ -4437,7 +4438,7 @@ $WPF_UI_Start_Button.Add_Click({
     }
     $ErrorCheck = Confirm-UIFields
     if ($ErrorCheck){
-        [System.Windows.MessageBox]::Show($ErrorCheck, 'Error! Go back and correct')
+        $null = [System.Windows.MessageBox]::Show($ErrorCheck, 'Error! Go back and correct')
         $ErrorCount += 1  
     } 
     if ($ErrorCount -eq 0){
@@ -4700,7 +4701,7 @@ One or more of input files is missing and/or has been altered!'
 
 Re-download file and try again. Tool will now exit.
 "@     
-    [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,16) 
+    $null = [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,16) 
     exit
     }
 }
@@ -4754,12 +4755,15 @@ if (((split-path  $Script:WorkingPath  -Parent)+'\') -eq $Script:Scriptpath) {
 
 Remove-WorkingFolderData
 
-if (-not(Test-Path ( $Script:WorkingPath+'FAT32Partition'))){
-    $null = New-Item -path ( $Script:WorkingPath) -Name 'FAT32Partition' -ItemType Directory    
+$FAT32Partition = $Script:WorkingPath+'FAT32Partition\'
+
+if (-not(Test-Path $FAT32Partition)){
+    $null = New-Item $FAT32Partition -ItemType Directory    
 }
 
-if (-not(Test-Path ( $Script:WorkingPath+'AmigaDownloads'))){
-    $null = New-Item -path ( $Script:WorkingPath) -Name 'AmigaDownloads' -ItemType Directory    
+$AmigaDownloads = $Script:WorkingPath+'AmigaDownloads\'
+if (-not(Test-Path $AmigaDownloads)){
+    $null = New-Item $AmigaDownloads -ItemType Directory    
 }
 
 $ProgramsFolder= $Script:WorkingPath+'Programs\'
@@ -4772,14 +4776,21 @@ if (-not (Test-Path $TempFolder)){
     $null = New-Item $TempFolder -ItemType Directory
 }
 
+#$Script:LocationofImage = $Script:WorkingPath+'OutputImage\' #Set in click button
+
+if (-not (Test-Path $Script:LocationofImage)){
+    $null = New-Item $Script:LocationofImage -ItemType Directory
+}
+
+$AmigaDrivetoCopy = $Script:WorkingPath+'AmigaImageFiles\'
+if (-not (Test-Path $AmigaDrivetoCopy)){
+    $null = New-Item $Script:LocationofImage -ItemType Directory
+}
+
 $HSTImagePath = $ProgramsFolder+'HST-Imager\hst.imager.exe'
 $HSTAmigaPath = $ProgramsFolder+'HST-Amiga\hst.amiga.exe'
 $LZXPath = $ProgramsFolder+'unlzx.exe'
 
-#$Script:LocationofImage = $Script:WorkingPath+'OutputImage\' #Set in click button
-$AmigaDrivetoCopy = $Script:WorkingPath+'AmigaImageFiles\'
-$AmigaDownloads = $Script:WorkingPath+'AmigaDownloads\'
-$FAT32Partition = $Script:WorkingPath+'FAT32Partition\'
 $HDFImageLocation = $Script:WorkingPath+'HDFImage\'
 
 $NameofImage = ('Pistorm'+$Script:KickstartVersiontoUse+'.HDF')
@@ -5641,13 +5652,12 @@ if ($Script:SetDiskupOnly -eq 'FALSE'){
 If ($Script:ImageOnly -eq 'TRUE'){
     Write-StartTaskMessage -Message 'Creating Image'
     
-    Set-Location $HDFImageLocation 
+    Set-Location $Script:LocationofImage
     
     #Update-OutputWindow -OutputConsole_Title_Text 'Creating Image' -ProgressbarValue_Overall 83 -ProgressbarValue_Overall_Text '83%'
     
     & $HDF2emu68Path ($HDFImageLocation +$NameofImage) $Script:SizeofFAT32_hdf2emu68 ($FAT32Partition).Trim('\')
-    
-    $null= Rename-Item ($HDFImageLocation+'emu68_converted.img') -NewName ('Emu68Kickstart'+$Script:KickstartVersiontoUse+'.img')
+    $null= rename-Item ($Script:LocationofImage+'emu68_converted.img') -NewName ('Emu68Kickstart'+$Script:KickstartVersiontoUse+'.img')
     
     Write-TaskCompleteMessage -Message ('Creating Image - Complete! Your image can be found at the following location: '+$HDFImageLocation +('Emu68Kickstart'+$Script:KickstartVersiontoUse+'.img')) 
 
@@ -5732,6 +5742,8 @@ if ($Script:DeleteAllWorkingPathFiles -eq 'TRUE'){
         Write-StartTaskMessage -Message 'Deleting ALL Working Folder files - Complete!'
     }
 
+    Set-Location $Script:Scriptpath
+
     Remove-WorkingFolderData -AtEnd 'TRUE'
 
     if ($Script:ImageOnly -eq 'TRUE'){
@@ -5741,6 +5753,8 @@ if ($Script:DeleteAllWorkingPathFiles -eq 'TRUE'){
         Write-TaskCompleteMessage -Message 'Deleting ALL Working Folder files - Complete!'
     }
 }
+
+Set-Location $Script:Scriptpath
 
 $EndDateandTime = (Get-Date -Format HH:mm:ss)
 $ElapsedTime = (New-TimeSpan -Start $StartDateandTime -End $EndDateandTime).TotalSeconds
