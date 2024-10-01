@@ -2268,10 +2268,10 @@ and select this path to scan.
 "@
     $null = [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,0)
 
-    $PathtoADFFiles = 'E:\Emulators\Amiga Files\Shared\adf\OS32\'
-    $PathtoADFHashes = 'E:\Emu68Imager\InputFiles\ADFHashes.csv'
-    $KickstartVersion='3.2.2.1'
-    $PathtoListofInstallFiles = 'E:\Emu68Imager\InputFiles\ListofInstallFiles.csv'
+  #  $PathtoADFFiles = 'E:\Emulators\Amiga Files\Shared\adf\OS32\'
+  #  $PathtoADFHashes = 'E:\Emu68Imager\InputFiles\ADFHashes.csv'
+  #  $KickstartVersion='3.2.2.1'
+  #  $PathtoListofInstallFiles = 'E:\Emu68Imager\InputFiles\ListofInstallFiles.csv'
 
     $ListofADFFilestoCheck = Get-ChildItem $PathtoADFFiles -force -Recurse
     if ((($ListofADFFilestoCheck | Measure-Object).count) -gt 500){
@@ -4490,7 +4490,6 @@ $WPF_UI_Start_Button.Add_Click({
 })
 
 $WPF_UI_GoBack_Button.add_Click({
-        $null = Remove-Item ($Script:SettingsFolder+$Script:LogDateTime+'_AutomatedSettingsSave.e68')
         $null = Confirm-UIFields
         $WPF_UI_Reporting_Grid.Visibility="Hidden"
         $WPF_UI_Main_Grid.Visibility="Visible"
