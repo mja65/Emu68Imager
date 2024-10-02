@@ -22,7 +22,7 @@ IF NOT FAIL
 		endif
          setenv System "PistormRaspi4" 
          ELSE 
-         version brcm-sdhc.device 
+         version brcm-sdhc.device >NIL:
           If NOT fail 
 		  	if ${FIRSTTIMEBOOT} EQ "TRUE"
 				echo "Setting environment as Raspberry Pi 3 (or Zero2)" 

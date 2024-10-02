@@ -4,3 +4,4 @@ UserFiles/*
 .vscode/*
 Settings/*
 .DS_Store
+Script/ExportCSVs.ps1

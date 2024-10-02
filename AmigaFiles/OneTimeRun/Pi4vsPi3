@@ -1,27 +1,23 @@
-Echo "Checking for brcm-emmc.device vs brcm-sdhc.device"
-version brcm-emmc.device >NIL:
-if not fail
+IF ${System} EQ "PistormRaspi4"
 	Echo "Raspberry 4 (or CM4) Found - brcm-emmc.device"
 	rename from Sys:Devs/DOSDrivers/SD0Pi4 to Sys:Devs/DOSDrivers/SD0 QUIET
-	If ${KickstartVersion} EQ 3.2
+	IF ${KickstartVersion} EQ 3.2
 		delete Sys:Tools/HDToolbox.info QUIET
 	ENDIF
 	rename from Sys:Tools/HDToolboxPi4.info to Sys:Tools/HDToolbox.info QUIET
 	Delete Sys:Devs/DOSDrivers/SD0Pi3 QUIET
 	Delete Sys:Tools/HDToolboxPi3.info QUIET 
-else
-	version brcm-sdhc.device >NIL:
-	if not fail
-		Echo "Raspberry 3 (or Raspberry Zero2) Found - brcm-sdhc.device"
-		rename from Sys:Devs/DOSDrivers/SD0Pi3 to Sys:Devs/DOSDrivers/SD0 QUIET
-		If ${KickstartVersion} EQ 3.2
-			delete Sys:Tools/HDToolbox.info QUIET
-		ENDIF
-		rename from Sys:Tools/HDToolboxPi3.info to Sys:Tools/HDToolbox.info QUIET
-		Delete Sys:Devs/DOSDrivers/SD0Pi4 QUIET
-		Delete Sys:Tools/HDToolboxPi4.info QUIET
-	endif  
-endif
+ENDIF
+IF ${System} EQ ""PistormRaspi3"
+	Echo "Raspberry 3 (or Raspberry Zero2) Found - brcm-sdhc.device"
+	rename from Sys:Devs/DOSDrivers/SD0Pi3 to Sys:Devs/DOSDrivers/SD0 QUIET
+	IF ${KickstartVersion} EQ 3.2
+		delete Sys:Tools/HDToolbox.info QUIET
+	ENDIF
+	rename from Sys:Tools/HDToolboxPi3.info to Sys:Tools/HDToolbox.info QUIET
+	Delete Sys:Devs/DOSDrivers/SD0Pi4 QUIET
+	Delete Sys:Tools/HDToolboxPi4.info QUIET
+ENDIF
 Mount SD0: >NIL:
 echo "sd.low_speed emmc.low_speed sd.unit0=rw emmc.unit0=rw" >EMU68BOOT:cmdline.txt
 Assign SD0: DISMOUNT >NIL:

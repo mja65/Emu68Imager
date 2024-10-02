@@ -1047,6 +1047,7 @@ function Confirm-UIFields {
     }
     
     if ($Script:SetDiskupOnly -eq 'TRUE'){
+        $WPF_UI_SetUpDiskOnly_CheckBox.IsChecked = 'TRUE'   
         $WPF_UI_MigratedFiles_Button.Visibility = 'Hidden'
         $WPF_UI_MigratedPath_Label.Visibility = 'Hidden'
         $WPF_UI_MigratedFiles_Button.IsEnabled = ""
@@ -1061,6 +1062,7 @@ function Confirm-UIFields {
         $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Visibility = 'Hidden'
     }
     elseif ($Script:SetDiskupOnly -eq 'FALSE'){
+        $WPF_UI_SetUpDiskOnly_CheckBox.IsChecked = '' 
         $WPF_UI_MigratedFiles_Button.IsEnabled = "TRUE"
         $WPF_UI_MigratedFiles_Button.Visibility = 'Visible'
         $WPF_UI_MigratedPath_Label.Visibility = 'Visible'
@@ -1086,11 +1088,11 @@ function Confirm-UIFields {
     elseif ($Script:WriteMethod -eq 'Normal'){
         $WPF_UI_SkipEmptySpace_CheckBox.IsChecked = ''
     }
-    if ($Script:SetDiskupOnly -eq 'TRUE'){
-        $WPF_UI_SetUpDiskOnly_CheckBox.IsChecked = 'TRUE'        
+    if ($Script:DeleteAllWorkingPathFiles -eq 'TRUE'){
+        $WPF_UI_DeleteFiles_CheckBox.IsChecked = 'TRUE'
     }
     else{
-        $WPF_UI_SetUpDiskOnly_CheckBox.IsChecked = ''        
+        $WPF_UI_DeleteFiles_CheckBox.IsChecked = ''
     }
     if ($NumberofErrors -gt 0){
         $WPF_UI_Start_Button.Background = 'Red'
@@ -1670,15 +1672,28 @@ function Get-AmigaFileWeb {
         return $false    
     }
     else{
-        try {
-            Invoke-WebRequest $URL -OutFile ($LocationforDL+$NameofDL) # Powershell 5 compatibility -AllowInsecureRedirect
-            Write-InformationMessage -Message 'Download completed'
-            return $true       
-        }
-        catch {
-            Write-ErrorMessage -Message ('Error downloading '+$NameofDL+'!')
-            return $false
-        }        
+        do {
+            try {
+                If ($Attempts -ne 0){
+                    Write-InformationMessage -Message ('Downloading file '+$NameofDL+' Attempt #'+($Attempts+1))                
+                }
+                Invoke-WebRequest $URL -OutFile ($LocationforDL+$NameofDL) # Powershell 5 compatibility -AllowInsecureRedirect
+                $IsSuccess = $true
+                Write-InformationMessage -Message 'Download completed'
+                Return $true       
+            }
+            catch {
+                Write-InformationMessage -message 'Download failed! Retrying in 3 seconds'
+                Start-Sleep -Seconds 3
+                $IsSuccess = $false   
+            }
+            $Attempts ++               
+            
+        } until (
+            $IsSuccess -eq $true -or $Attempts -eq 3
+        )
+        Write-ErrorMessage -Message ('Error downloading '+$NameofDL+'!')
+        return $false
     }
 }
 function Start-HSTImager {
@@ -4675,37 +4690,37 @@ $ErrorMessage
     exit
 }
 
-#Generate CSV MD5 Hashes - Begin (To be disabled or removed for production version)
-$CSVHashes = Get-FileHash ($InputFolder+'*.CSV') -Algorithm MD5
-
-'Name;Hash' | Out-File -FilePath ($InputFolder+'CSVHASH')
-Foreach ($CSVHash in $CSVHashes){
-    ((Split-Path $CSVHash.Path -Leaf)+';'+$CSVHash.Hash) | Out-File -FilePath ($InputFolder+'CSVHASH') -Append
-}
-
-#Generate CSV MD5 Hashes - End
-
 # Check Integrity of CSVs
 
 $CSVHashestoCheck = Import-Csv -Path ($InputFolder+'CSVHASH') -Delimiter ';'
+
+$CSVHashesFound = $null
+$CSVHashesFound += Get-FileHash ($InputFolder+'*.CSV') -Algorithm MD5
+$CSVHashesFound += Get-FileHash (Get-ChildItem -Path ($LocationofAmigaFiles) -Recurse | Where-Object { $_.PSIsContainer -eq $false }).FullName -Algorithm MD5
+$CSVHashesFound += Get-FileHash (Get-ChildItem -Path ($SourceProgramPath) -Recurse | Where-Object { $_.PSIsContainer -eq $false }).FullName -Algorithm MD5
+$CSVHashesFound += Get-FileHash (Get-ChildItem -Path ($ScriptPath+'Script\') -Recurse | Where-Object { $_.PSIsContainer -eq $false }).FullName -Algorithm MD5
+
 foreach ($CSVHashtoCheck in $CSVHashestoCheck){
-    foreach ($CSVHash in $CSVHashes){
-        if (($CSVHashtoCheck.Name+$CSVHashtoCheck.Hash) -eq ((split-path $CSVHash.Path -leaf)+($CSVHash.Hash))){
-            $HashMatch=$true
+    $HashMatch = $false
+    foreach ($CSVHash in $CSVHashesFound){
+        $Length = ($CSVHash.Path).Length
+        $StartPoint = ($Script:Scriptpath).Length
+        $Path = ($CSVHash.Path).Substring($StartPoint,($Length-$StartPoint))    
+        if (($CSVHashtoCheck.Path+$CSVHashtoCheck.Hash) -eq ($Path+$CSVHash.Hash)){
+            $HashMatch = $true
         }
     }
     if ($HashMatch -eq $false) {
         $Msg_Header ='Integrity Issue with Files'    
         $Msg_Body = @"  
-One or more of input files is missing and/or has been altered!' 
-
-Re-download file and try again. Tool will now exit.
+One or more files is missing and/or has been altered!' 
+        
+Re-download Emu68 Imager and try again. Tool will now exit.
 "@     
     $null = [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,16) 
     exit
     }
 }
-
 
 ### Clean up
 
@@ -4784,7 +4799,7 @@ if (-not (Test-Path $Script:LocationofImage)){
 
 $AmigaDrivetoCopy = $Script:WorkingPath+'AmigaImageFiles\'
 if (-not (Test-Path $AmigaDrivetoCopy)){
-    $null = New-Item $Script:LocationofImage -ItemType Directory
+    $null = New-Item $AmigaDrivetoCopy -ItemType Directory
 }
 
 $HSTImagePath = $ProgramsFolder+'HST-Imager\hst.imager.exe'

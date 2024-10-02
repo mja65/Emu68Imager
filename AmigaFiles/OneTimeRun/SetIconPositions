@@ -11,7 +11,7 @@ If Warn
 
     iconpos >NIL: "Sys:WBStartup" type=DRAWER 166 35 DXPOS 217 DYPOS 80 DWIDTH 194 DHEIGHT 80
 
-    iconpos >NIL: "Sys:Prefs" type=DRAWER 8 20 DXPOS 69 DYPOS 86 DWIDTH 539 DHEIGHT 153
+    iconpos >NIL: "Sys:Prefs" type=DRAWER 8 20 DXPOS 130 DYPOS 49 DWIDTH 471 DHEIGHT 198
 
     iconpos >NIL: "Sys:System" type=DRAWER 164 4 DXPOS 150 DYPOS 80 DWIDTH 273 DHEIGHT 110
 
@@ -43,13 +43,27 @@ If Warn
 
     iconpos >NIL: "Sys:Devs/Keymaps" type=DRAWER 90 4 DXPOS 280 DYPOS 134 DWIDTH 182 DHEIGHT 79
 
+    iconpos >NIL: "Sys:Devs/Printers/Generic" type=PROJECT 3 4
+    iconpos >NIL: "Sys:Devs/DataTypes/JFIF-PS25" type=PROJECT FREEX FREEY
+    iconpos >NIL: "Sys:Devs/DataTypes/JFIF" type=PROJECT FREEX FREEY
+    iconpos >NIL: "Sys:Devs/DataTypes/PNG" type=PROJECT FREEX FREEY
+    iconpos >NIL: "Sys:Devs/DataTypes/TIFF_II" type=PROJECT FREEX FREEY
+    iconpos >NIL: "Sys:Devs/DataTypes/TIFF_MM" type=PROJECT FREEX FREEY
     iconpos >NIL: "Sys:Devs/DataTypes/8SVX" type=PROJECT 12 4
     iconpos >NIL: "Sys:Devs/DataTypes/AmigaGuide" type=PROJECT 12 44
     iconpos >NIL: "Sys:Devs/DataTypes/ANIM" type=PROJECT 90 4
     iconpos >NIL: "Sys:Devs/DataTypes/CDXL" type=PROJECT 90 44
     iconpos >NIL: "Sys:Devs/DataTypes/FTXT" type=PROJECT 159 4
     iconpos >NIL: "Sys:Devs/DataTypes/ILBM" type=PROJECT 159 44
-    iconpos >NIL: "Sys:Devs/Printers/Generic" type=PROJECT 3 4
+    iconpos >NIL: "Sys:Devs/DataTypes/GIF" type=PROJECT FREEX FREEY
+    iconpos >NIL: "Sys:Devs/DataTypes/JFIF-ADOB" type=PROJECT FREEX FREEY
+    iconpos >NIL: "Sys:Devs/DataTypes/JFIF-basic" type=PROJECT FREEX FREEY
+    iconpos >NIL: "Sys:Devs/DataTypes/JFIF-EXIF" type=PROJECT FREEX FREEY
+    iconpos >NIL: "Sys:Devs/DataTypes/JFIF-EXIF2" type=PROJECT FREEX FREEY
+    iconpos >NIL: "Sys:Devs/DataTypes/JFIF-JPG" type=PROJECT FREEX FREEY
+    iconpos >NIL: "Sys:Devs/DataTypes/JFIF-MAC" type=PROJECT FREEX FREEY
+    iconpos >NIL: "Sys:Devs/DataTypes/JFIF-MAVI" type=PROJECT FREEX FREEY
+    iconpos >NIL: "Sys:Devs/DataTypes/JFIF-PS" type=PROJECT FREEX FREEY
     iconpos >NIL: "Sys:Devs/DOSDrivers/PIPE" type=PROJECT 3 4
     iconpos >NIL: "Sys:Devs/DOSDrivers/SD0" type=PROJECT FREEX FREEY
     iconpos >NIL: "Sys:Devs/Internet/groups" type=PROJECT FREEX FREEY
@@ -90,25 +104,31 @@ If Warn
     iconpos >NIL: "Sys:PiStorm/TransferKick" type=PROJECT 484 10
     iconpos >NIL: "Sys:PiStorm/VC4Tweak" type=TOOL 289 4
     iconpos >NIL: "Sys:PiStorm/Wifi Config" type=PROJECT 199 81
-    iconpos >NIL: "Sys:Prefs/WBPattern" type=TOOL 330 4
-    iconpos >NIL: "Sys:Prefs/Picasso96Mode" type=TOOL 421 4
-    iconpos >NIL: "Sys:Prefs/PVS" type=TOOL 424 47
-    iconpos >NIL: "Sys:Prefs/Presets" type=DRAWER 426 96 DXPOS 210 DYPOS 118 DWIDTH 171 DHEIGHT 84
+    iconpos >NIL: "Sys:Prefs/WBPattern" type=TOOL 259 4
+    iconpos >NIL: "Sys:Prefs/akDatatypes" type=DRAWER 363 84 DXPOS 173 DYPOS 80 DWIDTH 214 DHEIGHT 141
+
+    iconpos >NIL: "Sys:Prefs/Picasso96Mode" type=TOOL 255 133
+    iconpos >NIL: "Sys:Prefs/PVS" type=TOOL 361 4
+    iconpos >NIL: "Sys:Prefs/Presets" type=DRAWER 363 53 DXPOS 210 DYPOS 118 DWIDTH 171 DHEIGHT 84
 
     iconpos >NIL: "Sys:Prefs/Font" type=TOOL 4 4
     iconpos >NIL: "Sys:Prefs/IControl" type=TOOL 4 47
     iconpos >NIL: "Sys:Prefs/Input" type=TOOL 3 90
-    iconpos >NIL: "Sys:Prefs/Locale" type=TOOL 79 4
-    iconpos >NIL: "Sys:Prefs/Overscan" type=TOOL 79 47
-    iconpos >NIL: "Sys:Prefs/Palette" type=TOOL 79 90
-    iconpos >NIL: "Sys:Prefs/Pointer" type=TOOL 160 4
-    iconpos >NIL: "Sys:Prefs/Printer" type=TOOL 160 47
-    iconpos >NIL: "Sys:Prefs/PrinterGfx" type=TOOL 160 90
-    iconpos >NIL: "Sys:Prefs/PrinterPS" type=TOOL 247 4
-    iconpos >NIL: "Sys:Prefs/ScreenMode" type=TOOL 247 47
-    iconpos >NIL: "Sys:Prefs/Serial" type=TOOL 247 90
-    iconpos >NIL: "Sys:Prefs/Sound" type=TOOL 330 47
-    iconpos >NIL: "Sys:Prefs/Time" type=TOOL 330 90
+    iconpos >NIL: "Sys:Prefs/Locale" type=TOOL 4 133
+    iconpos >NIL: "Sys:Prefs/Overscan" type=TOOL 79 4
+    iconpos >NIL: "Sys:Prefs/Palette" type=TOOL 79 47
+    iconpos >NIL: "Sys:Prefs/Pointer" type=TOOL 79 90
+    iconpos >NIL: "Sys:Prefs/Printer" type=TOOL 79 133
+    iconpos >NIL: "Sys:Prefs/PrinterGfx" type=TOOL 160 4
+    iconpos >NIL: "Sys:Prefs/PrinterPS" type=TOOL 160 47
+    iconpos >NIL: "Sys:Prefs/ScreenMode" type=TOOL 160 90
+    iconpos >NIL: "Sys:Prefs/Serial" type=TOOL 160 133
+    iconpos >NIL: "Sys:Prefs/Sound" type=TOOL 259 47
+    iconpos >NIL: "Sys:Prefs/Time" type=TOOL 259 90
+    iconpos >NIL: "Sys:Prefs/akDatatypes/akGIFPrefs" type=TOOL 24 4
+    iconpos >NIL: "Sys:Prefs/akDatatypes/akJFIFPrefs" type=TOOL 24 62
+    iconpos >NIL: "Sys:Prefs/akDatatypes/akPNGPrefs" type=TOOL 119 4
+    iconpos >NIL: "Sys:Prefs/akDatatypes/akTIFFPrefs" type=TOOL 119 62
     iconpos >NIL: "Sys:Programs/AmiSpeedTest" type=DRAWER 103 82 DXPOS 173 DYPOS 80 DWIDTH 292 DHEIGHT 97
 
     iconpos >NIL: "Sys:Programs/AMISSL" type=DRAWER 386 81 DXPOS 173 DYPOS 80 DWIDTH 294 DHEIGHT 149
