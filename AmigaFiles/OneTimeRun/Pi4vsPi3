@@ -8,7 +8,7 @@ IF ${System} EQ "PistormRaspi4"
 	Delete Sys:Devs/DOSDrivers/SD0Pi3 QUIET
 	Delete Sys:Tools/HDToolboxPi3.info QUIET 
 ENDIF
-IF ${System} EQ ""PistormRaspi3"
+IF ${System} EQ "PistormRaspi3"
 	Echo "Raspberry 3 (or Raspberry Zero2) Found - brcm-sdhc.device"
 	rename from Sys:Devs/DOSDrivers/SD0Pi3 to Sys:Devs/DOSDrivers/SD0 QUIET
 	IF ${KickstartVersion} EQ 3.2

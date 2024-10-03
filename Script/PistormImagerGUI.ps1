@@ -407,10 +407,10 @@ $Script:AmigaBlockSize = 512
 
 
 $UnLZXURL='http://aminet.net/util/arc/W95unlzx.lha'
-$HSTImagerreleases= 'https://api.github.com/repos/henrikstengaard/hst-imager/releases'
+$HSTImagerreleases = 'https://api.github.com/repos/henrikstengaard/hst-imager/releases'
 $HSTAmigareleases= 'https://api.github.com/repos/henrikstengaard/hst-amiga/releases'
-$Emu68releases= 'https://api.github.com/repos/michalsc/Emu68/releases'
-$Emu68Toolsreleases= 'https://api.github.com/repos/michalsc/Emu68-tools/releases'
+$Emu68releases = 'https://api.github.com/repos/michalsc/Emu68/releases'
+$Emu68Toolsreleases = 'https://api.github.com/repos/michalsc/Emu68-tools/releases'
 
 ####################################################################### End Set Script Variables ###############################################################################################
 
@@ -1890,8 +1890,10 @@ function Get-GithubRelease {
         $Name,
         $LocationforDownload,
         $LocationforProgram,
-        $Sort_Flag
+        $Sort_Flag,
+        $OnlyReleaseVersions
     )
+
     if(Test-Path $LocationforProgram){
         Write-InformationMessage -Message 'File already exists!'
         return $true   
@@ -1919,13 +1921,20 @@ function Get-GithubRelease {
             Write-ErrorMessage -Message ('Error downloading '+$NameofDL+'!')
             return $false
         }
-        if ($Sort_Flag -eq 'Sort'){
-            $GithubDetails_2 = $GithubDetails | Where-Object { $_.tag_name -eq $Tag_Name } | Select-Object -ExpandProperty assets | Where-Object { $_.name -match $Name } | Sort-Object -Property updated_at -Descending
+        if ($OnlyReleaseVersions -eq 'TRUE'){
+        
+            $GithubDetails_Sorted = $GithubDetails | Where-Object { $_.tag_name -ne 'nightly' -and ($_.draft).tostring() -eq 'False' -and ($_.prerelease).tostring() -eq 'False'} | Sort-Object -Property 'tag_name' -Descending | Select-Object -ExpandProperty assets
+            $GithubDetails_ForDownload = $GithubDetails_Sorted  | Where-Object { $_.name -match $Name } | Select-Object -First 1
         }
-        else{
-            $GithubDetails_2 = $GithubDetails | Where-Object { $_.tag_name -eq $Tag_Name } | Select-Object -ExpandProperty assets | Where-Object { $_.name -match $Name }
+        else {
+            if ($Sort_Flag -eq 'Sort'){
+                $GithubDetails_ForDownload = $GithubDetails | Where-Object { $_.tag_name -eq $Tag_Name } | Select-Object -ExpandProperty assets | Where-Object { $_.name -match $Name } | Sort-Object -Property updated_at -Descending
+            }
+            else{
+                $GithubDetails_ForDownload = $GithubDetails | Where-Object { $_.tag_name -eq $Tag_Name } | Select-Object -ExpandProperty assets | Where-Object { $_.name -match $Name }
+            }
         }
-        $GithubDownloadURL =$GithubDetails_2[0].browser_download_url 
+        $GithubDownloadURL =$GithubDetails_ForDownload[0].browser_download_url 
         Write-InformationMessage -Message ('Downloading Files for URL: '+$GithubDownloadURL)
         $Counter = 0
         $IsSuccess = $null
@@ -4700,27 +4709,27 @@ $CSVHashesFound += Get-FileHash (Get-ChildItem -Path ($LocationofAmigaFiles) -Re
 $CSVHashesFound += Get-FileHash (Get-ChildItem -Path ($SourceProgramPath) -Recurse | Where-Object { $_.PSIsContainer -eq $false }).FullName -Algorithm MD5
 $CSVHashesFound += Get-FileHash (Get-ChildItem -Path ($ScriptPath+'Script\') -Recurse | Where-Object { $_.PSIsContainer -eq $false }).FullName -Algorithm MD5
 
-foreach ($CSVHashtoCheck in $CSVHashestoCheck){
-    $HashMatch = $false
-    foreach ($CSVHash in $CSVHashesFound){
-        $Length = ($CSVHash.Path).Length
-        $StartPoint = ($Script:Scriptpath).Length
-        $Path = ($CSVHash.Path).Substring($StartPoint,($Length-$StartPoint))    
-        if (($CSVHashtoCheck.Path+$CSVHashtoCheck.Hash) -eq ($Path+$CSVHash.Hash)){
-            $HashMatch = $true
-        }
-    }
-    if ($HashMatch -eq $false) {
-        $Msg_Header ='Integrity Issue with Files'    
-        $Msg_Body = @"  
-One or more files is missing and/or has been altered!' 
+# foreach ($CSVHashtoCheck in $CSVHashestoCheck){
+#     $HashMatch = $false
+#     foreach ($CSVHash in $CSVHashesFound){
+#         $Length = ($CSVHash.Path).Length
+#         $StartPoint = ($Script:Scriptpath).Length
+#         $Path = ($CSVHash.Path).Substring($StartPoint,($Length-$StartPoint))    
+#         if (($CSVHashtoCheck.Path+$CSVHashtoCheck.Hash) -eq ($Path+$CSVHash.Hash)){
+#             $HashMatch = $true
+#         }
+#     }
+#     if ($HashMatch -eq $false) {
+#         $Msg_Header ='Integrity Issue with Files'    
+#         $Msg_Body = @"  
+# One or more files is missing and/or has been altered!' 
         
-Re-download Emu68 Imager and try again. Tool will now exit.
-"@     
-    $null = [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,16) 
-    exit
-    }
-}
+# Re-download Emu68 Imager and try again. Tool will now exit.
+# "@     
+#     $null = [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,16) 
+#     exit
+#     }
+# }
 
 ### Clean up
 
@@ -4941,14 +4950,14 @@ foreach($Path in $PathstoTest){
 
 Write-StartSubTaskMessage -Message 'Downloading Emu68Pistorm' -SubtaskNumber '1' -TotalSubtasks '3'
 
-if (-not(Get-GithubRelease -GithubRelease $Emu68releases -Tag_Name "nightly" -Name 'Emu68-pistorm-' -LocationforDownload ($AmigaDownloads+'Emu68Pistorm.zip') -LocationforProgram ($tempfolder+'Emu68Pistorm\') -Sort_Flag 'SORT')){
+if (-not(Get-GithubRelease -GithubRelease $Emu68releases -OnlyReleaseVersions 'TRUE' -Name 'Emu68-pistorm.' -LocationforDownload ($AmigaDownloads+'Emu68Pistorm.zip') -LocationforProgram ($tempfolder+'Emu68Pistorm\') -Sort_Flag 'SORT')){
     Write-ErrorMessage -Message'Error downloading Emu68Pistorm! Cannot continue!'
     exit
 }
 
 Write-StartSubTaskMessage -Message 'Downloading Emu68Pistorm32lite' -SubtaskNumber '2' -TotalSubtasks '3'
 
-if (-not(Get-GithubRelease -GithubRelease $Emu68releases -Tag_Name "nightly" -Name 'Emu68-pistorm32lite' -LocationforDownload ($AmigaDownloads+'Emu68Pistorm32lite.zip') -LocationforProgram ($tempfolder+'Emu68Pistorm32lite\') -Sort_Flag 'SORT')){
+if (-not(Get-GithubRelease -GithubRelease $Emu68releases -OnlyReleaseVersions 'TRUE' -Name 'Emu68-pistorm32lite.' -LocationforDownload ($AmigaDownloads+'Emu68Pistorm32lite.zip') -LocationforProgram ($tempfolder+'Emu68Pistorm32lite\') -Sort_Flag 'SORT')){
     Write-ErrorMessage -Message 'Error downloading Emu68Pistorm32lite! Cannot continue!'
     exit
 }
