@@ -4834,7 +4834,7 @@ if ($Script:SetDiskupOnly -eq 'FALSE'){
     $Script:TotalSections = 17
 }
 else{
-    $TotalSections = 5
+    $TotalSections = 6
 }
 
 if (($Script:SetDiskupOnly -eq 'FALSE') -and (-not $Script:TransferLocation)){
