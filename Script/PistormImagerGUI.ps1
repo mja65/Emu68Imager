@@ -1047,6 +1047,11 @@ function Confirm-UIFields {
     }
     
     if ($Script:SetDiskupOnly -eq 'TRUE'){
+        $WPF_UI_WIfiSettings_Label.Visibility = 'Hidden'
+        $WPF_UI_Password_Label.Visibility = 'Hidden'
+        $WPF_UI_Password_Textbox.Visibility = 'Hidden'
+        $WPF_UI_SSID_Label.Visibility = 'Hidden'
+        $WPF_UI_SSID_Textbox.Visibility = 'Hidden'
         $WPF_UI_SetUpDiskOnly_CheckBox.IsChecked = 'TRUE'   
         $WPF_UI_MigratedFiles_Button.Visibility = 'Hidden'
         $WPF_UI_MigratedPath_Label.Visibility = 'Hidden'
@@ -1062,6 +1067,11 @@ function Confirm-UIFields {
         $WPF_UI_AvailableSpaceValueTransferredFiles_TextBox.Visibility = 'Hidden'
     }
     elseif ($Script:SetDiskupOnly -eq 'FALSE'){
+        $WPF_UI_WIfiSettings_Label.Visibility = 'Visible'
+        $WPF_UI_Password_Label.Visibility = 'Visible'
+        $WPF_UI_Password_Textbox.Visibility = 'Visible'
+        $WPF_UI_SSID_Label.Visibility = 'Visible'
+        $WPF_UI_SSID_Textbox.Visibility = 'Visible'
         $WPF_UI_SetUpDiskOnly_CheckBox.IsChecked = '' 
         $WPF_UI_MigratedFiles_Button.IsEnabled = "TRUE"
         $WPF_UI_MigratedFiles_Button.Visibility = 'Visible'
@@ -1923,12 +1933,13 @@ function Get-GithubRelease {
         }
         if ($OnlyReleaseVersions -eq 'TRUE'){
         
-            $GithubDetails_Sorted = $GithubDetails | Where-Object { $_.tag_name -ne 'nightly' -and ($_.draft).tostring() -eq 'False' -and ($_.prerelease).tostring() -eq 'False'} | Sort-Object -Property 'tag_name' -Descending | Select-Object -ExpandProperty assets
+            $GithubDetails_Sorted = $GithubDetails | Where-Object { $_.tag_name -ne 'nightly' -and ($_.draft).tostring() -eq 'False' -and ($_.prerelease).tostring() -eq 'False' -and ($_.name).tostring() -notmatch 'Release Candidate'} | Sort-Object -Property 'tag_name' -Descending | Select-Object -ExpandProperty assets
             $GithubDetails_ForDownload = $GithubDetails_Sorted  | Where-Object { $_.name -match $Name } | Select-Object -First 1
         }
         else {
             if ($Sort_Flag -eq 'Sort'){
                 $GithubDetails_ForDownload = $GithubDetails | Where-Object { $_.tag_name -eq $Tag_Name } | Select-Object -ExpandProperty assets | Where-Object { $_.name -match $Name } | Sort-Object -Property updated_at -Descending
+                $GithubDetails_ForDownload = $GithubDetails | Where-Object { $_.tag_name -eq 'nightly' } | Select-Object -ExpandProperty assets | Where-Object { $_.name -match $Name } | Sort-Object -Property updated_at -Descending
             }
             else{
                 $GithubDetails_ForDownload = $GithubDetails | Where-Object { $_.tag_name -eq $Tag_Name } | Select-Object -ExpandProperty assets | Where-Object { $_.name -match $Name }
@@ -3267,7 +3278,7 @@ $inputXML_UserInterface = @"
                     <TextBox x:Name="Password_Label" HorizontalAlignment="Left" Margin="6,100,0,0" TextWrapping="Wrap" Text="Enter your Wifi password"  VerticalAlignment="Top" Width="150" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Center"/>
                     <TextBox x:Name="SSID_Textbox" ToolTip="Set your SSID for wifi on the Amiga (leave empty if you wish to configure on the Amiga)" HorizontalAlignment="Left" Margin="187,77,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="200" />
                     <TextBox x:Name="Password_Textbox" ToolTip="Set your password for wifi on the Amiga (leave empty if you wish to configure on the Amiga)" HorizontalAlignment="Left" Margin="187,100,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="200" />
-                    <TextBox x:Name="WIfiSettings_Label" HorizontalAlignment="Center" TextWrapping="Wrap" Text="WiFi Settings" VerticalAlignment="Center" Width="120" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Center" Margin="0,-4,0,0" Height="20" FontWeight="Bold" FontSize="14"/>
+                    <TextBox x:Name="WIfiSettings_Label" HorizontalAlignment="Center" Visibility="Visible" TextWrapping="Wrap" Text="WiFi Settings" VerticalAlignment="Center" Width="120" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Center" Margin="0,-4,0,0" Height="20" FontWeight="Bold" FontSize="14"/>
 
                 </Grid>
 
@@ -5681,9 +5692,9 @@ If ($Script:ImageOnly -eq 'TRUE'){
     #Update-OutputWindow -OutputConsole_Title_Text 'Creating Image' -ProgressbarValue_Overall 83 -ProgressbarValue_Overall_Text '83%'
     
     & $HDF2emu68Path ($HDFImageLocation +$NameofImage) $Script:SizeofFAT32_hdf2emu68 ($FAT32Partition).Trim('\')
-    $null= rename-Item ($Script:LocationofImage+'emu68_converted.img') -NewName ('Emu68Kickstart'+$Script:KickstartVersiontoUse+'.img')
+    $null= rename-Item ($Script:LocationofImage+'emu68_converted.img') -NewName ('Emu68Workbench'+$Script:KickstartVersiontoUse+'.img')
     
-    Write-TaskCompleteMessage -Message ('Creating Image - Complete! Your image can be found at the following location: '+$HDFImageLocation +('Emu68Kickstart'+$Script:KickstartVersiontoUse+'.img')) 
+    Write-TaskCompleteMessage -Message ('Creating Image - Complete! Your image can be found at the following location: '+$Script:LocationofImage+('Emu68Workbench'+$Script:KickstartVersiontoUse+'.img')) 
 
 }
 
