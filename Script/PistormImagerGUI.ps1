@@ -1,5 +1,7 @@
+$Script:Version = '1.0'
+
 <#PSScriptInfo
-.VERSION 0.01
+.VERSION 1.0
 .GUID 73d9401c-ab81-4be5-a2e5-9fc0834be0fc
 .AUTHOR SupremeTurnip
 .COMPANYNAME
@@ -17,7 +19,7 @@
 
 <# 
 .DESCRIPTION 
- Script for Emu68Imager 
+Script for Emu68Imager 
 #> 
 
 ####################################################################### Add GUI Types ################################################################################################################
@@ -48,10 +50,11 @@ Emu68 Imager Log
         
 Log created at: $DateandTime
         
+Script Version: $Script:Version 
 Windows Version: $WindowsVersion
 Windows Locale Details: $WindowsLocale
 Powershell version used is: $PowershellVersion 
-.Net Framwork Release installed is: $NetFrameworkrelease 
+.Net Framework Release installed is: $NetFrameworkrelease 
 "@  
     $LogEntry| Out-File -FilePath ($LocationforLog)
 
@@ -281,8 +284,6 @@ Write-Emu68ImagerLog -StartorContinue 'Start' -LocationforLog $Script:LogLocatio
 
 
 ####################################################################### Null out Global Variables ###################################################################################################
-
-#Get-Variable > variables.txt
 
 $Script:ExitType = $null
 $Script:HSTDiskName = $null
@@ -2661,6 +2662,10 @@ function Repair-SDDisk {
         ADD-CONTENT -Path ($TempFoldertoUse+'DiskPartScriptConvertMBR.txt') $SelectDiskLine
         ADD-CONTENT -Path ($TempFoldertoUse+'DiskPartScriptConvertMBR.txt') "Convert MBR"
 
+        NEW-ITEM -Path ($TempFoldertoUse+'DiskPartScriptClearReadOnlyAttribute.txt') -ItemType file -force | OUT-NULL
+        ADD-CONTENT -Path ($TempFoldertoUse+'DiskPartScriptClearReadOnlyAttribute.txt') $SelectDiskLine
+        ADD-CONTENT -Path ($TempFoldertoUse+'DiskPartScriptClearReadOnlyAttribute.txt') "attributes disk clear readonly"
+
         $Counter = 1
         do {
             Write-InformationMessage ('Attempting to Clean Disk using Diskpart. Attempt #'+$Counter)
@@ -2687,8 +2692,11 @@ function Repair-SDDisk {
             return $false
         }
         else{
+            Write-InformationMessage 'Clearing read only attribute if set'
+            $ClearReadOnlyAttribute = (DISKPART.exe /S ($TempFoldertoUse+'DiskPartScriptClearReadOnlyAttribute.txt'))
+            Write-InformationMessage 'Read only attribute clear'   
             Write-InformationMessage 'Setting disk to MBR'
-            $ConvertMBRDiskOutput = (DISKPART.exe /S ($TempFoldertoUse+'DiskPartScriptConvertMBR..txt'))
+            $ConvertMBRDiskOutput = (DISKPART.exe /S ($TempFoldertoUse+'DiskPartScriptConvertMBR.txt'))
             Write-InformationMessage 'Disk set to MBR'   
             return $true
         }
@@ -3136,7 +3144,7 @@ $inputXML_UserInterface = @"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WpfApp14"
         mc:Ignorable="d"
-           Title="Emu68 Imager" Height="700" Width="1054" HorizontalAlignment="Left" VerticalAlignment="Top" ResizeMode="NoResize">
+           Title="Emu68 Imager v$Script:Version" Height="700" Width="1054" HorizontalAlignment="Left" VerticalAlignment="Top" ResizeMode="NoResize">
     <Grid x:Name="Overall_Grid" Background="Transparent" Visibility="Visible">
         <Grid x:Name="Main_Grid" Background="#FFE5E5E5" Visibility="Visible" >
             <GroupBox x:Name="DiskSetup_GroupBox" Header="Disk Setup" Margin="0,60,0,0" VerticalAlignment="Top" Height="173" Background="Transparent" HorizontalAlignment="Center">
@@ -4603,7 +4611,7 @@ $InputXML_DisclaimerWindow = @"
                  VerticalAlignment="Top" Width="874" IsReadOnly="True" Height="160" VerticalScrollBarVisibility="Disabled" FontSize="14" BorderThickness="0,0,0,0" SelectionOpacity="0"
                  />
         <TextBox x:Name="TextBox_Header" HorizontalAlignment="Center" Margin="0,20,0,0" TextWrapping="Wrap" Background="Transparent" BorderBrush="Transparent"
-            Text="Emu68 Imager" FontSize="14" BorderThickness="0,0,0,0" SelectionOpacity="0"
+            Text="Emu68 Imager v$Script:Version" FontSize="14" BorderThickness="0,0,0,0" SelectionOpacity="0"
             VerticalAlignment="Top" Width="772" IsReadOnly="True" Height="20" VerticalScrollBarVisibility="Disabled" HorizontalContentAlignment="Center" FontWeight="Bold"
                  />
         <Button x:Name="LinktoQuickstart_Button" Content="Link to Quick Start Guide" HorizontalAlignment="Center" Margin="0,210,0,0" VerticalAlignment="Top" Height="80" Width="400"/>
