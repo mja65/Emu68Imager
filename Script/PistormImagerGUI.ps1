@@ -2665,6 +2665,10 @@ function Repair-SDDisk {
         NEW-ITEM -Path ($TempFoldertoUse+'DiskPartScriptClearReadOnlyAttribute.txt') -ItemType file -force | OUT-NULL
         ADD-CONTENT -Path ($TempFoldertoUse+'DiskPartScriptClearReadOnlyAttribute.txt') $SelectDiskLine
         ADD-CONTENT -Path ($TempFoldertoUse+'DiskPartScriptClearReadOnlyAttribute.txt') "attributes disk clear readonly"
+        
+        Write-InformationMessage 'Clearing read only attribute if set'
+        $ClearReadOnlyAttribute = (DISKPART.exe /S ($TempFoldertoUse+'DiskPartScriptClearReadOnlyAttribute.txt'))
+        Write-InformationMessage 'Read only attribute clear'   
 
         $Counter = 1
         do {
@@ -2692,9 +2696,6 @@ function Repair-SDDisk {
             return $false
         }
         else{
-            Write-InformationMessage 'Clearing read only attribute if set'
-            $ClearReadOnlyAttribute = (DISKPART.exe /S ($TempFoldertoUse+'DiskPartScriptClearReadOnlyAttribute.txt'))
-            Write-InformationMessage 'Read only attribute clear'   
             Write-InformationMessage 'Setting disk to MBR'
             $ConvertMBRDiskOutput = (DISKPART.exe /S ($TempFoldertoUse+'DiskPartScriptConvertMBR.txt'))
             Write-InformationMessage 'Disk set to MBR'   

@@ -146,8 +146,8 @@ TRUE;3.1,3.2,3.2.2.1;Picasso96;FALSE;;;;Web;Full;http://aminet.net/driver/video/
 TRUE;3.1,3.2,3.2.2.1;Picasso96;FALSE;;;;Web;Full;http://aminet.net/driver/video/Picasso96.lha;Picasso96.lha;TRUE;16287F92CE6DDEA23F5456CEB4525189;Picasso96Install\Picasso96\*;System;Programs\Picasso96\;FALSE;;TRUE;FALSE;;;FALSE;FALSE
 TRUE;3.1,3.2,3.2.2.1;Picasso96;FALSE;;;;Web;Full;http://aminet.net/driver/video/Picasso96.lha;Picasso96.lha;TRUE;16287F92CE6DDEA23F5456CEB4525189;Picasso96Install\Picasso96.info;System;Programs\;FALSE;;TRUE;FALSE;;;FALSE;FALSE
 TRUE;3.1,3.2,3.2.2.1;Picasso96Settings;FALSE;;;;Local;CopyOnly;Devs\Picasso96Settings;;FALSE;;;System;Devs\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
-TRUE;3.1,3.2,3.2.2.1;Pistorm Folder - Check MD5s;FALSE;;;;Local;CopyOnly;Pistorm\CheckMD5s;;FALSE;;;System;PiStorm\;TRUE;;FALSE;FALSE;;;FALSE;FALSE
-TRUE;3.1,3.2,3.2.2.1;Pistorm Folder - Check MD5s;FALSE;;;;Local;CopyOnly;Pistorm\CheckMD5s.info;;FALSE;;;System;PiStorm\;TRUE;;FALSE;FALSE;;;FALSE;FALSE
+FALSE;3.1,3.2,3.2.2.1;Pistorm Folder - Check MD5s;FALSE;;;;Local;CopyOnly;Pistorm\CheckMD5s;;FALSE;;;System;PiStorm\;TRUE;;FALSE;FALSE;;;FALSE;FALSE
+FALSE;3.1,3.2,3.2.2.1;Pistorm Folder - Check MD5s;FALSE;;;;Local;CopyOnly;Pistorm\CheckMD5s.info;;FALSE;;;System;PiStorm\;TRUE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1,3.2,3.2.2.1;Pistorm Folder - Emu68 Imager Documentation;FALSE;;;;Local;CopyOnly;Pistorm\Documentation;;FALSE;;;System;PiStorm\;TRUE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1,3.2,3.2.2.1;Pistorm Folder - Emu68 Imager Documentation;FALSE;;;;Local;CopyOnly;Pistorm\Documentation.info;;FALSE;;;System;PiStorm\;TRUE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1,3.2,3.2.2.1;Pistorm Folder - Emu68Info;FALSE;;;;Local;CopyOnly;Pistorm\Emu68Info.r;;FALSE;;;System;PiStorm\;TRUE;;FALSE;FALSE;;;FALSE;FALSE
