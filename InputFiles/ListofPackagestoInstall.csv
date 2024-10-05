@@ -186,7 +186,7 @@ FALSE;3.1,3.2,3.2.2.1;SetDST;FALSE;;;;Web;Full;https://aminet.net/util/time/SetD
 TRUE;3.1,3.2,3.2.2.1;SetDST - Dat File;FALSE;;;;Local;CopyOnly;S\DST.Dat;;FALSE;;;System;S\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1;Setpatch44.38;FALSE;;;;Web;Full;https://cdn.cloanto.com/pub/amiga/SetPatch-44-38.lha;SetPatch.lha;TRUE;B3FCB573BF33987C33E4C9415E3ED0BB;SetPatch;System;C\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1,3.2,3.2.2.1;RTB Files - SKick;FALSE;;;;Web;Full;http://aminet.net/util/boot/skick346.lha;skick346.lha;TRUE;745EBF5A39D42E1B352A1FB914CFAB7A;Kickstarts\*;System;Devs\Kickstarts\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
-TRUE;3.1,3.2,3.2.2.1;RTB File - 7 Cities of Gold;FALSE;;;;Web;Full;https://www.whdload.de/games/7CitiesOfGold.lha;7CitiesOfGold.lha;FALSE;;7CitiesOfGoldInstall\kick31034.A1000.RTB;System;Devs\Kickstarts\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
+FALSE;3.1,3.2,3.2.2.1;RTB File - 7 Cities of Gold;FALSE;;;;Web;Full;https://www.whdload.de/games/7CitiesOfGold.lha;7CitiesOfGold.lha;FALSE;;7CitiesOfGoldInstall\kick31034.A1000.RTB;System;Devs\Kickstarts\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1,3.2,3.2.2.1;SMB0 Device;FALSE;;;;Local;CopyOnly;Storage\DosDrivers\SMB0;;FALSE;;;System;Storage\DosDrivers\;FALSE;;FALSE;FALSE;;;FALSE;FALSE
 TRUE;3.1,3.2,3.2.2.1;SMB0 Device - info file;FALSE;;;;ADF;Extract;StorageADF;DosDrivers\;FALSE;;DosDrivers\PC1.info;System;Storage\DosDrivers\;FALSE;SMB0.info;FALSE;FALSE;;;Replace;FALSE
 TRUE;3.1,3.2,3.2.2.1;SMBFS;FALSE;;;;Web;Full;http://aminet.net/disk/misc/smb2fs.m68k-amigaos.lha;smb2fs.m68k-amigaos.lha;TRUE;DD017C3E005950EFD775B97B76D1CEB6;smb2fs\L\smb2-handler.020;System;L\;FALSE;smb2-handler;FALSE;FALSE;;;FALSE;FALSE
