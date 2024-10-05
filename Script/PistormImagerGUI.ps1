@@ -5806,3 +5806,13 @@ $ElapsedTime = (New-TimeSpan -Start $StartDateandTime -End $EndDateandTime).Tota
 Write-InformationMessage -message "Started at: $StartDateandTime Finished at: $EndDateandTime. Total time to run (in seconds) was: $ElapsedTime" 
 Write-InformationMessage -message 'The tool has finished runnning. A log file was created and has been stored in the log subfolder.' 
 Write-InformationMessage -message ('The full path to the file is: '+$Script:LogLocation)
+
+$Msg_Header = 'Tool Completed'
+$Msg_Body = @"
+
+The tool has now completed! You can now close the terminal window.
+
+"@
+
+$null = [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,0)
+exit
