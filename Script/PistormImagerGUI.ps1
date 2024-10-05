@@ -1894,6 +1894,7 @@ function Add-AmigaFolder {
         Write-InformationMessage -Message ($FileName+'.info already exists')
     }
 }
+
 function Get-GithubRelease {
     param (
         $GithubRelease,
@@ -3129,6 +3130,45 @@ function Get-GUIADFKickstartReport {
 
 }
 
+function Confirm-NoLockonFile {
+    param (
+        $FileToTest,
+        $SecondsToTest,
+        $SecondsBetweenRetries
+    )
+    
+    $startDate = Get-Date
+    $IsSuccess = $false
+    $Counter = 1    
+    Start-Sleep -Seconds 1
+
+    while ($IsSuccess -eq $false -and $startDate.AddSeconds($SecondsToTest) -gt (Get-Date)) {
+        try {
+            Write-InformationMessage -Message ('Checking that there is no lock on .HDF file. Attempt #'+$Counter) -NoLog
+            $FileStream = [System.IO.File]::Open($FileToTest,'Open','write')
+        }
+        catch {
+            Write-InformationMessage -Message 'File still locked' -NoLog
+            $Counter ++
+            Start-Sleep -Seconds $SecondsBetweenRetries
+        }
+        if ($FileStream.CanWrite -eq $true){
+            $FileStream.Close()
+            $FileStream.Dispose()
+            Write-InformationMessage -Message 'File is not locked!'
+            $IsSuccess = $true
+        }
+             
+    }
+   
+    if ($IsSuccess -eq $true){
+        return $true
+    }
+    else{
+        return $false
+    }
+}
+  
 ### End Functions
 
 ######################################################################### End Functions #############################################################################################################
@@ -4985,7 +5025,7 @@ if (-not(Get-GithubRelease -GithubRelease $Emu68releases -OnlyReleaseVersions 'T
 Write-StartSubTaskMessage -Message 'Downloading Emu68Tools' -SubtaskNumber '3' -TotalSubtasks '3'
 
 if (-not(Get-GithubRelease -GithubRelease $Emu68Toolsreleases -Tag_Name "nightly" -Name 'Emu68-tools' -LocationforDownload ($AmigaDownloads+'Emu68Tools.zip') -LocationforProgram ($tempfolder+'Emu68Tools\') -Sort_Flag 'SORT')){
-    Write-ErrorMessage -Message 'Error downloading Emu68Tools! Cannot continue!'
+    Write-ErrorMessage -Message 'Error downloading Emu68Tools! Cannot continue! Quitting!'
     exit
 }
 
@@ -5029,6 +5069,12 @@ if (Test-Path ($HDFImageLocation +$NameofImage)){
 if (-not (Start-HSTImager -Command "Blank" -DestinationPath ($HDFImageLocation +$NameofImage) -ImageSize $Script:SizeofImage_HST -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
     exit
 } 
+
+if ( (Confirm-NoLockonFile -FileToTest ($HDFImageLocation+$NameofImage) -SecondsToTest 20 -SecondsBetweenRetries 3) -eq $false){
+    Write-ErrorMessage -Message 'Unable to continue! Another process (e.g. antimalware and/or antivirus) has locked access to the file!'
+    exit
+}
+
 if (-not (Start-HSTImager -Command "rdb init" -DestinationPath ($HDFImageLocation +$NameofImage) -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
     exit
 } 
