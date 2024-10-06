@@ -403,6 +403,7 @@ $Script:HDF2emu68Path = ($SourceProgramPath+'hdf2emu68.exe')
 $Script:7zipPath = ($SourceProgramPath+'7z.exe')
 $Script:DDTCPath = ($SourceProgramPath+'ddtc.exe')
 $Script:FindFreeSpacePath = ($SourceProgramPath+'FindFreeSpace.exe')
+$Script:FindLockPath = ($SourceProgramPath+'FindLock.exe')
 $Script:AmigaRDBSectors = 2015 #Standard number of sectors at 512bytes per sector 
 $Script:AmigaBlockSize = 512
 
@@ -5070,14 +5071,20 @@ if (-not (Start-HSTImager -Command "Blank" -DestinationPath ($HDFImageLocation +
     exit
 } 
 
-if ( (Confirm-NoLockonFile -FileToTest ($HDFImageLocation+$NameofImage) -SecondsToTest 20 -SecondsBetweenRetries 3) -eq $false){
+& $Script:FindLockPath ($HDFImageLocation+$NameofImage) >($TempFolder+'FindLockLog.txt')
+$CheckforLock = Get-Content -Path ($TempFolder+'FindLockLog.txt')
+
+if ($CheckforLock -ne 'File is not locked!'){
     Write-ErrorMessage -Message 'Unable to continue! Another process (e.g. antimalware and/or antivirus) has locked access to the file!'
+    Write-ErrorMessage -Message $CheckforLock
     exit
+
 }
 
 if (-not (Start-HSTImager -Command "rdb init" -DestinationPath ($HDFImageLocation +$NameofImage) -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
     exit
 } 
+
 if (-not (Start-HSTImager -Command "rdb filesystem add" -DestinationPath ($HDFImageLocation +$NameofImage) -FileSystemPath ($Script:WorkingPath+'Programs\HST-Imager\pfs3aio') -DosType 'PFS3' -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
     exit
 } 
