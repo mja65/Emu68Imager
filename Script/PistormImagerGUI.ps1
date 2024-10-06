@@ -2749,18 +2749,20 @@ You have selected a non-empty folder! Please select an empty folder.
     do {
         $WorkingPathtoReturn = Get-FolderPath -Message 'Select location for Working Folder (folder must be empty)' -RootFolder 'MyComputer' -ShowNewFolderButton
         if ($WorkingPathtoReturn){
-            if ($CheckforEmptyFolder -eq 'TRUE'){
-                $items = Get-ChildItem -Path $WorkingPathtoReturn -Recurse -Force | Where-Object {$_.Name -ne 'AmigaDownloads' -and $_.Name -ne 'AmigaImageFiles' -and $_.Name -ne 'FAT32Partition' -and $_.Name -ne 'HDFImage' -and $_.Name -ne 'OutputImage' -and $_.Name -ne 'Programs' -and $_.Name -ne 'Temp'}
-                if ($items.Count -ne 0){
-                    $null = [System.Windows.MessageBox]::Show($Msg_Body_NonEmpty, $Msg_Header_NonEmpty,0,48)
-                    $IsDefinedWorkingPath = $false
+            if ((Get-LocalvsNetwork -PathtoCheck $WorkingPathtoReturn -PreventNetworkPath 'Error') -eq 'Local'){
+                if ($CheckforEmptyFolder -eq 'TRUE'){
+                    $items = Get-ChildItem -Path $WorkingPathtoReturn -Recurse -Force | Where-Object {$_.Name -ne 'AmigaDownloads' -and $_.Name -ne 'AmigaImageFiles' -and $_.Name -ne 'FAT32Partition' -and $_.Name -ne 'HDFImage' -and $_.Name -ne 'OutputImage' -and $_.Name -ne 'Programs' -and $_.Name -ne 'Temp'}
+                    if ($items.Count -ne 0){
+                        $null = [System.Windows.MessageBox]::Show($Msg_Body_NonEmpty, $Msg_Header_NonEmpty,0,48)
+                        $IsDefinedWorkingPath = $false
+                    }
+                    else{
+                        $IsDefinedWorkingPath = $true 
+                    }
                 }
                 else{
-                    $IsDefinedWorkingPath = $true 
+                    $IsDefinedWorkingPath = $true
                 }
-            }
-            else{
-                $IsDefinedWorkingPath = $true
             }
         }
     } until (
@@ -3169,7 +3171,59 @@ function Confirm-NoLockonFile {
         return $false
     }
 }
-  
+
+function Get-LocalvsNetwork {
+    param (
+        $PathtoCheck,
+        $PreventNetworkPath
+    )
+
+    $Msg_Header = 'Network Locations Selected'
+    $MSG_Body_Error = 
+@"
+You have chosen a network location. Only paths on local drives allowed! 
+"@   
+    $MSG_Body_Warning = 
+@"
+You have chosen a network location. Please ensure that you have appropriate access rights to the folder! 
+"@   
+
+
+ #   $PathtoCheck = '\\turnippc'
+    $PathtoCheck = $PathtoCheck.TrimEnd(':\')
+    If (($PathtoCheck.Length -ge 2) -and ($PathtoCheck.Substring(0,2) -eq '\\')){
+        return 'Network-UNC'
+    }
+    else{
+        $EndPosition = $PathtoCheck.IndexOf(':\')
+        $DriveLetter = $PathtoCheck.Substring(0,$EndPosition)
+        $MappedDrives = Get-PSDrive -PSProvider FileSystem | Select-Object Name, DisplayRoot | Where-Object {$null -ne $_.DisplayRoot} | Where-Object {$_.Name -eq $DriveLetter}
+        $AllDrives =  Get-PSDrive -PSProvider FileSystem | Select-Object Name | Where-Object {$null -eq $_.DisplayRoot} | Where-Object {$_.Name -eq $DriveLetter}
+    
+        if ($AllDrives){
+            if ($MappedDrives){
+                $result = 'Network'
+            }
+            else {
+                $result = 'Local'
+            }
+        }
+        else{
+            $result = 'Invalid'
+        }   
+    }
+
+    If ($result -eq 'Network'){
+        If ($PreventNetworkPath -eq 'Error'){
+            $null = [System.Windows.MessageBox]::Show($MSG_Body_Error, $Msg_Header,0,16)
+        }
+        elseif ($PreventNetworkPath -eq 'Warning'){
+            $null = [System.Windows.MessageBox]::Show($MSG_Body_Warning, $Msg_Header,0,48)
+        }
+    }
+    return $result    
+}
+
 ### End Functions
 
 ######################################################################### End Functions #############################################################################################################
@@ -4286,6 +4340,7 @@ $WPF_UI_RomPath_Button.Add_Click({
     $PathtoPopulate = Get-FolderPath -Message 'Select path to Kickstart' -InitialDirectory $Script:ROMPath
     if ($PathtoPopulate){
         if ($PathtoPopulate -ne $Script:ROMPath) {
+            $null = Get-LocalvsNetwork -PathtoCheck $PathtoPopulate -PreventNetworkPath 'Warning'
             $Script:ROMPath = $PathtoPopulate.TrimEnd('\')+'\'
             $Script:FoundKickstarttoUse = $null    
         }
@@ -4324,6 +4379,7 @@ $WPF_UI_ADFPath_Button.Add_Click({
     $PathtoPopulate = Get-FolderPath -Message 'Select path to ADFs' -InitialDirectory $Script:ADFPath
     if ($PathtoPopulate){
         if ($PathtoPopulate -ne $Script:ADFPath) {
+            $null = Get-LocalvsNetwork -PathtoCheck $PathtoPopulate -PreventNetworkPath 'Warning'
             $Script:ADFPath = $PathtoPopulate.TrimEnd('\')+'\'
             $Script:AvailableADFs = $null    
         }
@@ -4383,6 +4439,7 @@ $WPF_UI_MigratedFiles_Button.Add_Click({
         $PathtoPopulate = Get-FolderPath -Message 'Select Transfer folder' -RootFolder 'MyComputer'
         if ($PathtoPopulate){
             $PathtoPopulate = $PathtoPopulate.TrimEnd('\')+'\'
+            $null = Get-LocalvsNetwork -PathtoCheck $PathtoPopulate -PreventNetworkPath 'Warning'
             $Msg = @'
 Calculating space requirements. This may take some time if you have selected a large folder for transfer!
 '@            
