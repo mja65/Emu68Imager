@@ -2333,6 +2333,7 @@ and select this path to scan.
                     FriendlyName = $ADFHash.FriendlyName
                     Hash = $ADFHash.Hash
                     Sequence =  $ADFHash.Sequence
+                    ADFSource = $ADFHash.ADFSource
                 }
             }
         }
@@ -2340,7 +2341,7 @@ and select this path to scan.
     
     $HashTableforADFHashestoFind = @{} # Clear Hash
     $RequiredADFandHashes | Sort-Object -Property 'Sequence'| ForEach-Object {
-        $HashTableforADFHashestoFind[$_.Hash] = @($_.ADF_Name,$_.FriendlyName)
+        $HashTableforADFHashestoFind[$_.Hash] = @($_.ADF_Name,$_.FriendlyName,$_.ADFSource)
     }
 
     $PathofFoundADFS = [System.Collections.Generic.List[PSCustomObject]]::New()
@@ -2351,6 +2352,7 @@ and select this path to scan.
                 Path = $_.Path
                 ADF_Name = $HashTableforADFHashestoFind.($_.Hash)[0]
                 FriendlyName = $HashTableforADFHashestoFind.($_.Hash)[1]
+                Source = $HashTableforADFHashestoFind.($_.Hash)[2]
             
             }                  
         }
@@ -2367,6 +2369,7 @@ and select this path to scan.
                     Path = $FoundADF.Path
                     ADF_Name = $FoundADF.ADF_Name
                     FriendlyName = $FoundADF.FriendlyName
+                    Source = $FoundADF.Source
                     IsMatched = 'TRUE'
                 }
                 $IsFoundADF = $true
@@ -4408,9 +4411,9 @@ $WPF_UI_ADFpath_Button_Check.Add_Click({
             $Text = 'The following ADFs will be used:'
         }
         
-        $DatatoPopulate = $AvailableADFs  | Select-Object @{Name='Status';Expression='IsMatched'},@{Name='ADF Name';Expression='FriendlyName'},@{Name='Path';Expression='Path'} | Sort-Object -Property 'Status'
+        $DatatoPopulate = $AvailableADFs  | Select-Object @{Name='Status';Expression='IsMatched'},@{Name='Source';Expression='Source'},@{Name='ADF Name';Expression='FriendlyName'},@{Name='Path';Expression='Path'},@{Name='MD5 Hash';Expression='Hash'} | Sort-Object -Property 'Status'
 
-        $FieldsSorted = ('Status','ADF Name','Path')
+        $FieldsSorted = ('Status','Source','ADF Name','Path','MD5 Hash')
 
         foreach ($ADF in $DatatoPopulate ){
             if ($ADF.Status -eq 'TRUE'){
@@ -4421,7 +4424,7 @@ $WPF_UI_ADFpath_Button_Check.Add_Click({
             }
         }
 
-        Get-GUIADFKickstartReport -Title $Title -Text $Text -DatatoPopulate $DatatoPopulate -WindowWidth 700 -WindowHeight 350 -DataGridWidth 570 -DataGridHeight 200 -GridLinesVisibility 'None' -FieldsSorted $FieldsSorted                    
+        Get-GUIADFKickstartReport -Title $Title -Text $Text -DatatoPopulate $DatatoPopulate -WindowWidth 800 -WindowHeight 350 -DataGridWidth 670 -DataGridHeight 200 -GridLinesVisibility 'None' -FieldsSorted $FieldsSorted                    
     }
     
     else {
