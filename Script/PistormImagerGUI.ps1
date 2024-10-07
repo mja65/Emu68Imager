@@ -2307,9 +2307,9 @@ and select this path to scan.
 "@
     $null = [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,0)
 
-  #  $PathtoADFFiles = 'E:\Emulators\Amiga Files\Shared\adf\OS32\'
+  #  $PathtoADFFiles = 'E:\Emulators\Amiga Files\Shared\adf\commodore-amiga-operating-systems-workbench\ESCOM\'
   #  $PathtoADFHashes = 'E:\Emu68Imager\InputFiles\ADFHashes.csv'
-  #  $KickstartVersion='3.2.2.1'
+  #  $KickstartVersion='3.1'
   #  $PathtoListofInstallFiles = 'E:\Emu68Imager\InputFiles\ListofInstallFiles.csv'
 
     $ListofADFFilestoCheck = Get-ChildItem $PathtoADFFiles -force -Recurse
@@ -2341,7 +2341,7 @@ and select this path to scan.
     
     $HashTableforADFHashestoFind = @{} # Clear Hash
     $RequiredADFandHashes | Sort-Object -Property 'Sequence'| ForEach-Object {
-        $HashTableforADFHashestoFind[$_.Hash] = @($_.ADF_Name,$_.FriendlyName,$_.ADFSource)
+        $HashTableforADFHashestoFind[$_.Hash] = @($_.ADF_Name,$_.FriendlyName,$_.ADFSource,$_.Sequence)
     }
 
     $PathofFoundADFS = [System.Collections.Generic.List[PSCustomObject]]::New()
@@ -2353,11 +2353,14 @@ and select this path to scan.
                 ADF_Name = $HashTableforADFHashestoFind.($_.Hash)[0]
                 FriendlyName = $HashTableforADFHashestoFind.($_.Hash)[1]
                 Source = $HashTableforADFHashestoFind.($_.Hash)[2]
+                Sequence = $HashTableforADFHashestoFind.($_.Hash)[3]
             
             }                  
         }
     }
 
+    $PathofFoundADFS = $PathofFoundADFS | Sort-Object -Property 'Sequence'
+    
     $MatchedADFs = [System.Collections.Generic.List[PSCustomObject]]::New()
 
     $RequiredADFsforInstall | ForEach-Object {
