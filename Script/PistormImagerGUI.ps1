@@ -2853,13 +2853,14 @@ function Get-Emu68ImagerDocumentation {
                     "https://mja65.github.io/Emu68-Imager/faqs.html", `
                     "https://mja65.github.io/Emu68-Imager/support.html", `
                     "https://mja65.github.io/Emu68-Imager/credits.html", `
-                    "https://mja65.github.io/Emu68-Imager/images/screenshot1.png"
+                    "https://mja65.github.io/Emu68-Imager/images/screenshot1.png", `
+                    "https://mja65.github.io/Emu68-Imager/images/screenshot2.png"
 
     foreach ($URL in $DownloadURLs){
         If ((Split-Path $URL -Leaf) -eq 'index.html'){
             $OutfileLocation = $LocationtoDownload 
         }
-        elseif ((Split-Path $URL -Leaf) -eq 'screenshot1.png') {
+        elseif (((Split-Path $URL -Leaf) -eq 'screenshot1.png') -or ((Split-Path $URL -Leaf) -eq 'screenshot2.png')) {
             $OutfileLocation = $LocationtoDownload+'images\'
         }
         else {
