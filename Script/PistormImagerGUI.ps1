@@ -2752,7 +2752,7 @@ You have selected a non-empty folder! Please select an empty folder.
     do {
         $WorkingPathtoReturn = Get-FolderPath -Message 'Select location for Working Folder (folder must be empty)' -RootFolder 'MyComputer' -ShowNewFolderButton
         if ($WorkingPathtoReturn){
-            if ((Get-LocalvsNetwork -PathtoCheck $WorkingPathtoReturn -PreventNetworkPath 'Error') -eq 'Local'){
+            if ((Get-LocalvsNetwork -PathtoCheck $WorkingPathtoReturn -PreventNetworkPath 'LocalOnly') -eq 'Local'){
                 if ($CheckforEmptyFolder -eq 'TRUE'){
                     $items = Get-ChildItem -Path $WorkingPathtoReturn -Recurse -Force | Where-Object {$_.Name -ne 'AmigaDownloads' -and $_.Name -ne 'AmigaImageFiles' -and $_.Name -ne 'FAT32Partition' -and $_.Name -ne 'HDFImage' -and $_.Name -ne 'OutputImage' -and $_.Name -ne 'Programs' -and $_.Name -ne 'Temp'}
                     if ($items.Count -ne 0){
@@ -3186,16 +3186,21 @@ function Get-LocalvsNetwork {
 @"
 You have chosen a network location. Only paths on local drives allowed! 
 "@   
+$MSG_Body_Error_UNC = 
+@"
+You have chosen an UNC network location ('\\....'). Only mapped network drives or local drives allowed! 
+"@   
+
     $MSG_Body_Warning = 
 @"
 You have chosen a network location. Please ensure that you have appropriate access rights to the folder! 
 "@   
 
 
- #   $PathtoCheck = '\\turnippc'
-    $PathtoCheck = $PathtoCheck.TrimEnd(':\')
+ #   $PathtoCheck = 'Y:\'
+#    $PathtoCheck = $PathtoCheck.TrimEnd(':\')
     If (($PathtoCheck.Length -ge 2) -and ($PathtoCheck.Substring(0,2) -eq '\\')){
-        return 'Network-UNC'
+        $result = 'Network-UNC'
     }
     else{
         $EndPosition = $PathtoCheck.IndexOf(':\')
@@ -3205,7 +3210,7 @@ You have chosen a network location. Please ensure that you have appropriate acce
     
         if ($AllDrives){
             if ($MappedDrives){
-                $result = 'Network'
+                $result = 'Network-MappedDrive'
             }
             else {
                 $result = 'Local'
@@ -3215,12 +3220,17 @@ You have chosen a network location. Please ensure that you have appropriate acce
             $result = 'Invalid'
         }   
     }
-
-    If ($result -eq 'Network'){
-        If ($PreventNetworkPath -eq 'Error'){
+    
+    If ($PreventNetworkPath -eq 'LocalOnly'){
+        If (($result -eq 'Network-MappedDrive')  -or ($result -eq 'Network-UNC')){
             $null = [System.Windows.MessageBox]::Show($MSG_Body_Error, $Msg_Header,0,16)
         }
-        elseif ($PreventNetworkPath -eq 'Warning'){
+    }
+    elseif ($PreventNetworkPath -eq 'LocalandMappedDrivesOnly'){
+        if($result -eq 'Network-UNC'){
+            $null = [System.Windows.MessageBox]::Show($MSG_Body_Error_UNC, $Msg_Header,0,16)
+        }
+        elseif ($result -eq 'Network-MappedDrive') {
             $null = [System.Windows.MessageBox]::Show($MSG_Body_Warning, $Msg_Header,0,48)
         }
     }
@@ -4338,22 +4348,29 @@ $WPF_UI_Workingpath_Button.Add_Click({
      $null = Confirm-UIFields
 })
 
-
 $WPF_UI_RomPath_Button.Add_Click({
     $PathtoPopulate = Get-FolderPath -Message 'Select path to Kickstart' -InitialDirectory $Script:ROMPath
     if ($PathtoPopulate){
-        if ($PathtoPopulate -ne $Script:ROMPath) {
-            $null = Get-LocalvsNetwork -PathtoCheck $PathtoPopulate -PreventNetworkPath 'Warning'
-            $Script:ROMPath = $PathtoPopulate.TrimEnd('\')+'\'
-            $Script:FoundKickstarttoUse = $null    
+        $CheckifLocalDrive = (Get-LocalvsNetwork -PathtoCheck $PathtoPopulate -PreventNetworkPath 'LocalandMappedDrivesOnly') 
+        if (($CheckifLocalDrive -eq 'Local') -or ($CheckifLocalDrive -eq 'Network-MappedDrive')){
+            if ($PathtoPopulate -ne $Script:ROMPath) {
+                $Script:ROMPath = $PathtoPopulate.TrimEnd('\')+'\'
+                $Script:FoundKickstarttoUse = $null    
+            }
+        }
+        else{
+            if ($Script:ROMPath -ne $Script:UserLocation_Kickstarts){
+                $Script:ROMPath = $Script:UserLocation_Kickstarts
+                $Script:FoundKickstarttoUse = $null                        
+            }
         }
     }
     else{
         if ($Script:ROMPath -ne $Script:UserLocation_Kickstarts){
-        $Script:ROMPath = $Script:UserLocation_Kickstarts
-        $Script:FoundKickstarttoUse = $null        
+            $Script:ROMPath = $Script:UserLocation_Kickstarts
+            $Script:FoundKickstarttoUse = $null                        
         }
-    }
+    }                     
     $null = Confirm-UIFields
 })
 
@@ -4381,13 +4398,21 @@ $WPF_UI_ROMpath_Button_Check.Add_Click({
 $WPF_UI_ADFPath_Button.Add_Click({
     $PathtoPopulate = Get-FolderPath -Message 'Select path to ADFs' -InitialDirectory $Script:ADFPath
     if ($PathtoPopulate){
-        if ($PathtoPopulate -ne $Script:ADFPath) {
-            $null = Get-LocalvsNetwork -PathtoCheck $PathtoPopulate -PreventNetworkPath 'Warning'
-            $Script:ADFPath = $PathtoPopulate.TrimEnd('\')+'\'
-            $Script:AvailableADFs = $null    
+        $CheckifLocalDrive = (Get-LocalvsNetwork -PathtoCheck $PathtoPopulate -PreventNetworkPath 'LocalandMappedDrivesOnly') 
+        if (($CheckifLocalDrive -eq 'Local') -or ($CheckifLocalDrive -eq 'Network-MappedDrive')){
+            if ($PathtoPopulate -ne $Script:ADFPath) {
+                $Script:ADFPath = $PathtoPopulate.TrimEnd('\')+'\'
+                $Script:AvailableADFs = $null    
+            }
+        }
+        else{
+            if ($Script:ADFPath -ne $Script:UserLocation_ADFs){
+                $Script:ADFPath = $Script:UserLocation_ADFs   
+                $Script:AvailableADFs = $null
+            }
         }
     }
-    else {
+    else{
         if ($Script:ADFPath -ne $Script:UserLocation_ADFs){
             $Script:ADFPath = $Script:UserLocation_ADFs   
             $Script:AvailableADFs = $null
@@ -4441,22 +4466,29 @@ $WPF_UI_MigratedFiles_Button.Add_Click({
     else{
         $PathtoPopulate = Get-FolderPath -Message 'Select Transfer folder' -RootFolder 'MyComputer'
         if ($PathtoPopulate){
-            $PathtoPopulate = $PathtoPopulate.TrimEnd('\')+'\'
-            $null = Get-LocalvsNetwork -PathtoCheck $PathtoPopulate -PreventNetworkPath 'Warning'
-            $Msg = @'
+            Write-host $PathtoPopulate
+            $CheckifLocalDrive = (Get-LocalvsNetwork -PathtoCheck $PathtoPopulate -PreventNetworkPath 'LocalandMappedDrivesOnly') 
+            if (($CheckifLocalDrive -eq 'Local') -or ($CheckifLocalDrive -eq 'Network-MappedDrive')){
+                $PathtoPopulate = $PathtoPopulate.TrimEnd('\')+'\'
+                $Msg = @'
 Calculating space requirements. This may take some time if you have selected a large folder for transfer!
-'@            
-            $null = [System.Windows.MessageBox]::Show($Msg, 'Calculating Space',0,0)
-            $Script:TransferLocation = $PathtoPopulate            
-            $Script:SizeofFilestoTransfer = Get-TransferredFilesSpaceRequired -FoldertoCheck $Script:TransferLocation
-            $Script:AvailableSpaceFilestoTransfer =  $Script:Space_FilestoTransfer - $Script:SizeofFilestoTransfer
-            $Script:SpaceThreshold_FilestoTransfer = ($Script:Space_FilestoTransfer*0.2)      
+'@                  
+                $null = [System.Windows.MessageBox]::Show($Msg, 'Calculating Space',0,0)
+                $Script:TransferLocation = $PathtoPopulate            
+                $Script:SizeofFilestoTransfer = Get-TransferredFilesSpaceRequired -FoldertoCheck $Script:TransferLocation
+                $Script:AvailableSpaceFilestoTransfer =  $Script:Space_FilestoTransfer - $Script:SizeofFilestoTransfer
+                $Script:SpaceThreshold_FilestoTransfer = ($Script:Space_FilestoTransfer*0.2)      
+            }
+            else{
+                $Script:TransferLocation =$null
+                $Script:SizeofFilestoTransfer = 0                
+            }       
         }
         else{
             $Script:TransferLocation =$null
-            $Script:SizeofFilestoTransfer = 0
-        }            
-    }
+            $Script:SizeofFilestoTransfer = 0            
+        }
+    }     
     $null = Confirm-UIFields
 })
 
