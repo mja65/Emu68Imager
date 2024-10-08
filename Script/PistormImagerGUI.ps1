@@ -1,7 +1,7 @@
-$Script:Version = '1.0.2'
+$Script:Version = '1.0.3'
 
 <#PSScriptInfo
-.VERSION 1.0.2
+.VERSION 1.0.3
 .GUID 73d9401c-ab81-4be5-a2e5-9fc0834be0fc
 .AUTHOR SupremeTurnip
 .COMPANYNAME
