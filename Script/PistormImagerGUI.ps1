@@ -365,6 +365,7 @@ $Script:DiskFriendlyName = $null
 $Script:IsDisclaimerAccepted = $null
 $Script:IsLoadedSettings = $null
 $Script:HDFImageLocation = $null
+$Script:PathtoGoogleDrive = $null
 
 ####################################################################### End Null out Global Variables ###############################################################################################
 
@@ -406,6 +407,7 @@ $Script:FindFreeSpacePath = ($SourceProgramPath+'FindFreeSpace.exe')
 $Script:FindLockPath = ($SourceProgramPath+'FindLock.exe')
 $Script:AmigaRDBSectors = 2015 #Standard number of sectors at 512bytes per sector 
 $Script:AmigaBlockSize = 512
+$Script:PathtoGoogleDrive = 'https://docs.google.com/spreadsheets/d/12UcKD7INDH9y7Tw_w1q3ebQOUS9JtARIs8Z9JWfLUWg/'
 
 
 $UnLZXURL='http://aminet.net/util/arc/W95unlzx.lha'
@@ -3241,6 +3243,80 @@ You have chosen a network location. Please ensure that you have appropriate acce
     return $result    
 }
 
+function Update-InputCSV {
+    param (
+        $GidValue,
+        $ExistingCSV,
+        $PathtoGoogleDrive_param
+    )
+
+    # $NameofOutputFile = ($InputFolder+'ADFHashes.CSV')
+    # $GidValue = 0
+    # $ExistingCSV = ($InputFolder+'ADFHashes.CSV')
+    
+    $ExistingCSV_Name = (split-path -leaf -Path $ExistingCSV)
+
+    Write-InformationMessage ('Checking for updates to '+$ExistingCSV_Name)
+    if (Test-Path -Path $ExistingCSV){
+        $IsExistsInputCSV = $true
+        $OldCSV = Get-Content -Path $ExistingCSV 
+    }
+    else{
+        Write-InformationMessage ($ExistingCSV_Name+ ' does not exist!')
+        $IsExistsInputCSV = $false
+    }
+
+    $PathtoGoogleDrivetouse = ($PathtoGoogleDrive_param+'export?format=tsv&gid='+$GidValue)
+    $ImportedFile = ((Invoke-WebRequest -Uri $PathtoGoogleDrivetouse).Content) -split "`r`n"
+    $TotalLines = $ImportedFile.Count
+
+    $NewCSV = @()
+    $Counter = 1
+
+    foreach ($Line in $ImportedFile){     
+        if ($Counter -lt $TotalLines){
+            $NewCSV += @($line -split ("`t"))[0]
+        }
+        else {
+            $NewCSV += @(($line -split ("`t"))[0]).replace("`r`n","")              
+        }
+        $Counter ++
+    }
+    
+    if ($IsExistsInputCSV -eq $true){
+        if ($NewCSV.Count -ne $OldCSV.Count){
+            $IsSame = $false
+        }
+        else{
+            $IsSame = $true
+            $LineNumber = 1
+            do {
+               if ($OldCSV[$LineNumber] -eq $NewCSV[$LineNumber]){
+                }
+                else {
+                    $IsSame = $false
+                }
+                $LineNumber ++
+            } until (
+                $IsSame -eq $false -or $LineNumber -gt $OldCSV.Count
+            )
+        }
+    
+        if ($IsSame -eq $false){
+            Write-InformationMessage ('Changes to '+$ExistingCSV_Name+'! Updating local file.')
+            $NewCSV | Out-File -FilePath $ExistingCSV
+        }
+        else{
+            Write-InformationMessage ('Local version of '+$ExistingCSV_Name+' is up-to-date')
+        }
+    }
+    else{
+        Write-InformationMessage ('Creating local version of '+$ExistingCSV_Name)
+        $NewCSV | Out-File -FilePath $ExistingCSV
+    }
+    
+}
+
 ### End Functions
 
 ######################################################################### End Functions #############################################################################################################
@@ -4827,6 +4903,12 @@ if (-not ($Script:IsDisclaimerAccepted -eq $true)){
 ################################ End Set Working Folder Default #########################################################################################
 
 ##################################################################### Peform Pre-GUI Checks ##############################################################################################################
+
+Update-InputCSV -PathtoGoogleDrive $PathtoGoogleDrive -GidValue 0 -ExistingCSV ($InputFolder+'ADFHashes.CSV') 
+Update-InputCSV -PathtoGoogleDrive $PathtoGoogleDrive -GidValue 750546389 -ExistingCSV ($InputFolder+'ListofInstallFiles.CSV')
+Update-InputCSV -PathtoGoogleDrive $PathtoGoogleDrive -GidValue 2048180409 -ExistingCSV($InputFolder+'ListofPackagestoInstall.CSV')
+Update-InputCSV -PathtoGoogleDrive $PathtoGoogleDrive -GidValue 1875558855 -ExistingCSV ($InputFolder+'RomHashes.CSV')
+Update-InputCSV -PathtoGoogleDrive $PathtoGoogleDrive -GidValue 860542576 -ExistingCSV ($InputFolder+'ScreenModes.CSV')
 
 $ErrorMessage = $null
 $ErrorMessage += Test-ExistenceofFiles -PathtoTest $SourceProgramPath -PathType 'Folder'
