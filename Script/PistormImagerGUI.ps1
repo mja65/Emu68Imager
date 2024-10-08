@@ -5171,7 +5171,7 @@ if (-not (Start-HSTImager -Command "Blank" -DestinationPath ($HDFImageLocation +
 $CheckforLock = Get-Content -Path ($TempFolder+'FindLockLog.txt')
 
 if ($CheckforLock -ne 'File is not locked!'){
-    Write-ErrorMessage -Message 'Unable to continue! Another process (e.g. antimalware and/or antivirus) has locked access to the file!'
+    Write-ErrorMessage -Message 'Unable to continue! Another process (e.g. anti-malware and/or anti-virus) has locked access to the file!'
     Write-ErrorMessage -Message $CheckforLock
     exit
 
