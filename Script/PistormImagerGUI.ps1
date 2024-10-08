@@ -4856,38 +4856,6 @@ $ErrorMessage
     exit
 }
 
-# Check Integrity of CSVs
-
-$CSVHashestoCheck = Import-Csv -Path ($InputFolder+'CSVHASH') -Delimiter ';'
-
-$CSVHashesFound = $null
-$CSVHashesFound += Get-FileHash ($InputFolder+'*.CSV') -Algorithm MD5
-$CSVHashesFound += Get-FileHash (Get-ChildItem -Path ($LocationofAmigaFiles) -Recurse | Where-Object { $_.PSIsContainer -eq $false }).FullName -Algorithm MD5
-$CSVHashesFound += Get-FileHash (Get-ChildItem -Path ($SourceProgramPath) -Recurse | Where-Object { $_.PSIsContainer -eq $false }).FullName -Algorithm MD5
-$CSVHashesFound += Get-FileHash (Get-ChildItem -Path ($ScriptPath+'Script\') -Recurse | Where-Object { $_.PSIsContainer -eq $false }).FullName -Algorithm MD5
-
-# foreach ($CSVHashtoCheck in $CSVHashestoCheck){
-#     $HashMatch = $false
-#     foreach ($CSVHash in $CSVHashesFound){
-#         $Length = ($CSVHash.Path).Length
-#         $StartPoint = ($Script:Scriptpath).Length
-#         $Path = ($CSVHash.Path).Substring($StartPoint,($Length-$StartPoint))    
-#         if (($CSVHashtoCheck.Path+$CSVHashtoCheck.Hash) -eq ($Path+$CSVHash.Hash)){
-#             $HashMatch = $true
-#         }
-#     }
-#     if ($HashMatch -eq $false) {
-#         $Msg_Header ='Integrity Issue with Files'    
-#         $Msg_Body = @"  
-# One or more files is missing and/or has been altered!' 
-        
-# Re-download Emu68 Imager and try again. Tool will now exit.
-# "@     
-#     $null = [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,16) 
-#     exit
-#     }
-# }
-
 ### Clean up
 
 Remove-WorkingFolderData -DefaultFolder 'TRUE'
