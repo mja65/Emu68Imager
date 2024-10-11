@@ -1,5 +1,3 @@
-$Script:Version = '1.0.3'
-
 <#PSScriptInfo
 .VERSION 1.0.3
 .GUID 73d9401c-ab81-4be5-a2e5-9fc0834be0fc
@@ -21,6 +19,8 @@ $Script:Version = '1.0.3'
 .DESCRIPTION 
 Script for Emu68Imager 
 #> 
+
+$Script:Version = '1.0.3'
 
 ####################################################################### Add GUI Types ################################################################################################################
 
@@ -92,6 +92,187 @@ Activity Commences:
     }
 }
 ####################################################################### End Function for Log     #####################################################################################################
+
+
+function Read-XAML {
+    param (
+        $xaml
+    )
+    $reader=(New-Object System.Xml.XmlNodeReader $xaml)
+    try{
+        $Form=[Windows.Markup.XamlReader]::Load( $reader )
+    }
+    catch{
+        Write-Warning "Unable to parse XML, with error: $($Error[0])`n Ensure that there are NO SelectionChanged or TextChanged properties in your textboxes (PowerShell cannot process them)"
+        throw
+    }
+    return $Form
+}
+function Format-XMLtoXAML{
+    param (
+        $inputXML 
+    )
+    $inputXML = $inputXML -replace 'mc:Ignorable="d"','' -replace "x:N",'N' -replace '^<Win.*', '<Window'
+    [xml]$XAML = $inputXML
+    return $XAML
+}
+
+Function Test-Administrator {  
+    $user = [Security.Principal.WindowsIdentity]::GetCurrent();
+    (New-Object Security.Principal.WindowsPrincipal $user).IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)  
+}
+
+######################################################################## Begin Function for CSV Update #####################################################
+
+function Write-InformationMessage {
+    param (
+        $Message,
+        [switch]$NoLog
+    )
+    Write-Host " `t $Message" -ForegroundColor Yellow
+    if (-not $NoLog){
+        $Message | Out-File $Script:LogLocation -Append
+    }
+}
+
+function Write-ErrorMessage {
+    param (
+        $Message,
+        [switch]$NoLog
+    )
+    Write-Host "[ERROR] `t $Message" -ForegroundColor Red
+    if (-not $NoLog){
+        "[ERROR] `t $Message" | Out-File $Script:LogLocation -Append
+    }
+}
+function Get-DownloadFile {
+    param (
+        $DownloadURL,
+        $OutputLocation,
+        $NumberofAttempts
+    )
+
+    #$DownloadURL = $PathtoGoogleDrivetouse
+    #$NumberofAttempts = 3
+
+    $Counter = 0
+    $IsSuccess = $null
+    do {
+        if ($Counter -gt 0){
+            Write-InformationMessage -Message ('Trying Download again. Retry Attempt # '+$Counter)
+        }
+        try {
+            if ($OutputLocation){
+                Invoke-WebRequest -Uri $DownloadURL -OutFile $OutputLocation # Powershell 5 compatibility -AllowInsecureRedirect
+            }    
+            else {
+                $Download = Invoke-WebRequest -Uri $DownloadURL
+            }
+            $IsSuccess = $true              
+        }
+        catch {
+            Write-InformationMessage -message 'Download failed! Retrying in 3 seconds'
+            Start-Sleep -Seconds 3
+            $IsSuccess = $false
+        }
+        $Counter ++             
+    } until (
+        $IsSuccess -eq $true -or $Counter -eq 3 
+    )
+    if ($IsSuccess -eq $false){
+        return $false
+    }
+    else{
+        if ($OutputLocation){
+            return $true
+        }
+        else{
+            return $Download
+        }
+    }
+}
+
+function Update-InputCSV {
+    param (
+        $GidValue,
+        $ExistingCSV,
+        $PathtoGoogleDrive_param
+    )
+
+    # $GidValue = 0
+    # $ExistingCSV = ($InputFolder+'ADFHashes.CSV')
+    # $PathtoGoogleDrive_param = $Script:PathtoGoogleDrive
+    
+    $ExistingCSV_Name = (split-path -leaf -Path $ExistingCSV)
+
+    Write-InformationMessage ('Checking for updates to '+$ExistingCSV_Name)
+    if (Test-Path -Path $ExistingCSV){
+        $IsExistsInputCSV = $true
+        $OldCSV = Get-Content -Path $ExistingCSV 
+    }
+    else{
+        Write-InformationMessage ($ExistingCSV_Name+ ' does not exist!')
+        $IsExistsInputCSV = $false
+    }
+
+    $PathtoGoogleDrivetouse = ($PathtoGoogleDrive_param+'export?format=tsv&gid='+$GidValue)
+    $ImportedFile = (((Get-DownloadFile -DownloadURL $PathtoGoogleDrivetouse -NumberofAttempts 3).Content) -split "`r`n")
+ 
+    If ($ImportedFile){
+        $TotalLines = $ImportedFile.Count
+    
+        $NewCSV = @()
+        $Counter = 1
+    
+        foreach ($Line in $ImportedFile){     
+            if ($Counter -lt $TotalLines){
+                $NewCSV += @($line -split ("`t"))[0]
+            }
+            else {
+                $NewCSV += @(($line -split ("`t"))[0]).replace("`r`n","")              
+            }
+            $Counter ++
+        }
+        
+        if ($IsExistsInputCSV -eq $true){
+            if ($NewCSV.Count -ne $OldCSV.Count){
+                $IsSame = $false
+            }
+            else{
+                $IsSame = $true
+                $LineNumber = 1
+                do {
+                   if ($OldCSV[$LineNumber] -eq $NewCSV[$LineNumber]){
+                    }
+                    else {
+                        $IsSame = $false
+                    }
+                    $LineNumber ++
+                } until (
+                    $IsSame -eq $false -or $LineNumber -gt $OldCSV.Count
+                )
+            }
+        
+            if ($IsSame -eq $false){
+                Write-InformationMessage ('Changes to '+$ExistingCSV_Name+'! Updating local file.')
+                $NewCSV | Out-File -FilePath $ExistingCSV
+            }
+            else{
+                Write-InformationMessage ('Local version of '+$ExistingCSV_Name+' is up-to-date')
+            }
+        }
+        else{
+            Write-InformationMessage ('Creating local version of '+$ExistingCSV_Name)
+            $NewCSV | Out-File -FilePath $ExistingCSV
+        }
+    }
+    else {
+        Write-InformationMessage -Message ('Error Checking '+$ExistingCSV_Name+'! Using local file! Note, internet connectivity is needed to run the tool!') 
+    }
+    
+}
+
+######################################################################## End Function for CSV Update #####################################################
 
 ####################################################################### Begin function for Window State ##############################################################################################
 function Set-WindowState {
@@ -256,14 +437,13 @@ if ($env:TERM_PROGRAM){
     $RunMode=1
  } 
 
-if  ($RunMode -eq 1){
-    $Script:Scriptpath = ((Split-Path -Parent -Path (Split-Path -Parent $MyInvocation.MyCommand.Definition))+'\')      
-    get-process -id $Pid | set-windowstate -State MINIMIZE
-} 
-
 if ($RunMode -eq 0){
     $Script:Scriptpath = 'E:\Emu68Imager\'    
 }
+
+if  ($RunMode -eq 1){
+    $Script:Scriptpath = ((Split-Path -Parent -Path (Split-Path -Parent $MyInvocation.MyCommand.Definition))+'\')      
+} 
 
 $Script:LogFolder = ($Script:Scriptpath+'Logs\')
 $Script:SettingsFolder = ($Script:Scriptpath+'Settings\')  
@@ -369,6 +549,136 @@ $Script:PathtoGoogleDrive = $null
 
 ####################################################################### End Null out Global Variables ###############################################################################################
 
+####################################################################### GUI XML for Test Administrator ##################################################################################################
+$InputXML_AdministratorWindow = @"
+
+<Window x:Name="NoAdministratorMode" 
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:WpfApp14"
+        mc:Ignorable="d"
+        Title="Not Run as Administrator" Height="200" Width="910" HorizontalAlignment="Center" HorizontalContentAlignment="Center" UseLayoutRounding="True" ScrollViewer.VerticalScrollBarVisibility="Disabled" ResizeMode="NoResize">
+    <Grid Background="#FFAAAAAA">
+        <Button x:Name="Button_Acknowledge" HorizontalContentAlignment="Center" Content="Acknowledge" HorizontalAlignment="Center" Margin="0,100,0,0" VerticalAlignment="Top" Height="40" Width="320" BorderBrush="Black" UseLayoutRounding="False" Background="#FF6688BB"/>
+        <TextBox x:Name="TextBox_Message" HorizontalContentAlignment="Center" HorizontalAlignment="center" Margin="0,60,0,0" Background="Transparent" TextWrapping="Wrap" Text="You must run the tool in Administrator Mode!" VerticalAlignment="Top" Width="600" IsReadOnly="True"  FontSize="24" FontWeight="Bold" Foreground="Red" BorderThickness="0,0,0,0" SelectionOpacity="0"/>        
+    </Grid>
+</Window>
+"@
+
+$XAML_AdministratorWindow = Format-XMLtoXAML -inputXML $InputXML_AdministratorWindow
+$Form_Administrator = Read-XAML -xaml $XAML_AdministratorWindow
+
+#===========================================================================
+# Load XAML Objects In PowerShell
+#===========================================================================
+
+Remove-Variable -Name WPF_Admin_*
+
+$XAML_AdministratorWindow.SelectNodes("//*[@Name]") | ForEach-Object{
+    #    "Trying item $($_.Name)";
+    try {
+        Set-Variable -Name "WPF_Admin_$($_.Name)" -Value $Form_Administrator.FindName($_.Name) -ErrorAction Stop
+    }
+    catch{
+        throw
+    }
+}
+
+# Get-FormVariables - If we need variables
+
+$WPF_Admin_Button_Acknowledge.Add_Click({
+    $Form_Administrator.Close() | out-null
+})
+
+####################################################################### End GUI XML for Test Administrator ##################################################################################################
+
+
+####################################################################### GUI XML for Disclaimer ##################################################################################################
+
+$InputXML_DisclaimerWindow = @"
+<Window x:Name="Disclaimer" 
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:WpfApp14"
+        mc:Ignorable="d"
+        Title="Disclaimer and Acknowledgements" Height="400" Width="1054" HorizontalAlignment="Center" HorizontalContentAlignment="Center" ScrollViewer.VerticalScrollBarVisibility="Disabled" ResizeMode="NoResize" WindowStyle="ToolWindow">
+    <Grid Background="#FFAAAAAA" >
+        <Button x:Name="Button_Acknowledge" Content="Acknowledge and Continue" HorizontalAlignment="Center" Height="40" VerticalAlignment="Bottom" Width="320" BorderBrush="Black" UseLayoutRounding="False" Background="#FF6688BB" Margin="0,0,0,15"/>
+        <TextBox x:Name="TextBox_Message" HorizontalAlignment="Center" Margin="0,50,0,0" TextWrapping="Wrap" Background="Transparent" BorderBrush="Transparent"
+                 Text="This software is used at your own risk! While efforts have been made to test the software, it should be used with caution.  Data will be written to physical media attached to your computer and all data on that media will be erased. If the incorrect media is chosen, data on that media will also be erased!&#xA;&#xA;If you do not accept this risk, then do not use this software! No one likes reading manuals! However, you are strongly encouraged to read at least the Quick Start section of the documentation! This can be accessed through the link below along links to the other section. &#xA;&#xA;A link to the documentation is also available in the tool should you wish to access from there." 
+                 VerticalAlignment="Top" Width="874" IsReadOnly="True" Height="160" VerticalScrollBarVisibility="Disabled" FontSize="14" BorderThickness="0,0,0,0" SelectionOpacity="0"
+                 />
+        <TextBox x:Name="TextBox_Header" HorizontalAlignment="Center" Margin="0,20,0,0" TextWrapping="Wrap" Background="Transparent" BorderBrush="Transparent"
+            Text="Emu68 Imager v$Script:Version" FontSize="14" BorderThickness="0,0,0,0" SelectionOpacity="0"
+            VerticalAlignment="Top" Width="772" IsReadOnly="True" Height="20" VerticalScrollBarVisibility="Disabled" HorizontalContentAlignment="Center" FontWeight="Bold"
+                 />
+        <Button x:Name="LinktoQuickstart_Button" Content="Link to Quick Start Guide" HorizontalAlignment="Center" Margin="0,210,0,0" VerticalAlignment="Top" Height="80" Width="400"/>
+    </Grid>
+</Window>
+"@
+
+$XAML_DisclaimerWindow = Format-XMLtoXAML -inputXML $InputXML_DisclaimerWindow
+$Form_Disclaimer = Read-XAML -xaml $XAML_DisclaimerWindow
+
+#===========================================================================
+# Load XAML Objects In PowerShell
+#===========================================================================
+
+Remove-Variable -Name WPF_Disclaimer_*
+
+$XAML_DisclaimerWindow.SelectNodes("//*[@Name]") | ForEach-Object{
+    #    "Trying item $($_.Name)";
+    try {
+        Set-Variable -Name "WPF_Disclaimer_$($_.Name)" -Value $Form_Disclaimer.FindName($_.Name) -ErrorAction Stop
+    }
+    catch{
+        throw
+    }
+}
+
+# Get-FormVariables - If we need variables
+
+$WPF_Disclaimer_Button_Acknowledge.Add_Click({
+    $Form_Disclaimer.Close() | out-null
+    $Script:IsDisclaimerAccepted = $True
+})
+
+$WPF_Disclaimer_LinktoQuickstart_Button.Add_Click({
+    Start-Process $Script:QuickStart_URL
+})
+
+####################################################################### End GUI XML for Disclaimer ##################################################################################################
+
+####################################################################### Test for Administrator ############################################################################################################
+
+if (-not (Test-Administrator)){
+    $Form_Administrator.ShowDialog() | out-null
+}
+else {
+    $IsAdministrator = $true 
+}
+
+if (-not ($IsAdministrator)){
+    exit
+
+}
+####################################################################### End Test for Administrator ############################################################################################################
+
+####################################################################### Run Disclaimer ##########################################################################################################################
+$Form_Disclaimer.ShowDialog() | out-null
+
+if (-not ($Script:IsDisclaimerAccepted -eq $true)){
+    Write-ErrorMessage 'Exiting - Disclaimer Not Accepted'
+    exit    
+}
+
+
+####################################################################### End Run Disclaimer ##########################################################################################################################
+
 ####################################################################### Set Script Path dependent  Variables ########################################################################################
 
 $SourceProgramPath = ($Script:Scriptpath+'Programs\')
@@ -428,6 +738,18 @@ if (-not (Test-Path $Script:UserLocation_ADFs)){
 
 if (-not (Test-Path $Script:UserLocation_Kickstarts)){
     $null= New-Item -Path $Script:UserLocation_Kickstarts -ItemType Directory -Force
+} 
+
+################################################################### Update Input CSV Files ##############################################################
+
+Update-InputCSV -PathtoGoogleDrive $PathtoGoogleDrive -GidValue 0 -ExistingCSV ($InputFolder+'ADFHashes.CSV') 
+Update-InputCSV -PathtoGoogleDrive $PathtoGoogleDrive -GidValue 750546389 -ExistingCSV ($InputFolder+'ListofInstallFiles.CSV')
+Update-InputCSV -PathtoGoogleDrive $PathtoGoogleDrive -GidValue 2048180409 -ExistingCSV($InputFolder+'ListofPackagestoInstall.CSV')
+Update-InputCSV -PathtoGoogleDrive $PathtoGoogleDrive -GidValue 1875558855 -ExistingCSV ($InputFolder+'RomHashes.CSV')
+Update-InputCSV -PathtoGoogleDrive $PathtoGoogleDrive -GidValue 860542576 -ExistingCSV ($InputFolder+'ScreenModes.CSV')
+
+if  ($RunMode -eq 1){
+    get-process -id $Pid | set-windowstate -State MINIMIZE
 } 
 
 ######################################################################### End User Files Folders ###############################################################################################
@@ -842,28 +1164,6 @@ function Write-StartSubTaskMessage {
     '' | Out-File $Script:LogLocation -Append
 }
 
-function Write-InformationMessage {
-    param (
-        $Message,
-        [switch]$NoLog
-    )
-    Write-Host " `t $Message" -ForegroundColor Yellow
-    if (-not $NoLog){
-        $Message | Out-File $Script:LogLocation -Append
-    }
-}
-
-function Write-ErrorMessage {
-    param (
-        $Message,
-        [switch]$NoLog
-    )
-    Write-Host "[ERROR] `t $Message" -ForegroundColor Red
-    if (-not $NoLog){
-        "[ERROR] `t $Message" | Out-File $Script:LogLocation -Append
-    }
-}
-
 function Write-TaskCompleteMessage {
     param (
         $Message
@@ -871,35 +1171,6 @@ function Write-TaskCompleteMessage {
     Write-Host "[Section: $Script:CurrentSection of $Script:TotalSections]: `t $Message" -ForegroundColor Green
     "[Section: $Script:CurrentSection of $Script:TotalSections]: `t $Message" | Out-File $Script:LogLocation -Append
     $Script:CurrentSection ++
-}
-
-
-function Read-XAML {
-    param (
-        $xaml
-    )
-    $reader=(New-Object System.Xml.XmlNodeReader $xaml)
-    try{
-        $Form=[Windows.Markup.XamlReader]::Load( $reader )
-    }
-    catch{
-        Write-Warning "Unable to parse XML, with error: $($Error[0])`n Ensure that there are NO SelectionChanged or TextChanged properties in your textboxes (PowerShell cannot process them)"
-        throw
-    }
-    return $Form
-}
-function Format-XMLtoXAML{
-    param (
-        $inputXML 
-    )
-    $inputXML = $inputXML -replace 'mc:Ignorable="d"','' -replace "x:N",'N' -replace '^<Win.*', '<Window'
-    [xml]$XAML = $inputXML
-    return $XAML
-}
-
-Function Test-Administrator {  
-    $user = [Security.Principal.WindowsIdentity]::GetCurrent();
-    (New-Object Security.Principal.WindowsPrincipal $user).IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)  
 }
 
 function Confirm-DiskSpace {
@@ -1673,12 +1944,11 @@ function Get-AmigaFileWeb {
             $URLPathandQuery=([System.Uri]$URL).pathandquery 
             $DownloadURL=($URLBase+$URLPathandQuery)
             Write-InformationMessage -Message ('Trying to download from: '+$DownloadURL)
-            try {
-                Invoke-WebRequest $DownloadURL -OutFile ($LocationforDL+$NameofDL) # Powershell 5 compatibility -AllowInsecureRedirect
+            if ((Get-DownloadFile -DownloadURL $DownloadURL -OutputLocation ($LocationforDL+$NameofDL) -NumberofAttempts 1) -eq $true){
                 Write-InformationMessage -Message "Download completed"
                 return $true   
             }
-            catch {
+            else{
                 Write-ErrorMessage -Message ('Error downloading '+$NameofDL+'! Trying different server')
             }
         }
@@ -1686,28 +1956,14 @@ function Get-AmigaFileWeb {
         return $false    
     }
     else{
-        do {
-            try {
-                If ($Attempts -ne 0){
-                    Write-InformationMessage -Message ('Downloading file '+$NameofDL+' Attempt #'+($Attempts+1))                
-                }
-                Invoke-WebRequest $URL -OutFile ($LocationforDL+$NameofDL) # Powershell 5 compatibility -AllowInsecureRedirect
-                $IsSuccess = $true
-                Write-InformationMessage -Message 'Download completed'
-                Return $true       
-            }
-            catch {
-                Write-InformationMessage -message 'Download failed! Retrying in 3 seconds'
-                Start-Sleep -Seconds 3
-                $IsSuccess = $false   
-            }
-            $Attempts ++               
-            
-        } until (
-            $IsSuccess -eq $true -or $Attempts -eq 3
-        )
-        Write-ErrorMessage -Message ('Error downloading '+$NameofDL+'!')
-        return $false
+        if ((Get-DownloadFile -DownloadURL $URL -OutputLocation ($LocationforDL+$NameofDL) -NumberofAttempts 3) -eq $true){
+            Write-InformationMessage -Message 'Download completed'
+            return $true
+        }
+        else{
+            Write-ErrorMessage -Message ('Error downloading '+$NameofDL+'!')
+            return $false
+        }
     }
 }
 function Start-HSTImager {
@@ -1915,27 +2171,12 @@ function Get-GithubRelease {
     }
     else{
         Write-InformationMessage -Message 'Retrieving Github information'
-        $Counter = 0
-        $IsSuccess = $null
-        do {
-            if ($Counter -gt 0){
-                Write-InformationMessage -Message 'Trying to retrieve Githb information again'
-            }
-            try {
-                $GithubDetails = (Invoke-WebRequest $GithubRelease | ConvertFrom-Json)  
-                $IsSuccess = $true          
-            }
-            catch {
-                $IsSuccess = $false
-            }
-            $Counter ++            
-        } until (
-            $IsSuccess -eq $true -or $Counter -eq 3 
-        )
-        if ($IsSuccess -eq $false){
-            Write-ErrorMessage -Message ('Error downloading '+$NameofDL+'!')
-            return $false
-        }
+
+        $GithubDetails = (Get-DownloadFile -DownloadURL $GithubRelease -NumberofAttempts 3) | ConvertFrom-Json
+        if ( -not $GithubDetails){
+            Write-ErrorMessage 'Error accessing Github! Qutting Progream'
+            exit
+        }  
         if ($OnlyReleaseVersions -eq 'TRUE'){
         
             $GithubDetails_Sorted = $GithubDetails | Where-Object { $_.tag_name -ne 'nightly' -and ($_.draft).tostring() -eq 'False' -and ($_.prerelease).tostring() -eq 'False' -and ($_.name).tostring() -notmatch 'Release Candidate'} | Sort-Object -Property 'tag_name' -Descending | Select-Object -ExpandProperty assets
@@ -1952,28 +2193,13 @@ function Get-GithubRelease {
         }
         $GithubDownloadURL =$GithubDetails_ForDownload[0].browser_download_url 
         Write-InformationMessage -Message ('Downloading Files for URL: '+$GithubDownloadURL)
-        $Counter = 0
-        $IsSuccess = $null
-        do {
-            if ($Counter -gt 0){
-                Write-InformationMessage -Message 'Trying Download again'
-            }
-            try {
-                Invoke-WebRequest $GithubDownloadURL -OutFile $LocationforDownload # Powershell 5 compatibility -AllowInsecureRedirect
-                Write-InformationMessage -Message 'Download completed'  
-                $IsSuccess = $true              
-            }
-            catch {
-                $IsSuccess = $false
-            }
-            $Counter ++             
-        } until (
-            $IsSuccess -eq $true -or $Counter -eq 3 
-        )
-        if ($IsSuccess -eq $false){
+        if ((Get-DownloadFile -DownloadURL $GithubDownloadURL -OutputLocation $LocationforDownload -NumberofAttempts 3) -eq $true){
+            Write-InformationMessage -Message 'Download completed'  
+        }
+        else{
             Write-ErrorMessage -Message ('Error downloading '+$NameofDL+'!')
             return $false
-        }
+        }       
         Write-InformationMessage -Message 'Extracting Files'
         $null = Expand-Archive -LiteralPath $LocationforDownload -DestinationPath $LocationforProgram -force
         return $true   
@@ -2131,10 +2357,30 @@ function Find-LatestAminetPackage {
         $DateNewerthan,
         $Architecture
     )
+    
+    $AminetMirrors =  Import-Csv ($InputFolder+'AminetMirrors.csv') -Delimiter ';'
     $AminetURL='http://aminet.net'
-    $URL=('https://aminet.net/search?name='+$PackagetoFind+'&o_date=newer&date='+$DateNewerthan+'&arch[]='+$Architecture)
     Write-InformationMessage -Message('Searching for: '+$PackagetoFind)
-    $ListofAminetFiles=Invoke-WebRequest $URL -UseBasicParsing # -AllowInsecureRedirect Powershell 5 compatibility
+    foreach ($Mirror in $AminetMirrors){
+        Write-InformationMessage -Message ('Using mirror: '+$Mirror.MirrorURL+' ('+$Mirror.Type+')')
+        $URLBase=$Mirror.Type+'://'+$Mirror.MirrorURL
+        $URL = ($URLBase+'/search?name='+$PackagetoFind+'&o_date=newer&date='+$DateNewerthan+'&arch[]='+$Architecture)
+        try {
+            $ListofAminetFiles=Invoke-WebRequest $URL -UseBasicParsing # -AllowInsecureRedirect Powershell 5 compatibility
+            $IsSuccess = $true    
+            break
+        }
+        catch {
+            Write-InformationMessage -message 'Download failed! Trying next mirror'
+        }
+
+    }
+  
+    if ($IsSuccess -ne $true){
+        Write-ErrorMessage -Message 'Could not access Aminet to find package! Unrrecoverable error!'
+        return   
+    }
+
     foreach ($Line in $ListofAminetFiles.Links) {      
     if (!$Exclusion) {
         if (($line -match ('.lha'))){
@@ -2152,6 +2398,7 @@ function Find-LatestAminetPackage {
     Write-ErrorMessage -Message 'Could not find package! Unrrecoverable error!'
     return                 
 }
+
 function Find-WHDLoadWrapperURL{
     param (
         $SearchCriteria,
@@ -2159,22 +2406,45 @@ function Find-WHDLoadWrapperURL{
         )        
         $SiteLink='https://ftp2.grandis.nu'
         $ListofURLs = New-Object System.Collections.Generic.List[System.Object]
-        $SearchResults=Invoke-WebRequest "https://ftp2.grandis.nu/turransearch/search.php?_search_=1&search=$SearchCriteria&category_id=Misc&exclude=&limit=$ResultLimit&httplinks=on"
-        Write-InformationMessage -Message ('Retrieving link latest version of '+$SearchCriteria)
-        foreach ($Item in $SearchResults.Links.OuterHTML){
-            if ($item -match $SearchCriteria){
-                $Startpoint=$item.IndexOf('/turran')
-                $Endpoint=$item.IndexOf('">/Misc/')
-                $InvidualURL=$item.Substring($Startpoint,($Endpoint-$Startpoint))
-                $ListofURLs.Add($InvidualURL)    
+        
+        $Counter = 0
+        $IsSuccess = $null
+
+        do {
+            try {
+                $SearchResults=Invoke-WebRequest "https://ftp2.grandis.nu/turransearch/search.php?_search_=1&search=$SearchCriteria&category_id=Misc&exclude=&limit=$ResultLimit&httplinks=on"
+                $IsSuccess = $true  
             }
-        }
-        $DownloadLink = $SiteLink+($ListofURLs | Sort-Object -Descending | Select-Object -First 1)
-        if ($DownloadLink){
-            return $DownloadLink
-        }
-        else {
+            catch {
+                Write-InformationMessage -message 'Download failed! Retrying in 3 seconds'
+                Start-Sleep -Seconds 3
+                $IsSuccess = $false
+            }
+            $Counter ++              
+        } until (
+            $IsSuccess -eq $true -or $Counter -eq 3 
+        )
+
+        if ($IsSuccess -eq $false){
             return
+        }
+        else{
+            Write-InformationMessage -Message ('Retrieving link latest version of '+$SearchCriteria)
+            foreach ($Item in $SearchResults.Links.OuterHTML){
+                if ($item -match $SearchCriteria){
+                    $Startpoint=$item.IndexOf('/turran')
+                    $Endpoint=$item.IndexOf('">/Misc/')
+                    $InvidualURL=$item.Substring($Startpoint,($Endpoint-$Startpoint))
+                    $ListofURLs.Add($InvidualURL)    
+                }
+            }
+            $DownloadLink = $SiteLink+($ListofURLs | Sort-Object -Descending | Select-Object -First 1)
+            if ($DownloadLink){
+                return $DownloadLink
+            }
+            else {
+                return
+            }
         }
     }
     
@@ -2871,35 +3141,41 @@ function Get-Emu68ImagerDocumentation {
         if (-not (test-path $OutfileLocation)){
                 $null = New-Item $OutfileLocation -ItemType Directory
         }
-        Invoke-WebRequest $URL -OutFile ($OutfileLocation+(Split-Path $URL -Leaf))
-
-        if (($OutfileLocation+(Split-Path $URL -Leaf)).IndexOf('.html') -gt 0){
-            $URLContent = Get-Content ($OutfileLocation+(Split-Path $URL -Leaf))
-            $RevisedURLContent = $null
-            foreach ($Line in $URLContent){
+        
+        if ((Get-DownloadFile -DownloadURL $URL -OutputLocation ($OutfileLocation+(Split-Path $URL -Leaf)) -NumberofAttempts 3) -eq $true){
+            if (($OutfileLocation+(Split-Path $URL -Leaf)).IndexOf('.html') -gt 0){
+                $URLContent = Get-Content ($OutfileLocation+(Split-Path $URL -Leaf))
+                $RevisedURLContent = $null
+                foreach ($Line in $URLContent){
+                    If ((Split-Path $URL -Leaf) -eq 'index.html'){
+                        $Line = $Line -replace '<a href="/Emu68-Imager/', '<a href="./html/'
+                        $Line = $Line -replace '<a href="https://mja65.github.io/Emu68-Imager/', '<a href="./index.html'
+                        $Line = $Line -replace '<img src="/Emu68-Imager/images' , '<img src="./images'
+                    }
+                    else{
+                        $Line = $Line -replace '<a href="/Emu68-Imager/', '<a href="../html/'
+                        $Line = $Line -replace '<a href="https://mja65.github.io/Emu68-Imager/', '<a href="../index.html'
+                        $Line = $Line -replace '<img src="/Emu68-Imager/images' , '<img src="../images'
+                    }
+                    $RevisedURLContent += $Line+"`r`n"
+                }
+                Set-Content -Path ($OutfileLocation+(Split-Path $URL -Leaf)+'NEW') -Value $RevisedURLContent
+                $null = remove-item ($OutfileLocation+(Split-Path $URL -Leaf))
+                $null = rename-item ($OutfileLocation+(Split-Path $URL -Leaf)+'NEW') ($OutfileLocation+(Split-Path $URL -Leaf)) 
                 If ((Split-Path $URL -Leaf) -eq 'index.html'){
-                    $Line = $Line -replace '<a href="/Emu68-Imager/', '<a href="./html/'
-                    $Line = $Line -replace '<a href="https://mja65.github.io/Emu68-Imager/', '<a href="./index.html'
-                    $Line = $Line -replace '<img src="/Emu68-Imager/images' , '<img src="./images'
+                    if (-not (Test-Path ($LocationtoDownload+'html\'))){
+                        $Null = New-Item ($LocationtoDownload+'html\') -ItemType Directory   
+                    }
+                    $Null = Copy-Item -Path ($OutfileLocation+(Split-Path $URL -Leaf)) -Destination ($LocationtoDownload+'html\Emu68-Imager.html')
                 }
-                else{
-                    $Line = $Line -replace '<a href="/Emu68-Imager/', '<a href="../html/'
-                    $Line = $Line -replace '<a href="https://mja65.github.io/Emu68-Imager/', '<a href="../index.html'
-                    $Line = $Line -replace '<img src="/Emu68-Imager/images' , '<img src="../images'
-                }
-                $RevisedURLContent += $Line+"`r`n"
-            }
-            Set-Content -Path ($OutfileLocation+(Split-Path $URL -Leaf)+'NEW') -Value $RevisedURLContent
-            $null = remove-item ($OutfileLocation+(Split-Path $URL -Leaf))
-            $null = rename-item ($OutfileLocation+(Split-Path $URL -Leaf)+'NEW') ($OutfileLocation+(Split-Path $URL -Leaf)) 
-            If ((Split-Path $URL -Leaf) -eq 'index.html'){
-                if (-not (Test-Path ($LocationtoDownload+'html\'))){
-                    $Null = New-Item ($LocationtoDownload+'html\') -ItemType Directory   
-                }
-                $Null = Copy-Item -Path ($OutfileLocation+(Split-Path $URL -Leaf)) -Destination ($LocationtoDownload+'html\Emu68-Imager.html')
             }
         }
+        else{
+            return $false
+        }
+
     }
+    return $true
 }
 
 function Get-ListofInstallFiles {
@@ -2911,15 +3187,47 @@ function Get-ListofInstallFiles {
 
         $ListofInstallFilesImported = Import-Csv $ListofInstallFilesCSV -delimiter ';'
 
+        $SemanticVersion = [System.Version]$Script:Version
+
         $RevisedListofInstallFiles = [System.Collections.Generic.List[PSCustomObject]]::New()
         foreach ($Line in $ListofInstallFilesImported ) {
-            $CountofVariables = ([regex]::Matches($line.Kickstart_Version, "," )).count
-            if ($CountofVariables -gt 0){
-                $Counter = 0
-                do {
-                    $RevisedListofInstallFiles += [PSCustomObject]@{
-                        Kickstart_Version = ($line.Kickstart_Version -split ',')[$Counter] 
-                        Kickstart_VersionFriendlyName = ($line.Kickstart_VersionFriendlyName -split ',')[$Counter] 
+            $PackageMinimumVersion = [System.Version]$line.MinimumInstallerVersion
+            if (($SemanticVersion.Major -ge $PackageMinimumVersion.Major) -and `
+            ($SemanticVersion.Minor -ge $PackageMinimumVersion.Minor) -and `
+            ($SemanticVersion.Build -ge $PackageMinimumVersion.Build) -and `
+            ($SemanticVersion.Revision -ge $PackageMinimumVersion.Revision)){
+                $CountofVariables = ([regex]::Matches($line.Kickstart_Version, "," )).count
+                if ($CountofVariables -gt 0){
+                    $Counter = 0
+                    do {
+                        $RevisedListofInstallFiles += [PSCustomObject]@{
+                            Kickstart_Version = ($line.Kickstart_Version -split ',')[$Counter] 
+                            Kickstart_VersionFriendlyName = ($line.Kickstart_VersionFriendlyName -split ',')[$Counter] 
+                            InstallSequence = $line.InstallSequence
+                            ADF_Name = $line.ADF_Name
+                            FriendlyName = $line.FriendlyName
+                            AmigaFiletoInstall = $line.AmigaFiletoInstall
+                            DrivetoInstall = $line.DrivetoInstall
+                            LocationtoInstall = $line.LocationtoInstall
+                            NewFileName = $line.NewFileName
+                            ExcludedFolders = $line.ExcludedFolder
+                            ExcludedFiles = $line.ExcludedFiles 
+                            Uncompress = $line.Uncompress
+                            ModifyScript = $line.ModifyScript
+                            ScriptNameofChange = $line.ScriptNameofChange
+                            ScriptInjectionStartPoint = $line.ScriptInjectionStartPoint
+                            ScriptInjectionEndPoint = $line.ScriptInjectionEndPoint
+                            ModifyInfoFileTooltype = $line.ModifyInfoFileTooltype
+                        }
+                        $counter ++
+                    } until (
+                        $Counter -eq ($CountofVariables+1)
+                    )
+                }
+                else{
+                    $RevisedListofInstallFiles  += [PSCustomObject]@{
+                        Kickstart_Version = $line.Kickstart_Version  
+                        Kickstart_VersionFriendlyName = $line.Kickstart_VersionFriendlyName 
                         InstallSequence = $line.InstallSequence
                         ADF_Name = $line.ADF_Name
                         FriendlyName = $line.FriendlyName
@@ -2936,30 +3244,6 @@ function Get-ListofInstallFiles {
                         ScriptInjectionEndPoint = $line.ScriptInjectionEndPoint
                         ModifyInfoFileTooltype = $line.ModifyInfoFileTooltype
                     }
-                    $counter ++
-                } until (
-                    $Counter -eq ($CountofVariables+1)
-                )
-            }
-            else{
-                $RevisedListofInstallFiles  += [PSCustomObject]@{
-                    Kickstart_Version = $line.Kickstart_Version  
-                    Kickstart_VersionFriendlyName = $line.Kickstart_VersionFriendlyName 
-                    InstallSequence = $line.InstallSequence
-                    ADF_Name = $line.ADF_Name
-                    FriendlyName = $line.FriendlyName
-                    AmigaFiletoInstall = $line.AmigaFiletoInstall
-                    DrivetoInstall = $line.DrivetoInstall
-                    LocationtoInstall = $line.LocationtoInstall
-                    NewFileName = $line.NewFileName
-                    ExcludedFolders = $line.ExcludedFolder
-                    ExcludedFiles = $line.ExcludedFiles 
-                    Uncompress = $line.Uncompress
-                    ModifyScript = $line.ModifyScript
-                    ScriptNameofChange = $line.ScriptNameofChange
-                    ScriptInjectionStartPoint = $line.ScriptInjectionStartPoint
-                    ScriptInjectionEndPoint = $line.ScriptInjectionEndPoint
-                    ModifyInfoFileTooltype = $line.ModifyInfoFileTooltype
                 }
             }
         }
@@ -2974,16 +3258,55 @@ function Get-ListofPackagestoInstall {
         #$ListofPackagestoInstallCSV = ($InputFolder+'ListofPackagestoInstall.csv') 
 
         $ListofPackagestoInstallImported = Import-Csv $ListofPackagestoInstallCSV -delimiter ';'
-
+        
+        $SemanticVersion = [System.Version]$Script:Version
+    
         $RevisedListofPackagestoInstall = [System.Collections.Generic.List[PSCustomObject]]::New()
         foreach ($Line in $ListofPackagestoInstallImported) {
-            $CountofVariables = ([regex]::Matches($line.KickstartVersion, "," )).count
-            if ($CountofVariables -gt 0){
-                $Counter = 0
-                do {
-                    $RevisedListofPackagestoInstall += [PSCustomObject]@{
+            $PackageMinimumVersion = [System.Version]$line.MinimumInstallerVersion
+            if (($SemanticVersion.Major -ge $PackageMinimumVersion.Major) -and `
+            ($SemanticVersion.Minor -ge $PackageMinimumVersion.Minor) -and `
+            ($SemanticVersion.Build -ge $PackageMinimumVersion.Build) -and `
+            ($SemanticVersion.Revision -ge $PackageMinimumVersion.Revision)){
+                $CountofVariables = ([regex]::Matches($line.KickstartVersion, "," )).count
+                if ($CountofVariables -gt 0){
+                    $Counter = 0
+                    do {
+                        $RevisedListofPackagestoInstall += [PSCustomObject]@{
+                            InstallFlag = $line.InstallFlag
+                            KickstartVersion = ($line.KickstartVersion -split ',')[$Counter] 
+                            PackageName = $line.PackageName
+                            SearchforUpdatedPackage = $line.SearchforUpdatedPackage
+                            UpdatePackageSearchTerm = $line.UpdatePackageSearchTerm    
+                            UpdatePackageSearchExclusionTerm  = $line.UpdatePackageSearchExclusionTerm
+                            UpdatePackageSearchMinimumDate  = $line.UpdatePackageSearchMinimumDate  
+                            Source = $line.Source     
+                            InstallType = $line.InstallType       
+                            SourceLocation = $line.SourceLocation          
+                            FileDownloadName = $line.FileDownloadName         
+                            PerformHashCheck = $line.PerformHashCheck    
+                            Hash = $line.Hash        
+                            FilestoInstall = $line.FilestoInstall        
+                            DrivetoInstall = $line. DrivetoInstall    
+                            LocationtoInstall = $line.LocationtoInstall    
+                            CreateFolderInfoFile = $line.CreateFolderInfoFile    
+                            NewFileName = $line.NewFileName       
+                            ModifyUserStartup = $line.ModifyUserStartup  
+                            ModifyStartupSequence = $line.ModifyStartupSequence 
+                            StartupSequenceInjectionStartPoint = $line.StartupSequenceInjectionStartPoint
+                            StartupSequenceInjectionEndPoint  =$line.StartupSequenceInjectionEndPoint
+                            ModifyInfoFileTooltype = $line.ModifyInfoFileTooltype    
+                            PiSpecificStorageDriver = $line.PiSpecificStorageDriver 
+                        }
+                        $counter ++
+                    } until (
+                        $Counter -eq ($CountofVariables+1)
+                    )
+                }
+                else{
+                    $RevisedListofPackagestoInstall   += [PSCustomObject]@{
                         InstallFlag = $line.InstallFlag
-                        KickstartVersion = ($line.KickstartVersion -split ',')[$Counter] 
+                        KickstartVersion = $line.KickstartVersion 
                         PackageName = $line.PackageName
                         SearchforUpdatedPackage = $line.SearchforUpdatedPackage
                         UpdatePackageSearchTerm = $line.UpdatePackageSearchTerm    
@@ -3005,38 +3328,7 @@ function Get-ListofPackagestoInstall {
                         StartupSequenceInjectionStartPoint = $line.StartupSequenceInjectionStartPoint
                         StartupSequenceInjectionEndPoint  =$line.StartupSequenceInjectionEndPoint
                         ModifyInfoFileTooltype = $line.ModifyInfoFileTooltype    
-                        PiSpecificStorageDriver = $line.PiSpecificStorageDriver 
                     }
-                    $counter ++
-                } until (
-                    $Counter -eq ($CountofVariables+1)
-                )
-            }
-            else{
-                $RevisedListofPackagestoInstall   += [PSCustomObject]@{
-                    InstallFlag = $line.InstallFlag
-                    KickstartVersion = $line.KickstartVersion 
-                    PackageName = $line.PackageName
-                    SearchforUpdatedPackage = $line.SearchforUpdatedPackage
-                    UpdatePackageSearchTerm = $line.UpdatePackageSearchTerm    
-                    UpdatePackageSearchExclusionTerm  = $line.UpdatePackageSearchExclusionTerm
-                    UpdatePackageSearchMinimumDate  = $line.UpdatePackageSearchMinimumDate  
-                    Source = $line.Source     
-                    InstallType = $line.InstallType       
-                    SourceLocation = $line.SourceLocation          
-                    FileDownloadName = $line.FileDownloadName         
-                    PerformHashCheck = $line.PerformHashCheck    
-                    Hash = $line.Hash        
-                    FilestoInstall = $line.FilestoInstall        
-                    DrivetoInstall = $line. DrivetoInstall    
-                    LocationtoInstall = $line.LocationtoInstall    
-                    CreateFolderInfoFile = $line.CreateFolderInfoFile    
-                    NewFileName = $line.NewFileName       
-                    ModifyUserStartup = $line.ModifyUserStartup  
-                    ModifyStartupSequence = $line.ModifyStartupSequence 
-                    StartupSequenceInjectionStartPoint = $line.StartupSequenceInjectionStartPoint
-                    StartupSequenceInjectionEndPoint  =$line.StartupSequenceInjectionEndPoint
-                    ModifyInfoFileTooltype = $line.ModifyInfoFileTooltype    
                 }
             }
         }
@@ -3243,86 +3535,10 @@ You have chosen a network location. Please ensure that you have appropriate acce
     return $result    
 }
 
-function Update-InputCSV {
-    param (
-        $GidValue,
-        $ExistingCSV,
-        $PathtoGoogleDrive_param
-    )
-
-    # $NameofOutputFile = ($InputFolder+'ADFHashes.CSV')
-    # $GidValue = 0
-    # $ExistingCSV = ($InputFolder+'ADFHashes.CSV')
-    
-    $ExistingCSV_Name = (split-path -leaf -Path $ExistingCSV)
-
-    Write-InformationMessage ('Checking for updates to '+$ExistingCSV_Name)
-    if (Test-Path -Path $ExistingCSV){
-        $IsExistsInputCSV = $true
-        $OldCSV = Get-Content -Path $ExistingCSV 
-    }
-    else{
-        Write-InformationMessage ($ExistingCSV_Name+ ' does not exist!')
-        $IsExistsInputCSV = $false
-    }
-
-    $PathtoGoogleDrivetouse = ($PathtoGoogleDrive_param+'export?format=tsv&gid='+$GidValue)
-    $ImportedFile = ((Invoke-WebRequest -Uri $PathtoGoogleDrivetouse).Content) -split "`r`n"
-    $TotalLines = $ImportedFile.Count
-
-    $NewCSV = @()
-    $Counter = 1
-
-    foreach ($Line in $ImportedFile){     
-        if ($Counter -lt $TotalLines){
-            $NewCSV += @($line -split ("`t"))[0]
-        }
-        else {
-            $NewCSV += @(($line -split ("`t"))[0]).replace("`r`n","")              
-        }
-        $Counter ++
-    }
-    
-    if ($IsExistsInputCSV -eq $true){
-        if ($NewCSV.Count -ne $OldCSV.Count){
-            $IsSame = $false
-        }
-        else{
-            $IsSame = $true
-            $LineNumber = 1
-            do {
-               if ($OldCSV[$LineNumber] -eq $NewCSV[$LineNumber]){
-                }
-                else {
-                    $IsSame = $false
-                }
-                $LineNumber ++
-            } until (
-                $IsSame -eq $false -or $LineNumber -gt $OldCSV.Count
-            )
-        }
-    
-        if ($IsSame -eq $false){
-            Write-InformationMessage ('Changes to '+$ExistingCSV_Name+'! Updating local file.')
-            $NewCSV | Out-File -FilePath $ExistingCSV
-        }
-        else{
-            Write-InformationMessage ('Local version of '+$ExistingCSV_Name+' is up-to-date')
-        }
-    }
-    else{
-        Write-InformationMessage ('Creating local version of '+$ExistingCSV_Name)
-        $NewCSV | Out-File -FilePath $ExistingCSV
-    }
-    
-}
-
 ### End Functions
 
 ######################################################################### End Functions #############################################################################################################
 
-
-#$WPF_UI_DiskPartition_Grid.ColumnDefinitions
 ####################################################################### GUI XML for Main Environment ##################################################################################################
 
 $inputXML_UserInterface = @"
@@ -4761,124 +4977,6 @@ $WPF_UI_Process_Button.add_Click({
 
 ####################################################################### End GUI XML for Main Environment ##################################################################################################
 
-####################################################################### GUI XML for Test Administrator ##################################################################################################
-$InputXML_AdministratorWindow = @"
-
-<Window x:Name="NoAdministratorMode" 
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:WpfApp14"
-        mc:Ignorable="d"
-        Title="Not Run as Administrator" Height="200" Width="910" HorizontalAlignment="Center" HorizontalContentAlignment="Center" UseLayoutRounding="True" ScrollViewer.VerticalScrollBarVisibility="Disabled" ResizeMode="NoResize">
-    <Grid Background="#FFAAAAAA">
-        <Button x:Name="Button_Acknowledge" HorizontalContentAlignment="Center" Content="Acknowledge" HorizontalAlignment="Center" Margin="0,100,0,0" VerticalAlignment="Top" Height="40" Width="320" BorderBrush="Black" UseLayoutRounding="False" Background="#FF6688BB"/>
-        <TextBox x:Name="TextBox_Message" HorizontalContentAlignment="Center" HorizontalAlignment="center" Margin="0,60,0,0" Background="Transparent" TextWrapping="Wrap" Text="You must run the tool in Administrator Mode!" VerticalAlignment="Top" Width="600" IsReadOnly="True"  FontSize="24" FontWeight="Bold" Foreground="Red" BorderThickness="0,0,0,0" SelectionOpacity="0"/>        
-    </Grid>
-</Window>
-"@
-
-$XAML_AdministratorWindow = Format-XMLtoXAML -inputXML $InputXML_AdministratorWindow
-$Form_Administrator = Read-XAML -xaml $XAML_AdministratorWindow
-
-#===========================================================================
-# Load XAML Objects In PowerShell
-#===========================================================================
-
-Remove-Variable -Name WPF_Admin_*
-
-$XAML_AdministratorWindow.SelectNodes("//*[@Name]") | ForEach-Object{
-    #    "Trying item $($_.Name)";
-    try {
-        Set-Variable -Name "WPF_Admin_$($_.Name)" -Value $Form_Administrator.FindName($_.Name) -ErrorAction Stop
-    }
-    catch{
-        throw
-    }
-}
-
-# Get-FormVariables - If we need variables
-
-$WPF_Admin_Button_Acknowledge.Add_Click({
-    $Form_Administrator.Close() | out-null
-})
-
-####################################################################### End GUI XML for Test Administrator ##################################################################################################
-
-
-####################################################################### GUI XML for Disclaimer ##################################################################################################
-
-$InputXML_DisclaimerWindow = @"
-<Window x:Name="Disclaimer" 
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:WpfApp14"
-        mc:Ignorable="d"
-        Title="Disclaimer and Acknowledgements" Height="400" Width="1054" HorizontalAlignment="Center" HorizontalContentAlignment="Center" ScrollViewer.VerticalScrollBarVisibility="Disabled" ResizeMode="NoResize" WindowStyle="ToolWindow">
-    <Grid Background="#FFAAAAAA" >
-        <Button x:Name="Button_Acknowledge" Content="Acknowledge and Continue" HorizontalAlignment="Center" Height="40" VerticalAlignment="Bottom" Width="320" BorderBrush="Black" UseLayoutRounding="False" Background="#FF6688BB" Margin="0,0,0,15"/>
-        <TextBox x:Name="TextBox_Message" HorizontalAlignment="Center" Margin="0,50,0,0" TextWrapping="Wrap" Background="Transparent" BorderBrush="Transparent"
-                 Text="This software is used at your own risk! While efforts have been made to test the software, it should be used with caution.  Data will be written to physical media attached to your computer and all data on that media will be erased. If the incorrect media is chosen, data on that media will also be erased!&#xA;&#xA;If you do not accept this risk, then do not use this software! No one likes reading manuals! However, you are strongly encouraged to read at least the Quick Start section of the documentation! This can be accessed through the link below along links to the other section. &#xA;&#xA;A link to the documentation is also available in the tool should you wish to access from there." 
-                 VerticalAlignment="Top" Width="874" IsReadOnly="True" Height="160" VerticalScrollBarVisibility="Disabled" FontSize="14" BorderThickness="0,0,0,0" SelectionOpacity="0"
-                 />
-        <TextBox x:Name="TextBox_Header" HorizontalAlignment="Center" Margin="0,20,0,0" TextWrapping="Wrap" Background="Transparent" BorderBrush="Transparent"
-            Text="Emu68 Imager v$Script:Version" FontSize="14" BorderThickness="0,0,0,0" SelectionOpacity="0"
-            VerticalAlignment="Top" Width="772" IsReadOnly="True" Height="20" VerticalScrollBarVisibility="Disabled" HorizontalContentAlignment="Center" FontWeight="Bold"
-                 />
-        <Button x:Name="LinktoQuickstart_Button" Content="Link to Quick Start Guide" HorizontalAlignment="Center" Margin="0,210,0,0" VerticalAlignment="Top" Height="80" Width="400"/>
-    </Grid>
-</Window>
-"@
-
-$XAML_DisclaimerWindow = Format-XMLtoXAML -inputXML $InputXML_DisclaimerWindow
-$Form_Disclaimer = Read-XAML -xaml $XAML_DisclaimerWindow
-
-#===========================================================================
-# Load XAML Objects In PowerShell
-#===========================================================================
-
-Remove-Variable -Name WPF_Disclaimer_*
-
-$XAML_DisclaimerWindow.SelectNodes("//*[@Name]") | ForEach-Object{
-    #    "Trying item $($_.Name)";
-    try {
-        Set-Variable -Name "WPF_Disclaimer_$($_.Name)" -Value $Form_Disclaimer.FindName($_.Name) -ErrorAction Stop
-    }
-    catch{
-        throw
-    }
-}
-
-# Get-FormVariables - If we need variables
-
-$WPF_Disclaimer_Button_Acknowledge.Add_Click({
-    $Form_Disclaimer.Close() | out-null
-    $Script:IsDisclaimerAccepted = $True
-})
-
-$WPF_Disclaimer_LinktoQuickstart_Button.Add_Click({
-    Start-Process $Script:QuickStart_URL
-})
-
-####################################################################### End GUI XML for Disclaimer ##################################################################################################
-
-####################################################################### Test for Administrator ############################################################################################################
-
-if (-not (Test-Administrator)){
-    $Form_Administrator.ShowDialog() | out-null
-}
-else {
-    $IsAdministrator = $true 
-}
-
-if (-not ($IsAdministrator)){
-    exit
-
-}
-####################################################################### End Test for Administrator ############################################################################################################
 
 
 ################################# Set Working Folder Default #########################################################################################
@@ -4893,22 +4991,16 @@ $Script:SetDiskupOnly = 'FALSE'
 $Script:DeleteAllWorkingPathFiles = 'FALSE'
 $Script:ImageOnly = 'FALSE'
 
-$Form_Disclaimer.ShowDialog() | out-null
-
-if (-not ($Script:IsDisclaimerAccepted -eq $true)){
-    Write-ErrorMessage 'Exiting - Disclaimer Not Accepted'
-    exit    
-}
 
 ################################ End Set Working Folder Default #########################################################################################
 
 ##################################################################### Peform Pre-GUI Checks ##############################################################################################################
 
-Update-InputCSV -PathtoGoogleDrive $PathtoGoogleDrive -GidValue 0 -ExistingCSV ($InputFolder+'ADFHashes.CSV') 
-#Update-InputCSV -PathtoGoogleDrive $PathtoGoogleDrive -GidValue 750546389 -ExistingCSV ($InputFolder+'ListofInstallFiles.CSV')
-#Update-InputCSV -PathtoGoogleDrive $PathtoGoogleDrive -GidValue 2048180409 -ExistingCSV($InputFolder+'ListofPackagestoInstall.CSV')
-Update-InputCSV -PathtoGoogleDrive $PathtoGoogleDrive -GidValue 1875558855 -ExistingCSV ($InputFolder+'RomHashes.CSV')
-Update-InputCSV -PathtoGoogleDrive $PathtoGoogleDrive -GidValue 860542576 -ExistingCSV ($InputFolder+'ScreenModes.CSV')
+if  ($RunMode -eq 1){
+    get-process -id $Pid | set-windowstate -State SHOWDEFAULT
+} 
+
+
 
 $ErrorMessage = $null
 $ErrorMessage += Test-ExistenceofFiles -PathtoTest $SourceProgramPath -PathType 'Folder'
@@ -4943,6 +5035,11 @@ $ErrorMessage
 Remove-WorkingFolderData -DefaultFolder 'TRUE'
 
 ### End Clean up
+
+if  ($RunMode -eq 1){
+    get-process -id $Pid | set-windowstate -State MINIMIZE
+} 
+
 
 ####################################################################### End Pre GUI Checks #################################################################################################################
 
@@ -5677,9 +5774,14 @@ if ($Script:SetDiskupOnly -eq 'FALSE'){
         $null = New-Item ($AmigaDrivetoCopy+$VolumeName_System+'\PiStorm\Docs\') -ItemType Directory
     } 
 
-    Get-Emu68ImagerDocumentation -LocationtoDownload ($AmigaDrivetoCopy+$VolumeName_System+'\PiStorm\Docs\')
+    if ((Get-Emu68ImagerDocumentation -LocationtoDownload ($AmigaDrivetoCopy+$VolumeName_System+'\PiStorm\Docs\')) -eq $false){
+        Write-ErrorMessage -Message 'Error creating Documentation! Quitting Program!'
+        exit
+    }
+    else {
+        Write-TaskCompleteMessage -Message 'Creating Documentation files - Complete!'
+    }
     
-    Write-TaskCompleteMessage -Message 'Creating Documentation files - Complete!'
     
     if (-not (Test-Path ($AmigaDrivetoCopy+$VolumeName_System+'\Prefs\Env-Archive\Sys\'))){
         $null = New-Item -path ($AmigaDrivetoCopy+$VolumeName_System+'\Prefs\Env-Archive\Sys') -ItemType Directory -Force 
