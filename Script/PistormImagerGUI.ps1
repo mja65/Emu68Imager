@@ -20,7 +20,7 @@
 Script for Emu68Imager 
 #> 
 
-$Script:Version = '1.0.4'
+$Script:Version = '1.0.4.1'
 
 ####################################################################### Add GUI Types ################################################################################################################
 
@@ -120,6 +120,11 @@ function Format-XMLtoXAML{
 Function Test-Administrator {  
     $user = [Security.Principal.WindowsIdentity]::GetCurrent();
     (New-Object Security.Principal.WindowsPrincipal $user).IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)  
+}
+
+Function Test-64bit {
+
+    return (Get-Process -Id $PID).StartInfo.EnvironmentVariables["PROCESSOR_ARCHITECTURE"]
 }
 
 ######################################################################## Begin Function for CSV Update #####################################################
@@ -666,6 +671,16 @@ if (-not ($IsAdministrator)){
     exit
 
 }
+
+######################################################################## Test for 64 bit ###################################################################
+
+if (-not (Test-64bit -eq 'AMD64')){
+    Write-ErrorMessage 'Exiting - You are not running a 64bit OS!'
+    exit    
+}
+
+######################################################################### End Test for 64 bit ###################################################################
+
 ####################################################################### End Test for Administrator ############################################################################################################
 
 ####################################################################### Run Disclaimer ##########################################################################################################################
