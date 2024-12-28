@@ -652,6 +652,8 @@ $WPF_Disclaimer_Button_Acknowledge.Add_Click({
     $Script:IsDisclaimerAccepted = $True
 })
 
+$Script:QuickStart_URL = "https://mja65.github.io/Emu68-Imager/quickstart.html"
+
 $WPF_Disclaimer_LinktoQuickstart_Button.Add_Click({
     Start-Process $Script:QuickStart_URL
 })
@@ -702,7 +704,6 @@ $LocationofAmigaFiles = ($Script:Scriptpath+'AmigaFiles\')
 $Script:UserLocation_ADFs = ($Script:Scriptpath+'UserFiles\ADFs\')
 $Script:UserLocation_Kickstarts = ($Script:Scriptpath+'UserFiles\Kickstarts\')
 $Script:Documentation_URL = "https://mja65.github.io/Emu68-Imager/"
-$Script:QuickStart_URL = "https://mja65.github.io/Emu68-Imager/quickstart.html"
 
 ## Amiga Variables
 
