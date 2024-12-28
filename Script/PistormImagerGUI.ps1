@@ -6058,7 +6058,7 @@ If ($Script:ImageOnly -eq 'FALSE'){
         Write-StartSubTaskMessage -SubtaskNumber 1 -TotalSubtasks 3 -Message 'Determing Free Space locations in partitions'
 
         Write-InformationMessage -Message 'Determining start of free space - Workbench Partition (this may take some time)'
-        & $Script:FindFreeSpacePath ($HDFImageLocation +$NameofImage) -sectorsize $SectorSize .\InputFiles-begincrop $RDBStartBlock -endcrop $SystemEndBlock -result ($TempFolder+'FindFreeSpaceLog.txt')
+        & $Script:FindFreeSpacePath ($HDFImageLocation +$NameofImage) -sectorsize $SectorSize -begincrop $RDBStartBlock -endcrop $SystemEndBlock -result ($TempFolder+'FindFreeSpaceLog.txt')
         $EmptySpaceStartBlock_System = ([decimal](Get-Content -Path ($TempFolder+'FindFreeSpaceLog.txt')))+$RDBStartBlock 
         Write-InformationMessage -Message ('FreeSpace found at: '+$EmptySpaceStartBlock_System+' (from start of .hdf file)')
         Write-InformationMessage -Message 'Determining start of free space - Workbench - Completed'              
