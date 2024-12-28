@@ -168,10 +168,10 @@ function Get-DownloadFile {
         }
         try {
             if ($OutputLocation){
-                Invoke-WebRequest -Uri $DownloadURL -OutFile $OutputLocation # Powershell 5 compatibility -AllowInsecureRedirect
+                Invoke-WebRequest -Uri $DownloadURL -OutFile $OutputLocation -UseBasicParsing # Powershell 5 compatibility -AllowInsecureRedirect
             }    
             else {
-                $Download = Invoke-WebRequest -Uri $DownloadURL
+                $Download = Invoke-WebRequest -Uri $DownloadURL -UseBasicParsing # -AllowInsecureRedirect Powershell 5 compatibility
             }
             $IsSuccess = $true              
         }
@@ -2428,7 +2428,7 @@ function Find-WHDLoadWrapperURL{
 
         do {
             try {
-                $SearchResults=Invoke-WebRequest "https://ftp2.grandis.nu/turransearch/search.php?_search_=1&search=$SearchCriteria&category_id=Misc&exclude=&limit=$ResultLimit&httplinks=on"
+                $SearchResults=Invoke-WebRequest "https://ftp2.grandis.nu/turransearch/search.php?_search_=1&search=$SearchCriteria&category_id=Misc&exclude=&limit=$ResultLimit&httplinks=on" -UseBasicParsing # -AllowInsecureRedirect Powershell 5 compatibility
                 $IsSuccess = $true  
             }
             catch {
