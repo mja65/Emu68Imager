@@ -6055,7 +6055,7 @@ If ($Script:ImageOnly -eq 'FALSE'){
         $WorkStartBlock = ($AmigaPartitionsList | Where-Object {$_.PartitionNumber -eq 2} | Select-Object 'StartSector').StartSector
         $WorkEndBlock = ($AmigaPartitionsList | Where-Object {$_.PartitionNumber -eq 2} | Select-Object 'EndSector').EndSector
         
-        Write-StartSubTaskMessage -SubtaskNumber 1 -TotalSubtasks 3 -Message 'Determing Free Space locations in partitions'
+        Write-StartSubTaskMessage -SubtaskNumber 1 -TotalSubtasks 3 -Message 'Determining Free Space locations in partitions'
 
         Write-InformationMessage -Message 'Determining start of free space - Workbench Partition (this may take some time)'
         & $Script:FindFreeSpacePath ($HDFImageLocation +$NameofImage) -sectorsize $SectorSize -begincrop $RDBStartBlock -endcrop $SystemEndBlock -result ($TempFolder+'FindFreeSpaceLog.txt')
@@ -6121,7 +6121,7 @@ $EndDateandTime = (Get-Date -Format HH:mm:ss)
 $ElapsedTime = (New-TimeSpan -Start $StartDateandTime -End $EndDateandTime).TotalSeconds
 
 Write-InformationMessage -message "Started at: $StartDateandTime Finished at: $EndDateandTime. Total time to run (in seconds) was: $ElapsedTime" 
-Write-InformationMessage -message 'The tool has finished runnning. A log file was created and has been stored in the log subfolder.' 
+Write-InformationMessage -message 'The tool has finished running. A log file was created and has been stored in the log subfolder.' 
 Write-InformationMessage -message ('The full path to the file is: '+$Script:LogLocation)
 
 $Msg_Header = 'Tool Completed'
