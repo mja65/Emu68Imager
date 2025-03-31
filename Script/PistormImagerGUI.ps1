@@ -2194,8 +2194,17 @@ function Get-GithubRelease {
             exit
         }  
         if ($OnlyReleaseVersions -eq 'TRUE'){
+
+            $GithubDetails_Revised =$null
+
+            $GithubDetails | ForEach-Object {
+                $TestofVersion = $_.tag_name.replace('v','').replace('-rc','').replace('-beta','').replace('-alpha-','').replace('nightly','0.0.0.0')
+                if ((([System.Version]$TestofVersion).major -eq '1' ) -and (([System.Version]$TestofVersion).minor -eq '0' )){
+                    $GithubDetails_Revised += $GithubDetails 
+                }
+            }
         
-            $GithubDetails_Sorted = $GithubDetails | Where-Object { $_.tag_name -ne 'nightly' -and ($_.draft).tostring() -eq 'False' -and ($_.prerelease).tostring() -eq 'False' -and ($_.name).tostring() -notmatch 'Release Candidate'} | Sort-Object -Property 'tag_name' -Descending | Select-Object -ExpandProperty assets
+            $GithubDetails_Sorted = $GithubDetails_Revised | Where-Object {($_.draft).tostring() -eq 'False' -and ($_.prerelease).tostring() -eq 'False' -and ($_.name).tostring() -notmatch 'Release Candidate'} | Sort-Object -Property 'tag_name' -Descending | Select-Object -ExpandProperty assets
             $GithubDetails_ForDownload = $GithubDetails_Sorted  | Where-Object { $_.name -match $Name } | Select-Object -First 1
         }
         else {
