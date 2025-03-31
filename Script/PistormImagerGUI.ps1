@@ -5790,8 +5790,8 @@ if ($Script:SetDiskupOnly -eq 'FALSE'){
     } 
 
     if ((Get-Emu68ImagerDocumentation -LocationtoDownload ($AmigaDrivetoCopy+$VolumeName_System+'\PiStorm\Docs\')) -eq $false){
-        Write-ErrorMessage -Message 'Error creating Documentation! Quitting Program!'
-        exit
+        Write-ErrorMessage -Message 'Documentation could not be created! You will not be able to access this on the Amiga'
+
     }
     else {
         Write-TaskCompleteMessage -Message 'Creating Documentation files - Complete!'
