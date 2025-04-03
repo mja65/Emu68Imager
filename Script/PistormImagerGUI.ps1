@@ -123,8 +123,13 @@ Function Test-Administrator {
 }
 
 Function Test-64bit {
-
-    return (Get-Process -Id $PID).StartInfo.EnvironmentVariables["PROCESSOR_ARCHITECTURE"]
+    if ($RunMode -eq 1) {
+        return (Get-Process -Id $PID).StartInfo.EnvironmentVariables["PROCESSOR_ARCHITECTURE"]
+    }
+    else{
+        #Running in VisualCode or ISE so user must be clever enough to be running 64bit!
+        return 'AMD64'
+    }
 }
 
 ######################################################################## Begin Function for CSV Update #####################################################
