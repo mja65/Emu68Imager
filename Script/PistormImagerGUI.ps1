@@ -768,6 +768,7 @@ Update-InputCSV -PathtoGoogleDrive $PathtoGoogleDrive -GidValue 757815554 -Exist
 Update-InputCSV -PathtoGoogleDrive $PathtoGoogleDrive -GidValue 2048180409 -ExistingCSV($InputFolder+'ListofPackagestoInstall.CSV')
 Update-InputCSV -PathtoGoogleDrive $PathtoGoogleDrive -GidValue 1875558855 -ExistingCSV ($InputFolder+'RomHashes.CSV')
 Update-InputCSV -PathtoGoogleDrive $PathtoGoogleDrive -GidValue 860542576 -ExistingCSV ($InputFolder+'ScreenModes.CSV')
+Update-InputCSV -PathtoGoogleDrive $PathtoGoogleDrive -GidValue 280506415 -ExistingCSV ($InputFolder+'OSVersionstoInstall.CSV')
 
 if  ($RunMode -eq 1){
     get-process -id $Pid | set-windowstate -State MINIMIZE
