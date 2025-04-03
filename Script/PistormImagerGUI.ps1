@@ -3208,6 +3208,28 @@ function Get-Emu68ImagerDocumentation {
     return $true
 }
 
+
+function Get-AvailableOSestoInstall {
+    param (
+        $OSVersionstoInstallCSV
+    )
+
+    #$OSVersionstoInstallCSV = ($InputFolder+'OSVersionstoInstall.csv')
+    $SemanticScriptVersion = [System.Version]$Script:Version
+    $OSVersionstoInstall = Import-Csv $OSVersionstoInstallCSV -delimiter ';' 
+
+    $OSOptionstoReturn = [System.Collections.Generic.List[PSCustomObject]]::New()
+
+    foreach ($Line in $OSVersionstoInstall){
+        if ($SemanticScriptVersion -ge ([System.Version]$line.MinimumInstallerVersion)){
+            $OSOptionstoReturn += $line
+        }
+    }
+
+    return $OSOptionstoReturn | Select-Object 'Kickstart_Version','Kickstart_VersionFriendlyName' 
+
+}
+
 function Get-ListofInstallFiles {
     param (
         $ListofInstallFilesCSV
@@ -4818,7 +4840,7 @@ Calculating space requirements. This may take some time if you have selected a l
     $null = Confirm-UIFields
 })
 
-$AvailableKickstarts =  Get-ListofInstallFiles -ListofInstallFilesCSV ($Script:InputFolder+'ListofInstallFiles.csv') | Where-Object 'Kickstart_VersionFriendlyName' -ne "" | Select-Object 'Kickstart_Version','Kickstart_VersionFriendlyName' -unique 
+$AvailableKickstarts =  Get-AvailableOSestoInstall -OSVersionstoInstallCSV ($InputFolder+'OSVersionstoInstall.csv')
 
 foreach ($Kickstart in $AvailableKickstarts) {
     $WPF_UI_KickstartVersion_Dropdown.AddChild(($Kickstart.Kickstart_VersionFriendlyName).tostring())
