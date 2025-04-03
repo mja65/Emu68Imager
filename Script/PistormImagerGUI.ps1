@@ -5546,6 +5546,26 @@ if ($Script:SetDiskupOnly -eq 'FALSE'){
                 exit
             }
             Expand-AmigaZFiles  -SevenzipPathtouse $7zipPath -WorkingFoldertouse $TempFolder -LocationofZFiles $DestinationPathtoUse
+            if ($InstallFileLine.NewFileName -ne ""){
+                $NameofFiletoChange = $InstallFileLine.AmigaFiletoInstall.split("/")[-1]
+                $LocationtoInstall=(($InstallFileLine.LocationtoInstall -replace '/','\')+'\')
+                # Need to remove the .z from the name. While all files should have this already, adding a check for it
+                if ($NameofFiletoChange.Substring($NameofFiletoChange.Length - 2) -eq '.z'){
+                    $NameofFiletoChange=$NameofFiletoChange.Substring(0,($NameofFiletoChange.Length - 2))
+                }
+                if (Test-Path ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$InstallFileLine.NewFileName)){
+                    Remove-Item ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$InstallFileLine.NewFileName)
+                }
+                $null = rename-Item -Path ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$NameofFiletoChange) -NewName $InstallFileLine.NewFileName       
+            }
+            if ($InstallFileLine.ModifyScript -eq'Remove'){
+                $FullPath = $AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$InstallFileLine.NewFileName
+                $filename = Split-Path $FullPath -leaf
+                Write-InformationMessage -Message  ('Modifying '+$FileName+' for: '+$InstallFileLine.ScriptNameofChange)
+                $ScripttoEdit = Import-TextFileforAmiga -SystemType 'Amiga' -ImportFile ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$FileName)
+                $ScripttoEdit = Edit-AmigaScripts -ScripttoEdit $ScripttoEdit -Action 'remove' -name $InstallFileLine.ScriptNameofChange -Startpoint $InstallFileLine.ScriptInjectionStartPoint -Endpoint $InstallFileLine.ScriptInjectionEndPoint                    
+                Export-TextFileforAmiga -ExportFile ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$FileName) -DatatoExport $ScripttoEdit -AddLineFeeds 'TRUE'
+            }   
         }    
         elseif (($InstallFileLine.NewFileName -ne "")  -or ($InstallFileLine.ModifyScript -ne 'FALSE') -or ($InstallFileLine.ModifyInfoFileTooltype -ne 'FALSE')){
             if ($InstallFileLine.LocationtoInstall -ne '`*'){
