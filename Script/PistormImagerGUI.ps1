@@ -437,14 +437,14 @@ public static extern bool SetForegroundWindow(IntPtr hWnd);
 
 if ($env:TERM_PROGRAM){
     Write-Host "Run from Visual Studio Code!"
-    $RunMode=0
+    $RunMode = 0
  } 
  elseif ($psISE){
     Write-Host "Run from Powershell ISE!"
-    $RunMode=0
+    $RunMode = 0
  }
  else{
-    $RunMode=1
+    $RunMode = 1
  } 
 
 if ($RunMode -eq 0){
