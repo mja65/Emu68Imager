@@ -69,6 +69,7 @@ Script:DiskFriendlyName = [$Script:DiskFriendlyName]
 Script:ScreenModetoUse = [$Script:ScreenModetoUse]
 Script:ScreenModetoUseFriendlyName = [$Script:ScreenModetoUseFriendlyName]
 Script:KickstartVersiontoUse = [$Script:KickstartVersiontoUse]
+Script:OSInstallMediaType = [$Script:OSInstallMediaType]
 Script:SizeofFAT32 = [$Script:SizeofFAT32]
 Script:SizeofImage = [$Script:SizeofImage]
 Script:SizeofDisk = [$Script:SizeofDisk]
@@ -483,6 +484,7 @@ $Script:ScreenModetoUse = $null
 $Script:ScreenModetoUseFriendlyName = $null
 $Script:KickstartVersiontoUse = $null
 $Script:KickstartVersiontoUseFriendlyName = $null 
+$Script:OSInstallMediaType = $null
 $Script:SSID = $null
 $Script:WifiPassword = $null
 $Script:SizeofFAT32 = $null
@@ -1254,7 +1256,7 @@ function Confirm-UIFields {
         $NumberofErrors += 1
     }
     if ($Script:ADFPath -eq  $Script:UserLocation_ADFs){
-        $WPF_UI_ADFPath_Label.Text = 'Using default ADF folder'
+        $WPF_UI_ADFPath_Label.Text = 'Using default Install Media folder'
         $WPF_UI_ADFPath_Button.Foreground = 'Black'
         $WPF_UI_ADFPath_Button.Background = '#FFDDDDDD'       
         $WPF_UI_ADFpath_Button_Check.Background = '#FFDDDDDD'
@@ -1269,7 +1271,7 @@ function Confirm-UIFields {
         $WPF_UI_ADFpath_Button_Check.Background = '#FFDDDDDD'
         $WPF_UI_ADFpath_Button_Check.Foreground = 'Black'
         if ($Script:SetDiskupOnly -ne 'TRUE'){
-            $ErrorMessage += 'All the required ADFs have not been located'+"`n"
+            $ErrorMessage += 'All the required Install Media (e.g. ADFs, CDs) have not been located'+"`n"
             $NumberofErrors += 1
         }
     }
@@ -1468,6 +1470,7 @@ $SettingstoRead = (
 'ScreenModetoUseFriendlyName',
 'KickstartVersiontoUse',
 'KickstartVersiontoUseFriendlyName',
+'OSInstallMediaType',
 'SSID',
 'WifiPassword',
 'SizeofFAT32',
@@ -1515,6 +1518,7 @@ $SettingstoRead = (
     $Script:ScreenModetoUseFriendlyName = $null
     $Script:KickstartVersiontoUse = $null 
     $Script:KickstartVersiontoUseFriendlyName = $null
+    $Script:OSInstallMediaType = $null
     $Script:SSID = $null
     $Script:WifiPassword = $null 
     $Script:SizeofFAT32 = $null
@@ -1723,6 +1727,7 @@ function Write-SettingsFile {
     ('ScreenModetoUseFriendlyName;'+$Script:ScreenModetoUseFriendlyName) | Out-File $SettingsFile -Append
     ('KickstartVersiontoUse;'+$Script:KickstartVersiontoUse) | Out-File $SettingsFile -Append
     ('KickstartVersiontoUseFriendlyName;'+$Script:KickstartVersiontoUseFriendlyName) | Out-File $SettingsFile -Append
+    ('OSInstallMediaType;'+$Script:OSInstallMediaType) | Out-File $SettingsFile -Append
     ('SSID;'+$Script:SSID) | Out-File $SettingsFile -Append
     ('WifiPassword;'+$Script:WifiPassword) | Out-File $SettingsFile -Append
     ('SizeofFAT32;'+$Script:SizeofFAT32) | Out-File $SettingsFile -Append
@@ -2788,24 +2793,24 @@ function Compare-ADFHashes {
 
     $Msg_Header ='Finding ADFs'    
     $Msg_Body = @"
-Searching folder '$Script:ADFPath' for valid ADFs. 
+Searching folder '$Script:ADFPath' for valid Install Files. 
 
 "@
     $Msg_Header_ExceedLimit ='Exceeded file limits!'   
     $Msg_Body_ExceedLimit = @"
 Search is limited to a maximum of 500 files! The current path (with no sub-folders) will be matched.
 
-If this does not find your ADFs either select a different path 
-with less files or move the ADFs into the default 
+If this does not find your Install Files either select a different path 
+with less files or move the files into the default 
 'UserFiles\ADFs\' folder in your install path for the tool
 and select this path to scan. 
 
 "@
     $null = [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,0)
 
-  #  $PathtoADFFiles = 'E:\Emulators\Amiga Files\Shared\adf\commodore-amiga-operating-systems-workbench\ESCOM\'
+  #  $PathtoADFFiles = 'E:\Emulators\Amiga Files\3.9\'
   #  $PathtoADFHashes = 'E:\Emu68Imager\InputFiles\ADFHashes.csv'
-  #  $KickstartVersion='3.1'
+  #  $KickstartVersion = '3.9'
   #  $PathtoListofInstallFiles = 'E:\Emu68Imager\InputFiles\ListofInstallFiles.csv'
 
     $ListofADFFilestoCheck = Get-ChildItem $PathtoADFFiles -force -Recurse
@@ -2813,8 +2818,15 @@ and select this path to scan.
         $null = [System.Windows.MessageBox]::Show($Msg_Body_ExceedLimit,$Msg_Header_ExceedLimit,0,48)
         $ListofADFFilestoCheck = $ListofADFFilestoCheck | Where-Object {$_.DirectoryName -eq $PathtoADFFiles.TrimEnd('\')} 
     } 
-    $ListofADFFilestoCheck = $ListofADFFilestoCheck | Where-Object { $_.PSIsContainer -eq $false -and $_.Name -match '.adf' -and $_.Length -eq 901120 } | Get-FileHash  -Algorithm MD5
-
+    
+    if ($Script:OSInstallMediaType -eq 'CD'){
+        $ListofADFFilestoCheck = $ListofADFFilestoCheck | Where-Object { $_.PSIsContainer -eq $false -and ($_.Name -match '.iso' -or $_.Name -match '.lha')} | Get-FileHash  -Algorithm MD5
+    
+    }
+    else {
+        $ListofADFFilestoCheck = $ListofADFFilestoCheck | Where-Object { $_.PSIsContainer -eq $false -and $_.Name -match '.adf' -and $_.Length -eq 901120 } | Get-FileHash  -Algorithm MD5
+    }
+    
     $ADFHashes = Import-Csv $PathtoADFHashes -Delimiter ';' | Sort-Object -Property 'Sequence'
    
     $RequiredADFsforInstall = Get-ListofInstallFiles $PathtoListofInstallFiles |  Where-Object {$_.Kickstart_Version -eq $KickstartVersion} | Select-Object ADF_Name, FriendlyName -Unique # Unique ADFs Required
@@ -3080,10 +3092,10 @@ function Write-GUIMissingADFs {
     
     $Msg_Header ='Error - ADFs Missing!'    
     $Msg_Body = @"  
-The following ADFs are missing:  
+The following Install Files are missing:  
 
 $MissingADFstoReport 
-Select a location with valid ADF files.    
+Select a location with valid Install files.    
 "@     
     $null = [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,48) 
 
@@ -3294,13 +3306,25 @@ function Update-ListofInstallFiles {
                 $Script:GlowIconsADF = $MatchedADF.Path
             }
             if ($MatchedADF.ADF_Name -match "Storage"){
-                $Script:StorageADF=$MatchedADF.Path
+                $Script:StorageADF = $MatchedADF.Path
             }
             if ($MatchedADF.ADF_Name -match "Install"){
-                $Script:InstallADF=$MatchedADF.Path
+                $Script:InstallADF = $MatchedADF.Path
             }
         }          
-    }             
+    } 
+
+    # Populate variables for CD based installs. Assumes one CD is main installer
+
+    if ($Script:OSInstallMediaType -eq 'CD'){
+        foreach ($InstallFileLine in $Script:ListofInstallFiles) {
+            if ($InstallFileLine.InstallMedia -eq 'CD'){
+                $Script:StorageADF = $InstallFileLine.Path
+                $Script:InstallADF = $InstallFileLine.Path
+            }
+        }
+    }
+
 }
 
 function Remove-WorkingFolderData {
@@ -3429,19 +3453,19 @@ function Get-ListofInstallFiles {
         $ListofInstallFilesCSV
         )       
 
-        #$ListofInstallFilesCSV = ($InputFolder+'ListofInstallFiles.csv')
+        # $ListofInstallFilesCSV = 'E:\Emu68Imager\InputFiles\ListofInstallFiles.csv'
 
         $ListofInstallFilesImported = Import-Csv $ListofInstallFilesCSV -delimiter ';'
 
-        $SemanticVersion = [System.Version]$Script:Version
-
         $RevisedListofInstallFiles = [System.Collections.Generic.List[PSCustomObject]]::New()
         foreach ($Line in $ListofInstallFilesImported ) {
-            $PackageMinimumVersion = [System.Version]$line.MinimumInstallerVersion
-            if (($SemanticVersion.Major -ge $PackageMinimumVersion.Major) -and `
-            ($SemanticVersion.Minor -ge $PackageMinimumVersion.Minor) -and `
-            ($SemanticVersion.Build -ge $PackageMinimumVersion.Build) -and `
-            ($SemanticVersion.Revision -ge $PackageMinimumVersion.Revision)){
+            if ($line.InstallerVersionLessThan -eq ''){
+                $MaximumVersion = [System.Version]'9.9'
+            }
+            else {
+                $MaximumVersion = [System.Version]$line.InstallerVersionLessThan
+            }
+            if (([System.Version]$Script:Version -ge [System.Version]$line.MinimumInstallerVersion) -and ([System.Version]$Script:Version -lt $MaximumVersion)) {
                 $CountofVariables = ([regex]::Matches($line.Kickstart_Version, "," )).count
                 if ($CountofVariables -gt 0){
                     $Counter = 0
@@ -3450,6 +3474,9 @@ function Get-ListofInstallFiles {
                             Kickstart_Version = ($line.Kickstart_Version -split ',')[$Counter] 
                             Kickstart_VersionFriendlyName = ($line.Kickstart_VersionFriendlyName -split ',')[$Counter] 
                             InstallSequence = $line.InstallSequence
+                            InstallMedia = $line.InstallMedia
+                            ArchiveinArchiveName = $line.ArchiveinArchiveName
+                            ArchiveinArchivePassword = $line.ArchiveinArchivePassword
                             ADF_Name = $line.ADF_Name
                             FriendlyName = $line.FriendlyName
                             AmigaFiletoInstall = $line.AmigaFiletoInstall
@@ -3463,6 +3490,7 @@ function Get-ListofInstallFiles {
                             ScriptNameofChange = $line.ScriptNameofChange
                             ScriptInjectionStartPoint = $line.ScriptInjectionStartPoint
                             ScriptInjectionEndPoint = $line.ScriptInjectionEndPoint
+                            ModifyInfoFileType = $line.ModifyInfoFileType
                             ModifyInfoFileTooltype = $line.ModifyInfoFileTooltype
                         }
                         $counter ++
@@ -3475,6 +3503,9 @@ function Get-ListofInstallFiles {
                         Kickstart_Version = $line.Kickstart_Version  
                         Kickstart_VersionFriendlyName = $line.Kickstart_VersionFriendlyName 
                         InstallSequence = $line.InstallSequence
+                        InstallMedia = $line.InstallMedia
+                        ArchiveinArchiveName = $line.ArchiveinArchiveName
+                        ArchiveinArchivePassword = $line.ArchiveinArchivePassword
                         ADF_Name = $line.ADF_Name
                         FriendlyName = $line.FriendlyName
                         AmigaFiletoInstall = $line.AmigaFiletoInstall
@@ -3488,12 +3519,13 @@ function Get-ListofInstallFiles {
                         ScriptNameofChange = $line.ScriptNameofChange
                         ScriptInjectionStartPoint = $line.ScriptInjectionStartPoint
                         ScriptInjectionEndPoint = $line.ScriptInjectionEndPoint
+                        ModifyInfoFileType = $line.ModifyInfoFileType
                         ModifyInfoFileTooltype = $line.ModifyInfoFileTooltype
                     }
                 }
             }
         }
-        return $RevisedListofInstallFiles
+        return ($RevisedListofInstallFiles | Sort-Object -Property 'InstallSequence','FriendlyName','AmigaFiletoInstall')
 }
 
 function Get-ListofPackagestoInstall {
@@ -3501,19 +3533,19 @@ function Get-ListofPackagestoInstall {
         $ListofPackagestoInstallCSV
         )       
 
-        #$ListofPackagestoInstallCSV = ($InputFolder+'ListofPackagestoInstall.csv') 
+        # $ListofPackagestoInstallCSV = 'E:\Emu68Imager\InputFiles\ListofPackagestoInstall.csv' 
 
         $ListofPackagestoInstallImported = Import-Csv $ListofPackagestoInstallCSV -delimiter ';'
-        
-        $SemanticVersion = [System.Version]$Script:Version
-    
+           
         $RevisedListofPackagestoInstall = [System.Collections.Generic.List[PSCustomObject]]::New()
         foreach ($Line in $ListofPackagestoInstallImported) {
-            $PackageMinimumVersion = [System.Version]$line.MinimumInstallerVersion
-            if (($SemanticVersion.Major -ge $PackageMinimumVersion.Major) -and `
-            ($SemanticVersion.Minor -ge $PackageMinimumVersion.Minor) -and `
-            ($SemanticVersion.Build -ge $PackageMinimumVersion.Build) -and `
-            ($SemanticVersion.Revision -ge $PackageMinimumVersion.Revision)){
+            if ($line.InstallerVersionLessThan -eq ''){
+                $MaximumVersion = [System.Version]'9.9'
+            }
+            else {
+                $MaximumVersion = [System.Version]$line.InstallerVersionLessThan
+            }
+            if (([System.Version]$Script:Version -ge [System.Version]$line.MinimumInstallerVersion) -and ([System.Version]$Script:Version -lt $MaximumVersion)) {
                 $CountofVariables = ([regex]::Matches($line.KickstartVersion, "," )).count
                 if ($CountofVariables -gt 0){
                     $Counter = 0
@@ -3541,6 +3573,7 @@ function Get-ListofPackagestoInstall {
                             ModifyStartupSequence = $line.ModifyStartupSequence 
                             StartupSequenceInjectionStartPoint = $line.StartupSequenceInjectionStartPoint
                             StartupSequenceInjectionEndPoint  =$line.StartupSequenceInjectionEndPoint
+                            ModifyInfoFileType = $line.ModifyInfoFileType
                             ModifyInfoFileTooltype = $line.ModifyInfoFileTooltype    
                             PiSpecificStorageDriver = $line.PiSpecificStorageDriver 
                         }
@@ -3573,6 +3606,7 @@ function Get-ListofPackagestoInstall {
                         ModifyStartupSequence = $line.ModifyStartupSequence 
                         StartupSequenceInjectionStartPoint = $line.StartupSequenceInjectionStartPoint
                         StartupSequenceInjectionEndPoint  =$line.StartupSequenceInjectionEndPoint
+                        ModifyInfoFileType = $line.ModifyInfoFileType
                         ModifyInfoFileTooltype = $line.ModifyInfoFileTooltype    
                     }
                 }
@@ -3915,16 +3949,16 @@ $inputXML_UserInterface = @"
                 <TextBox x:Name="KickstartVersion_Label" HorizontalAlignment="Left" Margin="10,10,0,0" TextWrapping="Wrap" Text="Select OS Version" VerticalAlignment="Top" Width="200" BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False" HorizontalContentAlignment="Center" FontWeight="Bold" FontSize="14"/>
                     <ComboBox x:Name="KickstartVersion_DropDown" ToolTip="Select the Kickstart version you wish to use (e.g. 3.1 or 3.2)" HorizontalAlignment="Left" Margin="10,32,0,0" VerticalAlignment="Top" Width="245"/>
 
-                    <Button x:Name="ADFpath_Button" Content="Click to set custom ADF folder" HorizontalAlignment="Left" Margin="10,94,0,0" VerticalAlignment="Top"  Width="200" Height="30"/>
-                    <Button x:Name="ADFpath_Button_Check" ToolTip="Check availability of ADF files" Content="Check" HorizontalAlignment="Left" Margin="215,94,0,0" VerticalAlignment="Top"  Width="40" Height="30" FontSize="10"/>
-                    <TextBox x:Name="ADFPath_Label" HorizontalAlignment="Left" Margin="263,100,0,0" TextWrapping="Wrap" Text="Using default ADF folder" VerticalAlignment="Top" Width="260" Height="20"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+                    <Button x:Name="ADFpath_Button" Content="Click to set custom Install Media folder" ToolTip="Set custom location for Install files (e.g. ADFs, CDs)" HorizontalAlignment="Left" Margin="10,94,0,0" VerticalAlignment="Top"  Width="220" Height="30"/>
+                    <Button x:Name="ADFpath_Button_Check" ToolTip="Check availability of Install files (e.g. ADFs, CDs) " Content="Check" HorizontalAlignment="Left" Margin="240,94,0,0" VerticalAlignment="Top"  Width="40" Height="30" FontSize="10"/>
+                    <TextBox x:Name="ADFPath_Label" HorizontalAlignment="Left" Margin="290,100,0,0" TextWrapping="Wrap" Text="Using default Install Media folder" VerticalAlignment="Top" Width="190" Height="20"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
 
-                    <Button x:Name="Rompath_Button" Content="Click to set custom Kickstart folder" HorizontalAlignment="Left" Margin="10,59,0,0" VerticalAlignment="Top"  Width="200" Height="30"/>
-                    <Button x:Name="Rompath_Button_Check" ToolTip="Check availability of Kickstart file" Content="Check" HorizontalAlignment="Left" Margin="215,59,0,0" VerticalAlignment="Top"  Width="40" Height="30" FontSize="10"/>
-                    <TextBox x:Name="ROMPath_Label" HorizontalAlignment="Left" Margin="263,65,0,0" TextWrapping="Wrap" Text="Using default Kickstart folder" VerticalAlignment="Top" Width="260" Height="20"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+                    <Button x:Name="Rompath_Button" Content="Click to set custom Kickstart folder" HorizontalAlignment="Left" Margin="10,59,0,0" VerticalAlignment="Top"  Width="220" Height="30"/>
+                    <Button x:Name="Rompath_Button_Check" ToolTip="Check availability of Kickstart file" Content="Check" HorizontalAlignment="Left" Margin="240,59,0,0" VerticalAlignment="Top"  Width="40" Height="30" FontSize="10"/>
+                    <TextBox x:Name="ROMPath_Label" HorizontalAlignment="Left" Margin="290,65,0,0" TextWrapping="Wrap" Text="Using default Kickstart folder" VerticalAlignment="Top" Width="190" Height="20"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
 
-                    <Button x:Name="MigratedFiles_Button" Content="Click to set Transfer folder" HorizontalAlignment="Left" Margin="10,129,0,0" VerticalAlignment="Top"  Width="200" Height="30"/>
-                    <TextBox x:Name="MigratedPath_Label" HorizontalAlignment="Left" Margin="263,139,0,0" TextWrapping="Wrap" Text="No transfer path selected" VerticalAlignment="Top" Width="260" Height="20"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
+                    <Button x:Name="MigratedFiles_Button" Content="Click to set Transfer folder" HorizontalAlignment="Left" Margin="10,129,0,0" VerticalAlignment="Top"  Width="220" Height="30"/>
+                    <TextBox x:Name="MigratedPath_Label" HorizontalAlignment="Left" Margin="290,139,0,0" TextWrapping="Wrap" Text="No transfer path selected" VerticalAlignment="Top" Width="190" Height="20"  BorderBrush="Transparent" Background="Transparent" IsReadOnly="True" IsUndoEnabled="False" IsTabStop="False" IsHitTestVisible="False" Focusable="False"/>
 
                 </Grid>
             </GroupBox>
@@ -4970,17 +5004,17 @@ $WPF_UI_ADFpath_Button_Check.Add_Click({
         Update-ListofInstallFiles
 
         if (($Script:AvailableADFs | Select-Object 'IsMatched' -unique).IsMatched -eq 'FALSE'){
-            $Title = 'Missing ADFs'
-            $Text = 'You have missing ADFs. You need to correct this before you can run the tool. List of ADFs located and missing is below'
+            $Title = 'Missing Install Files'
+            $Text = 'You have missing Install Files. You need to correct this before you can run the tool. List of Install Files located as well as missing is below'
         }
         else {                         
-            $Title = 'ADFs to be used'
-            $Text = 'The following ADFs will be used:'
+            $Title = 'Install Media to be used'
+            $Text = 'The following Install Files will be used:'
         }
         
-        $DatatoPopulate = $AvailableADFs  | Select-Object @{Name='Status';Expression='IsMatched'},@{Name='Source';Expression='Source'},@{Name='ADF Name';Expression='FriendlyName'},@{Name='Path';Expression='Path'},@{Name='MD5 Hash';Expression='Hash'} | Sort-Object -Property 'Status'
+        $DatatoPopulate = $AvailableADFs  | Select-Object @{Name='Status';Expression='IsMatched'},@{Name='Source';Expression='Source'},@{Name='Install File';Expression='FriendlyName'},@{Name='Path';Expression='Path'},@{Name='MD5 Hash';Expression='Hash'} | Sort-Object -Property 'Status'
 
-        $FieldsSorted = ('Status','Source','ADF Name','Path','MD5 Hash')
+        $FieldsSorted = ('Status','Source','Install File','Path','MD5 Hash')
 
         foreach ($ADF in $DatatoPopulate ){
             if ($ADF.Status -eq 'TRUE'){
@@ -5046,6 +5080,7 @@ $WPF_UI_KickstartVersion_Dropdown.Add_SelectionChanged({
             if ($Kickstart.Kickstart_Version -ne $Script:KickstartVersiontoUse){
                 $Script:KickstartVersiontoUse  = $Kickstart.Kickstart_Version 
                 $Script:KickstartVersiontoUseFriendlyName = $WPF_UI_KickstartVersion_Dropdown.SelectedItem
+                $Script:OSInstallMediaType = $Kickstart.InstallMedia
                 $Script:AvailableADFs = $null
                 $Script:FoundKickstarttoUse = $null
             } 
@@ -5634,7 +5669,13 @@ if ($Script:SetDiskupOnly -eq 'FALSE'){
         }
         $null = Rename-Item ($TempFolder+'Monitors.info') ($TempFolder+'def_drawer.info')
     }
-    elseif(($Script:KickstartVersiontoUse -ge 3.2) -and ($GlowIcons -eq 'TRUE')){
+    elseif ($Script:KickstartVersiontoUse -eq 3.9){
+        if (-not (Copy-CDFiles -InputFile $StorageADF -OutputDirectory ($TempFolder.TrimEnd('\')) -FiletoExtract 'OS-Version3.9\Workbench3.9\Prefs\ENV-Archive\Sys\def_drawer.info' -SevenzipPathtouse $7zipPath -TempFoldertouse $TempFolder)){
+            Write-ErrorMessage -Message 'Error extracting file(s) from CD! Quitting'
+            exit        
+        }        
+    }
+    elseif((([System.Version]$Script:KickstartVersiontoUse).Major -eq '3' -and ([System.Version]$Script:KickstartVersiontoUse).Minor -eq '2') -and ($GlowIcons -eq 'TRUE')){
         if (-not (Start-HSTImager -Command 'fs extract' -SourcePath ($GlowIconsADF+'\Prefs\Env-Archive\Sys\def_drawer.info') -DestinationPath ($TempFolder.TrimEnd('\')) -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
             exit
         }
@@ -5680,16 +5721,30 @@ if ($Script:SetDiskupOnly -eq 'FALSE'){
     
     if ($Script:KickstartVersiontoUse -eq 3.1){
         $SourcePath = ($InstallADF+'\Update\disk.info') 
-    }
-    
-    elseif ($Script:KickstartVersiontoUse -ge 3.2){
+    } 
+    elseif (([System.Version]$Script:KickstartVersiontoUse).Major -eq '3' -and ([System.Version]$Script:KickstartVersiontoUse).Minor -eq '2'){
         $SourcePath = ($GlowIconsADF+'\Prefs\Env-Archive\Sys\def_harddisk.info') 
     }   
 
-    Write-InformationMessage -Message ('Copying Icons to Work Partition. Source is: '+$SourcePath+' Destination is: '+$DestinationPathtoUse)
-    $DestinationPathtoUse = ($AmigaDrivetoCopy+$VolumeName_Other)
-    if (-not (Start-HSTImager -Command 'fs extract' -SourcePath $SourcePath -DestinationPath $DestinationPathtoUse -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
-                exit
+    if ($Script:KickstartVersiontoUse -eq 3.9){
+        $DestinationPathtoUse = ($AmigaDrivetoCopy+$VolumeName_Other+'\')
+        Write-InformationMessage -Message ('Copying Icons to Work Partition. Source is: '+$StorageADF+' Destination is: '+$DestinationPathtoUse)
+        if (-not (Copy-CDFiles -InputFile $StorageADF -OutputDirectory $DestinationPathtoUse -FiletoExtract 'OS-Version3.9\Icons\HD.info' -NewFileName 'disk.info' -SevenzipPathtouse $7zipPath -TempFoldertouse $TempFolder)){
+            Write-ErrorMessage -Message 'Error extracting file(s) from CD! Quitting'
+            exit        
+        }
+        Write-InformationMessage -Message 'Changing icon type to Disk'
+        if (-not (Write-AmigaInfoType -HSTAmigaPathtouse  $HSTAmigaPath -IconPath "$DestinationPathtoUse\disk.info" -TypetoSet 'Disk' -TempFoldertouse $TempFolder)){
+            Write-ErrorMessage -Message 'Error setting icon type to Disk! Quitting'
+            exit      
+        }
+    }
+    else{
+        Write-InformationMessage -Message ('Copying Icons to Work Partition. Source is: '+$SourcePath+' Destination is: '+$DestinationPathtoUse)
+        $DestinationPathtoUse = ($AmigaDrivetoCopy+$VolumeName_Other)
+        if (-not (Start-HSTImager -Command 'fs extract' -SourcePath $SourcePath -DestinationPath $DestinationPathtoUse -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+                    exit
+        }
     }
 
     if (([System.Version]$Script:KickstartVersiontoUse).Major -eq '3' -and ([System.Version]$Script:KickstartVersiontoUse).Minor -eq '2'){
@@ -5721,108 +5776,152 @@ if ($Script:SetDiskupOnly -eq 'FALSE'){
     
     Write-StartTaskMessage -Message 'Processing and Installing ADFs'
     
-    $TotalItems=$ListofInstallFiles.Count
+    $TotalItems = $ListofInstallFiles.Count
     
-    $ItemCounter=1
+    $ItemCounter = 1
     
     Foreach($InstallFileLine in $ListofInstallFiles){
-        Write-StartSubTaskMessage -SubtaskNumber $ItemCounter -TotalSubtasks $TotalItems -Message ('Processing ADF:'+$InstallFileLine.FriendlyName+' Files: '+$InstallFileLine.AmigaFiletoInstall)
-        $SourcePathtoUse = ($InstallFileLine.Path+'\'+($InstallFileLine.AmigaFiletoInstall -replace '/','\'))
-        if ($InstallFileLine.Uncompress -eq "TRUE"){
-            Write-InformationMessage -Message 'Extracting files from ADFs containing .Z files'
-            if ($InstallFileLine.LocationtoInstall.Length -eq 0){        
-                $DestinationPathtoUse = ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName)
-            }
-            else{  
-                $DestinationPathtoUse = ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+($InstallFileLine.LocationtoInstall -replace '/','\')) 
-            }
-            if (-not (Start-HSTImager -Command 'fs extract' -SourcePath $SourcePathtoUse -DestinationPath $DestinationPathtoUse -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+        Write-StartSubTaskMessage -SubtaskNumber $ItemCounter -TotalSubtasks $TotalItems -Message ('Processing Install Media:'+$InstallFileLine.FriendlyName+' Files: '+$InstallFileLine.AmigaFiletoInstall)
+        if ($InstallFileLine.InstallMedia -eq 'CD'){
+            $DestinationPathtoUse = "$(("$AmigaDrivetoCopy$($InstallFileLine.DrivetoInstall_VolumeName)\$($InstallFileLine.LocationtoInstall)").TrimEnd('\'))\"
+            Write-InformationMessage -Message 'Extracting file(s) from CD to .hdf file'
+            if (-not (Copy-CDFiles -InputFile $InstallFileLine.Path -OutputDirectory $DestinationPathtoUse -FiletoExtract $InstallFileLine.AmigaFiletoInstall.Replace('/','\') -NewFileName $InstallFileLine.NewFileName -SevenzipPathtouse $7zipPath -TempFoldertouse $TempFolder)){
+                Write-ErrorMessage -Message 'Error extracting file(s) from CD! Quitting'
                 exit
-            }
-            Expand-AmigaZFiles  -SevenzipPathtouse $7zipPath -WorkingFoldertouse $TempFolder -LocationofZFiles $DestinationPathtoUse
-            if ($InstallFileLine.NewFileName -ne ""){
-                $NameofFiletoChange = $InstallFileLine.AmigaFiletoInstall.split("/")[-1]
-                $LocationtoInstall=(($InstallFileLine.LocationtoInstall -replace '/','\')+'\')
-                # Need to remove the .z from the name. While all files should have this already, adding a check for it
-                if ($NameofFiletoChange.Substring($NameofFiletoChange.Length - 2) -eq '.z'){
-                    $NameofFiletoChange=$NameofFiletoChange.Substring(0,($NameofFiletoChange.Length - 2))
-                }
-                if (Test-Path ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$InstallFileLine.NewFileName)){
-                    Remove-Item ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$InstallFileLine.NewFileName)
-                }
-                $null = rename-Item -Path ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$NameofFiletoChange) -NewName $InstallFileLine.NewFileName       
-            }
-            if ($InstallFileLine.ModifyScript -eq'Remove'){
-                $FullPath = $AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$InstallFileLine.NewFileName
-                $filename = Split-Path $FullPath -leaf
-                Write-InformationMessage -Message  ('Modifying '+$FileName+' for: '+$InstallFileLine.ScriptNameofChange)
-                $ScripttoEdit = Import-TextFileforAmiga -SystemType 'Amiga' -ImportFile ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$FileName)
-                $ScripttoEdit = Edit-AmigaScripts -ScripttoEdit $ScripttoEdit -Action 'remove' -name $InstallFileLine.ScriptNameofChange -Startpoint $InstallFileLine.ScriptInjectionStartPoint -Endpoint $InstallFileLine.ScriptInjectionEndPoint                    
-                Export-TextFileforAmiga -ExportFile ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$FileName) -DatatoExport $ScripttoEdit -AddLineFeeds 'TRUE'
-            }   
-        }    
-        elseif (($InstallFileLine.NewFileName -ne "")  -or ($InstallFileLine.ModifyScript -ne 'FALSE') -or ($InstallFileLine.ModifyInfoFileTooltype -ne 'FALSE')){
-            if ($InstallFileLine.LocationtoInstall -ne '`*'){
-                $LocationtoInstall=(($InstallFileLine.LocationtoInstall -replace '/','\')+'\')
-            }
-            else{
-                $LocationtoInstall=$null
-            }
-            if ($InstallFileLine.NewFileName -ne ""){
-                $FullPath = $AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$InstallFileLine.NewFileName
-            }
-            else{
-                $FullPath = $AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+(Split-Path ($InstallFileLine.AmigaFiletoInstall -replace '/','\') -Leaf) 
-            }
-            $filename = Split-Path $FullPath -leaf
-            Write-InformationMessage -Message 'Extracting files from ADFs where changes needed'
-            if ($InstallFileLine.LocationtoInstall.Length -eq 0){
-                $DestinationPathtoUse = ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName)
-            }
-            else{        
-                $DestinationPathtoUse = ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+($InstallFileLine.LocationtoInstall -replace '/','\'))
-            }
-            if (-not (Start-HSTImager -Command 'fs extract' -SourcePath $SourcePathtoUse -DestinationPath $DestinationPathtoUse -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
-                exit
-            }
-            if ($InstallFileLine.NewFileName -ne ""){
-                $NameofFiletoChange=$InstallFileLine.AmigaFiletoInstall.split("/")[-1]  
-                if (Test-Path ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$InstallFileLine.NewFileName)){
-                    Remove-Item ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$InstallFileLine.NewFileName)
-                }
-                $null = rename-Item -Path ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$NameofFiletoChange) -NewName $InstallFileLine.NewFileName            
-            }
-            if ($InstallFileLine.ModifyInfoFileTooltype -eq 'Modify'){
-                if (-not (Read-AmigaTooltypes -IconPath ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$filename) -TooltypesPath ($TempFolder+$filename+'.txt') -HSTAmigaPathtouse $HSTAmigaPath -TempFoldertouse $TempFolder)){
-                    exit
-                }                 
-                $OldToolTypes = Get-Content($TempFolder+$filename+'.txt')
-                $TooltypestoModify = Import-Csv ($LocationofAmigaFiles+$LocationtoInstall+'\'+$filename+'.txt') -Delimiter ';'
-                Get-ModifiedToolTypes -OriginalToolTypes $OldToolTypes -ModifiedToolTypes $TooltypestoModify | Out-File ($TempFolder+$filename+'amendedtoimport.txt')
-                if (-not (Write-AmigaTooltypes -IconPath ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$filename) -ToolTypesPath ($TempFolder+$fileName+'amendedtoimport.txt') -TempFoldertouse $TempFolder -HSTAmigaPathtouse $HSTAmigaPath)){
-                    exit
-                }                 
-            }        
-            if ($InstallFileLine.ModifyScript -eq'Remove'){
-                Write-InformationMessage -Message  ('Modifying '+$FileName+' for: '+$InstallFileLine.ScriptNameofChange)
-                $ScripttoEdit = Import-TextFileforAmiga -SystemType 'Amiga' -ImportFile ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$FileName)
-                $ScripttoEdit = Edit-AmigaScripts -ScripttoEdit $ScripttoEdit -Action 'remove' -name $InstallFileLine.ScriptNameofChange -Startpoint $InstallFileLine.ScriptInjectionStartPoint -Endpoint $InstallFileLine.ScriptInjectionEndPoint                    
-                Export-TextFileforAmiga -ExportFile ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$FileName) -DatatoExport $ScripttoEdit -AddLineFeeds 'TRUE'
-            }   
+            } 
         }
-        else {
-            Write-InformationMessage -Message 'Extracting files from ADFs to .hdf file'
-            if ($InstallFileLine.LocationtoInstall.Length -eq 0){
-               $DestinationPathtoUse = ($HDFImageLocation +$NameofImage+'\rdb\'+$DeviceName_System)
+        elseif ($InstallFileLine.InstallMedia -eq 'Archive'){
+            $DestinationPathtoUse = "$(("$AmigaDrivetoCopy$($InstallFileLine.DrivetoInstall_VolumeName)\$($InstallFileLine.LocationtoInstall)").TrimEnd('\'))\"
+            Write-InformationMessage -Message 'Extracting file(s) from Archive to .hdf file'
+            if (-not (Copy-CDFiles -InputFile $InstallFileLine.Path -OutputDirectory $DestinationPathtoUse -FiletoExtract $InstallFileLine.AmigaFiletoInstall.Replace('/','\') -NewFileName $InstallFileLine.NewFileName -SevenzipPathtouse $7zipPath -TempFoldertouse $TempFolder)){
+                Write-ErrorMessage -Message 'Error extracting file(s) from Archive! Quitting'
+                exit
+            } 
+        }
+        elseif ($InstallFileLine.InstallMedia -eq 'ArchiveinArchive'){
+            $DestinationPathtoUse = "$(("$AmigaDrivetoCopy$($InstallFileLine.DrivetoInstall_VolumeName)\$($InstallFileLine.LocationtoInstall)").TrimEnd('\'))\"
+            Write-InformationMessage -Message 'Extracting file(s) from Archive to .hdf file'
+            if (-not (Copy-ArchiveinArchiveFiles -InputFile $InstallFileLine.Path -ArchiveinArchiveName $InstallFileLine.ArchiveinArchiveName.Replace('/','\') -ArchiveinArchivePassword $InstallFileLine.ArchiveinArchivePassword -OutputDirectory $DestinationPathtoUse -FiletoExtract $InstallFileLine.AmigaFiletoInstall.Replace('/','\') -NewFileName $InstallFileLine.NewFileName -SevenzipPathtouse $7zipPath -TempFoldertouse $TempFolder)){
+                Write-ErrorMessage -Message 'Error extracting file(s) from Archive! Quitting'
+                exit
+            } 
+        }
+        elseif ($InstallFileLine.InstallMedia -eq 'Disk'){
+            $SourcePathtoUse = ($InstallFileLine.Path+'\'+($InstallFileLine.AmigaFiletoInstall -replace '/','\'))
+            if ($InstallFileLine.Uncompress -eq "TRUE"){
+                Write-InformationMessage -Message 'Extracting files from ADFs containing .Z files'
+                if ($InstallFileLine.LocationtoInstall.Length -eq 0){        
+                    $DestinationPathtoUse = ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName)
+                }
+                else{  
+                    $DestinationPathtoUse = ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+($InstallFileLine.LocationtoInstall -replace '/','\')) 
+                }
+                if (-not (Start-HSTImager -Command 'fs extract' -SourcePath $SourcePathtoUse -DestinationPath $DestinationPathtoUse -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+                    exit
+                }
+                Expand-AmigaZFiles  -SevenzipPathtouse $7zipPath -WorkingFoldertouse $TempFolder -LocationofZFiles $DestinationPathtoUse
+                if ($InstallFileLine.NewFileName -ne ""){
+                    $NameofFiletoChange = $InstallFileLine.AmigaFiletoInstall.split("/")[-1]
+                    $LocationtoInstall=(($InstallFileLine.LocationtoInstall -replace '/','\')+'\')
+                    # Need to remove the .z from the name. While all files should have this already, adding a check for it
+                    if ($NameofFiletoChange.Substring($NameofFiletoChange.Length - 2) -eq '.z'){
+                        $NameofFiletoChange=$NameofFiletoChange.Substring(0,($NameofFiletoChange.Length - 2))
+                    }
+                    if (Test-Path ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$InstallFileLine.NewFileName)){
+                        Remove-Item ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$InstallFileLine.NewFileName)
+                    }
+                    $null = rename-Item -Path ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$NameofFiletoChange) -NewName $InstallFileLine.NewFileName       
+                }
+                if ($InstallFileLine.ModifyScript -eq'Remove'){
+                    $FullPath = $AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$InstallFileLine.NewFileName
+                    $filename = Split-Path $FullPath -leaf
+                    Write-InformationMessage -Message  ('Modifying '+$FileName+' for: '+$InstallFileLine.ScriptNameofChange)
+                    $ScripttoEdit = Import-TextFileforAmiga -SystemType 'Amiga' -ImportFile ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$FileName)
+                    $ScripttoEdit = Edit-AmigaScripts -ScripttoEdit $ScripttoEdit -Action 'remove' -name $InstallFileLine.ScriptNameofChange -Startpoint $InstallFileLine.ScriptInjectionStartPoint -Endpoint $InstallFileLine.ScriptInjectionEndPoint                    
+                    Export-TextFileforAmiga -ExportFile ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$FileName) -DatatoExport $ScripttoEdit -AddLineFeeds 'TRUE'
+                }   
+            }    
+            elseif (($InstallFileLine.NewFileName -ne "")  -or ($InstallFileLine.ModifyScript -ne 'FALSE') -or ($InstallFileLine.ModifyInfoFileTooltype -ne 'FALSE')){
+                if ($InstallFileLine.LocationtoInstall -ne '`*'){
+                    $LocationtoInstall=(($InstallFileLine.LocationtoInstall -replace '/','\')+'\')
+                }
+                else{
+                    $LocationtoInstall=$null
+                }
+                if ($InstallFileLine.NewFileName -ne ""){
+                    $FullPath = $AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$InstallFileLine.NewFileName
+                }
+                else{
+                    $FullPath = $AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+(Split-Path ($InstallFileLine.AmigaFiletoInstall -replace '/','\') -Leaf) 
+                }
+                $filename = Split-Path $FullPath -leaf
+                Write-InformationMessage -Message 'Extracting files from ADFs where changes needed'
+                if ($InstallFileLine.LocationtoInstall.Length -eq 0){
+                    $DestinationPathtoUse = ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName)
+                }
+                else{        
+                    $DestinationPathtoUse = ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+($InstallFileLine.LocationtoInstall -replace '/','\'))
+                }
+                if (-not (Start-HSTImager -Command 'fs extract' -SourcePath $SourcePathtoUse -DestinationPath $DestinationPathtoUse -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+                    exit
+                }
+                if ($InstallFileLine.NewFileName -ne ""){
+                    $NameofFiletoChange=$InstallFileLine.AmigaFiletoInstall.split("/")[-1]  
+                    if (Test-Path ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$InstallFileLine.NewFileName)){
+                        Remove-Item ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$InstallFileLine.NewFileName)
+                    }
+                    $null = rename-Item -Path ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$NameofFiletoChange) -NewName $InstallFileLine.NewFileName            
+                }
+                if ($InstallFileLine.ModifyInfoFileTooltype -eq 'Modify'){
+                    if (-not (Read-AmigaTooltypes -IconPath ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$filename) -TooltypesPath ($TempFolder+$filename+'.txt') -HSTAmigaPathtouse $HSTAmigaPath -TempFoldertouse $TempFolder)){
+                        exit
+                    }                 
+                    $OldToolTypes = Get-Content($TempFolder+$filename+'.txt')
+                    $TooltypestoModify = Import-Csv ($LocationofAmigaFiles+$LocationtoInstall+'\'+$filename+'.txt') -Delimiter ';'
+                    Get-ModifiedToolTypes -OriginalToolTypes $OldToolTypes -ModifiedToolTypes $TooltypestoModify | Out-File ($TempFolder+$filename+'amendedtoimport.txt')
+                    if (-not (Write-AmigaTooltypes -IconPath ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$filename) -ToolTypesPath ($TempFolder+$fileName+'amendedtoimport.txt') -TempFoldertouse $TempFolder -HSTAmigaPathtouse $HSTAmigaPath)){
+                        exit
+                    }                 
+                }        
+                if ($InstallFileLine.ModifyScript -eq'Remove'){
+                    Write-InformationMessage -Message  ('Modifying '+$FileName+' for: '+$InstallFileLine.ScriptNameofChange)
+                    $ScripttoEdit = Import-TextFileforAmiga -SystemType 'Amiga' -ImportFile ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$FileName)
+                    $ScripttoEdit = Edit-AmigaScripts -ScripttoEdit $ScripttoEdit -Action 'remove' -name $InstallFileLine.ScriptNameofChange -Startpoint $InstallFileLine.ScriptInjectionStartPoint -Endpoint $InstallFileLine.ScriptInjectionEndPoint                    
+                    Export-TextFileforAmiga -ExportFile ($AmigaDrivetoCopy+$InstallFileLine.DrivetoInstall_VolumeName+'\'+$LocationtoInstall+$FileName) -DatatoExport $ScripttoEdit -AddLineFeeds 'TRUE'
+                }   
+            }
+            else {
+                Write-InformationMessage -Message 'Extracting files from ADFs to .hdf file'
+                if ($InstallFileLine.LocationtoInstall.Length -eq 0){
+                   $DestinationPathtoUse = ($HDFImageLocation +$NameofImage+'\rdb\'+$DeviceName_System)
+                }
+                else{
+                   $DestinationPathtoUse = ($HDFImageLocation +$NameofImage+'\rdb\'+$DeviceName_System+'\'+($InstallFileLine.LocationtoInstall -replace '/','\'))
+                }
+                if (-not (Start-HSTImager -Command 'fs extract' -SourcePath $SourcePathtoUse -DestinationPath $DestinationPathtoUse -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
+                    exit
+                }
+            }         
+        }
+        
+        if ($InstallFileLine.ModifyInfoFileType -ne 'FALSE'){
+            if ($InstallFileLine.NewFileName){
+                $PathtoInfoFile = "$DestinationPathtoUse$($InstallFileLine.NewFileName)" 
             }
             else{
-               $DestinationPathtoUse = ($HDFImageLocation +$NameofImage+'\rdb\'+$DeviceName_System+'\'+($InstallFileLine.LocationtoInstall -replace '/','\'))
+                $PathtoInfoFile = "$DestinationPathtoUse$(split-path -Path $InstallFileLine.AmigaFiletoInstall -Leaf)"
             }
-            if (-not (Start-HSTImager -Command 'fs extract' -SourcePath $SourcePathtoUse -DestinationPath $DestinationPathtoUse -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
-                exit
+            
+            Write-InformationMessage -Message "Changing icon type for file $PathtoInfoFile to `"$($InstallFileLine.ModifyInfoFileType)`""
+    
+            if (-not (Write-AmigaInfoType -HSTAmigaPathtouse  $HSTAmigaPath -IconPath $PathtoInfoFile -TypetoSet $InstallFileLine.ModifyInfoFileType -TempFoldertouse $TempFolder)){
+                Write-ErrorMessage -Message "Error setting icon type to $($InstallFileLine.ModifyInfoFileType)! Quitting"
+                exit      
             }
-        }         
-        $ItemCounter+=1    
+            
+        }
+        
+        $ItemCounter += 1    
     }
     
     Write-TaskCompleteMessage -Message 'Processing and Installing ADFs - Complete!'
@@ -5846,8 +5945,7 @@ if ($Script:SetDiskupOnly -eq 'FALSE'){
     # Download and expand packages
     
     Write-StartTaskMessage -Message 'Downloading Packages'
-    
-    
+      
     $TotalItems=(
         $ListofPackagestoInstall | Where-Object InstallType -ne 'CopyOnly' |  Where-Object InstallType -ne 'StartupSequenceOnly' | Select-Object -Unique -Property PackageName
         ).count 
@@ -5865,6 +5963,15 @@ if ($Script:SetDiskupOnly -eq 'FALSE'){
                         $DestinationPathtoUse = ($TempFolder+$PackagetoFind.FileDownloadName).Trim('\')       
                         if (-not (Start-HSTImager -Command 'fs extract' -SourcePath $SourcePathtoUse -DestinationPath $DestinationPathtoUse -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
                             exit
+                        }
+                    }
+                }
+                elseif ($PackagetoFind.Source -eq "CD") {
+                    if ($PackagetoFind.SourceLocation -eq 'StorageADF'){
+                        $DestinationPathtoUse = ($TempFolder+$PackagetoFind.FileDownloadName).Trim('\')+'\'   
+                        if (-not (Copy-CDFiles -InputFile $StorageADF -OutputDirectory $DestinationPathtoUse -FiletoExtract $PackagetoFind.FilestoInstall -SevenzipPathtouse $7zipPath -TempFoldertouse $TempFolder)){
+                            Write-ErrorMessage -Message 'Error extracting file(s) from CD! Quitting'
+                            exit                       
                         }
                     }
                 }
@@ -5966,8 +6073,8 @@ if ($Script:SetDiskupOnly -eq 'FALSE'){
                if ($PackagetoFind.Source -eq 'Emu68' ){
                    $SourcePathtoUse=($TempFolder+$PackagetoFind.SourceLocation)       
                }
-               elseif ($PackagetoFind.Source -eq 'ADF' ) {
-                   $SourcePathtoUse=($TempFolder+$PackagetoFind.FilestoInstall)     
+               elseif (($PackagetoFind.Source -eq 'ADF') -or ($PackagetoFind.Source -eq 'CD')) {
+                   $SourcePathtoUse=($TempFolder+$PackagetoFind.FileDownloadName + (split-path -path $PackagetoFind.FilestoInstall -leaf))     
                }
                elseif (($PackagetoFind.Source -eq 'Local') -and ($PackagetoFind.InstallType -eq 'CopyOnly')){
                    $SourcePathtoUse=($LocationofAmigaFiles+$PackagetoFind.SourceLocation)
@@ -5991,7 +6098,7 @@ if ($Script:SetDiskupOnly -eq 'FALSE'){
                else{
                 Write-InformationMessage -Message ('Copying files to drive. Source path is: '+$SourcePathtoUse+' Destination path is: '+$DestinationPathtoUse)        
                }
-               Copy-Item -Path $SourcePathtoUse  -Destination $DestinationPathtoUse -Recurse -force  
+               Copy-Item -Path $SourcePathtoUse -Destination $DestinationPathtoUse -Recurse -force  
                #### End Copy Files
                if (($PackagetoFind.ModifyInfoFileTooltype -eq 'Replace') -or ($PackagetoFind.ModifyInfoFileTooltype -eq 'Modify')) {
                 Write-InformationMessage -Message  ('Tooltypes for relevant .info files for: '+$PackagetoFind.PackageName)
@@ -6084,14 +6191,16 @@ if ($Script:SetDiskupOnly -eq 'FALSE'){
     
     Write-TaskCompleteMessage -Message 'Fix WB Startup - Complete!'
     
-    ## Clean up AmigaImageFiles
+    # Clean up AmigaImageFiles # Only needed for 3.2 and 3.1 since they copy straight to the HDF from the ADF
     
     Write-StartTaskMessage -Message 'Clean up AmigaImageFiles'
     
-    if (Test-Path ($AmigaDrivetoCopy+$VolumeName_System+'\Disk.info')){
-        Remove-Item ($AmigaDrivetoCopy+$VolumeName_System+'\Disk.info')
+    if ($Script:KickstartVersiontoUse -ne '3.9'){
+        if (Test-Path ($AmigaDrivetoCopy+$VolumeName_System+'\Disk.info')){
+            Remove-Item ($AmigaDrivetoCopy+$VolumeName_System+'\Disk.info')
+        }        
     }
-    
+
     Write-TaskCompleteMessage -Message 'Clean up AmigaImageFiles - Complete!'
 }
 
@@ -6120,6 +6229,14 @@ if ((([System.Version]$Script:KickstartVersiontoUse).Major -eq '3' -and ([System
     if (-not(Write-AmigaIconPostition -HSTAmigaPathtouse $HSTAmigaPath -TempFoldertouse $TempFolder -IconPath ($Script:Fat32DrivePath+'disk.info') -XPos 109 -YPos 65)){
         Write-ErrorMessage -Message 'Unable to reposition icon!'
     }
+}
+elseif ([System.Version]$Script:KickstartVersiontoUse -eq [System.Version]'3.9'){
+    $DestinationPathtoUse = ($Script:Fat32DrivePath).TrimEnd('\') 
+    if (-not (Copy-CDFiles -InputFile $StorageADF -OutputDirectory $DestinationPathtoUse -FiletoExtract 'OS-Version3.9\Workbench3.9\Prefs\ENV-Archive\Sys\def_disk.info' -SevenzipPathtouse $7zipPath -TempFoldertouse $TempFolder)){
+        Write-ErrorMessage -Message 'Error extracting file(s) from CD! Quitting'
+        exit        
+    }
+    $null = Rename-Item ($DestinationPathtoUse+'\def_disk.info') ($DestinationPathtoUse+'\disk.info') -Force 
 }
  
 $null = copy-Item ($TempFolder+"Emu68Pistorm\*") -Destination ($Script:Fat32DrivePath )
