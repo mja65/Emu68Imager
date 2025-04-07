@@ -3279,7 +3279,7 @@ You have selected a non-empty folder! Please select an empty folder.
 function Update-ListofInstallFiles {
     param (              
     )
-    $Script:ListofInstallFiles = Get-ListofInstallFiles -ListofInstallFilesCSV ($Script:InputFolder+'ListofInstallFiles.csv') |  Where-Object {$_.Kickstart_Version -eq $Script:KickstartVersiontoUse} | Sort-Object -Property 'InstallSequence'    
+    $Script:ListofInstallFiles = Get-ListofInstallFiles -ListofInstallFilesCSV ($Script:InputFolder+'ListofInstallFiles.csv') |  Where-Object {$_.Kickstart_Version -eq $Script:KickstartVersiontoUse} | Sort-Object -Property 'InstallSequence','FriendlyName','AmigaFiletoInstall'
     $Script:ListofInstallFiles | Add-Member -NotePropertyName Path -NotePropertyValue $null
     $Script:ListofInstallFiles | Add-Member -NotePropertyName DrivetoInstall_VolumeName -NotePropertyValue $null    
     foreach ($InstallFileLine in $Script:ListofInstallFiles) {
@@ -3420,7 +3420,7 @@ function Get-AvailableOSestoInstall {
         }
     }
 
-    return $OSOptionstoReturn | Select-Object 'Kickstart_Version','Kickstart_VersionFriendlyName' 
+    return $OSOptionstoReturn | Select-Object 'Kickstart_Version','Kickstart_VersionFriendlyName','InstallMedia' 
 
 }
 
