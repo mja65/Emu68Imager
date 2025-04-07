@@ -5431,7 +5431,7 @@ if (-not (Start-HSTImager -Command "rdb part format" -DestinationPath ($HDFImage
 
 if ($Script:SetDiskupOnly -eq 'FALSE'){
     #### Begin - Create NewFolder.info file
-    if (($Script:KickstartVersiontoUse -eq 3.1) -or (($Script:KickstartVersiontoUse -ge 3.2) -and ($GlowIcons -eq 'FALSE'))) {
+    if (($Script:KickstartVersiontoUse -eq 3.1) -or ((([System.Version]$Script:KickstartVersiontoUse).Major -eq '3' -and ([System.Version]$Script:KickstartVersiontoUse).Minor -eq '2')-and ($GlowIcons -eq 'FALSE'))) {
         if (-not (Start-HSTImager -Command 'fs extract' -SourcePath ($StorageADF+'\Monitors.info') -DestinationPath ($TempFolder.TrimEnd('\'))  -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
             exit
         }
@@ -5498,7 +5498,7 @@ if ($Script:SetDiskupOnly -eq 'FALSE'){
                 exit
     }
 
-    if ($Script:KickstartVersiontoUse -ge 3.2){
+    if (([System.Version]$Script:KickstartVersiontoUse).Major -eq '3' -and ([System.Version]$Script:KickstartVersiontoUse).Minor -eq '2'){
         Rename-Item ($AmigaDrivetoCopy+$VolumeName_Other+'\def_harddisk.info') ($AmigaDrivetoCopy+$VolumeName_Other+'\disk.info') 
         if (-not (Write-AmigaIconPostition -HSTAmigaPathtouse $HSTAmigaPath -TempFoldertouse $TempFolder -IconPath ($AmigaDrivetoCopy+$VolumeName_Other+'\disk.info') -XPos 15 -YPos 65)){
             Write-ErrorMessage -Message 'Unable to reposition icon!'
@@ -5875,7 +5875,7 @@ if ($Script:SetDiskupOnly -eq 'FALSE'){
     
     Write-StartTaskMessage -Message 'Fix WBStartup'
     
-    If ($Script:KickstartVersiontoUse -ge 3.2){
+    If (([System.Version]$Script:KickstartVersiontoUse).Major -eq '3' -and ([System.Version]$Script:KickstartVersiontoUse).Minor -eq '2'){
         Write-Host 'Fixing Menutools'
         if (-not (Start-HSTImager -Command 'fs extract' -SourcePath ($StorageADF+'\WBStartup\MenuTools') -DestinationPath ($AmigaDrivetoCopy+$VolumeName_System+'\WBStartup') -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
             exit
@@ -5916,7 +5916,7 @@ Write-StartTaskMessage -Message 'Setting up FAT32 files'
 
 Write-InformationMessage -Message 'Copying Emu68Pistorm and Emu68Pistorm32lite files' 
 
-if (($Script:KickstartVersiontoUse -ge 3.2) -and ($Script:SetDiskupOnly -eq 'FALSE')){
+if ((([System.Version]$Script:KickstartVersiontoUse).Major -eq '3' -and ([System.Version]$Script:KickstartVersiontoUse).Minor -eq '2') -and ($Script:SetDiskupOnly -eq 'FALSE')){
     $SourcePath = ($GlowIconsADF+'\Prefs\Env-Archive\Sys\def_harddisk.info')
     $DestinationPathtoUse = ($Script:Fat32DrivePath).TrimEnd('\') 
     if (-not (Start-HSTImager -Command 'fs extract' -SourcePath $SourcePath -DestinationPath $DestinationPathtoUse -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
