@@ -1917,6 +1917,140 @@ function Compare-FileHash {
     }
         
 }
+
+function Copy-ArchiveinArchiveFiles {
+    param (
+        $InputFile,
+        $OutputDirectory,
+        $FiletoExtract, 
+        $NewFileName,      
+        $ArchiveinArchiveName,
+        $ArchiveinArchivePassword,
+        $SevenzipPathtouse,
+        $TempFoldertouse
+    )
+
+    # $SevenzipPathtouse = 'E:\Emu68Imager\Programs\7z.exe'
+    # $TempFoldertouse = 'E:\Emu68Imager\Working Folder\Temp\'
+    # $InputFile = 'E:\Emulators\Amiga Files\3.9\BoingBag39-2.lha'
+    # $FiletoExtract = 'Devs\AmigaOS ROM Update.BB39-2'
+    # $OutputDirectory = 'E:\Emu68Imager\Working Folder\AmigaImageFiles\Workbench\Devs\'
+    # $ArchiveinArchiveName = 'BoingBag3.9-2\AmigaOS-Update'
+    # $ArchiveinArchivePassword = '3FB6986B-B0AD6339-4FF3254B'
+    # $NewFileName = 'AmigaOS ROM Update'
+
+    $TempFoldertoExtract = "$($TempFoldertouse)ArchiveinArchiveFiles\"
+    $TempFoldertoExtract_ArchiveinArchive = "$($TempFoldertouse)ArchiveinArchiveFiles\AiAExtractedFiles\"
+
+    # $ArchiveinArchiveName = $ArchiveinArchiveName.Replace('/','\') 
+
+    if (-not (Test-Path $TempFoldertoExtract_ArchiveinArchive)){
+        $null = New-Item $TempFoldertoExtract_ArchiveinArchive -ItemType Directory -Force #Will also create parent folder
+    }
+   
+    $ArchiveinArchiveFullPath = "$TempFoldertoExtract$ArchiveinArchiveName"
+    $ArchiveinArchiveExtractedFilesPath = "$TempFoldertoExtract_ArchiveinArchive$ArchiveinArchiveName\"
+
+    if (-not (test-path $ArchiveinArchiveFullPath)){
+        Write-InformationMessage "Archive in Archive $ArchiveinArchiveName does not exist. Extracting $ArchiveinArchiveName"
+
+        & $SevenzipPathtouse x ('-o'+$TempFoldertoExtract) $InputFile $ArchiveinArchiveName -y >($TempFoldertouse+'LogOutputTemp.txt')
+
+        if ($LASTEXITCODE -ne 0) {
+            Write-ErrorMessage -Message "Error extracting $InputFile! Cannot continue!"
+            return $false    
+        }
+
+        if (-not (Test-Path $ArchiveinArchiveExtractedFilesPath)){
+            $null = New-Item $ArchiveinArchiveExtractedFilesPath -ItemType Directory -Force
+        } 
+        
+        Write-InformationMessage "Extracting all files within $ArchiveinArchiveName"
+        
+       & $SevenzipPathtouse x ('-o'+$ArchiveinArchiveExtractedFilesPath) ('-p'+$ArchiveinArchivePassword) $ArchiveinArchiveFullPath '*' y >($TempFoldertouse+'LogOutputTemp.txt')
+    
+        if ($LASTEXITCODE -ne 0) {
+            Write-ErrorMessage -Message "Error extracting $ArchiveinArchiveFullPath in $InputFile! Cannot continue!"
+            return $false    
+        }
+
+    }
+    
+    else {
+        Write-InformationMessage "Archive in Archive $ArchiveinArchiveName exists."
+    }
+    
+    if (-not (test-path $OutputDirectory)){
+        $null = New-Item -Path $OutputDirectory -ItemType Directory
+    }
+
+    if ($NewFileName){
+        Write-InformationMessage -Message "Copying file $ArchiveinArchiveExtractedFilesPath$FiletoExtract to $OutputDirectory with new name of $NewFileName"
+        Copy-Item -Path "$ArchiveinArchiveExtractedFilesPath$FiletoExtract" -Destination "$OutputDirectory$NewFileName" -Force -Recurse 
+    }
+    else {
+        Write-InformationMessage -Message "Copying file $ArchiveinArchiveExtractedFilesPath$FiletoExtract to $OutputDirectory"
+        Copy-Item -Path "$ArchiveinArchiveExtractedFilesPath$FiletoExtract" -Destination $OutputDirectory -Force -Recurse 
+    }
+    return $true
+}
+function Copy-CDFiles {
+    param (
+        $InputFile,
+        $OutputDirectory,
+        $FiletoExtract,
+        $SevenzipPathtouse,
+        $TempFoldertouse,
+        $NewFileName
+    )
+
+    #  $SevenzipPathtouse = 'E:\Emu68Imager\Programs\7z.exe'
+    #  $TempFoldertouse = 'E:\Emu68Imager\Working Folder\Temp\'
+    #  $InputFile = 'E:\Emulators\Amiga Files\3.9\AmigaOS39-p00h.iso'
+    #  $FiletoExtract = 'OS-VERSION3.9\WORKBENCH3.5\Tools\HDToolBox.info'
+    #  $OutputDirectory = 'E:\Emu68Imager\Working Folder\AmigaImageFiles\Workbench\Tools\'
+    #  $NewFileName = 'HDToolBoxPi3.info'
+
+    $TempFoldertoExtract = "$($TempFoldertouse)CDFiles\"
+    
+    # Write-host $TempFoldertoExtract
+
+    if (-not (Test-Path $TempFoldertoExtract)){
+        $null = New-Item $TempFoldertoExtract -ItemType Directory -Force
+    }
+    
+    $ParentFolder = $FiletoExtract.split("\")[0]
+    $ExtractedFilesPath = "$TempFoldertoExtract$ParentFolder"
+
+    if (-not (Test-path $ExtractedFilesPath)){
+        Write-InformationMessage -Message "No existing extracted files. Extracting $ParentFolder"
+        & $SevenzipPathtouse x ('-o'+$TempFoldertoExtract) $InputFile $ParentFolder -y >($TempFoldertouse+'LogOutputTemp.txt')
+
+        if ($LASTEXITCODE -ne 0) {
+            Write-ErrorMessage -Message ('Error extracting '+$InputFile+'! Cannot continue!')
+            return $false    
+        }
+    } 
+    else {
+        Write-InformationMessage -Message "$ParentFolder exists. Files already extracted."
+    }
+
+    if (-not (Test-Path -Path $OutputDirectory -PathType Container)){
+        $null = New-Item -Path $OutputDirectory -ItemType Directory
+    }
+    
+    if ($NewFileName){
+        Write-InformationMessage -Message "Copying file $TempFoldertoExtract$FiletoExtract to $OutputDirectory with new name of $NewFileName"
+        Copy-Item -Path "$TempFoldertoExtract$FiletoExtract" -Destination "$OutputDirectory$NewFileName" -Force -Recurse 
+    }
+    else {
+        Write-InformationMessage -Message "Copying file $TempFoldertoExtract$FiletoExtract to $OutputDirectory"
+        Copy-Item -Path "$TempFoldertoExtract$FiletoExtract" -Destination $OutputDirectory -Force -Recurse 
+    }
+
+            return $true
+}
+
 function Expand-Zipfiles {
     param (
         $InputFile,
