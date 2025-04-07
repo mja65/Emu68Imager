@@ -40,7 +40,7 @@ if vKickstartVersion=3.2 then do
    vCmd='C:md5sum EMU68BOOT:Kickstarts >T:RomHashes.txt'
    address command vCmd
 end
-if vKickstartVersion=3.1 then do
+if vKickstartVersion=3.1 | vKickstartVersion=3.9 then do
 /*    vCmd='List >>T:RunHashes EMU68boot:Kickstarts PAT=~(#?.info) LFORMAT="C:MD5sum -b *"%p%n*" >*"T:%n.MD5*""' */
     vCmd='List >>T:RunHashes EMU68boot:Kickstarts PAT=~(#?.info) LFORMAT="C:MD5sum -b *"%p%n*" >>T:RomHashes.txt"' 
     address command vCmd
