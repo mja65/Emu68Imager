@@ -1,5 +1,6 @@
-MinimumInstallerVersion;Kickstart_Version;Kickstart_VersionFriendlyName
-1.0;3.1;Workbench 3.1
-1.0;3.2;Workbench 3.2
-1.0;3.2.2.1;Workbench 3.2.2.1
-1.0.4.3;3.2.3;Workbench 3.2.3
+MinimumInstallerVersion;Kickstart_Version;Kickstart_VersionFriendlyName;InstallMedia
+1.0;3.1;Workbench 3.1;Disk
+1.0;3.2;Workbench 3.2;Disk
+1.0;3.2.2.1;Workbench 3.2.2.1;Disk
+1.0.4.3;3.2.3;Workbench 3.2.3;Disk
+1.0.4.4;3.9;Workbench 3.9;CD
