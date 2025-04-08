@@ -5670,10 +5670,15 @@ if ($Script:SetDiskupOnly -eq 'FALSE'){
         $null = Rename-Item ($TempFolder+'Monitors.info') ($TempFolder+'def_drawer.info')
     }
     elseif ($Script:KickstartVersiontoUse -eq 3.9){
-        if (-not (Copy-CDFiles -InputFile $StorageADF -OutputDirectory ($TempFolder.TrimEnd('\')) -FiletoExtract 'OS-Version3.9\Workbench3.9\Prefs\ENV-Archive\Sys\def_drawer.info' -SevenzipPathtouse $7zipPath -TempFoldertouse $TempFolder)){
+        if (-not (Copy-CDFiles -InputFile $StorageADF -OutputDirectory $TempFolder -FiletoExtract 'OS-Version3.9\Icons\drawer.info' -NewFileName 'NewFolder.info' -SevenzipPathtouse $7zipPath -TempFoldertouse $TempFolder)){
             Write-ErrorMessage -Message 'Error extracting file(s) from CD! Quitting'
             exit        
-        }        
+        }   
+        if (-not (Write-AmigaInfoType -HSTAmigaPathtouse $HSTAmigaPath -TempFoldertouse $TempFolder -IconPath "$TempFolder\NewFolder.info" -TypetoSet 'Drawer')){
+            Write-ErrorMessage -Message 'Error setting icon type to Drawer! Quitting'
+            exit    
+        }
+
     }
     elseif((([System.Version]$Script:KickstartVersiontoUse).Major -eq '3' -and ([System.Version]$Script:KickstartVersiontoUse).Minor -eq '2') -and ($GlowIcons -eq 'TRUE')){
         if (-not (Start-HSTImager -Command 'fs extract' -SourcePath ($GlowIconsADF+'\Prefs\Env-Archive\Sys\def_drawer.info') -DestinationPath ($TempFolder.TrimEnd('\')) -TempFoldertouse $TempFolder -HSTImagePathtouse $HSTImagePath)){
@@ -5681,13 +5686,14 @@ if ($Script:SetDiskupOnly -eq 'FALSE'){
         }
     }
     
-    if (Test-Path ($TempFolder+'NewFolder.info')){
-        $null = Remove-Item ($TempFolder+'NewFolder.info')
-    } 
-    $null = Rename-Item ($TempFolder+'def_drawer.info') ($TempFolder+'NewFolder.info') -Force
-    
+    if ($Script:KickstartVersiontoUse -ne '3.9'){
+        if (Test-Path ($TempFolder+'NewFolder.info')){
+            $null = Remove-Item ($TempFolder+'NewFolder.info')
+        } 
+        $null = Rename-Item ($TempFolder+'def_drawer.info') ($TempFolder+'NewFolder.info') -Force
+    }
+ 
     #### End - Create NewFolder.info file
-
 
     ### Begin Basic Drive Setup
 
