@@ -1,5 +1,5 @@
 <#PSScriptInfo
-.VERSION 1.0.5
+.VERSION 1.0.5.1
 .GUID 73d9401c-ab81-4be5-a2e5-9fc0834be0fc
 .AUTHOR SupremeTurnip
 .COMPANYNAME
@@ -20,7 +20,7 @@
 Script for Emu68Imager 
 #> 
 
-$Script:Version = '1.0.5'
+$Script:Version = '1.0.5.1'
 
 ####################################################################### Add GUI Types ################################################################################################################
 
@@ -768,7 +768,7 @@ if (-not (Test-Path $Script:UserLocation_Kickstarts)){
 Update-InputCSV -PathtoGoogleDrive $PathtoGoogleDrive -GidValue 0 -ExistingCSV ($InputFolder+'ADFHashes.CSV') 
 Update-InputCSV -PathtoGoogleDrive $PathtoGoogleDrive -GidValue 757815554 -ExistingCSV ($InputFolder+'ListofInstallFiles.CSV')
 Update-InputCSV -PathtoGoogleDrive $PathtoGoogleDrive -GidValue 2048180409 -ExistingCSV($InputFolder+'ListofPackagestoInstall.CSV')
-Update-InputCSV -PathtoGoogleDrive $PathtoGoogleDrive -GidValue 1875558855 -ExistingCSV ($InputFolder+'RomHashes.CSV')
+Update-InputCSV -PathtoGoogleDrive $PathtoGoogleDrive -GidValue 1439711656 -ExistingCSV ($InputFolder+'RomHashes.CSV')
 Update-InputCSV -PathtoGoogleDrive $PathtoGoogleDrive -GidValue 860542576 -ExistingCSV ($InputFolder+'ScreenModes.CSV')
 Update-InputCSV -PathtoGoogleDrive $PathtoGoogleDrive -GidValue 280506415 -ExistingCSV ($InputFolder+'OSVersionstoInstall.CSV')
 
@@ -2731,7 +2731,7 @@ and select this path to scan.
     
     $null = [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,0)
 
-    $KickstartHashestoFind =Import-Csv $PathtoKickstartHashes -Delimiter ';' |  Where-Object {$_.Kickstart_Version -eq $KickstartVersion} | Sort-Object -Property 'Sequence'   
+    $KickstartHashestoFind =Import-Csv $PathtoKickstartHashes -Delimiter ';' |  Where-Object {$_.Kickstart_Version -eq $KickstartVersion -and [system.version]$Script:Version -ge [system.version]$_.MinimumInstallerVersion -and [system.version]$Script:Version -lt [system.version]$_.InstallerVersionLessThan}| Sort-Object -Property 'Sequence'   
 
     $ListofKickstartFilestoCheck  = Get-ChildItem $PathtoKickstartFiles -force -Recurse
 
@@ -2740,7 +2740,7 @@ and select this path to scan.
         $ListofKickstartFilestoCheck  = $ListofKickstartFilestoCheck | Where-Object {$_.DirectoryName -eq $PathtoKickstartFiles.TrimEnd('\') } 
     } 
 
-    $ListofKickstartFilestoCheck  = $ListofKickstartFilestoCheck  | Where-Object { $_.PSIsContainer -eq $false -and $_.Length -eq 524288}
+    $ListofKickstartFilestoCheck  = $ListofKickstartFilestoCheck  | Where-Object { $_.PSIsContainer -eq $false -and ($_.Length -eq 524288 -or $_.Length -eq  524299)}
    
     $FoundKickstarts = [System.Collections.Generic.List[PSCustomObject]]::New()
     $HashTableforKickstartFilestoCheck = @{} # Clear Hash
@@ -2758,6 +2758,8 @@ and select this path to scan.
                 Kickstart_Version = $KickstartRomandHash.Kickstart_Version
                 FriendlyName= $KickstartRomandHash.FriendlyName
                 Sequence = $KickstartRomandHash.Sequence 
+                IncludeorExclude = $KickstartRomandHash.IncludeorExclude
+                ExcludeMessage = $KickstartRomandHash.ExcludeMessage
                 Fat32Name = $KickstartRomandHash.Fat32Name
                 KickstartPath = ($HashTableforKickstartFilestoCheck[$KickstartRomandHash.Hash])
             }        
@@ -3109,6 +3111,15 @@ function Write-GUINoKickstart {
     $Msg_Body = @"  
 No valid Kickstart file was found at the location you specified. Select a location with a valid Kickstart file.    
 "@     
+    $null = [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,48) 
+}
+
+function Write-GUIEncryptedKickstart {
+    param (
+        $ExcludeMessage
+    )
+    $Msg_Header ='Error - Encrypted Kickstart found!'    
+    $Msg_Body = "$ExcludeMessage"
     $null = [System.Windows.MessageBox]::Show($Msg_Body, $Msg_Header,0,48) 
 }
 
@@ -4955,6 +4966,11 @@ $WPF_UI_ROMpath_Button_Check.Add_Click({
         $Script:FoundKickstarttoUse = Compare-KickstartHashes -PathtoKickstartHashes ($InputFolder+'RomHashes.csv') -PathtoKickstartFiles $Script:ROMPath -KickstartVersion $Script:KickstartVersiontoUse
         if (-not ($Script:FoundKickstarttoUse)){
             Write-GUINoKickstart
+        }
+        elseif ($Script:FoundKickstarttoUse.IncludeorExclude -eq 'Exclude') {
+            $MessagetoWrite = "$($Script:FoundKickstarttoUse.ExcludeMessage) $($Script:FoundKickstarttoUse.KickstartPath) "
+            Write-GUIEncryptedKickstart -ExcludeMessage $MessagetoWrite
+            $Script:FoundKickstarttoUse = $null
         }
         else{
             $Title = 'Kickstarts to be used'
