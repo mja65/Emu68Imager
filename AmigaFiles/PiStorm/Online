@@ -1,32 +1,140 @@
-echo "Starting Wifi"
-failat 21
-;assign libs: libs:Roadshow ADD
-
-run <>nil: wirelessmanager Device=wifipi.device UNIT=0 CONFIG="ENVARC:Sys/Wireless.prefs" VERBOSE
-wait 1
-WaitUntilConnected device=wifipi.device UNIT=0 DELAY=100
-
-if NOT Warn
-    echo "Starting Roadshow"	
-	;roadshowcontrol tcp.recvspace = 150000 >NIL:
-	;roadshowcontrol tcp.sendspace = 150000 >NIL:
-	roadshowcontrol tcp.recvspace = 16384 >nil:
-	roadshowcontrol tcp.sendspace = 16384 >nil:
-;	addnetinterface wifipi >NIL:
-	addnetinterface wifipi
-	
-	sntp pool.ntp.org
-;	sntp pool.ntp.org >NIL:
-;    waitfortask sntp
-;    c:SetDST NOASK NOREQ QUIET >NIL:
-	If exists SYS:Prefs/ENV-ARCHIVE/TZONEOVERRIDE 
-		c:SetDST ZONE=${TZONEOVERRIDE}
-	else
-		c:SetDST NOASK NOREQ
-	endif
+echo "Setting Up Wireless Network"
+status >t:RunningProcesses.txt
 echo ""
-date
-echo ""
-echo "You should now be online. You can close this window."
+Echo "Checking if Network is already enabled"
+
+search t:RunningProcesses.txt "wirelessmanager" >NIL:
+
+if not Warn
+    Echo "Wireless Manager is already running! Checking if Roadshow is running."
+    shownetstatus >t:NetStatus.txt
+    search t:NetStatus.txt "on interface 'wifipi'" >NIL:
+    if not Warn
+        echo "Network is setup! Nothing to do!"
+        echo ""
+        shownetstatus
+        skip end
+    endif
 endif
-failat 10
+
+Echo "Network is not currently running."
+
+setenv NetworkErrorCount=0
+
+shownetstatus >t:NetStatus.txt
+search t:NetStatus.txt "on interface 'wifipi'" >NIL:
+if not warn
+    echo "Roadshow is already running. Shutting it down."
+    netshutdown QUIET
+endif
+
+echo ""
+echo "Running WirelessManager"
+Set wirelessManagerPID `status COM=C:wirelessmanager`
+if VAL $wirelessManagerPID GT 0
+    break $WirelessManagerPID
+endif
+;break name wirelessmanager >NIL:
+setenv NetworkInProgress 1
+run >T:Progressbar.txt S:ProgressBar
+run >NIL: c:wirelessmanager DEVICE="wifipi.device" UNIT=0 CONFIG="ENVARC:Sys/Wireless.prefs" VERBOSE >t:wirelessmanager.txt
+c:waituntilconnected device="DEVS:Networks/wifipi.device" UNIT=0 DELAY=100
+
+If not warn
+    unsetenv NetworkInProgress
+    wait 1
+    echo ""
+    echo ""
+    Echo "Connected to WirelessManager. Now running Roadshow."
+    roadshowcontrol tcp.recvspace = 16384 >NIL:
+    roadshowcontrol tcp.sendspace = 16384 >NIL:
+    AddNetInterface wifipi TIMEOUT=50 >T:AddInterface.txt
+    search t:addinterface.txt "Could not add" >NIL:
+    if not warn
+        set NetInterfaceError=1
+        eval $NetworkErrorCount+1 ENV:NetworkErrorCount
+        skip End
+    endif
+    
+    echo "Successfully connected to Network!" 
+    echo ""
+    shownetstatus
+    echo ""
+    echo "Setting/Updating system clock"
+    sntp pool.ntp.org >T:sntp.txt
+    search T:sntp.txt "Unknown host" >NIL:
+    if not warn
+        set SNTPError=1
+        eval $NetworkErrorCount+1 ENV:NetworkErrorCount
+        Skip End
+    endif
+    search T:sntp.txt "Resource temporarily unavailable" >NIL:
+    if not warn
+        set SNTPError=1
+        Skip End
+    endif
+    if exists SYS:Prefs/ENV-ARCHIVE/TZONEOVERRIDE
+        c:setDST ZONE=${TZONEOVERRIDEs}
+    else
+        c:SetDST NOASK NOREQ QUIET >NIL:
+    endif
+    Skip End
+    
+else
+    unsetenv NetworkInProgress
+    Set WirelessManagerError=1
+    eval $NetworkErrorCount+1 ENV:NetworkErrorCount   
+endif
+
+
+Lab End
+
+if $NetInterfaceError EQ 1
+    echo "Could not set up wifipi.device!"
+    Set wirelessManagerPID `status COM=C:wirelessmanager`
+    if VAL $wirelessManagerPID GT 0
+        break $WirelessManagerPID
+    endif
+    ;break name="wirelessmanager"
+    netshutdown QUIET
+endif
+
+if $WirelessManagerError EQ 1
+    echo "Unsuccessful at connecting to Wireless network!"
+    netshutdown QUIET
+endif
+
+if $SNTPError EQ 1
+    echo "Unable to synchronise time with time server!"
+endif
+
+if VAL $NetworkErrorCount GT 0
+    delete RAM:WirelessLogs.txt QUIET FORCE >NIL:
+    echo "One or more errors encountered. Log will be written to RAM:WirelessLogs.txt"
+    echo "Log of Wireless Connection" >RAM:WirelessLogs.txt
+    echo "" >>RAM:WirelessLogs.txt
+    echo "Output of Wireless Manager" >>RAM:WirelessLogs.txt
+    echo "" >>RAM:WirelessLogs.txt
+    type t:wirelessmanager.txt >>RAM:WirelessLogs.txt
+    echo "Output of AddInterface" >>RAM:WirelessLogs.txt
+    echo "" >>RAM:WirelessLogs.txt
+    type t:AddInterface.txt >RAM:Test.txt
+    echo "" >>RAM:WirelessLogs.txt
+    echo "Output of SNTP" >>RAM:WirelessLogs.txt
+    echo "" >>RAM:WirelessLogs.txt
+    type t:sntp.txt >>RAM:WirelessLogs.txt
+    
+endif
+
+;Clean up
+
+unsetenv NetworkInProgress
+unsetenv NetworkErrorCount
+delete t:ProgressBar.txt >NIL:
+delete t:AddInterface.txt QUIET FORCE >NIL:
+delete t:RunningProcesses.txt QUIET FORCE >NIL:
+delete t:Netstatus.txt QUIET FORCE >NIL:
+delete t:sntp.txt QUIET FORCE >NIL:
+
+echo "Window will close in 2 seconds"
+wait 2
