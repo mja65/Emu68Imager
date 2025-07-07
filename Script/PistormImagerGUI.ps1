@@ -1,5 +1,5 @@
 <#PSScriptInfo
-.VERSION 1.0.5.1
+.VERSION 1.0.5.2
 .GUID 73d9401c-ab81-4be5-a2e5-9fc0834be0fc
 .AUTHOR SupremeTurnip
 .COMPANYNAME
@@ -20,7 +20,7 @@
 Script for Emu68Imager 
 #> 
 
-$Script:Version = '1.0.5.1'
+$Script:Version = '1.0.5.2'
 
 ####################################################################### Add GUI Types ################################################################################################################
 
@@ -3464,7 +3464,8 @@ function Get-ListofInstallFiles {
         $ListofInstallFilesCSV
         )       
 
-        # $ListofInstallFilesCSV = 'E:\Emu68Imager\InputFiles\ListofInstallFiles.csv'
+        # $ListofInstallFilesCSV = "C:\Users\Matt\OneDrive\Documents\Emu68Imager\InputFiles\ListofInstallFiles.csv"
+        # $Script:Version = '1.0.5.1'
 
         $ListofInstallFilesImported = Import-Csv $ListofInstallFilesCSV -delimiter ';'
 
