@@ -52,7 +52,7 @@ If not warn
     search t:addinterface.txt "Could not add" >NIL:
     if not warn
         set NetInterfaceError=1
-        eval $NetworkErrorCount+1 ENV:NetworkErrorCount
+        eval $NetworkErrorCount+1 to ENV:NetworkErrorCount
         skip End
     endif
     
@@ -65,7 +65,7 @@ If not warn
     search T:sntp.txt "Unknown host" >NIL:
     if not warn
         set SNTPError=1
-        eval $NetworkErrorCount+1 ENV:NetworkErrorCount
+        eval $NetworkErrorCount+1 to ENV:NetworkErrorCount
         Skip End
     endif
     search T:sntp.txt "Resource temporarily unavailable" >NIL:
@@ -83,7 +83,7 @@ If not warn
 else
     unsetenv NetworkInProgress
     Set WirelessManagerError=1
-    eval $NetworkErrorCount+1 ENV:NetworkErrorCount   
+    eval $NetworkErrorCount+1 to ENV:NetworkErrorCount   
 endif
 
 
@@ -113,14 +113,14 @@ if VAL $NetworkErrorCount GT 0
     echo "One or more errors encountered. Log will be written to RAM:WirelessLogs.txt"
     echo "Log of Wireless Connection" >RAM:WirelessLogs.txt
     echo "" >>RAM:WirelessLogs.txt
-    echo "Output of Wireless Manager" >>RAM:WirelessLogs.txt
+    echo "Output of Wireless Manager:" >>RAM:WirelessLogs.txt
     echo "" >>RAM:WirelessLogs.txt
     type t:wirelessmanager.txt >>RAM:WirelessLogs.txt
-    echo "Output of AddInterface" >>RAM:WirelessLogs.txt
+    echo "Output of AddInterface Command:" >>RAM:WirelessLogs.txt
     echo "" >>RAM:WirelessLogs.txt
     type t:AddInterface.txt >RAM:Test.txt
     echo "" >>RAM:WirelessLogs.txt
-    echo "Output of SNTP" >>RAM:WirelessLogs.txt
+    echo "Output of SNTP Command:" >>RAM:WirelessLogs.txt
     echo "" >>RAM:WirelessLogs.txt
     type t:sntp.txt >>RAM:WirelessLogs.txt
     
