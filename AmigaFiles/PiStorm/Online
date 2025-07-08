@@ -102,9 +102,9 @@ endif
 if $WirelessManagerError EQ 1
     Set wirelessManagerPID `status COM=C:wirelessmanager`
     if VAL $wirelessManagerPID GT 0
-	     break $WirelessManagerPID
+         break $WirelessManagerPID
     endif
-	  ;break name wirelessmanager >NIL:
+    ;break name wirelessmanager >NIL:
     echo "Unsuccessful at connecting to Wireless network!"
     netshutdown QUIET
 endif
