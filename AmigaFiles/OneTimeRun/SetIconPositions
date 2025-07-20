@@ -19,7 +19,7 @@ IF ${KickstartVersion} EQ 3.1
 
     iconpos >NIL: "Sys:Disk" type=DISK 3 4 DXPOS 114 DYPOS 33 DWIDTH 500 DHEIGHT 89
 
-    iconpos >NIL: "Sys:PiStorm" type=DRAWER 398 18 DXPOS 36 DYPOS 84 DWIDTH 604 DHEIGHT 172
+    iconpos >NIL: "Sys:PiStorm" type=DRAWER 398 18 DXPOS 36 DYPOS 84 DWIDTH 613 DHEIGHT 232
 
     iconpos >NIL: "Sys:Programs" type=DRAWER 319 4 DXPOS 125 DYPOS 74 DWIDTH 496 DHEIGHT 141
 
@@ -93,17 +93,19 @@ IF ${KickstartVersion} EQ 3.1
     iconpos >NIL: "Sys:Devs/Monitors/PAL" type=TOOL FREEX FREEY
     iconpos >NIL: "Sys:Devs/NetInterfaces/wifipi" type=PROJECT FREEX FREEY
     iconpos >NIL: "Sys:PiStorm/CheckMD5s" type=PROJECT 625 1
-    iconpos >NIL: "Sys:PiStorm/Documentation" type=PROJECT 389 42
-    iconpos >NIL: "Sys:PiStorm/Emu68Info.r" type=PROJECT 112 12
-    iconpos >NIL: "Sys:PiStorm/Emu68Meter" type=TOOL 201 12
-    iconpos >NIL: "Sys:PiStorm/Emucontrol" type=TOOL 16 4
-    iconpos >NIL: "Sys:PiStorm/Install Packages" type=PROJECT 486 81
-    iconpos >NIL: "Sys:PiStorm/Offline" type=PROJECT 106 81
-    iconpos >NIL: "Sys:PiStorm/Online" type=PROJECT 20 81
-    iconpos >NIL: "Sys:PiStorm/SMB Config" type=PROJECT 294 81
-    iconpos >NIL: "Sys:PiStorm/TransferKick" type=PROJECT 484 10
-    iconpos >NIL: "Sys:PiStorm/VC4Tweak" type=TOOL 289 4
-    iconpos >NIL: "Sys:PiStorm/Wifi Config" type=PROJECT 199 81
+	iconpos >NIL: "Sys:PiStorm/Documentation" type=PROJECT 49 12
+	iconpos >NIL: "Sys:PiStorm/Emu68-Updater" type=DRAWER 175 12 DXPOS 314 DYPOS 53 DWIDTH 265 DHEIGHT 64
+	iconpos >NIL: "Sys:PiStorm/Emu68Info.r" type=PROJECT 281 12
+	iconpos >NIL: "Sys:PiStorm/Emu68Meter" type=TOOL 375 12
+	iconpos >NIL: "Sys:PiStorm/Emucontrol" type=TOOL 461 4
+	iconpos >NIL: "Sys:PiStorm/Install Packages" type=PROJECT 49 73
+	iconpos >NIL: "Sys:PiStorm/Offline" type=PROJECT 175 73
+	iconpos >NIL: "Sys:PiStorm/OnlineGENet" type=PROJECT 281 73
+	iconpos >NIL: "Sys:PiStorm/OnlineWifi" type=PROJECT 375 73
+	iconpos >NIL: "Sys:PiStorm/SMB Config" type=PROJECT 465 73
+	iconpos >NIL: "Sys:PiStorm/TransferKick" type=PROJECT 45 166
+	iconpos >NIL: "Sys:PiStorm/VC4Tweak" type=TOOL 171 134
+	iconpos >NIL: "Sys:PiStorm/Wifi Config" type=TOOL 281 142
     iconpos >NIL: "Sys:Prefs/WBPattern" type=TOOL 259 4
     iconpos >NIL: "Sys:Prefs/akDatatypes" type=DRAWER 363 84 DXPOS 173 DYPOS 80 DWIDTH 214 DHEIGHT 141
 
@@ -489,7 +491,7 @@ IF ${KickstartVersion} EQ 3.2
 
     iconpos >NIL: "Sys:Disk" type=DISK 15 4 DXPOS 84 DYPOS 30 DWIDTH 533 DHEIGHT 163
 
-    iconpos >NIL: "Sys:PiStorm" type=DRAWER 412 4 DXPOS 27 DYPOS 73 DWIDTH 613 DHEIGHT 163
+    iconpos >NIL: "Sys:PiStorm" type=DRAWER 412 4 DXPOS 27 DYPOS 73 DWIDTH 613 DHEIGHT 232
 
     iconpos >NIL: "Sys:Programs" type=DRAWER 325 76 DXPOS 119 DYPOS 81 DWIDTH 492 DHEIGHT 151
 
@@ -504,17 +506,19 @@ IF ${KickstartVersion} EQ 3.2
     iconpos >NIL: "Sys:Devs/Printers" type=DRAWER 107 65 DXPOS 154 DYPOS 64 DWIDTH 550 DHEIGHT 329
 
     iconpos >NIL: "Sys:PiStorm/CheckMD5s" type=PROJECT 623 2
-    iconpos >NIL: "Sys:PiStorm/Documentation" type=PROJECT 413 41
-    iconpos >NIL: "Sys:PiStorm/Emu68Info.r" type=PROJECT 208 12
-    iconpos >NIL: "Sys:PiStorm/Emu68Meter" type=TOOL 109 12
-    iconpos >NIL: "Sys:PiStorm/Emucontrol" type=TOOL 16 4
-    iconpos >NIL: "Sys:PiStorm/Install Packages" type=PROJECT 495 79
-    iconpos >NIL: "Sys:PiStorm/Offline" type=PROJECT 106 81
-    iconpos >NIL: "Sys:PiStorm/Online" type=PROJECT 20 81
-    iconpos >NIL: "Sys:PiStorm/SMB Config" type=PROJECT 326 80
-    iconpos >NIL: "Sys:PiStorm/TransferKick" type=PROJECT 490 16
-    iconpos >NIL: "Sys:PiStorm/VC4Tweak" type=TOOL 324 4
-    iconpos >NIL: "Sys:PiStorm/Wifi Config" type=PROJECT 209 81
+	iconpos >NIL: "Sys:PiStorm/Documentation" type=PROJECT 49 12
+	iconpos >NIL: "Sys:PiStorm/Emu68-Updater" type=DRAWER 175 12 DXPOS 314 DYPOS 53 DWIDTH 265 DHEIGHT 64
+	iconpos >NIL: "Sys:PiStorm/Emu68Info.r" type=PROJECT 281 12
+	iconpos >NIL: "Sys:PiStorm/Emu68Meter" type=TOOL 375 12
+	iconpos >NIL: "Sys:PiStorm/Emucontrol" type=TOOL 461 4
+	iconpos >NIL: "Sys:PiStorm/Install Packages" type=PROJECT 49 73
+	iconpos >NIL: "Sys:PiStorm/Offline" type=PROJECT 175 73
+	iconpos >NIL: "Sys:PiStorm/OnlineGENet" type=PROJECT 281 73
+	iconpos >NIL: "Sys:PiStorm/OnlineWifi" type=PROJECT 375 73
+	iconpos >NIL: "Sys:PiStorm/SMB Config" type=PROJECT 465 73
+	iconpos >NIL: "Sys:PiStorm/TransferKick" type=PROJECT 45 166
+	iconpos >NIL: "Sys:PiStorm/VC4Tweak" type=TOOL 171 134
+	iconpos >NIL: "Sys:PiStorm/Wifi Config" type=TOOL 281 142
     iconpos >NIL: "Sys:Prefs/Serial" type=TOOL 123 187
     iconpos >NIL: "Sys:Prefs/Sound" type=TOOL 233 187
     iconpos >NIL: "Sys:Prefs/Time" type=TOOL 331 187
@@ -1028,7 +1032,7 @@ iconpos >NIL: "SDH1:DISK" type=DISK 18 172 DXPOS 51 DYPOS 33 DWIDTH 507 DHEIGHT 
 
 iconpos >NIL: "Sys:Expansion" type=DRAWER 321 65 DXPOS 185 DYPOS 102 DWIDTH 203 DHEIGHT 79
 
-iconpos >NIL: "Sys:PiStorm" type=DRAWER 397 33 DXPOS 36 DYPOS 84 DWIDTH 604 DHEIGHT 172
+iconpos >NIL: "Sys:PiStorm" type=DRAWER 397 33 DXPOS 36 DYPOS 84 DWIDTH 613 DHEIGHT 232
 
 iconpos >NIL: "Sys:Prefs" type=DRAWER 7 31 DXPOS 23 DYPOS 0 DWIDTH 585 DHEIGHT 255
 
@@ -1054,17 +1058,20 @@ iconpos >NIL: "Sys:Devs/Monitors" type=DRAWER 21 65 DXPOS 248 DYPOS 124 DWIDTH 1
 
 iconpos >NIL: "Sys:Devs/Printers" type=DRAWER 107 65 DXPOS 256 DYPOS 118 DWIDTH 150 DHEIGHT 71
 
-iconpos >NIL: "Sys:PiStorm/Documentation" type=PROJECT 389 42
-iconpos >NIL: "Sys:PiStorm/Emu68Info.r" type=PROJECT 112 12
-iconpos >NIL: "Sys:PiStorm/Emu68Meter" type=TOOL 201 12
-iconpos >NIL: "Sys:PiStorm/Emucontrol" type=TOOL 16 4
-iconpos >NIL: "Sys:PiStorm/Install Packages" type=PROJECT 486 81
-iconpos >NIL: "Sys:PiStorm/Offline" type=PROJECT 106 81
-iconpos >NIL: "Sys:PiStorm/Online" type=PROJECT 20 81
-iconpos >NIL: "Sys:PiStorm/SMB Config" type=PROJECT 294 81
-iconpos >NIL: "Sys:PiStorm/TransferKick" type=PROJECT 484 10
-iconpos >NIL: "Sys:PiStorm/VC4Tweak" type=TOOL 289 4
-iconpos >NIL: "Sys:PiStorm/Wifi Config" type=PROJECT 199 81
+iconpos >NIL: "Sys:PiStorm/Documentation" type=PROJECT 49 12
+iconpos >NIL: "Sys:PiStorm/Emu68-Updater" type=DRAWER 175 12 DXPOS 314 DYPOS 53 DWIDTH 265 DHEIGHT 64
+iconpos >NIL: "Sys:PiStorm/Emu68Info.r" type=PROJECT 281 12
+iconpos >NIL: "Sys:PiStorm/Emu68Meter" type=TOOL 375 12
+iconpos >NIL: "Sys:PiStorm/Emucontrol" type=TOOL 461 4
+iconpos >NIL: "Sys:PiStorm/Install Packages" type=PROJECT 49 73
+iconpos >NIL: "Sys:PiStorm/Offline" type=PROJECT 175 73
+iconpos >NIL: "Sys:PiStorm/OnlineGENet" type=PROJECT 281 73
+iconpos >NIL: "Sys:PiStorm/OnlineWifi" type=PROJECT 375 73
+iconpos >NIL: "Sys:PiStorm/SMB Config" type=PROJECT 465 73
+iconpos >NIL: "Sys:PiStorm/TransferKick" type=PROJECT 45 166
+iconpos >NIL: "Sys:PiStorm/VC4Tweak" type=TOOL 171 134
+iconpos >NIL: "Sys:PiStorm/Wifi Config" type=TOOL 281 142
+
 iconpos >NIL: "Sys:Prefs/PrinterPS" type=TOOL 397 126
 iconpos >NIL: "Sys:Prefs/PVS" type=TOOL 483 140
 iconpos >NIL: "Sys:Prefs/Reaction" type=TOOL 29 187
