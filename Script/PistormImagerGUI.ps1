@@ -3,6 +3,7 @@
 .GUID 73d9401c-ab81-4be5-a2e5-9fc0834be0fc
 .AUTHOR SupremeTurnip
 .COMPANYNAME
+.COMPANYNAME
 .COPYRIGHT
 .TAGS
 .LICENSEURI https://github.com/mja65/Emu68-Imager/blob/main/LICENSE
@@ -2383,56 +2384,71 @@ function Get-GithubRelease {
         $LocationforDownload,
         $LocationforProgram,
         $Sort_Flag,
-        $OnlyReleaseVersions
+        $OnlyReleaseVersions,
+        [switch]$NoExpand
     )
 
-    if(Test-Path $LocationforProgram){
-        Write-InformationMessage -Message 'File already exists!'
-        return $true   
-    }
-    else{
-        Write-InformationMessage -Message 'Retrieving Github information'
+    #$GithubRelease = 'https://api.github.com/repos/rondoval/emu68-genet-driver/releases'
+    #$Name = 'genet.device'
+    #$Sort_Flag = 'Sort'
 
-        $GithubDetails = (Get-DownloadFile -DownloadURL $GithubRelease -NumberofAttempts 3) | ConvertFrom-Json
-        if ( -not $GithubDetails){
-            Write-ErrorMessage 'Error accessing Github! Qutting Progream'
-            exit
-        }  
-        if ($OnlyReleaseVersions -eq 'TRUE'){
-
-            $GithubDetails_Revised =$null
-
-            $GithubDetails | ForEach-Object {
-                $TestofVersion = $_.tag_name.replace('v','').replace('-rc','').replace('-beta','').replace('-alpha-','').replace('nightly','0.0.0.0')
-                if ((([System.Version]$TestofVersion).major -eq '1' ) -and (([System.Version]$TestofVersion).minor -eq '0' )){
-                    $GithubDetails_Revised += $GithubDetails 
-                }
-            }
-        
-            $GithubDetails_Sorted = $GithubDetails_Revised | Where-Object {($_.draft).tostring() -eq 'False' -and ($_.prerelease).tostring() -eq 'False' -and ($_.name).tostring() -notmatch 'Release Candidate'} | Sort-Object -Property 'tag_name' -Descending | Select-Object -ExpandProperty assets
-            $GithubDetails_ForDownload = $GithubDetails_Sorted  | Where-Object { $_.name -match $Name } | Select-Object -First 1
+    if ($LocationforProgram){
+        if(Test-Path $LocationforProgram){
+            Write-InformationMessage -Message 'File already exists!'
+            return $true   
         }
-        else {
-            if ($Sort_Flag -eq 'Sort'){
+    }
+
+    Write-InformationMessage -Message 'Retrieving Github information'
+
+    $GithubDetails = (Get-DownloadFile -DownloadURL $GithubRelease -NumberofAttempts 3) | ConvertFrom-Json
+    if ( -not $GithubDetails){
+        Write-ErrorMessage 'Error accessing Github! Qutting Progream'
+        exit
+    }  
+    if ($OnlyReleaseVersions -eq 'TRUE'){
+
+        $GithubDetails_Revised =$null
+
+        $GithubDetails | ForEach-Object {
+            $TestofVersion = $_.tag_name.replace('v','').replace('-rc','').replace('-beta','').replace('-alpha-','').replace('nightly','0.0.0.0')
+            if ((([System.Version]$TestofVersion).major -eq '1' ) -and (([System.Version]$TestofVersion).minor -eq '0' )){
+                $GithubDetails_Revised += $GithubDetails 
+            }
+        }
+    
+        $GithubDetails_Sorted = $GithubDetails_Revised | Where-Object {($_.draft).tostring() -eq 'False' -and ($_.prerelease).tostring() -eq 'False' -and ($_.name).tostring() -notmatch 'Release Candidate'} | Sort-Object -Property 'tag_name' -Descending | Select-Object -ExpandProperty assets
+        $GithubDetails_ForDownload = $GithubDetails_Sorted  | Where-Object { $_.name -match $Name } | Select-Object -First 1
+    }
+    else {
+        if ($Sort_Flag -eq 'Sort'){
+            if ($Tag_Name){
                 $GithubDetails_ForDownload = $GithubDetails | Where-Object { $_.tag_name -eq $Tag_Name } | Select-Object -ExpandProperty assets | Where-Object { $_.name -match $Name } | Sort-Object -Property updated_at -Descending               
             }
-            else{
-                $GithubDetails_ForDownload = $GithubDetails | Where-Object { $_.tag_name -eq $Tag_Name } | Select-Object -ExpandProperty assets | Where-Object { $_.name -match $Name }
+            else {
+                $GithubDetails_ForDownload = $GithubDetails | Select-Object -ExpandProperty assets | Where-Object { $_.name -match $Name } | Sort-Object -Property updated_at -Descending 
             }
         }
-        $GithubDownloadURL =$GithubDetails_ForDownload[0].browser_download_url 
-        Write-InformationMessage -Message ('Downloading Files for URL: '+$GithubDownloadURL)
-        if ((Get-DownloadFile -DownloadURL $GithubDownloadURL -OutputLocation $LocationforDownload -NumberofAttempts 3) -eq $true){
-            Write-InformationMessage -Message 'Download completed'  
-        }
         else{
-            Write-ErrorMessage -Message ('Error downloading '+$NameofDL+'!')
-            return $false
-        }       
+            $GithubDetails_ForDownload = $GithubDetails | Where-Object { $_.tag_name -eq $Tag_Name } | Select-Object -ExpandProperty assets | Where-Object { $_.name -match $Name }
+        }
+    }
+    $GithubDownloadURL = $GithubDetails_ForDownload[0].browser_download_url 
+    Write-InformationMessage -Message ('Downloading Files for URL: '+$GithubDownloadURL)
+    if ((Get-DownloadFile -DownloadURL $GithubDownloadURL -OutputLocation $LocationforDownload -NumberofAttempts 3) -eq $true){
+        Write-InformationMessage -Message 'Download completed'  
+    }
+    else{
+        Write-ErrorMessage -Message ('Error downloading '+$NameofDL+'!')
+        return $false
+    }
+    if (-not ($NoExpand)){
         Write-InformationMessage -Message 'Extracting Files'
         $null = Expand-Archive -LiteralPath $LocationforDownload -DestinationPath $LocationforProgram -force
-        return $true   
-    }
+    }       
+    return $true   
+    
+    
 }
 
 function Edit-AmigaScripts {
@@ -3571,7 +3587,8 @@ function Get-ListofPackagestoInstall {
                             UpdatePackageSearchExclusionTerm  = $line.UpdatePackageSearchExclusionTerm
                             UpdatePackageSearchMinimumDate  = $line.UpdatePackageSearchMinimumDate  
                             Source = $line.Source     
-                            InstallType = $line.InstallType       
+                            InstallType = $line.InstallType
+                            GithubPreRelease = $line.GithubPreRelease       
                             SourceLocation = $line.SourceLocation          
                             FileDownloadName = $line.FileDownloadName         
                             PerformHashCheck = $line.PerformHashCheck    
@@ -3604,7 +3621,8 @@ function Get-ListofPackagestoInstall {
                         UpdatePackageSearchExclusionTerm  = $line.UpdatePackageSearchExclusionTerm
                         UpdatePackageSearchMinimumDate  = $line.UpdatePackageSearchMinimumDate  
                         Source = $line.Source     
-                        InstallType = $line.InstallType       
+                        InstallType = $line.InstallType    
+                        GithubPreRelease = $line.GithubPreRelease                               
                         SourceLocation = $line.SourceLocation          
                         FileDownloadName = $line.FileDownloadName         
                         PerformHashCheck = $line.PerformHashCheck    
@@ -5998,6 +6016,18 @@ if ($Script:SetDiskupOnly -eq 'FALSE'){
                         }
                     }
                 }
+                elseif ($PackagetoFind.Source -eq "Github"){
+                    if ($PackagetoFind.GithubPreRelease -eq 'TRUE'){
+                        $OnlyReleaseVersionsFlag = 'FALSE'
+                    }
+                    else {
+                        $OnlyReleaseVersionsFlag = 'TRUE'
+                    }
+                    if (-not(Get-GithubRelease -GithubRelease $PackagetoFind.SourceLocation -OnlyReleaseVersions $OnlyReleaseVersionsFlag -Name $PackagetoFind.FileDownloadName -LocationforDownload "$($AmigaDownloads)$($PackagetoFind.FileDownloadName)" -Sort_Flag 'SORT' -NoExpand)){
+                        Write-ErrorMessage -Message "Error downloading $($PackagetoFind.PackageName) Cannot continue!"
+                        exit
+                    }                   
+                }
                 Elseif ($PackagetoFind.Source -eq "Web"){
                     if(($PackagetoFind.SearchforUpdatedPackage -eq 'TRUE') -and ($PackagetoFind.PackageName -ne 'WHDLoadWrapper')){
                         $PackagetoFind.SourceLocation=Find-LatestAminetPackage -PackagetoFind $PackagetoFind.PackageName -Exclusion $PackagetoFind.UpdatePackageSearchExclusionTerm -DateNewerthan $PackagetoFind.UpdatePackageSearchMinimumDate -Architecture 'm68k-amigaos'   
@@ -6087,6 +6117,7 @@ if ($Script:SetDiskupOnly -eq 'FALSE'){
         }   
         if (($PackagetoFind.InstallType -eq 'CopyOnly') -or
            ($PackagetoFind.InstallType -eq 'Full') -or
+           ($PackagetoFind.InstallType -eq 'NoArchive') -or
            ($PackagetoFind.InstallType -eq 'Extract')){
                ### Determining Source Paths
                $DestinationPathtoUse =($AmigaDrivetoCopy+$PackagetoFind.DrivetoInstall_VolumeName+'\'+$PackagetoFind.LocationtoInstall) 
@@ -6094,16 +6125,19 @@ if ($Script:SetDiskupOnly -eq 'FALSE'){
                    $SourcePathtoUse=($TempFolder+$PackagetoFind.FileDownloadName+'\'+$PackagetoFind.FilestoInstall)  
                }
                if ($PackagetoFind.Source -eq 'Emu68' ){
-                   $SourcePathtoUse=($TempFolder+$PackagetoFind.SourceLocation)       
+                   $SourcePathtoUse = ($TempFolder+$PackagetoFind.SourceLocation)       
                }
                elseif (($PackagetoFind.Source -eq 'ADF') -or ($PackagetoFind.Source -eq 'CD')) {
-                   $SourcePathtoUse=($TempFolder+$PackagetoFind.FileDownloadName + (split-path -path $PackagetoFind.FilestoInstall -leaf))     
+                   $SourcePathtoUse = ($TempFolder+$PackagetoFind.FileDownloadName + (split-path -path $PackagetoFind.FilestoInstall -leaf))     
                }
                elseif (($PackagetoFind.Source -eq 'Local') -and ($PackagetoFind.InstallType -eq 'CopyOnly')){
-                   $SourcePathtoUse=($LocationofAmigaFiles+$PackagetoFind.SourceLocation)
+                   $SourcePathtoUse = ($LocationofAmigaFiles+$PackagetoFind.SourceLocation)
                }
                elseif (($PackagetoFind.Source -eq 'Local') -and ($PackagetoFind.InstallType -eq 'Full')){
-                   $SourcePathtoUse=($TempFolder+$PackagetoFind.FileDownloadName+'\'+$PackagetoFind.FilestoInstall)     
+                   $SourcePathtoUse = ($TempFolder+$PackagetoFind.FileDownloadName+'\'+$PackagetoFind.FilestoInstall)     
+               }
+               elseif ($PackagetoFind.Source -eq 'Github'){
+                   $SourcePathtoUse = ($AmigaDownloads+$PackagetoFind.FileDownloadName)               
                }
                #### End Determining SourcePaths
                Write-InformationMessage -Message ('Creating directories where required - Folder '+$PackagetoFind.LocationtoInstall)
