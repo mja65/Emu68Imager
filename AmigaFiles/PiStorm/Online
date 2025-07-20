@@ -1,95 +1,175 @@
-echo "Setting Up Wireless Network"
-status >t:RunningProcesses.txt
-echo ""
-Echo "Checking if Network is already enabled"
+.key ConnectionType/K,Action/K,TCPRecv/K,UDPRecv/K,TCPSend/K,UDPSend/K
+.bra {
+.ket }
 
-search t:RunningProcesses.txt "wirelessmanager" >NIL:
+;echo {TCPRecv}
+;echo {UDPRecv}
+;echo {UDPSend}
+;echo {TCPSend}
 
-if not Warn
-    Echo "Wireless Manager is already running! Checking if Roadshow is running."
-    shownetstatus >t:NetStatus.txt
-    search t:NetStatus.txt "on interface 'wifipi'" >NIL:
-    if not Warn
-        echo "Network is setup! Nothing to do!"
-        echo ""
-        shownetstatus
-        skip end
+;endcli
+
+if {Action} EQ "Disconnect"
+    echo "Disconnecting Network"
+    Set wirelessManagerPID `status COM=C:wirelessmanager`
+    if VAL $wirelessManagerPID GT 0
+        break $WirelessManagerPID
     endif
+    
+    failat 21
+    killdev DOSDEV=SMB0 >NIL:
+    c:Netshutdown
+    failat 10
+    ;SETENV ConnectionStatus Disconnected
+    Skip End
 endif
 
-Echo "Network is not currently running."
+
+
+If {Action} EQ "Connect"
+    if {ConnectionType} EQ "Wireless"
+        echo "Connecting to Wireless (wifipi.device)"
+    endif
+    if {ConnectionType} EQ "Wired"
+    echo "Connecting to Ethernet (Genet.device)"
+        if not ${KickstartVersion} EQ 3.2
+            echo "Genet.device only works on Kickstart 3.2! Aborting!"
+            Skip end
+        endif
+        if not ${System} EQ "PistormRaspi4"
+            echo "Genet.device only works on Pistorm with Raspberry Pi4 or CM4! Aborting!"
+        endif
+    endif
+    c:areweonline   
+;    shownetstatus >t:NetStatus.txt
+;    search t:NetStatus.txt "Not configured" >NIL:
+    if Warn
+        Skip ConnectToNetwork
+    else
+;    search t:NetStatus.txt "on interface 'wifipi'" >NIL:
+;        if not warn
+;            if {ConnectionType} EQ "Wireless"
+                Echo "You are already connected!"
+                Skip End
+ ;           else
+ ;               c:netshutdown QUIET
+ ;               Set wirelessManagerPID `status COM=C:wirelessmanager`
+ ;               if VAL $wirelessManagerPID GT 0
+ ;                   break $WirelessManagerPID
+ ;               endif
+ ;               Skip ConnectToNetwork
+ ;           endif
+ ;       endif
+ ;   search t:NetStatus.txt "on interface 'genet'" >NIL:
+ ;       if not warn
+ ;           if {ConnectionType} EQ "Wired"
+ ;               Skip End
+ ;           else 
+ ;               c:netshutdown QUIET
+ ;               Skip ConnectToNetwork    
+ ;           endif
+ ;       endif        
+    endif
+    
+Else
+    Echo "Invalid Action!"
+    skip End
+endif
+
+Lab ConnectToNetwork
 
 setenv NetworkErrorCount=0
 
-shownetstatus >t:NetStatus.txt
-search t:NetStatus.txt "on interface 'wifipi'" >NIL:
-if not warn
-    echo "Roadshow is already running. Shutting it down."
-    netshutdown QUIET
+if {ConnectionType} EQ "Wireless"
+    Set wirelessManagerPID `status COM=C:wirelessmanager`
+    if VAL $wirelessManagerPID GT 0
+        break $WirelessManagerPID
+    endif
+    echo "Running WirelessManager"
+    setenv NetworkInProgress 1
+    run >T:Progressbar.txt S:ProgressBar
+    run >NIL: c:wirelessmanager DEVICE="wifipi.device" UNIT=0 CONFIG="ENVARC:Sys/Wireless.prefs" VERBOSE >t:wirelessmanager.txt
+    c:waituntilconnected device="DEVS:Networks/wifipi.device" UNIT=0 DELAY=100
+    If not warn
+        unsetenv NetworkInProgress
+        wait 1
+        echo ""
+        echo ""
+        Echo "Connected to WirelessManager. Now running Roadshow."
+        roadshowcontrol tcp.recvspace = {TCPRecv}  >NIL:
+        roadshowcontrol udp.recvspace = {UDPRecv} >NIL:
+        roadshowcontrol tcp.sendspace = {TCPSend} >NIL:
+        roadshowcontrol udp.sendspace = {UDPSend} >NIL:
+        AddNetInterface wifipi TIMEOUT=50 >T:AddInterface.txt
+        search t:addinterface.txt "Could not add" >NIL:
+        if not warn
+            set NetInterfaceErrorWifi=1
+            eval $NetworkErrorCount+1 to ENV:NetworkErrorCount
+            skip End
+        endif
+    
+        echo "Successfully connected to Network (Wifi)!" 
+        echo ""
+        shownetstatus
+    else
+        unsetenv NetworkInProgress
+        Set WirelessManagerError=1
+        eval $NetworkErrorCount+1 to ENV:NetworkErrorCount   
+    endif
+        Skip SetNetworkTime
 endif
 
-echo ""
-echo "Running WirelessManager"
-Set wirelessManagerPID `status COM=C:wirelessmanager`
-if VAL $wirelessManagerPID GT 0
-    break $WirelessManagerPID
-endif
-;break name wirelessmanager >NIL:
-setenv NetworkInProgress 1
-run >T:Progressbar.txt S:ProgressBar
-run >NIL: c:wirelessmanager DEVICE="wifipi.device" UNIT=0 CONFIG="ENVARC:Sys/Wireless.prefs" VERBOSE >t:wirelessmanager.txt
-c:waituntilconnected device="DEVS:Networks/wifipi.device" UNIT=0 DELAY=100
-
-If not warn
-    unsetenv NetworkInProgress
-    wait 1
-    echo ""
-    echo ""
-    Echo "Connected to WirelessManager. Now running Roadshow."
-    roadshowcontrol tcp.recvspace = 16384 >NIL:
-    roadshowcontrol tcp.sendspace = 16384 >NIL:
-    AddNetInterface wifipi TIMEOUT=50 >T:AddInterface.txt
+if {ConnectionType} EQ "Wired"
+    roadshowcontrol tcp.recvspace = {TCPRecv} >NIL:
+    roadshowcontrol udp.recvspace = {UDPRecv} >NIL:
+    roadshowcontrol tcp.sendspace = {TCPSend} >NIL:
+    roadshowcontrol udp.sendspace = {UDPSend} >NIL:
+    setenv NetworkInProgress 1
+    run >T:Progressbar.txt S:ProgressBar
+    AddNetInterface genet >T:AddInterface.txt
     search t:addinterface.txt "Could not add" >NIL:
     if not warn
-        set NetInterfaceError=1
+        set NetInterfaceErrorWired=1
         eval $NetworkErrorCount+1 to ENV:NetworkErrorCount
         skip End
     endif
-    
-    echo "Successfully connected to Network!" 
+    unsetenv NetworkInProgress
+    echo ""
+    echo "Successfully connected to Network (Ethernet)!" 
     echo ""
     shownetstatus
-    echo ""
-    echo "Setting/Updating system clock"
-    sntp pool.ntp.org >T:sntp.txt
-    search T:sntp.txt "Unknown host" >NIL:
-    if not warn
-        set SNTPError=1
-        eval $NetworkErrorCount+1 to ENV:NetworkErrorCount
-        Skip End
-    endif
-    search T:sntp.txt "Resource temporarily unavailable" >NIL:
-    if not warn
-        set SNTPError=1
-        Skip End
-    endif
-    if exists SYS:Prefs/ENV-ARCHIVE/TZONEOVERRIDE
-        c:setDST ZONE=${TZONEOVERRIDEs}
-    else
-        c:SetDST NOASK NOREQ QUIET >NIL:
-    endif
-    Skip End
+;    type T:AddInterface.txt
+    Skip SetNetworkTime
     
-else
-    unsetenv NetworkInProgress
-    Set WirelessManagerError=1
-    eval $NetworkErrorCount+1 to ENV:NetworkErrorCount   
 endif
 
+Lab SetNetworkTime
+
+echo ""
+echo "Setting/Updating system clock"
+sntp pool.ntp.org >T:sntp.txt
+search T:sntp.txt "Unknown host" >NIL:
+if not warn
+    set SNTPError=1
+    eval $NetworkErrorCount+1 to ENV:NetworkErrorCount
+    Skip End
+endif
+search T:sntp.txt "Resource temporarily unavailable" >NIL:
+if not warn
+    set SNTPError=1
+    eval $NetworkErrorCount+1 to ENV:NetworkErrorCount
+    Skip End
+endif
+if exists SYS:Prefs/ENV-ARCHIVE/TZONEOVERRIDE
+    c:setDST ZONE=${TZONEOVERRIDEs}
+else
+    c:SetDST NOASK NOREQ QUIET >NIL:
+endif
+Skip End
 
 Lab End
 
-if $NetInterfaceError EQ 1
+if $NetInterfaceErrorWifi EQ 1
     echo "Could not set up wifipi.device!"
     Set wirelessManagerPID `status COM=C:wirelessmanager`
     if VAL $wirelessManagerPID GT 0
@@ -98,6 +178,11 @@ if $NetInterfaceError EQ 1
     ;break name="wirelessmanager"
     netshutdown QUIET
 endif
+
+if $NetInterfaceErrorWired EQ 1
+    echo "Could not set up genet.device!"
+    netshutdown QUIET
+Endif
 
 if $WirelessManagerError EQ 1
     Set wirelessManagerPID `status COM=C:wirelessmanager`
@@ -114,20 +199,20 @@ if $SNTPError EQ 1
 endif
 
 if VAL $NetworkErrorCount GT 0
-    delete RAM:WirelessLogs.txt QUIET FORCE >NIL:
-    echo "One or more errors encountered. Log will be written to RAM:WirelessLogs.txt"
-    echo "Log of Wireless Connection" >RAM:WirelessLogs.txt
-    echo "" >>RAM:WirelessLogs.txt
-    echo "Output of Wireless Manager:" >>RAM:WirelessLogs.txt
-    echo "" >>RAM:WirelessLogs.txt
-    type t:wirelessmanager.txt >>RAM:WirelessLogs.txt
-    echo "Output of AddInterface Command:" >>RAM:WirelessLogs.txt
-    echo "" >>RAM:WirelessLogs.txt
-    type t:AddInterface.txt >RAM:Test.txt
-    echo "" >>RAM:WirelessLogs.txt
-    echo "Output of SNTP Command:" >>RAM:WirelessLogs.txt
-    echo "" >>RAM:WirelessLogs.txt
-    type t:sntp.txt >>RAM:WirelessLogs.txt
+    delete RAM:NetworkConnectionLogs.txt QUIET FORCE >NIL:
+    echo "One or more errors encountered. Log will be written to RAM:NetworkConnectionLogs.txt"
+    echo "Log of Network Connection" >RAM:NetworkConnectionLogs.txt
+    echo "" >>RAM:NetworkConnectionLogs.txt
+    echo "Output of Wireless Manager:" >>RAM:RAM:NetworkConnectionLogs.txt
+    echo "" >>RAM:NetworkConnectionLogs.txt
+    type t:wirelessmanager.txt >>RAM:NetworkConnectionLogs.txt
+    echo "Output of AddInterface Command:" >>RAM:NetworkConnectionLogs.txt
+    echo "" >>RAM:NetworkConnectionLogs.txt
+    type t:AddInterface.txt >>RAM:NetworkConnectionLogs.txt
+    echo "" >>RAM:NetworkConnectionLogs.txt
+    echo "Output of SNTP Command:" >>RAM:NetworkConnectionLogs.txt
+    echo "" >>RAM:NetworkConnectionLogs.txt
+    type t:sntp.txt >>RAM:NetworkConnectionLogs.txt
     
 endif
 
