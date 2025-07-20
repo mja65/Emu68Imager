@@ -1,0 +1,174 @@
+.key EMU68DEVICE/K,EMU68PATH/K
+.bra {
+.ket }
+
+STACK 80000
+
+FAILAT 21
+
+ASSIGN >NIL: AmiSSL: EXISTS 
+IF WARN
+  ECHO "AmiSSL not found!"
+  ECHO ""
+  ECHO "This window will close in 3 seconds"
+  Wait 3
+  EndCLI
+ENDIF
+
+C:AreWeOnline
+
+IF WARN
+  ECHO "System is currently offline, please enable your internet connection then try again."
+  ECHO ""
+  ECHO "This window will close in 3 seconds"
+  Wait 3
+  EndCLI
+ENDIF
+
+ASSIGN Emu68-Updater: ""
+
+if $System EQ "PistormRaspi4"
+	C:EMU68INFO variant >ENV:PistormVariant
+endif
+
+if $System EQ "PistormRaspi3"
+	C:EMU68INFO variant >ENV:PistormVariant
+endif
+
+if NOT exists ENV:PistormVariant
+    ECHO "It seems your are not running Emu68, this window will close in 3 seconds"
+	SKIP Cleanup
+  ENDIF
+ENDIF
+
+;ECHO "pistorm32lite" >ENV:PistormVariant
+
+ECHO "Welcome to Emu68 Updater!"
+ECHO ""
+ECHO "This script will update your current Emu68 version to the latest official release available on Github."
+ECHO ""
+
+ASSIGN >NIL: {EMU68DEVICE} EXISTS
+IF WARN 
+  C:Mount {EMU68DEVICE} >NIL:
+    IF WARN
+      ECHO "Cannot find/mount the device named {EMU68DEVICE}!"
+      ECHO "Please check your EMU68DEVICE value by opening the Emu68-Updater file with an editor."
+      ECHO ""
+      ECHO "This window will close in 3 seconds."
+      SKIP Cleanup
+	ENDIF
+ENDIF
+
+IF EXISTS "{EMU68DEVICE}{EMU68PATH}Emu68-$PistormVariant"
+    ECHO "Found {EMU68DEVICE}{EMU68PATH}Emu68-$PistormVariant"
+    ECHO ""
+ELSE
+    ECHO "Cannot find Emu68-$PistormVariant in {EMU68DEVICE}{EMU68PATH}!"
+    ECHO "Please check your EMU68PATH value by opening the Emu68-Updater file with an editor and confirming it matches with the path defined in {EMU68DEVICE}config.txt (kernel=<pathtoemu68file>) on your SD card."
+    ECHO ""
+    ECHO "This window will close in 3 seconds."
+    SKIP Cleanup
+ENDIF
+
+IF NOT EXISTS "{EMU68DEVICE}{EMU68PATH}Backup_Emu68"
+  MAKEDIR "{EMU68DEVICE}{EMU68PATH}Backup_Emu68" >NIL:
+ENDIF
+
+ECHO "Downloading Emu68 JSON file..."
+ECHO ""
+
+c:aget https://api.github.com/repos/michalsc/Emu68/releases TO RAM:releases.json >NIL:
+
+IF WARN
+   ECHO "Unable to connecto to Github, retrying..."
+   Emu68-Updater:aget https://api.github.com/repos/michalsc/Emu68/releases TO RAM:releases.json >NIL:
+   IF WARN
+     ECHO ""
+     ECHO "It seems the system is currently unable to connect to Github, please try again later."
+     ECHO ""
+     ECHO "This window will close in 3 seconds."
+     SKIP Cleanup
+   ENDIF
+ENDIF
+
+RX Emu68-Updater:tag.rexx >NIL:
+
+ECHO "Downloading latest Emu68-$PistormVariant release..."
+ECHO ""
+
+c:aget https://github.com/michalsc/Emu68/releases/download/$TagENV/Emu68-$PistormVariant.zip TO RAM:Emu68-$PistormVariant.zip >NIL:
+
+IF WARN
+   ECHO "Unable to connecto to Github, retrying..."
+   Emu68-Updater:aget https://github.com/michalsc/Emu68/releases/download/$TagENV/Emu68-$PistormVariant.zip TO RAM:Emu68-$PistormVariant.zip >NIL:
+   IF WARN
+     ECHO ""
+     ECHO "It seems the system is currently unable to connect to Github, please try again later."
+     ECHO ""
+     ECHO "This window will close in 3 seconds."
+     SKIP Cleanup
+   ENDIF
+ENDIF
+
+ECHO "Unpacking..."
+ECHO ""
+
+C:UnZip -o RAM:Emu68-$PistormVariant.zip -d RAM:Emu68upd_temp >NIL:
+
+ECHO "Starting update process..."
+ECHO ""
+
+SET OldEmu68Version `Version Full "{EMU68DEVICE}{EMU68PATH}Emu68-$PistormVariant"`
+SET NewEmu68Version `Version Full RAM:Emu68upd_temp/Emu68-$PistormVariant`
+IF "$NewEmu68Version" GT "$OldEmu68Version"
+  ASK "New $NewEmu68Version version found, do you want to update your current $OldEmu68Version version? Y/N"
+    IF WARN
+	  IF EXISTS "{EMU68DEVICE}{EMU68PATH}Backup_Emu68/Emu68-$PistormVariant_old"
+	    DELETE "{EMU68DEVICE}{EMU68PATH}Backup_Emu68/Emu68-$PistormVariant_old" FORCE QUIET >NIL:
+	  ENDIF
+	  COPY "{EMU68DEVICE}{EMU68PATH}Emu68-$PistormVariant" TO "{EMU68DEVICE}{EMU68PATH}Backup_Emu68/Emu68-$PistormVariant_old" FORCE CLONE QUIET >NIL:
+	  COPY "RAM:Emu68upd_temp/Emu68-$PistormVariant" TO "{EMU68DEVICE}{EMU68PATH}Emu68-$PistormVariant" FORCE CLONE QUIET >NIL:
+	ELSE
+	  ECHO ""
+	  ECHO "This window will close in 3 seconds."
+	  SKIP Cleanup
+	ENDIF
+ELSE
+  IF "$NewEmu68Version" EQ "$OldEmu68Version"
+	ECHO "Your version of Emu68 is already up to date, this window will close in 3 seconds."
+	SKIP Cleanup
+  ENDIF
+ENDIF
+
+ECHO ""
+
+ASK "Update completed successfully! A Hard Reset is needed to use the new Emu68 version, do you want to do it now? Y/N"
+  IF WARN
+	ECHO ""
+	ECHO "Rebooting..."
+	WAIT 3
+    C:EMU68INFO HARDRESET
+  ELSE
+    ECHO ""
+    ECHO "This window will close in 3 seconds."
+  ENDIF
+
+LAB Cleanup
+
+DELETE RAM:releases.json FORCE QUIET >NIL:
+DELETE RAM:Emu68-$PistormVariant.zip FORCE QUIET >NIL:
+DELETE RAM:Emu68upd_temp/ ALL FORCE QUIET >NIL:
+DELETE ENV:PistormVariant FORCE QUIET >NIL:
+
+UNSET OldEmu68Version
+UNSET NewEmu68Version
+UNSETENV TagENV
+
+WAIT 3
+
+ASSIGN Emu68-Updater: REMOVE
+
+FAILAT 10
+
+ENDCLI
