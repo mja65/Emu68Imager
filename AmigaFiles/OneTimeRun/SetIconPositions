@@ -102,7 +102,7 @@ IF ${KickstartVersion} EQ 3.1
 	iconpos >NIL: "Sys:PiStorm/Offline" type=PROJECT 175 73
 	iconpos >NIL: "Sys:PiStorm/OnlineGENet" type=PROJECT 281 73
 	iconpos >NIL: "Sys:PiStorm/OnlineWifi" type=PROJECT 375 73
-	iconpos >NIL: "Sys:PiStorm/SMB Config" type=PROJECT 465 73
+	iconpos >NIL: "Sys:PiStorm/SMB Config" type=TOOL 465 73
 	iconpos >NIL: "Sys:PiStorm/TransferKick" type=PROJECT 45 166
 	iconpos >NIL: "Sys:PiStorm/VC4Tweak" type=TOOL 171 134
 	iconpos >NIL: "Sys:PiStorm/Wifi Config" type=TOOL 281 142
@@ -515,7 +515,7 @@ IF ${KickstartVersion} EQ 3.2
 	iconpos >NIL: "Sys:PiStorm/Offline" type=PROJECT 175 73
 	iconpos >NIL: "Sys:PiStorm/OnlineGENet" type=PROJECT 281 73
 	iconpos >NIL: "Sys:PiStorm/OnlineWifi" type=PROJECT 375 73
-	iconpos >NIL: "Sys:PiStorm/SMB Config" type=PROJECT 465 73
+	iconpos >NIL: "Sys:PiStorm/SMB Config" type=TOOL 465 73
 	iconpos >NIL: "Sys:PiStorm/TransferKick" type=PROJECT 45 166
 	iconpos >NIL: "Sys:PiStorm/VC4Tweak" type=TOOL 171 134
 	iconpos >NIL: "Sys:PiStorm/Wifi Config" type=TOOL 281 142
@@ -1067,7 +1067,7 @@ iconpos >NIL: "Sys:PiStorm/Install Packages" type=PROJECT 49 73
 iconpos >NIL: "Sys:PiStorm/Offline" type=PROJECT 175 73
 iconpos >NIL: "Sys:PiStorm/OnlineGENet" type=PROJECT 281 73
 iconpos >NIL: "Sys:PiStorm/OnlineWifi" type=PROJECT 375 73
-iconpos >NIL: "Sys:PiStorm/SMB Config" type=PROJECT 465 73
+iconpos >NIL: "Sys:PiStorm/SMB Config" type=TOOL 465 73
 iconpos >NIL: "Sys:PiStorm/TransferKick" type=PROJECT 45 166
 iconpos >NIL: "Sys:PiStorm/VC4Tweak" type=TOOL 171 134
 iconpos >NIL: "Sys:PiStorm/Wifi Config" type=TOOL 281 142
