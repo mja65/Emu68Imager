@@ -17,17 +17,17 @@ ENDIF
 
 ASSIGN Emu68-Updater: ""
 
-Version brcm-emmc.device >NIL: 
-IF NOT FAIL
-  Emu68-Updater:EMU68INFO variant >ENV:PistormVariant
-ELSE
-  Version brcm-sdhc.device >NIL:
-  IF NOT FAIL
-    Emu68-Updater:EMU68INFO variant >ENV:PistormVariant
-  ELSE
+if $System EQ "PistormRaspi4"
+	C:EMU68INFO variant >ENV:PistormVariant
+endif
+
+if $System EQ "PistormRaspi3"
+	C:EMU68INFO variant >ENV:PistormVariant
+endif
+
+if NOT exists ENV:PistormVariant
     ECHO "It seems your are not running Emu68, this window will close in 3 seconds"
 	SKIP Cleanup
-  ENDIF
 ENDIF
 
 ;ECHO "pistorm32lite" >ENV:PistormVariant
@@ -64,7 +64,7 @@ IF NOT EXISTS "{EMU68DEVICE}{EMU68PATH}Backup_Emu68"
   MAKEDIR "{EMU68DEVICE}{EMU68PATH}Backup_Emu68" >NIL:
 ENDIF
 
-Emu68-Updater:AreWeOnline
+c:AreWeOnline
 IF WARN
   ECHO "System is currently offline, please enable your internet connection then try again."
   ECHO ""
@@ -75,14 +75,14 @@ ENDIF
 ECHO "Downloading Emu68 JSON file..."
 ECHO ""
 
-Emu68-Updater:aget https://api.github.com/repos/michalsc/Emu68/releases TO RAM:releases.json >NIL:
+c:aget https://api.github.com/repos/michalsc/Emu68/releases TO RAM:releases.json >NIL:
 IF WARN
    ECHO "Unable to connect to Github, waiting 5 seconds before retrying..."
    WAIT 5
    ECHO ""
    ECHO "Second attempt at downloading Emu68 JSON file..."
    ECHO ""
-   Emu68-Updater:aget https://api.github.com/repos/michalsc/Emu68/releases TO RAM:releases.json >NIL:
+   c:aget https://api.github.com/repos/michalsc/Emu68/releases TO RAM:releases.json >NIL:
    IF WARN
      ECHO "It seems the system is currently unable to connect to Github, please try again later."
 	 ECHO ""
@@ -96,14 +96,14 @@ RX Emu68-Updater:tag.rexx >NIL:
 ECHO "Downloading latest Emu68-$PistormVariant release..."
 ECHO ""
 
-Emu68-Updater:aget https://github.com/michalsc/Emu68/releases/download/$TagENV/Emu68-$PistormVariant.zip TO RAM:Emu68-$PistormVariant.zip >NIL:
+c:aget https://github.com/michalsc/Emu68/releases/download/$TagENV/Emu68-$PistormVariant.zip TO RAM:Emu68-$PistormVariant.zip >NIL:
 IF WARN
    ECHO "Unable to connect to Github, waiting 5 seconds before retrying..."
    WAIT 5
    ECHO ""
    ECHO "Second attempt at downloading latest Emu68-$PistormVariant release..."
    ECHO ""
-   Emu68-Updater:aget https://github.com/michalsc/Emu68/releases/download/$TagENV/Emu68-$PistormVariant.zip TO RAM:Emu68-$PistormVariant.zip >NIL:
+   c:aget https://github.com/michalsc/Emu68/releases/download/$TagENV/Emu68-$PistormVariant.zip TO RAM:Emu68-$PistormVariant.zip >NIL:
    IF WARN
      ECHO "It seems the system is currently unable to connect to Github, please try again later."
 	 ECHO ""
@@ -115,7 +115,7 @@ ENDIF
 ECHO "Unpacking..."
 ECHO ""
 
-Emu68-Updater:UnZip -o RAM:Emu68-$PistormVariant.zip -d RAM:Emu68upd_temp >NIL:
+c:UnZip -o RAM:Emu68-$PistormVariant.zip -d RAM:Emu68upd_temp >NIL:
 
 ECHO "Starting update process..."
 ECHO ""
@@ -154,7 +154,7 @@ ASK "Update completed successfully! A Hard Reset is needed to use the new Emu68 
 	ECHO ""
 	ECHO "Rebooting..."
 	WAIT 3
-    Emu68-Updater:EMU68INFO HARDRESET
+    c:EMU68INFO HARDRESET
   ELSE
     ECHO ""
     ECHO "This window will close in 3 seconds."
