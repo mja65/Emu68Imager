@@ -1,5 +1,5 @@
 <#PSScriptInfo
-.VERSION 1.0.5.2
+.VERSION 1.0.6.1
 .GUID 73d9401c-ab81-4be5-a2e5-9fc0834be0fc
 .AUTHOR SupremeTurnip
 .COMPANYNAME
@@ -21,7 +21,7 @@
 Script for Emu68Imager 
 #> 
 
-$Script:Version = '1.0.6'
+$Script:Version = '1.0.6.1'
 
 ####################################################################### Add GUI Types ################################################################################################################
 
