@@ -1,4 +1,4 @@
-.key ConnectionType/K,Action/K,TCPRecv/K,UDPRecv/K,TCPSend/K,UDPSend/K
+.key ConnectionType/K,Action/K
 .bra {
 .ket }
 
@@ -27,10 +27,11 @@ endif
 
 
 If {Action} EQ "Connect"
-    if {ConnectionType} EQ "Wireless"
+    rx sys:Pistorm/ReadRoadshowParameters.rexx {ConnectionType} 
+    if {ConnectionType} EQ "wifipi"
         echo "Connecting to Wireless (wifipi.device)"
     endif
-    if {ConnectionType} EQ "Wired"
+    if {ConnectionType} EQ "genet"
     echo "Connecting to Ethernet (Genet.device)"
         if not ${KickstartVersion} EQ 3.2
             echo "Genet.device only works on Kickstart 3.2! Aborting!"
@@ -48,7 +49,7 @@ If {Action} EQ "Connect"
     else
 ;    search t:NetStatus.txt "on interface 'wifipi'" >NIL:
 ;        if not warn
-;            if {ConnectionType} EQ "Wireless"
+;            if {ConnectionType} EQ "wifipi"
                 Echo "You are already connected!"
                 Skip End
  ;           else
@@ -62,7 +63,7 @@ If {Action} EQ "Connect"
  ;       endif
  ;   search t:NetStatus.txt "on interface 'genet'" >NIL:
  ;       if not warn
- ;           if {ConnectionType} EQ "Wired"
+ ;           if {ConnectionType} EQ "genet"
  ;               Skip End
  ;           else 
  ;               c:netshutdown QUIET
@@ -80,7 +81,7 @@ Lab ConnectToNetwork
 
 setenv NetworkErrorCount=0
 
-if {ConnectionType} EQ "Wireless"
+if {ConnectionType} EQ "wifipi"
     Set wirelessManagerPID `status COM=C:wirelessmanager`
     if VAL $wirelessManagerPID GT 0
         break $WirelessManagerPID
@@ -96,10 +97,10 @@ if {ConnectionType} EQ "Wireless"
         echo ""
         echo ""
         Echo "Connected to WirelessManager. Now running Roadshow."
-        roadshowcontrol tcp.recvspace = {TCPRecv}  >NIL:
-        roadshowcontrol udp.recvspace = {UDPRecv} >NIL:
-        roadshowcontrol tcp.sendspace = {TCPSend} >NIL:
-        roadshowcontrol udp.sendspace = {UDPSend} >NIL:
+        roadshowcontrol tcp.recvspace = $TCPReceive >NIL:
+        roadshowcontrol udp.recvspace = $UDPReceive >NIL:
+        roadshowcontrol tcp.sendspace = $TCPSend >NIL:
+        roadshowcontrol udp.sendspace = $UDPSend >NIL:
         AddNetInterface wifipi TIMEOUT=50 >T:AddInterface.txt
         search t:addinterface.txt "Could not add" >NIL:
         if not warn
@@ -119,11 +120,11 @@ if {ConnectionType} EQ "Wireless"
         Skip SetNetworkTime
 endif
 
-if {ConnectionType} EQ "Wired"
-    roadshowcontrol tcp.recvspace = {TCPRecv} >NIL:
-    roadshowcontrol udp.recvspace = {UDPRecv} >NIL:
-    roadshowcontrol tcp.sendspace = {TCPSend} >NIL:
-    roadshowcontrol udp.sendspace = {UDPSend} >NIL:
+if {ConnectionType} EQ "genet"
+    roadshowcontrol tcp.recvspace = $TCPReceive >NIL:
+    roadshowcontrol udp.recvspace = $UDPReceive >NIL:
+    roadshowcontrol tcp.sendspace = $TCPSend >NIL:
+    roadshowcontrol udp.sendspace = $UDPSend >NIL:
     setenv NetworkInProgress 1
     run >T:Progressbar.txt S:ProgressBar
     AddNetInterface genet >T:AddInterface.txt
@@ -220,6 +221,10 @@ endif
 
 unsetenv NetworkInProgress
 unsetenv NetworkErrorCount
+unsetenv TCPReceive
+unsetenv UDPReceive
+unsetenv TCPSend 
+unsetenv UDPSend
 delete t:ProgressBar.txt >NIL:
 delete t:AddInterface.txt QUIET FORCE >NIL:
 delete t:RunningProcesses.txt QUIET FORCE >NIL:

@@ -106,6 +106,7 @@ IF ${KickstartVersion} EQ 3.1
 	iconpos >NIL: "Sys:PiStorm/TransferKick" type=PROJECT 45 166
 	iconpos >NIL: "Sys:PiStorm/VC4Tweak" type=TOOL 171 134
 	iconpos >NIL: "Sys:PiStorm/Wifi Config" type=TOOL 281 142
+	iconpos >NIL: "Sys:PiStorm/RoadshowParameters" type=PROJECT 463 138
     iconpos >NIL: "Sys:Prefs/WBPattern" type=TOOL 259 4
     iconpos >NIL: "Sys:Prefs/akDatatypes" type=DRAWER 363 84 DXPOS 173 DYPOS 80 DWIDTH 214 DHEIGHT 141
 
@@ -519,6 +520,7 @@ IF ${KickstartVersion} EQ 3.2
 	iconpos >NIL: "Sys:PiStorm/TransferKick" type=PROJECT 45 166
 	iconpos >NIL: "Sys:PiStorm/VC4Tweak" type=TOOL 171 134
 	iconpos >NIL: "Sys:PiStorm/Wifi Config" type=TOOL 281 142
+	iconpos >NIL: "Sys:PiStorm/RoadshowParameters" type=PROJECT 463 138
     iconpos >NIL: "Sys:Prefs/Serial" type=TOOL 123 187
     iconpos >NIL: "Sys:Prefs/Sound" type=TOOL 233 187
     iconpos >NIL: "Sys:Prefs/Time" type=TOOL 331 187
@@ -1071,7 +1073,7 @@ iconpos >NIL: "Sys:PiStorm/SMB Config" type=TOOL 465 73
 iconpos >NIL: "Sys:PiStorm/TransferKick" type=PROJECT 45 166
 iconpos >NIL: "Sys:PiStorm/VC4Tweak" type=TOOL 171 134
 iconpos >NIL: "Sys:PiStorm/Wifi Config" type=TOOL 281 142
-
+iconpos >NIL: "Sys:PiStorm/RoadshowParameters" type=PROJECT 463 138
 iconpos >NIL: "Sys:Prefs/PrinterPS" type=TOOL 397 126
 iconpos >NIL: "Sys:Prefs/PVS" type=TOOL 483 140
 iconpos >NIL: "Sys:Prefs/Reaction" type=TOOL 29 187
