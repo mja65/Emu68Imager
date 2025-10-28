@@ -3388,26 +3388,42 @@ function Get-Emu68ImagerDocumentation {
 
    # $LocationtoDownload ='E:\PiStorm\Docs\'
 
-    $DownloadURLs = "https://mja65.github.io/Emu68-Imager/index.html", `
-                    "https://mja65.github.io/Emu68-Imager/requirements.html", `
-                    "https://mja65.github.io/Emu68-Imager/download.html", `
-                    "https://mja65.github.io/Emu68-Imager/installation.html",
-                    "https://mja65.github.io/Emu68-Imager/quickstart.html", `
-                    "https://mja65.github.io/Emu68-Imager/instructions.html", `
-                    "https://mja65.github.io/Emu68-Imager/amigautilities.html", `
-                    "https://mja65.github.io/Emu68-Imager/packages.html", `
-                    "https://mja65.github.io/Emu68-Imager/included.html", `
-                    "https://mja65.github.io/Emu68-Imager/faqs.html", `
-                    "https://mja65.github.io/Emu68-Imager/support.html", `
+    $DownloadURLs = "https://mja65.github.io/Emu68-Imager/amigautilities.html", `
                     "https://mja65.github.io/Emu68-Imager/credits.html", `
-                    "https://mja65.github.io/Emu68-Imager/images/screenshot1.png", `
-                    "https://mja65.github.io/Emu68-Imager/images/screenshot2.png"
-
+                    "https://mja65.github.io/Emu68-Imager/download.html", `
+                    "https://mja65.github.io/Emu68-Imager/faqs.html", `
+                    "https://mja65.github.io/Emu68-Imager/included.html", `
+                    "https://mja65.github.io/Emu68-Imager/index.html", `
+                    "https://mja65.github.io/Emu68-Imager/installation.html", `
+                    "https://mja65.github.io/Emu68-Imager/instructions.html", `
+                    "https://mja65.github.io/Emu68-Imager/InstructionsEmu68ImagerV1.html", `
+                    "https://mja65.github.io/Emu68-Imager/InstructionsEmu68ImagerV2.html", `
+                    "https://mja65.github.io/Emu68-Imager/packages.html", `
+                    "https://mja65.github.io/Emu68-Imager/quickstart.html", `
+                    "https://mja65.github.io/Emu68-Imager/requirements.html", `
+                    "https://mja65.github.io/Emu68-Imager/support.html", `
+                    "https://mja65.github.io/Emu68-Imager/images/NetworkCommandOutput.png", `
+                    "https://mja65.github.io/Emu68-Imager/images/SMBConfig.png", `
+                    "https://mja65.github.io/Emu68-Imager/images/WifiConfig.png", `
+                    "https://mja65.github.io/Emu68-Imager/images/Version1/screenshot1.png", `
+                    "https://mja65.github.io/Emu68-Imager/images/Version1/screenshot2.png", `
+                    "https://mja65.github.io/Emu68-Imager/images/Version2/MissingFiles.png", `
+                    "https://mja65.github.io/Emu68-Imager/images/Version2/SelectPackages.png", `
+                    "https://mja65.github.io/Emu68-Imager/images/Version2/SetupDiskAdvanced.png", `
+                    "https://mja65.github.io/Emu68-Imager/images/Version2/SetupDiskSimple.png", `
+                    "https://mja65.github.io/Emu68-Imager/images/Version2/StartupPageAdvanced.png", `
+                    "https://mja65.github.io/Emu68-Imager/images/Version2/StartupPageSimple.png", `
+                    "https://mja65.github.io/Emu68-Imager/images/Version2/StartupScreen.png", `
+                    "https://mja65.github.io/Emu68-Imager/images/WifiConfig.png"
+                   
     foreach ($URL in $DownloadURLs){
+        
+        $Extension = [System.IO.Path]::GetExtension("$(Split-Path $URL -Leaf)")
+
         If ((Split-Path $URL -Leaf) -eq 'index.html'){
             $OutfileLocation = $LocationtoDownload 
         }
-        elseif (((Split-Path $URL -Leaf) -eq 'screenshot1.png') -or ((Split-Path $URL -Leaf) -eq 'screenshot2.png')) {
+        elseif ($Extension -eq '.png') {
             $OutfileLocation = $LocationtoDownload+'images\'
         }
         else {
@@ -6205,7 +6221,7 @@ if ($Script:SetDiskupOnly -eq 'FALSE'){
     } 
 
     if ((Get-Emu68ImagerDocumentation -LocationtoDownload ($AmigaDrivetoCopy+$VolumeName_System+'\PiStorm\Docs\')) -eq $false){
-        Write-ErrorMessage -Message 'Documentation could not be created! You will not be able to access this on the Amiga'
+        Write-ErrorMessage -Message 'Some or all documentation could not be created! You may not be able to access this on the Amiga'
 
     }
     else {
