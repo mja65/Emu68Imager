@@ -6033,16 +6033,26 @@ if ($Script:SetDiskupOnly -eq 'FALSE'){
                     }
                 }
                 elseif ($PackagetoFind.Source -eq "Github"){
-                    if ($PackagetoFind.GithubPreRelease -eq 'TRUE'){
-                        $OnlyReleaseVersionsFlag = 'FALSE'
+                    if ($PackagetoFind.PackageName -eq "GeNet"){
+                        if (-not(Get-GithubRelease -GithubRelease $PackagetoFind.SourceLocation -Tag_Name "v1.3" -Name $PackagetoFind.FileDownloadName -LocationforDownload "$($AmigaDownloads)$($PackagetoFind.FileDownloadName)" -NoExpand)){
+                            Write-ErrorMessage -Message "Error downloading $($PackagetoFind.PackageName) Cannot continue!"
+                            exit
+                        }   
                     }
                     else {
-                        $OnlyReleaseVersionsFlag = 'TRUE'
+
+                        if ($PackagetoFind.GithubPreRelease -eq 'TRUE'){
+                            $OnlyReleaseVersionsFlag = 'FALSE'
+                        }
+                        else {
+                            $OnlyReleaseVersionsFlag = 'TRUE'
+                        }
+                        if (-not(Get-GithubRelease -GithubRelease $PackagetoFind.SourceLocation -OnlyReleaseVersions $OnlyReleaseVersionsFlag -Name $PackagetoFind.FileDownloadName -LocationforDownload "$($AmigaDownloads)$($PackagetoFind.FileDownloadName)" -Sort_Flag 'SORT' -NoExpand)){
+                            Write-ErrorMessage -Message "Error downloading $($PackagetoFind.PackageName) Cannot continue!"
+                            exit
+                        }                   
+
                     }
-                    if (-not(Get-GithubRelease -GithubRelease $PackagetoFind.SourceLocation -OnlyReleaseVersions $OnlyReleaseVersionsFlag -Name $PackagetoFind.FileDownloadName -LocationforDownload "$($AmigaDownloads)$($PackagetoFind.FileDownloadName)" -Sort_Flag 'SORT' -NoExpand)){
-                        Write-ErrorMessage -Message "Error downloading $($PackagetoFind.PackageName) Cannot continue!"
-                        exit
-                    }                   
                 }
                 Elseif ($PackagetoFind.Source -eq "Web"){
                     if(($PackagetoFind.SearchforUpdatedPackage -eq 'TRUE') -and ($PackagetoFind.PackageName -ne 'WHDLoadWrapper')){
